@@ -1,42 +1,24 @@
-#root {
-  max-width: 1280px;
+.App {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /*내부 컴포넌트 가운데 정렬*/
+  background-color: #ffffff;
+  min-height: 100vh;
+  /* padding-top: 20px; */
+  padding-top: 10px;
+  /* App을 화면 중앙에 정렬 */
+  display: flex;
+  flex-direction: column;
+  /* margin: 0 auto; */
+}
+.main-content {
+  max-width: 1200px;
+  width: 100%;
+  /* 네비게이션 높이 고려한 상단 padding */
+  /* padding: 100px 20px 40px; */
+  /* 상단, 좌우, 하단 */
+  padding: 50px 0px 40px;
   margin: 0 auto;
-  padding: 2rem;
+  box-sizing: border-box; /* 패딩 포함 너비 계산 */
   text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-/* @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-} */
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }
