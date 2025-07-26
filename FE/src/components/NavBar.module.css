@@ -104,3 +104,8 @@
   color: #1E2939;
   font-weight: 500;
 }
+.loginButton:hover,
+.logoutButton:hover {
+  background-color: #5A597D;
+  color: #F3F2FA;
+}

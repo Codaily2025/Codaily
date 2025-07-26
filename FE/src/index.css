@@ -76,3 +76,8 @@ body, html, #root {
   align-items: flex-start;  /* 수직은 필요시 center로 조정 가능 */
   background-color: #f9f9f9;
 }
+
+/* 구글 폰트 Inter 적용 */
+body {
+  font-family: 'Inter', sans-serif;
+}

@@ -1,112 +1,111 @@
-.login-container {
+.login-page-container {
   display: flex;
-  justify-content: center;
+  /* 오른쪽 정렬 */
+  justify-content: flex-end;
   align-items: center;
-  min-height: 80vh;
-  padding: 20px;
-}
-
-.login-card {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 40px;
   width: 100%;
-  max-width: 400px;
+  /* min-height: 100vh; */
+  /* 높이를 595px로 고정 */
+  height: 595px;
+  background-color: white;
+  gap: 100px; /* 좌우 섹션 사이의 간격 */
 }
 
-.login-card h1 {
+/* 왼쪽 로그인 영역 */
+.login-form-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 2rem;
 }
 
-.login-subtitle {
-  text-align: center;
-  color: #666;
+.welcome-heading {
+  color: #6C6B93;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-shadow: 0px 4px 4px rgba(108, 107, 147, 0.10);
+  margin: 0;
+}
+
+.login-subheading {
+  color: #A0AEC0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 8px;
   margin-bottom: 30px;
-  font-size: 1rem;
 }
 
 .social-login-buttons {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  width: 400px;
 }
 
 .social-login-button {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  background: white;
+  justify-content: center; /* 내부 요소 가운데 정렬 */
+  width: 100%;
+  height: 64px;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 15px;
+  box-shadow: 0px 4px 4px rgba(108, 107, 147, 0.25);
   cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  position: relative;
+  
+  color: #404040;
+  font-size: 18px;
+  font-weight: 400;
+  text-align: center;
+  gap: 12px; /* 아이콘과 텍스트 사이 간격 */
+  padding: 0 20px;
+  transition: background-color 0.2s;
 }
 
 .social-login-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
 }
 
-.social-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 14px;
-  color: white;
+.social-login-button img {
+  width: 30px;
+  height: 30px;
 }
 
-/* Google 스타일 */
-.social-login-button.google {
-  border-color: #4285f4;
-  color: #4285f4;
+/* 오른쪽 이미지 영역 */
+.login-image-section {
+  position: relative;
+  width: 647px;
+  max-width: 45vw;
+  height: auto;
+  /* height: 595px; */
+  /* 화면이 작아지면 이미지가 보이지 않도록 처리 */
+  display: block; 
 }
 
-.social-login-button.google:hover {
-  background: #f8f9ff;
+@media (max-width: 768px) {
+  .login-image-section {
+    display: none;
+  }
 }
 
-.google-icon {
-  background: #4285f4;
+.background-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* Kakao 스타일 */
-.social-login-button.kakao {
-  border-color: #fee500;
-  color: #3c1e1e;
+.foreground-image {
+  position: absolute;
+  /* width: 236px; */
+  /* height: 107px; */
+  width: 36.5%;     /* 236px / 647px ≈ 36.5% */
+  height: auto;
+  /* left: 205px; */
+  /* top: 244px; */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%); /* 이미지 중앙 정렬 */
 }
-
-.social-login-button.kakao:hover {
-  background: #fffef0;
-}
-
-.kakao-icon {
-  background: #fee500;
-  color: #3c1e1e;
-}
-
-/* Naver 스타일 */
-.social-login-button.naver {
-  border-color: #03c75a;
-  color: #03c75a;
-}
-
-.social-login-button.naver:hover {
-  background: #f0fff4;
-}
-
-.naver-icon {
-  background: #03c75a;
-} 

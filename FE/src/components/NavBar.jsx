@@ -86,7 +86,6 @@ const NavBar = ({ isLoggedIn, activeMenu = '프로젝트', onMenuClick, onLogoCl
         </>
       ) : (
         <>
-          <div className={styles.signUp}>회원가입</div>
           <div className={styles.loginButton} onClick={handleLoginClick} style={{ cursor: 'pointer' }}>
             <span>로그인</span>
           </div>
