@@ -1,0 +1,112 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-card h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 10px;
+  font-size: 2rem;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 1rem;
+}
+
+.social-login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.social-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.social-login-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.social-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: white;
+}
+
+/* Google 스타일 */
+.social-login-button.google {
+  border-color: #4285f4;
+  color: #4285f4;
+}
+
+.social-login-button.google:hover {
+  background: #f8f9ff;
+}
+
+.google-icon {
+  background: #4285f4;
+}
+
+/* Kakao 스타일 */
+.social-login-button.kakao {
+  border-color: #fee500;
+  color: #3c1e1e;
+}
+
+.social-login-button.kakao:hover {
+  background: #fffef0;
+}
+
+.kakao-icon {
+  background: #fee500;
+  color: #3c1e1e;
+}
+
+/* Naver 스타일 */
+.social-login-button.naver {
+  border-color: #03c75a;
+  color: #03c75a;
+}
+
+.social-login-button.naver:hover {
+  background: #f0fff4;
+}
+
+.naver-icon {
+  background: #03c75a;
+} 
