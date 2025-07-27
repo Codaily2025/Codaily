@@ -1,0 +1,111 @@
+.navWrapper {
+  width: 1440px;
+  height: 73px;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.background {
+  width: 1440px;
+  height: 73px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: white;
+}
+
+.logoContainer {
+  width: 110px;
+  height: 29px;
+  position: absolute;
+  top: 22px;
+  left: 116px;
+  position: absolute;
+}
+
+.logoImage {
+  width: 29px;
+  height: 30px;
+  position: absolute;
+  left: -33px;
+  top: -5px;
+}
+
+.logoText {
+  position: absolute;
+  left: -6px;
+  top: -8px;
+  font-size: 28px;
+  font-family: 'Pacifico', cursive;
+  font-weight: 400;
+  color: #5A597D;
+  line-height: 37.8px;
+  letter-spacing: 0.28px;
+}
+
+.menuContainer {
+  position: absolute;
+  top: 27px;
+  left: 611px;
+  display: flex;
+  gap: 33px;
+}
+
+.menuItem {
+  font-size: 16px;
+  font-weight: 500;
+  color: #191919;
+}
+
+.active {
+  color: #5A597D;
+  font-weight: 600;
+}
+
+.activeUnderline {
+  width: 76px;
+  height: 6px;
+  top: 67px;
+  position: absolute;
+  background: #5A597D;
+  border-radius: 60px;
+}
+
+.signUp,
+.myPage {
+  position: absolute;
+  top: 27px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1E2939;
+}
+
+.signUp {
+  left: 1150px;
+}
+
+.myPage {
+  left: 1126px;
+}
+
+.loginButton,
+.logoutButton {
+  position: absolute;
+  top: 17px;
+  left: 1226px;
+  padding: 10px 24px;
+  background: #F3F2FA;
+  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #1E2939;
+  font-weight: 500;
+}
+.loginButton:hover,
+.logoutButton:hover {
+  background-color: #5A597D;
+  color: #F3F2FA;
+}
