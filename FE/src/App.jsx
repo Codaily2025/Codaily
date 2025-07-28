@@ -9,6 +9,7 @@ import ProjectCreate from './pages/ProjectCreate/ProjectCreate';
 import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
+import Signup from './pages/Signup/Signup';
 
 // 보호된 라우트 컴포넌트 : 로그인 상태가 아니면 접근 불가
 const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => { 
@@ -99,7 +100,8 @@ function AppContent() {
   return (
     <div className="App">
       <NavBar 
-        isLoggedIn={isLoggedIn} 
+        // isLoggedIn={isLoggedIn} 
+        isLoggedIn={true} 
         activeMenu={getActiveMenu()} 
         onMenuClick={handleMenuClick}
         onLogoClick={handleLogoClick}
@@ -116,8 +118,19 @@ function AppContent() {
           <Route 
             path="/schedule" 
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              // <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={true} onRedirectToLogin={handleRedirectToLogin}>
                 <Schedule />
+              </ProtectedRoute>
+            } 
+          />
+          {/* TODO : 페이지 확인 후 삭제하기 */}
+          <Route 
+            path="/signup" 
+            element={
+              // <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={true} onRedirectToLogin={handleRedirectToLogin}>
+                <Signup />
               </ProtectedRoute>
             } 
           />
