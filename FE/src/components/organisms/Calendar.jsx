@@ -1,17 +1,13 @@
-import React, { useState } from "react"
+import React from "react"
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
-import EventDetailModal from "../organisms/EventDetailModal"
+import useModalStore from "../../store/modalStore"
 
 const Calendar = () => {
-  const [selectedEvent, setSelectedEvent] = useState(null)
+  const { openModal } = useModalStore()
 
   const handleEventClick = (info) => {
-    setSelectedEvent(info.event)
-  }
-
-  const handleClose = () => {
-    setSelectedEvent(null)
+    openModal('EVENT_DETAIL', { event: info.event })
   }
 
   // 확인용 하드코딩 데이터
@@ -43,10 +39,6 @@ const Calendar = () => {
         displayEventTime={false}
         events={myEventArray}
         eventClick={handleEventClick}
-      />
-      <EventDetailModal
-        event={selectedEvent}
-        onClose={handleClose}
       />
     </div>
   )

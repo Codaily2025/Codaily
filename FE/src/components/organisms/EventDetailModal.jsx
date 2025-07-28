@@ -3,7 +3,9 @@ import ModalContainer from '../molecules/ModalContainer'
 import EventDetailContent from '../molecules/EventDetailContent'
 import CloseButton from '../atoms/CloseButton'
 
-const EventDetailModal = ({ event, onClose }) => {
+const EventDetailModal = ({ data, onClose }) => {
+    const event = data?.event
+    
   if (!event) return null
 
   return (
