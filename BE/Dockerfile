@@ -1,14 +1,14 @@
-# Java 17 기반 이미지 사용 (Alpine 기반으로 작고 빠름)
 FROM openjdk:17-jdk-slim
-
-# 작업 디렉토리 설정
 WORKDIR /app
 
-# JAR 파일 복사 (Gradle 빌드 결과물)
-COPY build/libs/*.jar app.jar
+# JAR 파일 하나만 복사할 경우 (가장 최신 SNAPSHOT만)
+COPY build/libs/codaily-0.0.1-SNAPSHOT.jar app.jar
 
-# 컨테이너 시작 시 실행할 명령
-ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
+# 여러 개를 전부 복사하고 싶으면 디렉토리 지정
+# COPY build/libs/*.jar /app/
+
+ENTRYPOINT ["sh", "-c", "java -jar *.jar"]
+
 
 # 애플리케이션 포트 (필요 시 변경)
 EXPOSE 8081
