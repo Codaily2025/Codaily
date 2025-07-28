@@ -76,7 +76,14 @@ public class GithubLinkController {
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
                 })
-                .map(body -> (String) body.get("access_token"));
+                .map(body -> {
+                    String token = (String) body.get("access_token");
+                    if (token == null) {
+                        log.error("GitHub에서 access_token을 가져오지 못했습니다. 응답 body: {}", body);
+                        throw new RuntimeException("GitHub access token null");
+                    }
+                    return token;
+                });
     }
 
     private Mono<GithubFetchProfileResponse> fetchGithubProfile(String accessToken) {
