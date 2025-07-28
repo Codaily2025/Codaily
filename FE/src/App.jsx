@@ -10,6 +10,7 @@ import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
 
+
 // 보호된 라우트 컴포넌트 : 로그인 상태가 아니면 접근 불가
 const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => { 
 

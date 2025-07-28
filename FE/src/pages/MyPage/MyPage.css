@@ -1,11 +1,14 @@
-
 .mypage-container {
   display: flex;
   padding: 0px;
-  gap: 20px;
+  gap: 30px;
+  width: 100%;
+  max-width: 1200px; /* 원하는 최대 너비 */
+  /* margin: 0 auto;*/     
+  /* 중앙 정렬 */
 }
 
-/* Sidebar */
+/* 사이드바 */
 .sidebar {
   width: 316px;
   flex-shrink: 0;
@@ -37,6 +40,12 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  cursor: pointer;
+}
+
+.edit-profile-link img {
+  width: 16px;
+  height: 19px;
 }
 
 .info-section {
@@ -85,219 +94,15 @@
     height: 24px;
 }
 
-/* Main Content */
-.main-content {
-  flex-grow: 1;
+/* 메인 콘텐츠 */
+.main-column {
+  flex: 1;
+  min-width: 0; 
 }
 
-.progress-section, .projects-section {
-  margin-bottom: 40px;
-}
-
-.main-content h2 {
+.main-column h2 {
   font-size: 20px;
   font-weight: 700;
   color: #404040;
   margin-bottom: 20px;
-}
-
-.projects-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.project-filters {
-  background: #FAFAFA;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05) inset;
-  border-radius: 16px;
-  display: inline-flex;
-  padding: 4px;
-}
-
-.filter-btn {
-  border: none;
-  background: none;
-  padding: 8px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #737373;
-}
-
-.filter-btn.active {
-  background: white;
-  box-shadow: 0px 2px 4px -2px rgba(0, 0, 0, 0.10);
-  color: #6C6B93;
-}
-
-.project-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 20px;
-}
-
-.project-card {
-  background: white;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.10);
-  border-radius: 10px;
-  border: 1px solid #E5E5E5;
-  padding: 25px;
-}
-
-.project-card.disabled {
-    background: rgba(250, 250, 250, 0.40);
-    color: #A1A1A1;
-}
-
-.project-card h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #404040;
-  margin: 0 0 5px 0;
-}
-
-.project-card .project-duration {
-  font-size: 14px;
-  color: #737373;
-  margin-bottom: 15px;
-}
-
-.project-card.disabled h3, .project-card.disabled .project-duration {
-    color: #A1A1A1;
-}
-
-.progress-bar-container {
-    margin-bottom: 15px;
-    font-size: 13px;
-    color: #737373;
-}
-
-.progress-bar-container > span:last-of-type {
-    float: right;
-}
-
-.progress-bar {
-  width: 100%;
-  background: #F5F5F5;
-  border-radius: 4px;
-  height: 8px;
-  margin-top: 5px;
-}
-
-.progress {
-  height: 100%;
-  background: #9C9BC3;
-  border-radius: 4px;
-}
-
-.project-stack {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.tech-tag-disabled {
-    background: #F5F5F5;
-    color: #A1A1A1;
-    padding: 5px 12px;
-    border-radius: 16px;
-    font-size: 13px;
-    font-weight: 500;
-}
-
-/* No Projects */
-.no-projects-container {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #E5E5E5;
-  text-align: center;
-  padding: 100px 0;
-  margin-top: 20px;
-}
-
-.no-projects-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-}
-
-.no-projects-title {
-  color: #737373;
-  font-size: 18px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.no-projects-subtitle {
-  color: #A1A1A1;
-  font-size: 14px;
-  margin: 0;
-}
-
-.create-project-btn {
-  background: white;
-  border-radius: 6px;
-  border: 1px solid #D4D4D4;
-  padding: 13px 21px;
-  color: #404040;
-  font-size: 14px;
-  font-weight: 400;
-  cursor: pointer;
-}
-
-/* Heatmap Section */
-.heatmap-container {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #E5E5E5;
-  padding: 20px;
-}
-
-.heatmap-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  color: rgba(115, 115, 115, 0.50);
-  font-size: 13px;
-}
-
-.heatmap-legend {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.heatmap-grid {
-  display: grid;
-  /* 7 days a week */
-  grid-template-rows: repeat(7, 1fr);
-  /* Auto-fit columns, creates a yearly calendar look */
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 4px;
-  height: 150px; /* Adjust height as needed */
-}
-
-.heatmap-cell {
-  width: 100%;
-  aspect-ratio: 1 / 1; /* Makes cells square */
-  background: #E5E5E5;
-  border-radius: 3px;
-}
-
-/* Activity Levels */
-.heatmap-cell.level-0 { background-color: #F5F5F5; }
-.heatmap-cell.level-1 { background-color: #E4E3F3; }
-.heatmap-cell.level-2 { background-color: #B4B3DC; }
-.heatmap-cell.level-3 { background-color: #6C6B93; }
-
-/* Legend cells should not be affected by grid aspect ratio */
-.heatmap-legend .heatmap-cell {
-  width: 20px;
-  height: 20px;
 }
