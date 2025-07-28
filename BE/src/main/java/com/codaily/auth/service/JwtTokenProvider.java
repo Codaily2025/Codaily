@@ -2,6 +2,8 @@ package com.codaily.auth.service;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,9 +22,8 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private final long tokenValidityInMilliseconds = 1000 * 60 * 60; // 1시간
+    private final long tokenValidityInMilliseconds = 1000 * 60 * 60 * 24 * 14; // 2주
 
-    // jjwt 0.12.3: 키 객체로 변환 필요
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
@@ -68,5 +69,24 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    public String resolveToken(HttpServletRequest request) {
+        // 1. Authorization 헤더
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.replace("Bearer ", "");
+        }
+
+        // 2. HttpOnly Cookie
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwt".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        return null;
     }
 }

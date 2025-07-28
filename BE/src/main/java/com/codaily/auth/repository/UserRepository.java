@@ -9,4 +9,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByGithubAccount(String githubAccount);
 
     Optional<User> findByNickname(String nickname);
+
+    Optional<User> findByEmail(String email);
+
+    boolean existsByNickname(String nickname);
+
 }

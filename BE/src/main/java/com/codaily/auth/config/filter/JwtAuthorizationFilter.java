@@ -1,9 +1,10 @@
 package com.codaily.auth.config.filter;
 
-import com.codaily.auth.service.CustomUserDetailsService;
+import com.codaily.auth.service.CustomUserDetailsServiceImpl;
 import com.codaily.auth.service.JwtTokenProvider;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import java.io.IOException;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final CustomUserDetailsService userDetailsService;
+    private final CustomUserDetailsServiceImpl userDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -26,32 +27,26 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1. Authorization 헤더에서 토큰 추출
-        String header = request.getHeader("Authorization");
-        if (header == null || !header.startsWith("Bearer ")) {
+        // 토큰 추출 (헤더 → 쿠키 순서)
+        String token = jwtTokenProvider.resolveToken(request);
+
+        // 토큰이 없거나 유효하지 않으면 필터 통과
+        if (token == null || !jwtTokenProvider.validateToken(token)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.replace("Bearer ", "");
-
-        // 2. 토큰 유효성 검사
-        if (!jwtTokenProvider.validateToken(token)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 3. 토큰에서 사용자 정보 추출
+        // 토큰에서 사용자 정보 추출
         String username = jwtTokenProvider.getUsernameFromToken(token);
 
-        // 4. DB에서 사용자 정보 조회
+        // DB에서 사용자 정보 조회
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-        // 5. 인증 객체 생성
+        // 인증 객체 생성
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-        // 6. SecurityContext에 저장
+        // SecurityContext에 저장
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);

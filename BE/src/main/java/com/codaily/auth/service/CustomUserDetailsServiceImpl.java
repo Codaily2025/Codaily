@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Log4j2
 @Service
 @RequiredArgsConstructor
-public class CustomUserDetailsService implements UserDetailsService {
+public class CustomUserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
 
@@ -24,7 +24,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // username은 DB에서의 식별자 (예: 이메일, 닉네임 등)
         log.info("username: " + username);
-        User user = userRepository.findByNickname(username)
+        User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
         log.info("user: "+user.getNickname());
         return new PrincipalDetails(user);

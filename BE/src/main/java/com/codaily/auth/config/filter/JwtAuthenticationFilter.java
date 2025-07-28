@@ -9,19 +9,17 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.io.IOException;
 import java.util.Map;
 
-@Slf4j
+@Log4j2
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -37,7 +35,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(credentials.get("username"), credentials.get("password"));
-            log.info("로그인 중...");
+            log.info("로그인 시도 중...");
             // 로그인 시도
             return authenticationManager.authenticate(authToken);
 
@@ -58,7 +56,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         // JWT 토큰 생성
         String jwt = jwtTokenProvider.createToken(userDetails.getUsername());
-        log.info("로그인 성공!!!");
+//        log.info("로그인 성공!!!");
         // 응답 헤더에 토큰 전달
         response.addHeader("Authorization", "Bearer " + jwt);
         response.setContentType("application/json");
