@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Project.css';
-import ProjectTemplate from '../../components/templates/ProjectTemplate';
+import ProjectTemplate from '../../components/layouts/ProjectTemplate';
 
 const Project = () => {
   // const navigate = useNavigate(); // navigate 함수 생성
