@@ -1,5 +1,6 @@
-package com.codaily.project.entity;
+package com.codaily.management.entity;
 
+import com.codaily.project.entity.Project;
 import jakarta.persistence.*;
 import lombok.*;
 
