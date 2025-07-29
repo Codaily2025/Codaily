@@ -9,4 +9,6 @@ public interface UserService {
     void linkGithub(Long userId, GithubFetchProfileResponse profile, String accessToken);
 
     User findById(Long userId);
+
+    String getGithubAccessToken(Long userId);
 }

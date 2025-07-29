@@ -44,4 +44,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
     }
+
+    @Override
+    public String getGithubAccessToken(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getGithubAccessToken)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+    }
 }
