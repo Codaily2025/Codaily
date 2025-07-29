@@ -30,6 +30,9 @@ public class User {
     private String nickname;
 
     @Column(length = 255)
+    private String password;
+
+    @Column(length = 255)
     private String githubAccount;
 
     @Column(columnDefinition = "TEXT")
@@ -38,14 +41,19 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String githubAccessToken;
 
-    @Column(nullable = false, updatable = false)
+    private LocalDateTime tokenExpiredAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String githubScope;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Column(columnDefinition = "TEXT")
     private String image;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -54,18 +62,15 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Specification> specifications;
 
-    public enum Role {
-        USER, ADMIN
-    }
-
     @PrePersist
     protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        if (this.role == null) {
+            this.role = Role.USER;
         }
+    }
 
-        if (role == null) {
-            role = Role.USER;
-        }
+    public enum Role {
+        USER, ADMIN
     }
 }
