@@ -12,13 +12,20 @@
   /* margin: 0 auto; */
 }
 .main-content {
-  max-width: 1200px;
   width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 50px 0px 40px;
+  box-sizing: border-box;
+}
+/* .main-content { */
+  /* max-width: 1200px; */
+  /* width: 100%; */
   /* 네비게이션 높이 고려한 상단 padding */
   /* padding: 100px 20px 40px; */
   /* 상단, 좌우, 하단 */
-  padding: 50px 0px 40px;
-  margin: 0 auto;
-  box-sizing: border-box; /* 패딩 포함 너비 계산 */
-  text-align: center;
-}
+  /* padding: 50px 0px 40px; */
+  /* margin: 0 auto; */
+  /* box-sizing: border-box; 패딩 포함 너비 계산 */
+  /* text-align: center; */
+/* } */
