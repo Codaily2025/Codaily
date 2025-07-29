@@ -5,52 +5,45 @@ import FormRow from '@/components/molecules/FormRow'
 import ProfileAvatar from '@/components/atoms/ProfileAvatar'
 import SaveButton from '@/components/atoms/SaveButton'
 import NicknameCheckButton from '@/components/atoms/NicknameCheckButton'
+import useFormStore from '@/store/formStore'
 
-const AdditionalInfoForm = ({ formData, onInputChange, onNicknameCheck, onSave }) => {
-    return (
-        <div className='profile-section'>
-            <ProfileAvatar />
+const AdditionalInfoForm = ({ onNicknameCheck, onSave }) => {
+  const { formData } = useFormStore()
 
-            <form onSubmit={onSave}>
-                <FormRow>
-                    <InputGroup 
-                        label="First Name"
-                        inputProps={{
-                            value: formData.firstName,
-                            placeholder: "firstName",
-                            onChange: (e) => onInputChange('firstName', e.target.value)
-                        }}
-                    />
-                    <InputGroup 
-                        label="Last Name"
-                        inputProps={{
-                            value: formData.lastName,
-                            placeholder: "lastName",
-                            onChange: (e) => onInputChange('lastName', e.target.value)
-                        }}
-                    />
-                </FormRow>
+  return (
+    <div className='profile-section'>
+      <ProfileAvatar />
 
-                <FormRow>
-                    <InputGroup 
-                        label="Nickname"
-                        // className="form-group full-width"
-                        inputProps={{
-                            value: formData.nickname,
-                            placeholder: "user_nickname",
-                            onChange: (e) => onInputChange('nickname', e.target.value)
-                        }}
-                    >
-                        <NicknameCheckButton onClick={() => onNicknameCheck(formData.nickname)} />
-                    </InputGroup>
-                </FormRow>
+      <form onSubmit={onSave}>
+        <FormRow>
+          <InputGroup 
+            label="First Name"
+            fieldName="firstName"
+            placeholder="firstName"
+          />
+          <InputGroup 
+            label="Last Name"
+            fieldName="lastName"
+            placeholder="lastName"
+          />
+        </FormRow>
 
-                <div className='form-actions'>
-                    <SaveButton />
-                </div>
-            </form>
+        <FormRow>
+          <InputGroup 
+            label="Nickname"
+            fieldName="nickname"
+            placeholder="user_nickname"
+          >
+            <NicknameCheckButton onClick={() => onNicknameCheck(formData.nickname)} />
+          </InputGroup>
+        </FormRow>
+
+        <div className='form-actions'>
+          <SaveButton />
         </div>
-    ) 
+      </form>
+    </div>
+  ) 
 }
 
 export default AdditionalInfoForm
