@@ -1,6 +1,5 @@
 package com.codaily.project.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +13,7 @@ import java.util.*;
 @AllArgsConstructor
 @Builder
 @ToString(exclude = {"project", "specification", "parentFeature", "childFeatures"})
-public class FeatureItems {
+public class FeatureItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long featureId;
@@ -47,16 +46,16 @@ public class FeatureItems {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
-    private Projects project;
+    private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "spec_id")
-    private Specifications specification;
+    private Specification specification;
 
     @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_feature_id")
-    private FeatureItems parentFeature;
+    private FeatureItem parentFeature;
 
     @OneToMany(mappedBy = "parentFeature", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<FeatureItems> childFeatures = new ArrayList<>();
+    private List<FeatureItem> childFeatures = new ArrayList<>();
 }

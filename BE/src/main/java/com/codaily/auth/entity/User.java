@@ -1,10 +1,10 @@
 package com.codaily.auth.entity;
 
-import com.codaily.project.entity.Projects;
-import com.codaily.project.entity.Specifications;
+import com.codaily.project.entity.Project;
+import com.codaily.project.entity.Specification;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Cascade;
+
 import java.util.*;
 import java.time.LocalDateTime;
 
@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Users {
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
@@ -49,10 +49,10 @@ public class Users {
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Projects> projects;
+    private List<Project> projects;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Specifications> specifications;
+    private List<Specification> specifications;
 
     public enum Role {
         USER, ADMIN

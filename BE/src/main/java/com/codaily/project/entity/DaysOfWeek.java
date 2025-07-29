@@ -17,7 +17,7 @@ public class DaysOfWeek {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
-    private Projects project;
+    private Project project;
 
     @Column(nullable = false, length = 20)
     private String datName;

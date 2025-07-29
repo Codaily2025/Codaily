@@ -12,14 +12,14 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FeatureItemSchedules {
+public class FeatureItemSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feature_id", nullable = false)
-    private FeatureItems featureItem;
+    private FeatureItem featureItem;
 
     @Column(nullable = false)
     private LocalDate scheduleDate;
