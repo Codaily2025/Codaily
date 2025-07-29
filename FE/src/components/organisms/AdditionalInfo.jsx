@@ -1,8 +1,19 @@
 import React from "react"
 import SaveButton from '../atoms/SaveButton'
+import NicknameCheckButton from '../atoms/NicknameCheckButton'
+import useModalStore from "../../store/modalStore"
 
 {/* TODO : 컴포넌트 분리하기 */}
 const AdditionalInfo = () => {
+    const { openModal } = useModalStore()
+
+
+    {/* TODO: 닉네임 중복 여부 따라 분기 처리하기 */}
+    const handleNicknameCheck = () => {
+        openModal('NICKNAME_CHECK', {
+            nickname: 'user_nickname'   // 현재 입력된 닉네임값 전달
+        })
+    }
     return (
             <div class="container">
                 <div class="main-content">
@@ -34,10 +45,11 @@ const AdditionalInfo = () => {
                             </div>
 
                             <div class="form-row">
-                                <div class="form-group full-width">
-                                    <label class="form-label">Phone Number</label>
-                                    <input type="tel" class="form-input" value="+84 789 373 568" placeholder="+84 789 373 568" />
+                                <div class="form-group">
+                                    <label class="form-label">Nickname</label>
+                                    <input type="text" class="form-input" value="user_nickname" placeholder="user_nickname" />
                                 </div>
+                                <NicknameCheckButton onClick={handleNicknameCheck} />
                             </div>
 
                             <div class="address-section">

@@ -1,9 +1,11 @@
 import useModalStore from "../../store/modalStore"
 import EventDetailModal from './EventDetailModal'
+import NicknameCheckModal from './NicknameCheckModal'
 
 // modal 타입별 컴포넌트 맵핑
 const MODAL_COMPONENTS = {
     EVENT_DETAIL: EventDetailModal,
+    NICKNAME_CHECK: NicknameCheckModal,
     // CONFIRMATION: ConfirmationModal,
     // DELETION: DeleteModal,
     // ...
