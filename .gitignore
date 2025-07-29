@@ -38,4 +38,6 @@ out/
 
 application-secret.properties
 
+application-secret.yml
+
 keystore.p12
