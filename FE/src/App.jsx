@@ -85,7 +85,7 @@ function AppContent() {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    navigate('/project'); // 로그인 후 프로젝트 페이지로 이동
+    navigate('/'); // 로그인 후 프로젝트 페이지로 이동
   };
 
   const handleRedirectToLogin = () => {
@@ -123,7 +123,7 @@ function AppContent() {
             } 
           />
           <Route 
-            path="/project" 
+            path="/project/:id" 
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <Project />

@@ -27,6 +27,12 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
     navigate('/project/create');
   };
 
+  // 프로젝트 보드 페이지 이동 핸들러 -> 향후 백엔드와 연결해 프로젝트 id를 기반으로 각 프로젝트 보드 페이지로 이동
+  const handleProjectBoard = (id) => {
+    navigate(`/project/${id}`);
+  };
+
+
   const filteredProjects = localProjects.filter((project) => {
     if (activeFilter === '전체') return true;
     if (activeFilter === '진행 중') return !project.disabled;
@@ -65,12 +71,30 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
             <div
               key={project.id}
               className={`project-card ${project.disabled ? 'disabled' : ''}`}
+              onClick={() => handleProjectBoard(project.id)}
             >
               {/* 우측 상단 삭제, 설정 버튼 */}
               <div className="card-actions">
-                <button className="icon-btn delete-btn" title="삭제" onClick={() => handleDelete(project.id)}>
+                <button 
+                  className="icon-btn delete-btn" 
+                  title="삭제" 
+                  // onClick={() => handleDelete(project.id)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                    // 삭제 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                    handleDelete(project.id)
+                  }}
+                >
                 </button>
-                <button className="icon-btn settings-btn" title="설정" onClick={() => handleSettings(project)}>
+                <button 
+                  className="icon-btn settings-btn" 
+                  title="설정" 
+                  onClick={(e) => {
+                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                    // 설정 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                    handleSettings(project)
+                  }}
+                >
                 </button>
               </div>
               <h3>{project.title}</h3>
@@ -108,6 +132,7 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
           project={selectedProject}
           onClose={() => setShowModal(false)}
           onSave={(updatedProject) => {
+            console.log('🧩 저장된 프로젝트:', updatedProject);
             setLocalProjects(prev =>
               prev.map(p => p.id === updatedProject.id ? updatedProject : p)
             );
