@@ -1,5 +1,6 @@
 package com.codaily.project.dto;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ProductivityCalculateRequest {
     private String userId;
     private String projectId;
@@ -17,6 +19,7 @@ public class ProductivityCalculateRequest {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class Period {
         private LocalDate start;
         private LocalDate end;
@@ -25,6 +28,7 @@ public class ProductivityCalculateRequest {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    @Builder
     public static class Metrics {
         private boolean includeCommits;
         private boolean includeTaskCompletion;
