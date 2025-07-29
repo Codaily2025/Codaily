@@ -20,26 +20,56 @@ const Mypage = () => {
     {
       id: 1,
       title: '팀 협업 칸반보드 제작',
-      duration: '2025.06.10 ~ 2025.09.30',
+      duration: '2025/06/10 ~ 2025/09/30',
       progress: 75,
       stack: ['React', 'WebSocket', 'Express'],
-      disabled: false
+      disabled: false,
+      timeByDay: {
+        '월': 0,
+        '화': 0,
+        '수': 0,
+        '목': 0,
+        '금': 3,
+        '토': 0,
+        '일': 0
+      },
+      repoUrl: 'https://github.com/sample1.git'
     },
     {
       id: 2,
       title: 'Next.js 기반 기술 블로그',
-      duration: '2025.07.01 ~ 2025.08.01',
+      duration: '2025/07/01 ~ 2025/08/01',
       progress: 20,
       stack: ['Next.js', 'TailwindCSS'],
-      disabled: false
+      disabled: false,
+      timeByDay: {
+        '월': 0,
+        '화': 0,
+        '수': 3,
+        '목': 4,
+        '금': 3,
+        '토': 0,
+        '일': 0
+      },
+      repoUrl: 'https://github.com/sample2.git'
     },
     {
       id: 3,
       title: '개인 포트폴리오 사이트',
-      duration: '2025.04.05 ~ 2025.05.20',
+      duration: '2025/04/05 ~ 2025/05/20',
       progress: 100,
       stack: ['HTML', 'CSS', 'JavaScript'],
-      disabled: true
+      disabled: true,
+      timeByDay: {
+        '월': 0,
+        '화': 0,
+        '수': 0,
+        '목': 0,
+        '금': 0,
+        '토': 0,
+        '일': 0
+      },
+      repoUrl: 'https://github.com/sample3.git'
     }
   ]);
   const [isModalOpen, setIsModalOpen] = useState(false);
