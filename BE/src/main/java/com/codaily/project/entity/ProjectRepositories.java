@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProjectRepository {
+public class ProjectRepositories {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

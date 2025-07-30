@@ -3,25 +3,24 @@ package com.codaily.project.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Entity
-@Table(name = "days_of_week")
+@Table(name = "schedules")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DaysOfWeek {
+public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long daysId;
+    private Long scheduleId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
-    @Column(nullable = false, length = 20)
-    private String dayName;
-
     @Column(nullable = false)
-    private Integer hours;
+    private LocalDate scheduledDate;
 }
