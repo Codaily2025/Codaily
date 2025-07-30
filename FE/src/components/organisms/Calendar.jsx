@@ -32,7 +32,6 @@ const Calendar = () => {
   ]
 
   return (
-    <div className="">
       <FullCalendar
         defaultView="dayGridMonth"
         plugins={[dayGridPlugin]}
@@ -40,7 +39,6 @@ const Calendar = () => {
         events={myEventArray}
         eventClick={handleEventClick}
       />
-    </div>
   )
 }
 
