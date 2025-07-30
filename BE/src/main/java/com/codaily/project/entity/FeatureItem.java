@@ -31,7 +31,7 @@ public class FeatureItem {
 
     @Column(nullable = false)
     private Boolean isSelected = true;
-    private Boolean isCustom;
+    private Boolean isCustom = false;
     private Integer priorityLevel;
 
     @Column(length=50)
