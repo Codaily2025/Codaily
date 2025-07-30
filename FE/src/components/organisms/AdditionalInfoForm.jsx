@@ -7,14 +7,14 @@ import SaveButton from '@/components/atoms/SaveButton'
 import NicknameCheckButton from '@/components/atoms/NicknameCheckButton'
 import useFormStore from '@/store/formStore'
 
-const AdditionalInfoForm = ({ onNicknameCheck, onSave }) => {
+const AdditionalInfoForm = ({ onNicknameCheck }) => {
   const { formData } = useFormStore()
 
   return (
     <div className='profile-section'>
       <ProfileAvatar />
 
-      <form onSubmit={onSave}>
+      <form>
         <FormRow>
           <InputGroup 
             label="First Name"
@@ -36,6 +36,27 @@ const AdditionalInfoForm = ({ onNicknameCheck, onSave }) => {
           >
             <NicknameCheckButton onClick={() => onNicknameCheck(formData.nickname)} />
           </InputGroup>
+        </FormRow>
+        <FormRow>
+          <InputGroup 
+            label="Email"
+            fieldName="email"
+            placeholder="example@email.com"
+          />
+        </FormRow>
+        <FormRow>
+          <InputGroup 
+            label="Address"
+            fieldName="address"
+            placeholder="user_address"
+          />
+        </FormRow>
+        <FormRow>
+          <InputGroup 
+            label="Phone"
+            fieldName="phone"
+            placeholder="000-0000-0000"
+          />
         </FormRow>
 
         <div className='form-actions'>

@@ -7,7 +7,7 @@ import useFormField from '../../hooks/useFormField'
 const InputGroup = ({ label, fieldName, placeholder, className="form-group", children }) => {
     // label 이름 - inputId 맵핑
     // const inputId = `input-${label?.toLowerCase().replace(/\s+/g, '-')}`
-    const field = useFormField(fieldName)
+    // const field = useFormField(fieldName)
     const inputId = `input-${label?.toLowerCase()}`
 
     return (
@@ -15,9 +15,8 @@ const InputGroup = ({ label, fieldName, placeholder, className="form-group", chi
             {label && <Label htmlFor={inputId}>{label}</Label>}
             <Input 
                 id={inputId}
-                value={field.value}
+                fieldName={fieldName}
                 placeholder={placeholder}
-                onChange={field.onChange} 
             />
             {children}
         </div>

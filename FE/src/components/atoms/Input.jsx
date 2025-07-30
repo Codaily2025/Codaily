@@ -1,15 +1,16 @@
 // 입력 필드 컴포넌트
 import React from "react"
+import useFormField from "@/hooks/useFormField"
 
-// onChange도 추가?
-const Input = ({ type="text", value, placeholder, id }) => {
+const Input = ({ type="text", fieldName, placeholder, id }) => {
+    const field = useFormField(fieldName)
     return (
         <input 
-            type={type} 
-            value={value}
+            type={type}
             placeholder={placeholder}
             id={id}
             className="form-input"
+            onChange={field.onChange}
         />
     )
 }

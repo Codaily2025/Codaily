@@ -1,15 +1,14 @@
 import { create } from 'zustand'
 
-const useFormStore = create((set) => ({
+const useFormStore = create((set, get) => ({
+    // TODO: api 확인 후 필드 수정 예정
     formData: {
-    firstName: "firstName",
-    lastName: "lastName",
-    email: "user_email@email.com",
-    nickname: "user_nickname",
-    country: "country",
-    city: "city",
-    address: "address",
-    zipCode: "180000",
+    firstName: "",
+    lastName: "",
+    email: "",
+    nickname: "",
+    address: "",
+    phone: "",
   },
 
   updateField: (field, value) => set((state) => ({
@@ -19,8 +18,12 @@ const useFormStore = create((set) => ({
     }
   })),
 
-  // 추가 메서드 (필요시)
-  // ...
+  handleSave: (e) => {
+    if (e) e.preventDefault()
+    const { formData } = get()
+    console.log('사용자 입력값: ', formData)
+  },
+
 }))
 
 export default useFormStore

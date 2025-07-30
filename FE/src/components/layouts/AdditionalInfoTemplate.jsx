@@ -12,17 +12,11 @@ const AdditionalInfoTemplate = () => {
     openModal("NICKNAME_CHECK", { nickname })
   }
 
-  const handleSave = (e) => {
-    e.preventDefault()
-    console.log("Saving form data:", formData)
-  }
-
   return (
     <div className="container">
       <div className="main-content">
         <AdditionalInfoForm
           onNicknameCheck={handleNicknameCheck}
-          onSave={handleSave}
         />
       </div>
     </div>
