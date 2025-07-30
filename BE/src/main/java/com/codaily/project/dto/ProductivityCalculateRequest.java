@@ -4,7 +4,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -21,8 +20,7 @@ public class ProductivityCalculateRequest {
     @AllArgsConstructor
     @Builder
     public static class Period {
-        private LocalDate start;
-        private LocalDate end;
+        private String date; // "2025-01-01" 형식
     }
 
     @Data

@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.Map;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,7 +13,7 @@ import java.util.Map;
 public class ProductivityCalculateResponse {
     private double overallScore;
     private Map<String, MetricScore> breakdown;
-    private String trend;
+    private String trend; // improving, declining, stable
     private BenchmarkComparison benchmarkComparison;
 
     @Data
@@ -33,6 +32,5 @@ public class ProductivityCalculateResponse {
     public static class BenchmarkComparison {
         private double personalAverage;
         private double projectAverage;
-       // private double industryAverage;
     }
 }
