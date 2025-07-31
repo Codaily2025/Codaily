@@ -3,6 +3,7 @@ import Calendar from '../organisms/Calendar'
 import TaskCard from '@/components/molecules/TaskCard'
 import KanbanBoard from '@/components/organisms/KanbanBoard'
 import Sidebar from '@/components/organisms/Sidebar'
+import Badge from '@/components/atoms/Badge'
 import { Menu } from 'lucide-react'
 
 
@@ -84,6 +85,7 @@ const ProjectTemplate = () => {
         }}>
           <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
             오늘 할 일
+            <Badge content={mockTasks.length} />
           </h2>
           {/* TaskCard 리스트 렌더링 */}
           <div className="task-list">
