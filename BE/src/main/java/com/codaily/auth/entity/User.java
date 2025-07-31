@@ -1,8 +1,11 @@
 package com.codaily.auth.entity;
 
+import com.codaily.project.entity.Project;
+import com.codaily.project.entity.Specification;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -13,7 +16,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class User {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
@@ -24,7 +26,7 @@ public class User {
     @Column(nullable = false, length = 255)
     private String email;
 
-    @Column(nullable = false, length = 50, unique = true)
+    @Column(nullable = false, length = 50)
     private String nickname;
 
     @Column(length = 255)
@@ -44,7 +46,7 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String githubScope;
 
-    @Column(updatable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(columnDefinition = "TEXT")
@@ -53,6 +55,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Project> projects;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Specification> specifications;
 
     @PrePersist
     protected void onCreate() {
