@@ -9,9 +9,13 @@ import java.util.List;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    @Query("SELECT t FROM Task t WHERE t.projectId = :projectId AND t.status = 'COMPLETED' AND t.completedAt BETWEEN :start AND :end")
-    List<Task> findCompletedTasks(@Param("projectId") Long projectId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
+    @Query("SELECT t FROM Task t WHERE t.projectId = :projectId AND t.status = :status AND t.completedAt BETWEEN :start AND :end")
+    List<Task> findCompletedTasks(
+            @Param("projectId") Long projectId,
+            @Param("status") Task.Status status,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
     @Query("SELECT t FROM Task t WHERE t.userId = :userId AND t.projectId = :projectId AND t.status = 'COMPLETED' AND t.completedAt BETWEEN :start AND :end")
     List<Task> findCompletedTasksByUser(@Param("userId") Long userId, @Param("projectId") Long projectId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 

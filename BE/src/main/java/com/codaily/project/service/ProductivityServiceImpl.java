@@ -1,4 +1,3 @@
-// ProductivityServiceImpl.java - chart_data 테이블 활용 버전
 package com.codaily.project.service;
 
 import com.codaily.project.dto.*;
@@ -25,7 +24,7 @@ public class ProductivityServiceImpl implements ProductivityService {
     private final CodeReviewRepository reviewRepository;
     private final ProductivityMetricRepository productivityMetricRepository;
     private final DailyProductivityRepository dailyProductivityRepository;
-    private final ChartDataRepository chartDataRepository; // chart_data 테이블 사용
+    private final ChartDataRepository chartDataRepository;
 
     private static final String PRODUCTIVITY_CHART_TYPE = "productivity";
 
@@ -41,16 +40,19 @@ public class ProductivityServiceImpl implements ProductivityService {
         Map<String, ProductivityCalculateResponse.MetricScore> breakdown = new HashMap<>();
         double overallScore = 0.0;
 
-        // 작업 완료율
+        // 작업 완료율 계산 (40% 가중치)
         if (request.getMetrics().isIncludeTaskCompletion()) {
-            List<Task> completedTasks = taskRepository.findCompletedTasks(projectId, startOfDay, endOfDay);
+            List<Task> completedTasks = taskRepository.findCompletedTasks( projectId,
+                    Task.Status.COMPLETED,
+                    startOfDay,
+                    endOfDay);
             double taskScore = calculateTaskScore(completedTasks.size());
             breakdown.put("taskCompletion", ProductivityCalculateResponse.MetricScore.builder()
                     .score(taskScore).weight(0.4).build());
             overallScore += taskScore * 0.4;
         }
 
-        // 커밋 활동
+        // 커밋 활동 계산 (30% 가중치)
         if (request.getMetrics().isIncludeCommits()) {
             List<CodeCommit> commits = commitRepository.findByCommittedAtBetween(startOfDay, endOfDay);
             double commitScore = calculateCommitScore(commits.size());
@@ -59,26 +61,24 @@ public class ProductivityServiceImpl implements ProductivityService {
             overallScore += commitScore * 0.3;
         }
 
-        // 코드 품질
+        // 코드 품질 계산 (20% 가중치)
         if (request.getMetrics().isIncludeCodeQuality()) {
             List<CodeReview> reviews = reviewRepository.findByProjectIdAndCreatedAtBetween(
                     projectId, startOfDay, endOfDay);
             double avgQuality = reviews.stream()
                     .mapToDouble(r -> r.getQualityScore() != null ? r.getQualityScore() : 0)
-                    .average().orElse(80.0); // 기본값
+                    .average().orElse(80.0);
             breakdown.put("codeQuality", ProductivityCalculateResponse.MetricScore.builder()
                     .score(avgQuality).weight(0.2).build());
             overallScore += avgQuality * 0.2;
         }
 
-        // 개인 및 프로젝트 평균 조회
+        // 벤치마크 조회
         Double personalAvg = productivityMetricRepository.findPersonalAverageScore(userId);
         Double projectAvg = productivityMetricRepository.findProjectAverageScore(projectId);
 
-        // 추세 계산
+        // 추세 계산 및 메트릭 저장
         String trend = calculateTrend(userId, projectId, overallScore);
-
-        // 메트릭 저장
         saveProductivityMetric(userId, projectId, targetDate, overallScore, breakdown, trend);
 
         return ProductivityCalculateResponse.builder()
@@ -86,8 +86,8 @@ public class ProductivityServiceImpl implements ProductivityService {
                 .breakdown(breakdown)
                 .trend(trend)
                 .benchmarkComparison(ProductivityCalculateResponse.BenchmarkComparison.builder()
-                        .personalAverage(personalAvg != null ? personalAvg : 72.3)
-                        .projectAverage(projectAvg != null ? projectAvg : 68.9)
+                        .personalAverage(personalAvg != null ? personalAvg : 0.0)
+                        .projectAverage(projectAvg != null ? projectAvg : 0.0)
                         .build())
                 .build();
     }
@@ -98,28 +98,26 @@ public class ProductivityServiceImpl implements ProductivityService {
         LocalDate start = LocalDate.parse(startDate);
         LocalDate end = LocalDate.parse(endDate);
 
-        // 일별 생산성 데이터 조회
+        // 일별 생산성 데이터 조회 및 차트 데이터 생성
         List<DailyProductivity> dailyData = dailyProductivityRepository
                 .findByUserIdAndProjectIdAndDateBetween(userId, projectId, start, end);
 
-        // 차트 데이터 생성
         List<ProductivityChartResponse.ChartData> chartData = dailyData.stream()
                 .map(this::convertToChartData)
                 .collect(Collectors.toList());
 
-        // 빈 날짜 채우기 (데이터가 없는 날은 0으로)
+        // 빈 날짜 채우기
         chartData = fillMissingDates(chartData, start, end);
 
         // 통계 계산
         Double avgTasks = dailyProductivityRepository.findAverageTasksPerDay(userId, projectId, start, end);
         Double avgScore = dailyProductivityRepository.findAverageProductivityScore(userId, projectId, start, end);
-
         String trend = calculateChartTrend(chartData);
         double trendPercentage = calculateTrendPercentage(chartData);
 
         ProductivityChartResponse.Summary summary = ProductivityChartResponse.Summary.builder()
-                .averageTasksPerDay(avgTasks != null ? avgTasks : 2.5)
-                .averageProductivityScore(avgScore != null ? avgScore : 77.5)
+                .averageTasksPerDay(avgTasks != null ? avgTasks : 0.0)
+                .averageProductivityScore(avgScore != null ? avgScore : 0.0)
                 .trend(trend)
                 .trendPercentage(trendPercentage)
                 .build();
@@ -133,9 +131,7 @@ public class ProductivityServiceImpl implements ProductivityService {
                         .build())
                 .build();
 
-        // chart_data 테이블에 저장
         saveChartData(userId, projectId, period, response);
-
         return response;
     }
 
@@ -146,8 +142,10 @@ public class ProductivityServiceImpl implements ProductivityService {
         LocalDateTime endOfDay = targetDate.atTime(23, 59, 59);
 
         // 완료된 작업 조회
-        List<Task> completedTasks = taskRepository.findCompletedTasks(projectId, startOfDay, endOfDay);
-
+        List<Task> completedTasks = taskRepository.findCompletedTasks( projectId,
+                Task.Status.COMPLETED,
+                startOfDay,
+                endOfDay);
         List<ProductivityDetailResponse.CompletedTask> taskDtos = completedTasks.stream()
                 .map(task -> ProductivityDetailResponse.CompletedTask.builder()
                         .id("task_" + String.format("%03d", task.getTaskId()))
@@ -157,7 +155,6 @@ public class ProductivityServiceImpl implements ProductivityService {
 
         // 커밋 조회
         List<CodeCommit> commits = commitRepository.findByCommittedAtBetween(startOfDay, endOfDay);
-
         List<ProductivityDetailResponse.Commit> commitDtos = commits.stream()
                 .map(commit -> ProductivityDetailResponse.Commit.builder()
                         .hash(commit.getCommitHash())
@@ -170,9 +167,9 @@ public class ProductivityServiceImpl implements ProductivityService {
                 .findByUserIdAndProjectIdAndDate(userId, projectId, targetDate);
 
         ProductivityDetailResponse.ProductivityFactors factors = ProductivityDetailResponse.ProductivityFactors.builder()
-                .codeQuality(dailyProductivity.map(DailyProductivity::getCodeQuality).orElse(8.5))
+                .codeQuality(dailyProductivity.map(DailyProductivity::getCodeQuality).orElse(0.0))
                 .completedTasks(completedTasks.size())
-                .productivityScore(dailyProductivity.map(DailyProductivity::getProductivityScore).orElse(70.0))
+                .productivityScore(dailyProductivity.map(DailyProductivity::getProductivityScore).orElse(0.0))
                 .build();
 
         return ProductivityDetailResponse.builder()
@@ -186,16 +183,29 @@ public class ProductivityServiceImpl implements ProductivityService {
                 .build();
     }
 
-    // Helper methods
+    // ===== Helper Methods =====
 
+    /**
+     * 작업 완료 점수 계산
+     * @param completedTasks 완료된 작업 수
+     * @return 작업 점수 (최대 100점)
+     */
     private double calculateTaskScore(int completedTasks) {
         return Math.min(completedTasks * 25.0, 100.0);
     }
 
+    /**
+     * 커밋 활동 점수 계산
+     * @param commits 커밋 수
+     * @return 커밋 점수 (최대 100점)
+     */
     private double calculateCommitScore(int commits) {
         return Math.min(commits * 12.5, 100.0);
     }
 
+    /**
+     * 개인 생산성 추세 계산
+     */
     private String calculateTrend(Long userId, Long projectId, double currentScore) {
         List<ProductivityMetric> recentMetrics = productivityMetricRepository
                 .findRecentMetrics(userId, projectId);
@@ -211,6 +221,9 @@ public class ProductivityServiceImpl implements ProductivityService {
         return "stable";
     }
 
+    /**
+     * 차트 데이터 기반 추세 계산
+     */
     private String calculateChartTrend(List<ProductivityChartResponse.ChartData> chartData) {
         if (chartData.size() < 2) return "stable";
 
@@ -222,16 +235,22 @@ public class ProductivityServiceImpl implements ProductivityService {
         return "stable";
     }
 
+    /**
+     * 추세 변화율 계산
+     */
     private double calculateTrendPercentage(List<ProductivityChartResponse.ChartData> chartData) {
-        if (chartData.size() < 2) return 12.5;
+        if (chartData.size() < 2) return 0.0;
 
         double first = chartData.get(0).getProductivityScore();
         double last = chartData.get(chartData.size() - 1).getProductivityScore();
 
-        if (first == 0) return 12.5;
+        if (first == 0) return 0.0;
         return Math.abs(((last - first) / first) * 100);
     }
 
+    /**
+     * Daily Productivity -> Chart Data 변환
+     */
     private ProductivityChartResponse.ChartData convertToChartData(DailyProductivity daily) {
         return ProductivityChartResponse.ChartData.builder()
                 .date(daily.getDate().toString())
@@ -241,6 +260,9 @@ public class ProductivityServiceImpl implements ProductivityService {
                 .build();
     }
 
+    /**
+     * 기간 내 빈 날짜를 0값으로 채우기
+     */
     private List<ProductivityChartResponse.ChartData> fillMissingDates(
             List<ProductivityChartResponse.ChartData> chartData, LocalDate start, LocalDate end) {
 
@@ -248,8 +270,7 @@ public class ProductivityServiceImpl implements ProductivityService {
                 .collect(Collectors.toMap(
                         ProductivityChartResponse.ChartData::getDate,
                         data -> data,
-                        (existing, replacement) -> existing
-                ));
+                        (existing, replacement) -> existing));
 
         List<ProductivityChartResponse.ChartData> result = new ArrayList<>();
         LocalDate current = start;
@@ -270,11 +291,16 @@ public class ProductivityServiceImpl implements ProductivityService {
         return result;
     }
 
-    //@Transactional
-    private void saveProductivityMetric(Long userId, Long projectId, LocalDate date,
-                                        double overallScore, Map<String, ProductivityCalculateResponse.MetricScore> breakdown,
+    /**
+     * 생산성 메트릭 및 일별 데이터 저장
+     */
+    @Transactional
+    public void saveProductivityMetric(Long userId, Long projectId, LocalDate date,
+                                        double overallScore,
+                                        Map<String, ProductivityCalculateResponse.MetricScore> breakdown,
                                         String trend) {
 
+        // 기존 ProductivityMetric 중복 방지
         ProductivityMetric.ProductivityMetricBuilder builder = ProductivityMetric.builder()
                 .userId(userId)
                 .projectId(projectId)
@@ -282,7 +308,6 @@ public class ProductivityServiceImpl implements ProductivityService {
                 .productivityScore(overallScore)
                 .trend(ProductivityMetric.TrendType.valueOf(trend.toUpperCase()));
 
-        // breakdown에서 개별 점수 설정
         if (breakdown.containsKey("taskCompletion")) {
             ProductivityCalculateResponse.MetricScore taskMetric = breakdown.get("taskCompletion");
             builder.taskCompletionScore(taskMetric.getScore())
@@ -301,27 +326,31 @@ public class ProductivityServiceImpl implements ProductivityService {
 
         productivityMetricRepository.save(builder.build());
 
-        // DailyProductivity도 함께 저장
-        DailyProductivity dailyProductivity = DailyProductivity.builder()
-                .userId(userId)
-                .projectId(projectId)
-                .date(date)
-                .completedTasks(breakdown.containsKey("taskCompletion") ?
-                        (int)(breakdown.get("taskCompletion").getScore() / 25) : 0)
-                .commits(breakdown.containsKey("commitFrequency") ?
-                        (int)(breakdown.get("commitFrequency").getScore() / 12.5) : 0)
-                .codeQuality(breakdown.containsKey("codeQuality") ?
-                        breakdown.get("codeQuality").getScore() : 8.5)
-                .productivityScore(overallScore)
-                .build();
+        // DailyProductivity Upsert (중복 방지)
+        DailyProductivity daily = dailyProductivityRepository
+                .findByUserIdAndProjectIdAndDate(userId, projectId, date)
+                .orElseGet(() -> DailyProductivity.builder()
+                        .userId(userId)
+                        .projectId(projectId)
+                        .date(date)
+                        .build());
 
-        dailyProductivityRepository.save(dailyProductivity);
+        daily.setCompletedTasks(breakdown.containsKey("taskCompletion") ?
+                (int)(breakdown.get("taskCompletion").getScore() / 25) : 0);
+        daily.setCommits(breakdown.containsKey("commitFrequency") ?
+                (int)(breakdown.get("commitFrequency").getScore() / 12.5) : 0);
+        daily.setCodeQuality(breakdown.containsKey("codeQuality") ?
+                breakdown.get("codeQuality").getScore() : 0.0);
+        daily.setProductivityScore(overallScore);
+
+        dailyProductivityRepository.save(daily);
     }
 
-    //@Transactional
+    /**
+     * 차트 데이터를 JSONB로 저장 (선택적)
+     */
     private void saveChartData(Long userId, Long projectId, String period, ProductivityChartResponse response) {
         try {
-            // 차트 응답을 JSON으로 변환하여 저장
             Map<String, Object> dataJson = new HashMap<>();
             dataJson.put("success", response.isSuccess());
             dataJson.put("data", response.getData());
@@ -335,10 +364,9 @@ public class ProductivityServiceImpl implements ProductivityService {
                     .build();
 
             chartDataRepository.save(chartData);
-            log.info("생산성 차트 데이터 저장 완료 - userId: {}, projectId: {}, period: {}", userId, projectId, period);
+            log.debug("차트 데이터 저장 완료 - userId: {}, projectId: {}, period: {}", userId, projectId, period);
         } catch (Exception e) {
-            log.error("차트 데이터 저장 중 오류 발생", e);
-            // 차트 데이터 저장 실패해도 메인 응답에는 영향 없도록 예외를 삼킴
+            log.warn("차트 데이터 저장 실패 - userId: {}, projectId: {}, error: {}", userId, projectId, e.getMessage());
         }
     }
 }
