@@ -1,5 +1,38 @@
 import React from 'react';
 import Calendar from '../organisms/Calendar'
+import TaskCard from '@/components/molecules/TaskCard'
+import KanbanBoard from '@/components/organisms/KanbanBoard'
+
+// 확인용 하드코딩 데이터
+const mockTasks = [
+  {
+    id: 1,
+    category: '회원',
+    title: '일반 로그인 구현',
+    details: 'JwtTokenProvider 클래스 구현\nJwtAuthenticationFilter 구현',
+    tags: [
+      { text: '매우높음', type: 'high' }
+    ]
+  },
+  {
+    id: 2,
+    category: '회원',
+    title: '일반 로그인 구현',
+    details: 'JwtTokenProvider 클래스 구현\nJwtAuthenticationFilter 구현',
+    tags: [
+      { text: '매우높음', type: 'high' }
+    ]
+  },
+  {
+    id: 3,
+    category: '회원',
+    title: '일반 로그인 구현',
+    details: 'JwtTokenProvider 클래스 구현\nJwtAuthenticationFilter 구현',
+    tags: [
+      { text: '매우높음', type: 'high' }
+    ]
+  }
+]
 
 const ProjectTemplate = () => {
   return (
@@ -41,7 +74,20 @@ const ProjectTemplate = () => {
           <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
             오늘 할 일
           </h2>
-          {/* 내용은 비워둠 */}
+          {/* TaskCard 리스트 렌더링 */}
+          <div className="task-list">
+            {mockTasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                category={task.category}
+                title={task.title}
+                details={task.details}
+                tags={task.tags}
+                score={task.score}
+                scoreColor={task.scoreColor}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -58,7 +104,8 @@ const ProjectTemplate = () => {
         <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
           DB 구축 | 로그인 | 회원가입
         </h2>
-        {/* 내용은 비워둠 */}
+        {/* 칸반 보드 렌더링 */}
+        <KanbanBoard />
       </div>
     </div>
   );
