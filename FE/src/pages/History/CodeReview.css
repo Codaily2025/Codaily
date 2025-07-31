@@ -1,62 +1,3 @@
-/* 메인 컨텐츠 */
-.main-content {
-  padding: 53px 126px;
-  display: flex;
-  flex-direction: column;
-}
-/* 메인 컨텐츠내 요소들이 세로가 아니라 가로로 배치되고 있음*/
-
-.tabs {
-  /*
-  display: flex;
-  gap: 16px;
-  margin-bottom: 40px;
-  */
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 30px;
-}
-
-.tab-button {
-  display: flex;
-  padding: 10px 16px;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  border: none;
-  background-color: transparent;
-  cursor: pointer;
-  color: #d1d5db;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 24px; /* 133.333% */
-}
-
-/*
-.tab-button.active {
-  color: #4b5563;
-  box-shadow: inset 0px -1.5px 0px 0px #5a597d;
-}
-*/
-
-.tab-button.active {
-  width: 99px;
-  justify-content: center;
-  gap: 10px;
-  background: #FFF;
-  /* box-sizing: border-box; */
-
-  border-bottom: 2px solid #5A597D;
-  border-radius: 0px;
-  /*  box-shadow: 0 -1.5px 0 0 #5A597D inset; */
-  color: #5A597D;
-  
-}
-
-
 .controls {
   display: flex;
   justify-content: space-between;
@@ -65,31 +6,113 @@
 }
 
 .filters {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
+  /* display: flex; */
   gap: 5px;
 }
 
 .filter-button {
   height: 36px;
-  padding: 0 12px;
+  padding: 20px 12px;
   background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 15px;
   color: #374151;
   cursor: pointer;
   transition: border-color 0.2s ease;
+}
+
+.project-filter {
+  width: 210px;
+}
+
+.feature-filter {
+  width: 143px;
 }
 
 .filter-button:hover {
   border-color: #a3a3a3;
 }
 
+.filter-button.open {
+  outline: 1px solid #B4B3DC;
+}
+
+.filter-button:focus {
+  outline: 1px solid #B4B3DC;
+  box-shadow: none;
+}
+
 .filter-button span {
   font-size: 10px;
+}
+
+.filter-icon {
+  margin-left: auto;
+}
+
+.dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 51px;
+  left: 0;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.09);
+  border: 1px solid #f1f5f9;
+  z-index: 999;
+  width: 210px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dropdown-menu.small {
+  width: 143px;
+}
+
+.dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #404040;
+  line-height: 50px;
+  background-color: white;
+}
+
+.dropdown-option:hover {
+  background-color: #f3f2fa;
+}
+
+.dropdown-option.selected {
+  background-color: #f3f2fa;
+  color: #5A597D;
+}
+
+.option-icon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option-label {
+  flex: 1;
+  line-height: 20px;
 }
 
 .search-bar {
@@ -107,33 +130,83 @@
   outline: none;
   flex-grow: 1;
   font-size: 14px;
+  color: #404040;
+}
+
+.search-bar input::placeholder {
   color: #a3a3a3;
 }
 
 .search-icon {
   width: 24px;
   height: 24px;
-  background-color: #a0a0a0; /* 향후 실제 아이콘으로 대체 필요 */
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3E%3Cpath d='M10 18a8 8 0 100-16 8 8 0 000 16zm-5.3-2.7a6 6 0 118.5-8.5 6 6 0 01-8.5 8.5zM21 21l-4.3-4.3'%3E%3C/path%3E%3C/svg%3E") no-repeat center;
+  background-image: url('../../assets/search_icon.svg');
+  cursor: pointer;
 }
 
 
-/* 프로젝트 그리드 & 카드 */
+/* 프로젝트 컨테이너 & 카드 */
+.review-container {
+  width: 1089px;
+}
+
+.review-container.with-sidebar {
+  display: flex;
+  gap: 25px;
+}
+
 .review-grid {
   display: flex;
-  width: 1089px;
   flex-direction: column;
   align-items: flex-start;
   gap: 23px;
 }
-/* .review-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-} */
 
 .review-row {
-    display: flex;
-    justify-content: flex-start;
-    gap: 12px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
 }
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 23px;
+  width: 355px;
+}
+
+.load-more-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: rgba(228, 227, 243, 0.50);
+  color: #8483AB;
+  line-height: 24px;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.load-more-button.small {
+  width: 355px;
+  margin-top: 24px;
+}
+
+.load-more-button.large {
+  width: 1089px;
+}
+
+.load-more-button.small:hover, .load-more-button.large:hover{
+  background-color: #E4E3F3;
+  color: #5A597D;
+}
+
+.load-more-button:focus {
+  outline: none;
+  /* box-shadow: none; */
+}
+

@@ -1,15 +1,3 @@
-/* .project-card {
-  width: 384px;
-  height: 160px;
-  background-color: white;
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow: 1px 1px 4px 0px rgba(212, 212, 212, 0.4);
-  outline: 1px solid #d4d4d4;
-  outline-offset: -1px;
-  display: flex;
-  justify-content: space-between;
-} */
 .review-card {
   display: flex;
   /* 패딩까지 포함해서 보기 */
@@ -23,11 +11,24 @@
   border: 1px solid #D4D4D4;
   background: #FFF;
   box-shadow: 1px 1px 4px 0 rgba(212, 212, 212, 0.40);
+  cursor: pointer;
 }
 
 .review-card:hover {
-  outline: 2px solid #a3a3a3;
+  /* outline: 2px solid #a3a3a3; */
+  outline: 3px solid #B4B3DC;
+  /* border와 outline 차이 */
+  /* border는 테두리 영역을 포함하지 않음 */
+  /* outline은 테두리 영역을 포함함 */
+  /* border는 옵션의 두께만큼 박스의 전체 크기도 늘어나게 하는 반면 
+  outline은 박스의 크기를 늘리는 게 아니라 단지 테두리만 생기는 것뿐 */
   outline-offset: -2px;
+}
+
+.review-card.selected {
+  outline: 3px solid #B4B3DC;
+  outline-offset: -2px;
+  background: #f9f9ff;
 }
 
 .card-info {
@@ -47,12 +48,6 @@
   letter-spacing: 0.14px;
   text-transform: uppercase;
 }
-/* .card-category {
-  color: #94a3b8;
-  font-size: 14px;
-  font-weight: 500;
-  text-transform: uppercase;
-} */
 
 .card-title {
   width: 219px;
@@ -63,14 +58,6 @@
   font-weight: 500;
   line-height: 32px; /* 177.778% */
 }
-/*
-.card-title {
-  font-size: 18px;
-  font-weight: 500;
-  color: #404040;
-  margin: 0;
-}
-*/
 
 .card-details {
   width: 219px;
@@ -82,13 +69,6 @@
   line-height: 24px; /* 171.429% */
   margin: 0px
 }
-/*
-.card-details {
-  font-size: 14px;
-  color: #737373;
-  margin: 0;
-}
-*/
 
 .card-tags {
   display: flex;
@@ -107,14 +87,6 @@
 .tag-medium { background-color: #fef9c3; color: #f59e0b; }
 .tag-low { background-color: #dcfce7; color: #22c55e; }
 
-/*
-.card-score {
-  font-size: 18px;
-  font-weight: 600;
-  align-self: flex-end;
-  margin-bottom: 24px;
-}
-  */
 .card-score {
   display: flex;
   width: 42px;
@@ -129,18 +101,3 @@
 .score-red { color: #f43f5e; }
 .score-orange { color: #f97316; }
 .score-green { color: #22c55e; }
-
-.load-more-button {
-  width: calc(100% - 56px);
-  margin-left: 28px;
-  margin-top: 24px;
-  padding: 8px 16px;
-  background-color: rgba(226, 232, 240, 0.5);
-  border: none;
-  border-radius: 6px;
-  color: #94a3b8;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-}
