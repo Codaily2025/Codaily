@@ -4,7 +4,7 @@ import InputGroup from '@/components/molecules/InputGroup'
 import FormRow from '@/components/molecules/FormRow'
 import ProfileAvatar from '@/components/atoms/ProfileAvatar'
 import SaveButton from '@/components/atoms/SaveButton'
-import NicknameCheckButton from '@/components/atoms/NicknameCheckButton'
+// import NicknameCheckButton from '@/components/atoms/NicknameCheckButton'
 import useFormStore from '@/store/formStore'
 
 const AdditionalInfoForm = ({ onNicknameCheck }) => {
@@ -21,6 +21,8 @@ const AdditionalInfoForm = ({ onNicknameCheck }) => {
             fieldName="firstName"
             placeholder="firstName"
           />
+        </FormRow>
+        <FormRow>
           <InputGroup 
             label="Last Name"
             fieldName="lastName"
@@ -34,7 +36,7 @@ const AdditionalInfoForm = ({ onNicknameCheck }) => {
             fieldName="nickname"
             placeholder="user_nickname"
           >
-            <NicknameCheckButton onClick={() => onNicknameCheck(formData.nickname)} />
+            {/* <NicknameCheckButton onClick={() => onNicknameCheck(formData.nickname)} /> */}
           </InputGroup>
         </FormRow>
         <FormRow>

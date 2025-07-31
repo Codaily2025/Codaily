@@ -14,7 +14,7 @@ const AdditionalInfoTemplate = () => {
 
   return (
     <div className="container">
-      <div className="main-content">
+      <div className="info-content">
         <AdditionalInfoForm
           onNicknameCheck={handleNicknameCheck}
         />
