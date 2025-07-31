@@ -1,6 +1,5 @@
 import re
 import os
-import json
 import asyncio
 from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
@@ -135,6 +134,28 @@ def generate_main_functions(project_description: str, function_group: str) -> li
     return result
 
 
+def parse_bullet_items_with_duration_and_priority(response: str, key_name: str) -> list[dict]:
+    """
+    '- 이름: 설명: 시간: 우선순위' 형식의 문자열 리스트를 파싱하여 리스트[dict]로 변환합니다.
+    """
+    result = []
+    lines = response.strip().splitlines()
+    for line in lines:
+        if line.strip().startswith("-") and line.count(":") >= 3:
+            content = line.lstrip("-").strip()
+            name, desc, duration, priority = map(str.strip, content.split(":", 3))
+            try:
+                result.append({
+                    key_name: name,
+                    "설명": desc,
+                    "예상시간": float(duration.replace("시간", "").strip()),
+                    "우선순위": int(priority)
+                })
+            except ValueError:
+                continue  # 숫자 형식 오류 방지
+    return result
+
+
 def generate_sub_functions(project_description: str, function_group: str, main_function: str) -> list[dict]:
     """
     주어진 주 기능 항목에 대해 상세 기능 항목들을 list[dict] 형식으로 반환합니다.
@@ -143,17 +164,25 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
     prompt = ChatPromptTemplate.from_messages([
         ("system", (
             "당신은 사용자의 프로젝트 설명을 바탕으로 기능 명세서를 작성하는 전문가입니다.\n\n"
-            "아래 예시처럼 출력 형식을 **반드시** 지켜야 합니다:\n"
-            "- 이메일 입력: 사용자의 이메일 주소를 입력 받음\n"
-            "- 가입 버튼 클릭: 회원가입을 완료하는 버튼\n\n"
+            "각 항목은 다음 형식을 반드시 따라야 합니다:\n"
+            "- 상세기능명: 설명: 예상시간(정수): 우선순위(1~10 정수)\n\n"
+            "예시:\n"
+            "- 이메일 입력: 사용자의 이메일 주소를 입력 받음: 1: 8\n"
+            "- 가입 버튼 클릭: 회원가입을 완료하는 버튼: 1: 10\n\n"
             "주의사항:\n"
             "- 주 기능과 **동일하거나 유사한 상세 기능은 작성하지 마세요.**\n"
-            "- 상세 기능은 주 기능을 실제 구현 단위로 **작게 나눈 단계들**이어야 합니다."
+            "- 상세 기능은 주 기능을 실제 구현 단위로 **작게 나눈 단계들**이어야 합니다.\n"
+            "- 각 항목의 마지막에는 예상 소요 시간을 `:` 뒤에 **정수**로, 그 뒤에는 우선순위를 1~10 정수로 적으세요.\n\n"
+            "우선순위는 다음 기준에 따라 판단하세요:\n"
+            "1. 다른 기능의 선행 조건인지\n"
+            "2. 사용자 경험에서의 중요도\n"
+            "3. 기능의 핵심 여부\n"
+            "4. 보안이나 성능에 미치는 영향"
         )),
         ("user", (
             "**다음 조건을 정확히 따르세요:**\n"
             "- 개수: **{min}개 이상, {max}개 이하**\n"
-            "- 형식: `- 상세기능명: 설명` (설명은 한 줄)\n"
+            "- 형식: `- 상세기능명: 설명: 예상시간` (예상시간은 정수만)\n"
             "- 주 기능과 중복되거나 거의 같은 상세 기능은 제외하세요.\n"
             "▼ 프로젝트 설명:\n"
             "{{description}}\n\n"
@@ -172,7 +201,7 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
     })
 
     # 문자열 응답을 list[dict]로 파싱
-    result = result = parse_bullet_items(response, "상세기능명")
+    result = result = parse_bullet_items_with_duration_and_priority(response, "상세기능명")
 
     return result
 
@@ -241,7 +270,7 @@ async def stream_function_specification(project_description: str) -> AsyncGenera
     while not (finished_flag["done"] and queue.empty()):
         try:
             item = await asyncio.wait_for(queue.get(), timeout=1.0)
-            yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+            yield item
         except asyncio.TimeoutError:
             continue
 

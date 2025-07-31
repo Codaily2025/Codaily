@@ -3,14 +3,8 @@ package com.codaily.project.service;
 import com.codaily.auth.entity.User;
 import com.codaily.project.dto.ProjectCreateRequest;
 import com.codaily.project.dto.ProjectRepositoryResponse;
-import com.codaily.project.entity.DaysOfWeek;
-import com.codaily.project.entity.Project;
-import com.codaily.project.entity.ProjectRepositories;
-import com.codaily.project.entity.Schedule;
-import com.codaily.project.repository.DaysOfWeekRepository;
-import com.codaily.project.repository.ProjectRepository;
-import com.codaily.project.repository.ProjectRepositoriesRepository;
-import com.codaily.project.repository.ScheduleRepository;
+import com.codaily.project.entity.*;
+import com.codaily.project.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +20,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ScheduleRepository scheduleRepository;
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ProjectRepositoriesRepository repository;
+    private final SpecificationRepository specificationRepository;
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();
@@ -61,6 +56,17 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public void createProject(ProjectCreateRequest request, User user) {
+        Specification spec = specificationRepository.save(
+                Specification.builder()
+                        .user(user)
+                        .title("자동 생성 중")
+                        .content("")
+                        .format("json")
+                        .createdAt(LocalDateTime.now())
+                        .updatedAt(LocalDateTime.now())
+                        .build()
+        );
+
         Project project = Project.builder()
                 .user(user)
                 .title(request.getTitle())
@@ -68,6 +74,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .status("TODO")
+                .specification(spec)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();

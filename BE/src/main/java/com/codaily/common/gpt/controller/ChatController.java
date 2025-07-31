@@ -1,6 +1,9 @@
 package com.codaily.common.gpt.controller;
 
+import com.codaily.common.gpt.dispatcher.SseMessageDispatcher;
 import com.codaily.common.gpt.dto.ChatMessageRequest;
+import com.codaily.common.gpt.service.ChatService;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -18,24 +21,29 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ChatController {
 
-    private final com.codaily.common.gpt.service.ChatService chatService;
+    private final ChatService chatService;
+    private final SseMessageDispatcher dispatcher;
+    private final ObjectMapper objectMapper;
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestParam("userId") String userId,
-                                 @RequestParam("message") String message) {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE) ;
+                                 @RequestParam("message") String message,
+                                 @RequestParam("projectId") Long projectId,
+                                 @RequestParam("specId") Long specId) {
 
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         Flux<String> chatFlux = chatService.streamChat(userId, message);
 
         chatFlux.subscribe(chunk -> {
-            log.info("sse chunk: "+ chunk);
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, String> payload = Map.of("text", chunk);
-                String json = objectMapper.writeValueAsString(payload);
+                JsonNode root = objectMapper.readTree(chunk);
+                String type = root.path("type").asText();
+                JsonNode content = root.path("content");
 
-                emitter.send(SseEmitter.event().data(json));
-            } catch (IOException e) {
+                dispatcher.dispatch(type, content, projectId, specId);  // 👈 전달
+
+                emitter.send(SseEmitter.event().data(chunk));
+            } catch (Exception e) {
                 emitter.completeWithError(e);
             }
         }, emitter::completeWithError, emitter::complete);

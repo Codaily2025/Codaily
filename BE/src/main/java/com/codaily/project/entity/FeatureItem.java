@@ -29,6 +29,7 @@ public class FeatureItem {
     @Column(length=50)
     private String field;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isSelected = true;
     private Boolean isCustom;
@@ -40,6 +41,7 @@ public class FeatureItem {
     @Column(length=50)
     private String status;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isReduced = false;
     private Integer estimatedTime;
