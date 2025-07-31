@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './Project.css';
 import './TaskCard.css';
 import './KanbanBoard.css';
+import './Sidebar.css';
 import ProjectTemplate from '../../components/layouts/ProjectTemplate';
 
 const Project = () => {

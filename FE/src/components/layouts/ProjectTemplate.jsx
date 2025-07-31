@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Calendar from '../organisms/Calendar'
 import TaskCard from '@/components/molecules/TaskCard'
 import KanbanBoard from '@/components/organisms/KanbanBoard'
+import Sidebar from '@/components/organisms/Sidebar'
+import { Menu } from 'lucide-react'
+
 
 // 확인용 하드코딩 데이터
 const mockTasks = [
@@ -35,37 +38,45 @@ const mockTasks = [
 ]
 
 const ProjectTemplate = () => {
+  // 사이드바 
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
-    <div>
+    <div className='project-template'>
+      <button
+        className='menu-button'
+        onClick={() => setSidebarOpen(true)}
+      >
+        <Menu size={20} />
+      </button>
+
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+
       {/* 상단 영역 - 2개 컬럼 */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '2fr 1fr', 
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '2fr 1fr',
         gap: '20px',
         marginBottom: '20px'
       }}>
         {/* 첫 번째 영역 - 일정별 호출 */}
         <div style={{
-        //   border: '2px solid #333',
-        //   boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)',
           boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)',
           borderRadius: '16px',
           padding: '20px',
           backgroundColor: '#FAF9FD',
           minHeight: '400px'
         }}>
-          <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
-            일정별 호출 : 월별? 주별? ??
-          </h2>
-          {/* 내용은 비워둠 */}
+          {/* 달력 렌더링 */}
           <Calendar />
         </div>
 
         {/* 두 번째 영역 - 오늘 할 일 */}
         <div style={{
-        //   border: '2px solid #333',
-        // boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)',
-        boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)',
+          boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)',
           borderRadius: '16px',
           padding: '20px',
           backgroundColor: '#FAF9FD',
@@ -93,8 +104,6 @@ const ProjectTemplate = () => {
 
       {/* 세 번째 영역 - 칸반 보드 */}
       <div style={{
-        // border: '2px solid #333',
-        // boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.3), 0px 2px 6px 2px rgba(0, 0, 0, 0.15)',
         boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.25)',
         borderRadius: '16px',
         padding: '20px',
@@ -107,6 +116,8 @@ const ProjectTemplate = () => {
         {/* 칸반 보드 렌더링 */}
         <KanbanBoard />
       </div>
+
+
     </div>
   );
 };
