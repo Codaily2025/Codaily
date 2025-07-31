@@ -1,93 +1,185 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReviewCard from '../../components/ReviewCard';
 import ReviewDetailSidebar from '../../components/ReviewDetailSidebar';
-import { useReviewStore } from '../../stores/reviewStore'; // Zustand 전역 상태 훅
-import { useReviews, useProjectOptions } from '../../queries/reviewQueries'; // React Query 데이터 훅
+import { useReviewStore } from '../../stores/reviewStore'; // Zustand 스토어
+import { useReviews, useProjectOptions } from '../../queries/reviewQueries';
 import './CodeReview.css';
 import caretUp from '../../assets/caret_up.svg';
 
+// 프로젝트 데이터 예시 
+const reviews = [
+  {
+    projectId: 1,
+    category: '회원 관리',
+    title: '일반 로그인 기능 구현',
+    details: '2025/07/28 14:32 · 3개 파일',
+    tags: [
+      { text: '중간 1', type: 'medium' },
+      { text: '낮음 4', type: 'low' }
+    ],
+    score: 61,
+    scoreColor: 'orange'
+  },
+  {
+    projectId: 2,
+    category: '회원 관리',
+    title: '소셜 로그인 기능 구현',
+    details: '2025/07/28 14:32 · 3개 파일',
+    tags: [
+      { text: '높음 4', type: 'high' },
+      { text: '중간 3', type: 'medium' },
+      { text: '낮음 4', type: 'low' }
+    ],
+    score: 30,
+    scoreColor: 'red'
+  },
+  {
+    projectId: 3,
+    category: '회원 관리',
+    title: '회원 탈퇴 기능 구현',
+    details: '2025/07/28 14:32 · 3개 파일',
+    tags: [{ text: '낮음 4', type: 'low' }],
+    score: 91,
+    scoreColor: 'green'
+  },
+  {
+    projectId: 3,
+    category: '배포',
+    title: 'AWS 서버 구현',
+    details: '2025/07/28 14:32 · 3개 파일',
+    tags: [
+        { text: '높음 4', type: 'high' },
+        { text: '중간 3', type: 'medium' },
+        { text: '낮음 4', type: 'low' }
+    ],
+    score: 30,
+    scoreColor: 'red',
+    highlight: false // 두 번째 줄 카드들은 highlight가 없음
+  },
+  {
+    projectId: 1,
+    category: '배포',
+    title: 'CI/CD 연결',
+    details: '2025/07/28 14:32 · 3개 파일',
+    tags: [{ text: '낮음 4', type: 'low' }],
+    score: 91,
+    scoreColor: 'green',
+    highlight: false
+  },
+  // ... 다른 프로젝트 데이터
+];
+
+const projectOptions = [
+  {
+    id: null,
+    name: '모든 프로젝트',
+    features: ['전체', '회원 관리', '배포'],
+  },
+  {
+    id: 2,
+    name: '레시피 챗봇 서비스',
+    features: ['전체', '회원 관리'],
+  },
+  {
+    id: 3,
+    name: '싸피 출석 알림 서비스',
+    features: ['전체', '회원 관리', '배포'],
+  },
+  { 
+    id: 4,
+    name: '음악 스트리밍 구독 서비스',
+    features: ['전체'],
+  },
+];
+
 const CodeReview = () => {
-  // React Query를 통해 리뷰 데이터와 프로젝트 옵션을 가져옴
-  const { data: reviews = [], isLoading: isLoadingReviews } = useReviews();
-  const { data: projectOptions = [], isLoading: isLoadingProjects } = useProjectOptions();
+  const [selectedProjectOption, setSelectedProjectOption] = useState('모든 프로젝트');
+  const [selectedFeatureOption, setSelectedFeatureOption] = useState('전체');
+  const [openDropdown, setOpenDropdown] = useState(null); // 'project' | 'feature' | null
 
-  // Zustand 상태 및 액션 가져오기
-  const {
-    selectedProjectId,
-    selectedFeature,
-    searchQuery,
-    selectedReviewId,
-    visibleCount,
-    openDropdown,
-    setProject,
-    setFeature,
-    setSearchQuery,
-    selectReview,
-    closeSidebar,
-    loadMore,
-    toggleDropdown,
-    closeDropdowns,
-  } = useReviewStore();
+  const dropdownRef = useRef(null); // 드롭다운 참조 -> 외부 클릭 시 드롭다운 닫기
 
-  const dropdownRef = useRef(null);
+  // 프로젝트 선택 시 기능 옵션 업데이트
+  const currentProject = projectOptions.find(p => p.name === selectedProjectOption);
+  const featureOptions = currentProject?.features || ['전체'];
 
-  // 드롭다운 외부 클릭 시 닫기 위한 이벤트 등록
+  // 검색 기능 상태
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        closeDropdowns();
+        setOpenDropdown(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [closeDropdowns]);
+  }, []);
 
-  // 파생 상태 계산 (성능 향상을 위해 useMemo 사용)
-  const {
-    currentProject,
-    featureOptions,
-    filteredReviews,
-    selectedReview,
-    selectedProjectName
-  } = useMemo(() => {
-    const currentProject = projectOptions.find(p => p.id === selectedProjectId) || projectOptions[0];
-    const featureOptions = currentProject?.features || ['전체'];
+  // 실제로 드롭다운 필터링 구현하기
+  // 필터링된 리뷰들
+  const filteredReviews = reviews.filter((review) => {
+      
+    const projectMatched = // 드롭다운에서 필터링된 프로젝트 옵션 카드들
+      selectedProjectOption === '모든 프로젝트' ||
+      currentProject?.id === review.projectId; // 프로젝트 옵션 선택 시 프로젝트 카드 필터링
+    
+    const featureMatched =
+      selectedFeatureOption === '전체' || 
+      review.category === selectedFeatureOption;
 
-    const filtered = reviews.filter((review) => {
-      const projectMatched = selectedProjectId === null || review.projectId === selectedProjectId;
-      const featureMatched = selectedFeature === '전체' || review.category === selectedFeature;
-      const titleMatched = review.title.toLowerCase().includes(searchQuery.toLowerCase());
+      const titleMatched = review.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+      // 필터링 영향 x : 검색어가 있을 때는 검색 결과만 필터링
+      // if (searchQuery.trim() !== '') {
+      //  return titleMatched;
+      //}
+
       return projectMatched && featureMatched && titleMatched;
     });
 
-    const selectedReview = reviews.find(r => r.id === selectedReviewId) || null;
-    const selectedProjectName = currentProject?.name || '모든 프로젝트';
 
-    return { currentProject, featureOptions, filteredReviews: filtered, selectedReview, selectedProjectName };
-  }, [reviews, projectOptions, selectedProjectId, selectedFeature, searchQuery, selectedReviewId]);
+  // 필터 변경 시 visibleCount 초기화
+  useEffect(() => {
+    setVisibleCount(3);
+  }, [selectedProjectOption, selectedFeatureOption]);
 
-  // 로딩 상태 처리
-  if (isLoadingReviews || isLoadingProjects) {
-    return <div>로딩 중...</div>;
-  }
+  // 필터 변경 시 자동 초기화
+  useEffect(() => {
+    setVisibleCount(3);
+    setSearchQuery(''); // 검색창 입력 초기화
+    setSelectedFeatureOption('전체');
+  }, [selectedProjectOption]);
+  useEffect(() => {
+    setSearchQuery(''); // 검색창 입력 초기화
+  }, [selectedFeatureOption]);
 
-  // 더보기 버튼 클릭 시 카드 개수 증가
-  const handleLoadMore = () => {
-    loadMore();
-  };
+  // 리뷰 선택 상태
+  const [selectedReview, setSelectedReview] = useState(null);
 
-  // 카드 클릭 시 상세 사이드 페이지를 띄우기 위한 클릭 핸들러
+  // 카드 클릭 시 상세 사이드 페이지 띄우기
   const handleCardClick = (review) => {
-    selectReview(review.id);
+    setSelectedReview(review);
   };
 
   // 상세 사이드 페이지 닫기
   const handleCloseSidebar = () => {
-    closeSidebar();
+    setSelectedReview(null);
   };
 
-  return (
-    <>
+  // 더보기 버튼: 더 볼 카드 개수 관리
+  const [visibleCount, setVisibleCount] = useState(3);
+
+  // 더보기 버튼 클릭 시 카드 개수 증가
+  const handleLoadMore = () => {
+    setVisibleCount(prevCount => prevCount + 3);
+  };
+
+  return (      
+  <>
     <div className="controls" ref={dropdownRef}>
       <div className="filters">
         <div className="dropdown-wrapper">
@@ -98,10 +190,10 @@ const CodeReview = () => {
           // 프로젝트 드롭다운 열기
           // 프로젝트 드롭다운 열려있을 때 닫기(null로 변경)
           onClick={() =>
-            toggleDropdown(openDropdown === 'project' ? null : 'project')
+            setOpenDropdown(openDropdown === 'project' ? null : 'project')
           }
         >
-          {selectedProjectName} 
+          {selectedProjectOption} 
           <img className="filter-icon" src={caretUp} alt="caret" />
           </button>
           {openDropdown === 'project' && (
@@ -109,14 +201,14 @@ const CodeReview = () => {
             {projectOptions.map((option) => (
               <div
                 key={option.id}
-                className={`dropdown-option ${option.name === selectedProjectName ? 'selected' : ''}`}
+                className={`dropdown-option ${option.name === selectedProjectOption ? 'selected' : ''}`}
                 onClick={() => {
-                  setProject(option.id); // 클릭하면 프로젝트 옵션 변경
-                  toggleDropdown(null); // 드롭다운 닫기
+                  setSelectedProjectOption(option.name); // 클릭하면 프로젝트 옵션 변경
+                  setOpenDropdown(null); // 드롭다운 닫기
                 }}
               >
                 <div className="option-icon">
-                  {option.name === selectedProjectName && (
+                  {option.name === selectedProjectOption && (
                     <svg
                       width="16"
                       height="16"
@@ -148,10 +240,10 @@ const CodeReview = () => {
             }`}
             
             onClick={() =>
-              toggleDropdown(openDropdown === 'feature' ? null : 'feature')
+              setOpenDropdown(openDropdown === 'feature' ? null : 'feature')
             }
           >
-            {selectedFeature} 
+            {selectedFeatureOption} 
             <img className="filter-icon" src={caretUp} alt="caret" />
           </button>
         {/* 기능 드롭다운 메뉴 */}
@@ -160,14 +252,14 @@ const CodeReview = () => {
             {featureOptions.map((option) => (
               <div
                 key={option}
-                className={`dropdown-option ${option === selectedFeature ? 'selected' : ''}`}
+                className={`dropdown-option ${option === selectedFeatureOption ? 'selected' : ''}`}
                 onClick={() => {
-                  setFeature(option);
-                  toggleDropdown(null);
+                  setSelectedFeatureOption(option);
+                  setOpenDropdown(null);
                 }}
               >
                 <div className="option-icon">
-                  {option === selectedFeature && (
+                  {option === selectedFeatureOption && (
                     <svg
                       width="16"
                       height="16"
@@ -207,15 +299,7 @@ const CodeReview = () => {
     
     {/* 카드 목록 */}
     <div className={`review-container ${selectedReview ? 'with-sidebar' : ''}`}>
-      {filteredReviews.length === 0 ? (
-        <div className="no-reviews-container">
-          <div className="no-reviews-content">
-            <p className="no-reviews-title">생성한 코드 리뷰가 없어요.</p>
-            <p className="no-reviews-subtitle">프로젝트의 기능을 구현하고 코드 리뷰를 받아보세요.</p>
-            {/* <button className="create-project-btn" onClick={() => handleCreateProject()}>프로젝트 생성하기</button> */}
-          </div>
-        </div>
-        ) : !selectedReview ? (
+      {!selectedReview ? (
         // 카드가 선택되지 않았을 때: 3개씩 가로로 나열
         <div className="review-grid">
           {Array.from({ length: Math.ceil(visibleCount / 3) }).map((_, rowIndex) => (

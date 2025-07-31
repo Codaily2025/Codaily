@@ -38,7 +38,8 @@
 }
 
 .card-category {
-  width: 34px;
+  /* width: 34px; */
+  max-width: 100%;
   color: #8483AB;
   font-family: Inter;
   font-size: 14px;

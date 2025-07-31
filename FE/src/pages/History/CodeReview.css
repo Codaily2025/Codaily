@@ -175,6 +175,36 @@
   width: 355px;
 }
 
+/* 카드 없을 때 메시지 */
+.no-reviews-container {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E5E5E5;
+  text-align: center;
+  padding: 100px 0;
+  margin-top: 20px;
+}
+
+.no-reviews-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.no-reviews-title {
+  color: #737373;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.no-reviews-subtitle {
+  color: #A1A1A1;
+  font-size: 14px;
+  margin: 0;
+}
+
 .load-more-button {
   display: flex;
   justify-content: center;

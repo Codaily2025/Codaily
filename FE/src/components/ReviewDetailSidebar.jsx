@@ -13,7 +13,7 @@ const ReviewDetailSidebar = ({ review, onClose }) => {
       
       <div className="sidebar-content">
         <div className="detail-section">
-          <div className="detail-category">{review.category}</div>
+          <div className="detail-category">{review.projectName} {review.category}</div>
           <h3 className="detail-title">{review.title}</h3>
           <p className="detail-info">{review.details}</p>
         </div>
