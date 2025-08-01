@@ -6,6 +6,7 @@ import ProfileEditModal from '../../components/ProfileEditModal';
 import editIcon from '../../assets/edit_icon.png';
 import githubIcon from '../../assets/github_icon.png';
 import useModalStore from '../../store/modalStore';
+import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
 
 // 히트맵 그래프를 위한 더미 데이터
 // level: 0 (활동 없음), 1 (적음), 2 (중간), 3 (많음)
@@ -113,6 +114,7 @@ const Mypage = () => {
 
       <main className="main-column">
         <ProgressSection />
+        <MyPageProductivityGraph />
         <ProjectsSection
           projects={projects}
           activeFilter={activeFilter}
