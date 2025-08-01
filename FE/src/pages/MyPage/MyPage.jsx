@@ -5,6 +5,7 @@ import ProjectsSection from './ProjectsSection';
 import ProfileEditModal from '../../components/ProfileEditModal';
 import editIcon from '../../assets/edit_icon.png';
 import githubIcon from '../../assets/github_icon.png';
+import useModalStore from '../../store/modalStore';
 
 // 히트맵 그래프를 위한 더미 데이터
 // level: 0 (활동 없음), 1 (적음), 2 (중간), 3 (많음)
@@ -72,13 +73,17 @@ const Mypage = () => {
       repoUrl: 'https://github.com/sample3.git'
     }
   ]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isOpen, modalType, openModal, closeModal } = useModalStore()
+
+
   return (
     <div className="mypage-container">
       <aside className="sidebar">
       <div className="profile-card">
           <div className="profile-image-placeholder"></div>
-          <a onClick={() => setIsModalOpen(true)} className="edit-profile-link">
+          {/* <a onClick={() => setIsModalOpen(true)} className="edit-profile-link"> */}
+          <a onClick={() => openModal('PROFILE_EDIT')} className="edit-profile-link">
             <img src={editIcon} alt="edit icon" />
             회원정보 수정
           </a>
@@ -114,8 +119,9 @@ const Mypage = () => {
           setActiveFilter={setActiveFilter}
         />
         <ProfileEditModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
+          isOpen={isOpen && (modalType === 'PROFILE_EDIT')} 
+          // onClose={() => setIsModalOpen(false)} 
+          onClose={() => closeModal()} 
         />
       </main>
     </div>
