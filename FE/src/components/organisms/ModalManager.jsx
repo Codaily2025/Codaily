@@ -1,4 +1,6 @@
 import useModalStore from "../../store/modalStore"
+import ProfileEditModal from "../ProfileEditModal"
+import ProjectEditModal from "../ProjectEditModal"
 import EventDetailModal from './EventDetailModal'
 import NicknameCheckModal from './NicknameCheckModal'
 
@@ -6,6 +8,8 @@ import NicknameCheckModal from './NicknameCheckModal'
 const MODAL_COMPONENTS = {
     EVENT_DETAIL: EventDetailModal,
     NICKNAME_CHECK: NicknameCheckModal,
+    PROFILE_EDIT: ProfileEditModal,
+    PROJECT_EDIT: ProjectEditModal,
     // CONFIRMATION: ConfirmationModal,
     // DELETION: DeleteModal,
     // ...

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './ProjectsSection.css';
 import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
+import useModalStore from "../../store/modalStore";
 
 const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   const navigate = useNavigate();
@@ -9,7 +10,8 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   const [localProjects, setLocalProjects] = useState(projects);
   // 설정 모달 관련 상태 관리
   const [selectedProject, setSelectedProject] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  // const [showModal, setShowModal] = useState(false);
+  const { isOpen, modalType, closeModal, openModal } = useModalStore()
 
   // 삭제 핸들러
   const handleDelete = (id) => {
@@ -19,7 +21,8 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   // 설정 모달 관련 핸들러
   const handleSettings = (project) => {
     setSelectedProject(project);
-    setShowModal(true);
+    // setShowModal(true);
+    openModal('PROJECT_EDIT')
   };
 
   // 프로젝트 생성 핸들러
@@ -127,16 +130,18 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
           ))}
         </div>
       )}
-      {showModal && (
+      {isOpen && (modalType === 'PROJECT_EDIT') &&  (
         <ProjectEditModal
           project={selectedProject}
-          onClose={() => setShowModal(false)}
+          // onClose={() => setShowModal(false)}
+          onClose={() => closeModal()}
           onSave={(updatedProject) => {
             console.log('🧩 저장된 프로젝트:', updatedProject);
             setLocalProjects(prev =>
               prev.map(p => p.id === updatedProject.id ? updatedProject : p)
             );
-            setShowModal(false);
+            // setShowModal(false);
+            closeModal();
           }}
         />
       )}

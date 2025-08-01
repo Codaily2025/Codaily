@@ -19,18 +19,18 @@ const Sidebar = ({ isOpen, onClose }) => {
   return (
     <>
       {/* Overlay */}
-      {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
+      {isOpen && <div className="project-sidebar-overlay" onClick={onClose} />}
       
       {/* Sidebar */}
-      <div className={`sidebar ${isOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-        <div className="sidebar-header">
-          <h2 className="sidebar-title">My Projects</h2>
-          <button className="sidebar-close-btn" onClick={onClose}>
+      <div className={`project-sidebar ${isOpen ? 'project-sidebar-open' : 'project-sidebar-closed'}`}>
+        <div className="project-sidebar-header">
+          <h2 className="project-sidebar-title">My Projects</h2>
+          <button className="project-sidebar-close-btn" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
         
-        <div className="sidebar-content">
+        <div className="project-sidebar-content">
           {projects.map((project) => (
             <ProjectItem
               key={project.id}
