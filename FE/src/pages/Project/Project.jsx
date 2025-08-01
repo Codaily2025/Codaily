@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom'; // 추가
 import './Project.css';
 import './TaskCard.css';
 import './KanbanBoard.css';

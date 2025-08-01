@@ -11,7 +11,7 @@ import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
 import Signup from './pages/Signup/Signup';
 import ModalManager from './components/organisms/ModalManager';
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // 보호된 라우트 컴포넌트 : 로그인 상태가 아니면 접근 불가
 const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => { 
@@ -31,7 +31,6 @@ const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => {
   }
   return children;
 };
-
 
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 기본값을 false로 변경
@@ -87,7 +86,7 @@ function AppContent() {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    navigate('/project'); // 로그인 후 프로젝트 페이지로 이동
+    navigate('/'); // 로그인 후 프로젝트 페이지로 이동
   };
 
   const handleRedirectToLogin = () => {
@@ -137,7 +136,7 @@ function AppContent() {
             } 
           />
           <Route 
-            path="/project" 
+            path="/project/:id" 
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <Project />
@@ -174,14 +173,16 @@ function AppContent() {
   );
 }
 
+// QueryClient 인스턴스 생성
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <Router>
-      <AppContent />
-
-      {/* 전역 Modal Manager */}
-      <ModalManager />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <AppContent />
+      </Router>
+    </QueryClientProvider>
   );
 }
 
