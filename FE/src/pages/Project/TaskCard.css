@@ -1,0 +1,146 @@
+/* TaskCard CSS */
+.task-card {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 355px;
+    height: 165px;
+    padding: 16px;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #FFF;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    /* margin-bottom: 16px; */
+}
+
+.task-card:hover {
+    /* outline: 2px solid #CCCBE4;
+    outline-offset: -2px; */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
+
+.card-category {
+    /* width: 34px; */
+    color: #8483AB;
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 100%;
+    letter-spacing: 0.14px;
+    text-transform: uppercase;
+}
+
+.card-title {
+    width: 219px;
+    color: #404040;
+    font-family: Inter, sans-serif;
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 32px;
+}
+
+.card-details {
+    width: 219px;
+    color: #737373;
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px;
+    margin: 0px;
+    white-space: pre-line;
+}
+
+.card-tags {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.tag {
+    padding: 2px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tag-high {
+    background-color: #fee2e2;
+    color: #ef4444;
+}
+
+.tag-medium {
+    background-color: #fef9c3;
+    color: #f59e0b;
+}
+
+.tag-low {
+    background-color: #dcfce7;
+    color: #22c55e;
+}
+
+.card-score {
+    display: flex;
+    width: 42px;
+    height: 98px;
+    padding: 10px 0 0.5px 0;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+    font-family: Inter, sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.score-red {
+    color: #f43f5e;
+}
+
+.score-orange {
+    color: #f97316;
+}
+
+.score-green {
+    color: #22c55e;
+}
+
+.task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    /* max-height: 320px; */
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.task-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.task-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

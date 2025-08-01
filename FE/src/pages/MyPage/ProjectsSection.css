@@ -61,6 +61,7 @@
   border: 1px solid #E5E5E5;
   padding: 25px;
   position: relative;
+  cursor: pointer;
 }
 
 .project-card.disabled {
@@ -194,8 +195,6 @@
 .project-card:hover .card-actions {
   display: flex;
 }
-
-
 
 /* 공통 버튼 스타일 */
 .icon-btn {

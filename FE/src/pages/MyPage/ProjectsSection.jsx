@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './ProjectsSection.css';
 import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
+import useModalStore from "../../store/modalStore";
 
 const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   const navigate = useNavigate();
@@ -9,7 +10,8 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   const [localProjects, setLocalProjects] = useState(projects);
   // 설정 모달 관련 상태 관리
   const [selectedProject, setSelectedProject] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  // const [showModal, setShowModal] = useState(false);
+  const { isOpen, modalType, closeModal, openModal } = useModalStore()
 
   // 삭제 핸들러
   const handleDelete = (id) => {
@@ -19,13 +21,20 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   // 설정 모달 관련 핸들러
   const handleSettings = (project) => {
     setSelectedProject(project);
-    setShowModal(true);
+    // setShowModal(true);
+    openModal('PROJECT_EDIT')
   };
 
   // 프로젝트 생성 핸들러
   const handleCreateProject = () => {
     navigate('/project/create');
   };
+
+  // 프로젝트 보드 페이지 이동 핸들러 -> 향후 백엔드와 연결해 프로젝트 id를 기반으로 각 프로젝트 보드 페이지로 이동
+  const handleProjectBoard = (id) => {
+    navigate(`/project/${id}`);
+  };
+
 
   const filteredProjects = localProjects.filter((project) => {
     if (activeFilter === '전체') return true;
@@ -65,12 +74,30 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
             <div
               key={project.id}
               className={`project-card ${project.disabled ? 'disabled' : ''}`}
+              onClick={() => handleProjectBoard(project.id)}
             >
               {/* 우측 상단 삭제, 설정 버튼 */}
               <div className="card-actions">
-                <button className="icon-btn delete-btn" title="삭제" onClick={() => handleDelete(project.id)}>
+                <button 
+                  className="icon-btn delete-btn" 
+                  title="삭제" 
+                  // onClick={() => handleDelete(project.id)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                    // 삭제 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                    handleDelete(project.id)
+                  }}
+                >
                 </button>
-                <button className="icon-btn settings-btn" title="설정" onClick={() => handleSettings(project)}>
+                <button 
+                  className="icon-btn settings-btn" 
+                  title="설정" 
+                  onClick={(e) => {
+                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                    // 설정 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                    handleSettings(project)
+                  }}
+                >
                 </button>
               </div>
               <h3>{project.title}</h3>
@@ -103,15 +130,18 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
           ))}
         </div>
       )}
-      {showModal && (
+      {isOpen && (modalType === 'PROJECT_EDIT') &&  (
         <ProjectEditModal
           project={selectedProject}
-          onClose={() => setShowModal(false)}
+          // onClose={() => setShowModal(false)}
+          onClose={() => closeModal()}
           onSave={(updatedProject) => {
+            console.log('🧩 저장된 프로젝트:', updatedProject);
             setLocalProjects(prev =>
               prev.map(p => p.id === updatedProject.id ? updatedProject : p)
             );
-            setShowModal(false);
+            // setShowModal(false);
+            closeModal();
           }}
         />
       )}

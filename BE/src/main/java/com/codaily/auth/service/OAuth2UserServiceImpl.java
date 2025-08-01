@@ -56,11 +56,11 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         User user;
 
         // 1. userId와 nickname 자동 생성 (ex: github_f3d9a2)
-        String nickname = provider + "_" + createRandomUserNickname(11 - provider.length());
+        String nickname = provider + "_" + createRandomUserNickname(20 - provider.length());
 
         // 2. userId 중복 방지
         while (userRepository.existsByNickname(nickname)) {
-            nickname = provider + "_" + createRandomUserNickname(11 - provider.length());
+            nickname = provider + "_" + createRandomUserNickname(20 - provider.length());
         }
 
         // 3. 이메일 중복 여부 확인
