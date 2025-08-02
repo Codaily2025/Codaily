@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import ReviewCard from '../../components/ReviewCard';
-import ReviewDetailSidebar from '../../components/ReviewDetailSidebar';
+import ReviewDetailSidebar from '../../components/ReviewDetailSidebar/ReviewDetailSidebar';
 import { useReviewStore } from '../../stores/reviewStore'; // Zustand 전역 상태 훅
 import { useReviews, useProjectOptions } from '../../queries/reviewQueries'; // React Query 데이터 훅
 import './CodeReview.css';
