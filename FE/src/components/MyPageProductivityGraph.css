@@ -1,9 +1,10 @@
 .productivity-graph-section {
+  /* height: 450px; */
   margin-bottom: 40px;
 }
 
 .productivity-graph-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 8px;
 }
 
 .productivity-graph-header h2 {
@@ -56,6 +57,7 @@
 .graph-navigation {
   display: flex;
   width: 90%;
+  height: 30px;
   /* 부모 콘텐츠에서 중앙 정렬 */
   margin: 0 auto;
   justify-content: space-between;
@@ -82,17 +84,18 @@
 .icon {
   width: 1.25rem;
   height: 1.25rem;
-  color: #4b5563;
+  color: #737373;
 }
 
 .graph-period-text {
-  font-size: 1.125rem;
+  height: 30px;
+  font-size: 17px;
   font-weight: 600;
-  color: #525252;
+  color: #737373;
 }
 
 .chart-area {
-  height: 20rem;
+  height: 200px;
 }
 
 .tooltip {
@@ -111,41 +114,46 @@
 
 .tooltip-value {
   font-size: 0.875rem;
-  color: #8b5cf6;
+  font-weight: 600;
+  color: #B4B3DC;
 }
 
 .chart-summary {
-  margin-top: 1.5rem;
+  margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
 
 .summary-box {
-    height: 84px;
-  padding: 1rem;
+  height: 88px;
+  box-sizing: border-box;
+  padding: 8px 22px;
   border-radius: 0.5rem;
+  font-size: 14px;
 }
 
 .summary-box.purple {
   /* background-color: #f5f3ff; */
-  background-color: #E7DEFF;
+  background-color: #e0def5;
   /* color: #6d28d9; */
-  color: #4B2993;
+  color: #6e6c9b;
 }
 
 .summary-box.blue {
   /* background-color: #eff6ff; */
-  background-color: #DBF4FF;
+  /* background-color: #DBF4FF; */
+  background-color: #d1e5f5;
   /* color: #2563eb; */
-  color: #256B86;
+  /* color: #256B86; */
+  color: #5685b4;
 }
 
 .summary-box.green {
   /* background-color: #ecfdf5; */
-  background-color: #E6F9DA;
+  background-color: #d7f6de;
   /* color: #059669; */
-  color: #3A7524;
+  color: #447957;
 }
 
 .summary-box p {
@@ -154,7 +162,7 @@
 }
 
 .summary-value {
-  font-size: 1.5rem;
+  font-size: 18px;
   font-weight: bold;
   margin-top: 8px;
   /* margin-top: 0.25rem; */

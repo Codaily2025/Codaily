@@ -133,10 +133,12 @@ const ProductivityChart = () => {
               <linearGradient id="colorCommits" x1="0" y1="0" x2="0" y2="1">
                 {/* <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8} /> */}
                 {/* <stop offset="5%" stopColor="#DBCFFD" stopOpacity={0.8} /> */}
-                <stop offset="5%" stopColor="#A3A1E6" stopOpacity={0.8} />
+                {/* <stop offset="5%" stopColor="#A3A1E6" stopOpacity={0.8} /> */}
+                <stop offset="5%" stopColor="#B4B3DC" stopOpacity={0.8} />
                 {/* <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1}/> */}
                 {/* <stop offset="95%" stopColor="#A5A3F7" stopOpacity={0.1} /> */}
-                <stop offset="95%" stopColor="#A3A1E6" stopOpacity={0} />
+                {/* <stop offset="95%" stopColor="#A3A1E6" stopOpacity={0} /> */}
+                <stop offset="95%" stopColor="#B4B3DC" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -145,7 +147,8 @@ const ProductivityChart = () => {
             {/* <Tooltip /> */}
             <Tooltip content={<CustomTooltip />} />
             {/* 그래프 외곽선 색 */}
-            <Area type="monotone" dataKey="commits" stroke="#A3A1E6" strokeWidth={2} fillOpacity={1} fill="url(#colorCommits)" />
+            {/* <Area type="monotone" dataKey="commits" stroke="#A3A1E6" strokeWidth={2} fillOpacity={1} fill="url(#colorCommits)" /> */}
+            <Area type="monotone" dataKey="commits" stroke="#B4B3DC" strokeWidth={2} fillOpacity={1} fill="url(#colorCommits)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
