@@ -85,11 +85,11 @@
   display: block; 
 }
 
-@media (max-width: 768px) {
+/* @media (max-width: 768px) {
   .login-image-section {
     display: none;
   }
-}
+} */
 
 .background-image {
   width: 100%;
