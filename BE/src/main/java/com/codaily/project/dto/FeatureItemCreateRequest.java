@@ -6,15 +6,15 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FeatureItemUpdate {
+public class FeatureItemCreate {
     private String title;
     private String description;
     private String field;
     private String category;
-    private String status;
     private Integer priorityLevel;
-    private Integer estimatedTime;
-    private Boolean isSelected;
-    private Boolean isReduced;
+    private Double estimatedTime;
+    private Boolean isCustom;
+    private Long projectId;
+    private Long specificationId;
     private Long parentFeatureId;
 }
