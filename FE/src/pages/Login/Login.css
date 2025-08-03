@@ -69,6 +69,10 @@
     background-color: #f9f9f9;
 }
 
+.social-login-button:focus {
+  outline: none;
+}
+
 .social-login-button img {
   width: 30px;
   height: 30px;

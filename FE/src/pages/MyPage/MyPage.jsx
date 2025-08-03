@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './MyPage.css';
 import ProgressSection from './ProgressSection';
 import ProjectsSection from './ProjectsSection';
 import ProfileEditModal from '../../components/ProfileEditModal';
 import editIcon from '../../assets/edit_icon.png';
 import githubIcon from '../../assets/github_icon.png';
-import useModalStore from '../../store/modalStore';
 import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
+
+import useModalStore from '../../store/modalStore';
+// import { fetchProfile } from '../../apis/profile'; // 서버 호출
+// import { useQuery, useQueryClient } from '@tanstack/react-query'; // 쿼리 클라이언트 사용
+import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
+import { useProfileStore } from '../../stores/profileStore'; // 프로필 스토어 사용
+
 
 // 히트맵 그래프를 위한 더미 데이터
 // level: 0 (활동 없음), 1 (적음), 2 (중간), 3 (많음)
@@ -16,7 +22,13 @@ import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
 // });
 
 const Mypage = () => {
+  // const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isOpen, modalType, openModal, closeModal } = useModalStore()
+  const setProfile = useProfileStore((state) => state.setProfile); // 프로필 저장
+  const profile = useProfileStore((state) => state.profile); // 프로필 가져오기
+  const { data: fetchedProfile, isLoading, isError, error } = useProfileQuery(); // 프로필 조회 훅
   const [activeFilter, setActiveFilter] = useState('전체'); // 필터 기본값 : 전체
+
   // 실제 애플리케이션에서는 API로부터 프로젝트 데이터를 받아와야 함
   const [projects, setProjects] = useState([
     {
@@ -74,23 +86,34 @@ const Mypage = () => {
       repoUrl: 'https://github.com/sample3.git'
     }
   ]);
-  // const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isOpen, modalType, openModal, closeModal } = useModalStore()
 
+  useEffect(() => {
+    if (fetchedProfile) {
+      setProfile(fetchedProfile);
+    }
+  }, [fetchedProfile, setProfile]);
+
+  if (isLoading) return <div>로딩 중...</div>;
+
+  if (isError) return <div>에러 발생: {error.message}</div>;
 
   return (
     <div className="mypage-container">
       <aside className="sidebar">
-      <div className="profile-card">
-          <div className="profile-image-placeholder"></div>
+        <div className="profile-card">
+          <div className="profile-image-placeholder">
+            {profile.profileImage && (
+              <img src={profile.profileImage} alt="profile" />
+            )}
+          </div>
           {/* <a onClick={() => setIsModalOpen(true)} className="edit-profile-link"> */}
-          <a onClick={() => openModal('PROFILE_EDIT')} className="edit-profile-link">
+          <button onClick={() => openModal('PROFILE_EDIT')} className="edit-profile-link">
             <img src={editIcon} alt="edit icon" />
             회원정보 수정
-          </a>
+          </button>
           <div className="info-section">
             <label>닉네임</label>
-            <div className="info-box">CodeMaster</div>
+            <div className="info-box">{profile.nickname}</div>
           </div>
           <div className="info-section">
             <label>사용 가능한 기술 스택</label>
@@ -106,7 +129,7 @@ const Mypage = () => {
             <label>GitHub 연동</label>
             <div className="info-box github-link">
               <img src={githubIcon} alt="github icon" />
-              <span>@hiabc</span>
+              <span>@{profile.githubAccount}</span>
             </div>
           </div>
         </div>
@@ -120,10 +143,11 @@ const Mypage = () => {
           activeFilter={activeFilter}
           setActiveFilter={setActiveFilter}
         />
-        <ProfileEditModal 
-          isOpen={isOpen && (modalType === 'PROFILE_EDIT')} 
+        {/* 프로필 수정 모달 */}
+        <ProfileEditModal
+          isOpen={isOpen && (modalType === 'PROFILE_EDIT')} // 모달 열림 여부
           // onClose={() => setIsModalOpen(false)} 
-          onClose={() => closeModal()} 
+          onClose={() => closeModal()} // 모달 닫기
         />
       </main>
     </div>
