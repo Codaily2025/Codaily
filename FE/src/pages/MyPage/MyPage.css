@@ -30,17 +30,28 @@
   margin: 40px auto 20px;
 }
 
+.profile-image-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 .edit-profile-link {
   position: absolute;
   top: 20px;
   right: 20px;
   color: #737373;
+  background-color: white;
   font-size: 14px;
   text-decoration: none;
   display: flex;
   align-items: center;
   gap: 5px;
   cursor: pointer;
+}
+.edit-profile-link:focus {
+  outline: none;
 }
 
 .edit-profile-link img {
