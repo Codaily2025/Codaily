@@ -1,8 +1,8 @@
 import React from 'react'
 
-const KanbanCard = ({ category, title, details, dueDate }) => {
+const KanbanCard = ({ category, title, details, dueDate, onClick }) => {
   return (
-    <div className="kanban-card">
+    <div className="kanban-card" onClick={onClick}>
       <div className="kanban-card-info">
         <span className="kanban-card-category">{category}</span>
         <span className="kanban-card-title">{title}</span>

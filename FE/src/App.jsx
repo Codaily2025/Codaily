@@ -171,6 +171,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AppContent />
+        {/* <ModalManager /> */}
       </Router>
     </QueryClientProvider>
   );
