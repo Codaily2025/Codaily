@@ -40,7 +40,8 @@
 .edit-profile-link {
   position: absolute;
   top: 20px;
-  right: 20px;
+  right: 22px;
+  padding: 0px;
   color: #737373;
   background-color: white;
   font-size: 14px;

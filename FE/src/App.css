@@ -18,6 +18,10 @@
   padding: 50px 0px 40px;
   box-sizing: border-box;
 }
+
+.main-content--home-page {
+  padding-top: 6px;
+}
 /* .main-content { */
   /* max-width: 1200px; */
   /* width: 100%; */
