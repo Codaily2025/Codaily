@@ -97,6 +97,9 @@ function AppContent() {
     navigate('/login');
   };
 
+  const { pathname } = useLocation();
+  const isHomePage = pathname === '/';
+
   return (
     <div className="App">
       <NavBar 
@@ -108,7 +111,7 @@ function AppContent() {
         onLogoutClick={handleLogoutClick}
         onLoginClick={handleLoginClick}
       />
-      <main className="main-content">
+      <main className={`main-content ${isHomePage ? 'main-content--home-page' : ''}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
