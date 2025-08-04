@@ -1,19 +1,14 @@
 package com.codaily.common.gpt.controller;
 
-import com.codaily.common.gpt.dispatcher.SseMessageDispatcher;
-import com.codaily.common.gpt.dto.ChatMessageRequest;
+import com.codaily.common.gpt.handler.MessageType;
+import com.codaily.common.gpt.handler.ChatResponseStreamHandler;
 import com.codaily.common.gpt.service.ChatService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codaily.project.service.FeatureItemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import reactor.core.publisher.Flux;
-
-import java.io.IOException;
-import java.util.Map;
 
 @Log4j2
 @RestController
@@ -22,33 +17,26 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
-    private final SseMessageDispatcher dispatcher;
-    private final ObjectMapper objectMapper;
+    private final FeatureItemService featureItemService;
+    private final ChatResponseStreamHandler chatStreamHandler;
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamChat(@RequestParam("userId") String userId,
                                  @RequestParam("message") String message,
                                  @RequestParam("projectId") Long projectId,
                                  @RequestParam("specId") Long specId) {
+        String intent = chatService.classifyIntent(message).block();
+        MessageType messageType = MessageType.fromString(intent);
 
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-        Flux<String> chatFlux = chatService.streamChat(userId, message);
+        switch (messageType) {
+            case SPEC:
+            case SPEC_REGENERATE:
+                featureItemService.deleteBySpecId(specId);
+                break;
+            case CHAT:
+                break;
+        }
 
-        chatFlux.subscribe(chunk -> {
-            try {
-                JsonNode root = objectMapper.readTree(chunk);
-                String type = root.path("type").asText();
-                JsonNode content = root.path("content");
-
-                Object response = dispatcher.dispatch(type, content, projectId, specId);
-
-                emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(response)));
-            } catch (Exception e) {
-                emitter.completeWithError(e);
-            }
-        }, emitter::completeWithError, emitter::complete);
-
-
-        return emitter;
+        return chatStreamHandler.stream(intent, userId, message, projectId, specId);
     }
 }

@@ -104,4 +104,19 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         item.setPriorityLevel(request.getPriorityLevel());
     }
 
+    @Override
+    @Transactional
+    public FeatureSaveResponse regenerateSpec(FeatureSaveRequest chunk, Long projectId, Long specId) {
+        // 1. 기존 명세 항목 전부 삭제
+        featureItemRepository.deleteBySpecification_SpecId(specId);
+
+        // 2. 새로 들어온 chunk 저장
+        return saveSpecChunk(chunk, projectId, specId); // 기존 저장 메서드 재사용
+    }
+
+    @Override
+    @Transactional
+    public void deleteBySpecId(Long specId) {
+        featureItemRepository.deleteBySpecification_SpecId(specId);
+    }
 }

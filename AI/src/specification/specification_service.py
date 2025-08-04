@@ -240,7 +240,7 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
 
 
 async def process_main_function_and_put(project_description: str, group: str, main_func: dict, queue: asyncio.Queue):
-    main_func_full = f"{main_func['기능명']}. {main_func['설명']}"
+    main_func_full = f"{main_func['title']}. {main_func['description']}"
     sub_functions = await asyncio.to_thread(generate_sub_functions, project_description, group, main_func_full)
     result = {
         "field": group,

@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 public class ChatMessageHandler implements SseMessageHandler<ChatMessageResponse> {
 
     @Override
-    public String getType() {
-        return "chat";
+    public MessageType getType() {
+        return MessageType.CHAT;
     }
 
     @Override
