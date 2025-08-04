@@ -1,6 +1,9 @@
 package com.codaily.project.service;
 
+import com.codaily.project.dto.FeatureSaveContent;
+import com.codaily.project.dto.FeatureSaveItem;
 import com.codaily.project.dto.FeatureSaveRequest;
+import com.codaily.project.dto.FeatureSaveResponse;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
@@ -11,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class FeatureItemServiceImpl implements FeatureItemService {
@@ -20,46 +25,83 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
     @Override
     @Transactional
-    public void saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId) {
+    public FeatureSaveResponse saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid projectId"));
         Specification spec = specificationRepository.findById(specId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid specId"));
 
-        // 1. 하위 기능들의 예상시간 총합 계산
-        int totalEstimatedTime = chunk.getSubFunctions().stream()
+        // 1. 상세 기능들의 예상시간 총합 계산
+        int totalEstimatedTime = chunk.getSubFeature().stream()
                 .mapToInt(sub -> sub.getEstimatedTime() != null ? sub.getEstimatedTime() : 0)
                 .sum();
 
-        // 2. main 기능 저장
+        // 2. 주 기능 저장
         FeatureItem mainFeature = FeatureItem.builder()
-                .title(chunk.getMainFunction().getTitle())
-                .description(chunk.getMainFunction().getDescription())
-                .field(chunk.getFunctionGroup())
+                .title(chunk.getMainFeature().getTitle())
+                .description(chunk.getMainFeature().getDescription())
+                .field(chunk.getField())
                 .project(project)
                 .specification(spec)
-                .estimatedTime(totalEstimatedTime) // 총합 예상시간 저장
+                .estimatedTime(totalEstimatedTime)
                 .isCustom(false)
                 .build();
 
-        featureItemRepository.save(mainFeature);
+        FeatureItem savedMain = featureItemRepository.save(mainFeature);
 
-        // 3. 하위 기능 저장
-        for (FeatureSaveRequest.SubFunction sub : chunk.getSubFunctions()) {
+        FeatureSaveItem mainFeatureDto = FeatureSaveItem.builder()
+                .id(savedMain.getFeatureId())
+                .title(savedMain.getTitle())
+                .description(savedMain.getDescription())
+                .estimatedTime(savedMain.getEstimatedTime())
+                .priorityLevel(null)
+                .build();
+
+        // 3. 상세 기능 저장
+        List<FeatureSaveItem> subFeatureDtos = chunk.getSubFeature().stream().map(sub -> {
             FeatureItem subFeature = FeatureItem.builder()
                     .title(sub.getTitle())
                     .description(sub.getDescription())
-                    .field(chunk.getFunctionGroup())
+                    .field(chunk.getField())
                     .project(project)
                     .specification(spec)
                     .priorityLevel(sub.getPriorityLevel())
-                    .parentFeature(mainFeature)
+                    .parentFeature(savedMain)
                     .estimatedTime(sub.getEstimatedTime())
                     .isCustom(false)
                     .build();
+            FeatureItem savedSub = featureItemRepository.save(subFeature);
 
-            featureItemRepository.save(subFeature);
-        }
+            return FeatureSaveItem.builder()
+                    .id(savedSub.getFeatureId())
+                    .title(savedSub.getTitle())
+                    .description(savedSub.getDescription())
+                    .estimatedTime(savedSub.getEstimatedTime())
+                    .priorityLevel(savedSub.getPriorityLevel())
+                    .build();
+        }).toList();
+
+        FeatureSaveContent content = FeatureSaveContent.builder()
+                .mainFeature(mainFeatureDto)
+                .subFeature(subFeatureDtos)
+                .build();
+
+        return FeatureSaveResponse.builder()
+                .type("spec")
+                .content(content)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void updateFeatureItem(FeatureSaveItem request) {
+        FeatureItem item = featureItemRepository.findById(request.getId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 기능이 존재하지 않습니다."));
+
+        item.setTitle(request.getTitle());
+        item.setDescription(request.getDescription());
+        item.setEstimatedTime(request.getEstimatedTime());
+        item.setPriorityLevel(request.getPriorityLevel());
     }
 
 }

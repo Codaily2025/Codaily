@@ -21,6 +21,8 @@ public class ProjectServiceImpl implements ProjectService {
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ProjectRepositoriesRepository repository;
     private final SpecificationRepository specificationRepository;
+    private final FeatureItemRepository featureItemRepository;
+
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();

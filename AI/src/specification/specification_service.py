@@ -9,13 +9,13 @@ from typing import AsyncGenerator
 
 
 MIN_GROUPS = 0
-MAX_GROUPS = 3
+MAX_GROUPS = 2
 
 MIN_MAIN_FUNCTIONS = 0
-MAX_MAIN_FUNCTIONS = 3
+MAX_MAIN_FUNCTIONS = 2
 
 MIN_SUB_FUNCTIONS = 0
-MAX_SUB_FUNCTIONS = 3
+MAX_SUB_FUNCTIONS = 2
 
 
 # 1. 환경 변수 로드
@@ -90,7 +90,7 @@ def parse_bullet_items(response: str, key_name: str) -> list[dict]:
             name, desc = content.split(":", 1)
             result.append({
                 key_name: name.strip(),
-                "설명": desc.strip()
+                "description": desc.strip()
             })
     return result
 
@@ -134,7 +134,7 @@ def generate_main_functions(project_description: str, function_group: str) -> li
     })
 
     # 문자열 응답을 리스트[dict]로 파싱
-    result = parse_bullet_items(response, "기능명")
+    result = parse_bullet_items(response, "title")
 
     return result
 
@@ -152,9 +152,9 @@ def parse_bullet_items_with_duration_and_priority(response: str, key_name: str) 
             try:
                 result.append({
                     key_name: name,
-                    "설명": desc,
-                    "예상시간": float(duration.replace("시간", "").strip()),
-                    "우선순위": int(priority)
+                    "description": desc,
+                    "estimated_time": float(duration.replace("시간", "").strip()),
+                    "priority_level": int(priority)
                 })
             except ValueError:
                 continue  # 숫자 형식 오류 방지
@@ -209,30 +209,30 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
     })
 
     # 문자열 응답을 list[dict]로 파싱
-    result = result = parse_bullet_items_with_duration_and_priority(response, "상세기능명")
+    result = result = parse_bullet_items_with_duration_and_priority(response, "title")
 
     return result
 
 
-def build_function_spec_json(function_spec_data: list) -> dict:
-    """
-    기능 그룹, 주 기능, 상세 기능 데이터를 기반으로 기능 명세 JSON을 생성합니다.
-    """
-    result = {}
+# def build_function_spec_json(function_spec_data: list) -> dict:
+#     """
+#     기능 그룹, 주 기능, 상세 기능 데이터를 기반으로 기능 명세 JSON을 생성합니다.
+#     """
+#     result = {}
 
-    for item in function_spec_data:
-        group = item["function_group"] # str
-        main = item["main_function"]  # dict: {"기능명": ..., "설명": ...}
-        subs = item["sub_functions"]  # list[dict]: [{"기능명": ..., "설명": ...}, ...]
+#     for item in function_spec_data:
+#         group = item["function_group"] # str
+#         main = item["main_function"]  # dict: {"기능명": ..., "설명": ...}
+#         subs = item["sub_functions"]  # list[dict]: [{"기능명": ..., "설명": ...}, ...]
 
-        if group not in result:
-            result[group] = []
+#         if group not in result:
+#             result[group] = []
 
-        result[group].append({
-            "기능명": main["기능명"],
-            "설명": main["설명"],
-            "상세 기능": subs
-        })
+#         result[group].append({
+#             "field": main["기능명"],
+#             "설명": main["설명"],
+#             "상세 기능": subs
+#         })
 
     return result
 
@@ -243,9 +243,9 @@ async def process_main_function_and_put(project_description: str, group: str, ma
     main_func_full = f"{main_func['기능명']}. {main_func['설명']}"
     sub_functions = await asyncio.to_thread(generate_sub_functions, project_description, group, main_func_full)
     result = {
-        "function_group": group,
-        "main_function": main_func,
-        "sub_functions": sub_functions
+        "field": group,
+        "main_feature": main_func,
+        "sub_feature": sub_functions
     }
     await queue.put(result)
 

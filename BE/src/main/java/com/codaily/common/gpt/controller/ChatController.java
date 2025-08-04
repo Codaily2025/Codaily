@@ -40,13 +40,14 @@ public class ChatController {
                 String type = root.path("type").asText();
                 JsonNode content = root.path("content");
 
-                dispatcher.dispatch(type, content, projectId, specId);  // 👈 전달
+                Object response = dispatcher.dispatch(type, content, projectId, specId);
 
-                emitter.send(SseEmitter.event().data(chunk));
+                emitter.send(SseEmitter.event().data(objectMapper.writeValueAsString(response)));
             } catch (Exception e) {
                 emitter.completeWithError(e);
             }
         }, emitter::completeWithError, emitter::complete);
+
 
         return emitter;
     }

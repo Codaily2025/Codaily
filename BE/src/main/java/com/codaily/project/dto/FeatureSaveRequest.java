@@ -8,37 +8,30 @@ import java.util.List;
 @Data
 public class FeatureSaveRequest {
 
-    @JsonProperty("function_group")
-    private String functionGroup;
+    @JsonProperty("field")
+    private String field;
 
-    @JsonProperty("main_function")
-    private MainFunction mainFunction;
+    @JsonProperty("main_feature")
+    private MainFeature mainFeature;
 
-    @JsonProperty("sub_functions")
-    private List<SubFunction> subFunctions;
+    @JsonProperty("sub_feature")
+    private List<SubFeature> subFeature;
 
     @Data
-    public static class MainFunction {
-        @JsonProperty("기능명")
+    public static class MainFeature {
         private String title;
-
-        @JsonProperty("설명")
         private String description;
     }
 
     @Data
-    public static class SubFunction {
-        @JsonProperty("상세기능명")
+    public static class SubFeature {
         private String title;
-
-        @JsonProperty("설명")
         private String description;
 
-        @JsonProperty("예상시간")
+        @JsonProperty("estimated_time")
         private Integer estimatedTime;
 
-        @JsonProperty("우선순위")
+        @JsonProperty("priority_level")
         private Integer priorityLevel;
     }
 }
-
