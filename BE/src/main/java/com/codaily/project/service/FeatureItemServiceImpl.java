@@ -119,4 +119,11 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     public void deleteBySpecId(Long specId) {
         featureItemRepository.deleteBySpecification_SpecId(specId);
     }
+
+    @Override
+    @Transactional
+    public int calculateTotalEstimatedTime(Long specId) {
+        Integer total = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
+        return total != null ? total : 0;
+    }
 }

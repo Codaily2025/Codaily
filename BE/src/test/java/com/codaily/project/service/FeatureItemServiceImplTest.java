@@ -1,16 +1,20 @@
 package com.codaily.project.service;
 
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
-
+import com.codaily.auth.entity.User;
 import com.codaily.project.dto.FeatureSaveItem;
 import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.entity.Project;
+import com.codaily.project.entity.Specification;
 import com.codaily.project.repository.FeatureItemRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 class FeatureItemServiceImplTest {
@@ -78,5 +82,90 @@ class FeatureItemServiceImplTest {
         });
 
         verify(featureItemRepository, times(1)).findById(featureId);
+    }
+
+    @Test
+    void calculateTotalEstimatedTime_하위기능합계가_정상적으로_반환된다() {
+        // given
+        Long specId = 123123123L;
+
+        User dummyUser = User.builder()
+                .userId(123123123L)
+                .email("test@example.com")
+                .nickname("tester")
+                .socialProvider("github")
+                .role(User.Role.USER)
+                .build();
+
+        Specification spec = Specification.builder()
+                .specId(specId)
+                .title("사양서 제목")
+                .content("사양 내용")
+                .format("json")
+                .user(dummyUser)
+                .priorityLevel(1)
+                .build();
+
+        Project project = Project.builder()
+                .projectId(1L)
+                .title("프로젝트 A")
+                .specification(spec)
+                .user(dummyUser)
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        FeatureItem parentFeature = FeatureItem.builder()
+                .featureId(123123123L)
+                .title("주 기능 A")
+                .specification(spec)
+                .project(project)
+                .build();
+
+        FeatureItem child1 = FeatureItem.builder()
+                .featureId(123123124L)
+                .title("하위 기능 1")
+                .estimatedTime(5)
+                .parentFeature(parentFeature)
+                .specification(spec)
+                .project(project)
+                .build();
+
+        FeatureItem child2 = FeatureItem.builder()
+                .featureId(123123125L)
+                .title("하위 기능 2")
+                .estimatedTime(12)
+                .parentFeature(parentFeature)
+                .specification(spec)
+                .project(project)
+                .build();
+
+        // Repository가 SUM 결과를 17로 리턴하도록 설정
+        when(featureItemRepository.getTotalEstimatedTimeBySpecId(specId))
+                .thenReturn(17);
+
+        // when
+        int totalTime = featureItemService.calculateTotalEstimatedTime(specId);
+
+        // then
+        assertEquals(17, totalTime);
+        verify(featureItemRepository, times(1)).getTotalEstimatedTimeBySpecId(specId);
+    }
+
+
+    @Test
+    void calculateTotalEstimatedTime_하위기능이_없으면_0을_반환한다() {
+        // given
+        Long specId = 123123123L;
+
+        // DB에서 SUM 결과가 없으면 null 반환될 수 있음
+        when(featureItemRepository.getTotalEstimatedTimeBySpecId(specId))
+                .thenReturn(null);
+
+        // when
+        int totalTime = featureItemService.calculateTotalEstimatedTime(specId);
+
+        // then
+        assertEquals(0, totalTime);
+        verify(featureItemRepository, times(1)).getTotalEstimatedTimeBySpecId(specId);
     }
 }
