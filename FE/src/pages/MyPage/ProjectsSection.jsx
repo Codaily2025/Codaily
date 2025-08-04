@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './ProjectsSection.css';
+import styles from './ProjectsSection.module.css';
 import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
 import useModalStore from "../../store/modalStore";
@@ -44,14 +44,14 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   });
 
   return (
-    <section className="projects-section">
-      <div className="projects-header">
+    <section className={styles.projectsSection}>
+      <div className={styles.projectsHeader}>
         <h2>Projects</h2>
-        <div className="project-filters">
+        <div className={styles.projectFilters}>
           {['전체', '진행 중', '완료'].map((label) => (
             <button
               key={label}
-              className={`filter-btn ${activeFilter === label ? 'active' : ''}`}
+              className={`${styles.filterBtn} ${activeFilter === label ? styles.active : ''}`}
               onClick={() => setActiveFilter(label)}
             >
               {label}
@@ -61,25 +61,25 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
       </div>
 
       {filteredProjects.length === 0 ? (
-        <div className="no-projects-container">
-          <div className="no-projects-content">
-            <p className="no-projects-title">생성한 프로젝트가 아직 없어요.</p>
-            <p className="no-projects-subtitle">지금 바로 프로젝트를 생성하고 관리해 보세요.</p>
-            <button className="create-project-btn" onClick={() => handleCreateProject()}>프로젝트 생성하기</button>
+        <div className={styles.noProjectsContainer}>
+          <div className={styles.noProjectsContent}>
+            <p className={styles.noProjectsTitle}>생성한 프로젝트가 아직 없어요.</p>
+            <p className={styles.noProjectsSubtitle}>지금 바로 프로젝트를 생성하고 관리해 보세요.</p>
+            <button className={styles.createProjectBtn} onClick={() => handleCreateProject()}>프로젝트 생성하기</button>
           </div>
         </div>
       ) : (
-        <div className="project-list">
+        <div className={styles.projectList}>
           {filteredProjects.map((project) => (
             <div
               key={project.id}
-              className={`project-card ${project.disabled ? 'disabled' : ''}`}
+              className={`${styles.projectCard} ${project.disabled ? styles.disabled : ''}`}
               onClick={() => handleProjectBoard(project.id)}
             >
               {/* 우측 상단 삭제, 설정 버튼 */}
-              <div className="card-actions">
+              <div className={styles.cardActions}>
                 <button 
-                  className="icon-btn delete-btn" 
+                  className={`${styles.iconBtn} ${styles.deleteBtn}`} 
                   title="삭제" 
                   // onClick={() => handleDelete(project.id)}
                   onClick={(e) => {
@@ -90,7 +90,7 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
                 >
                 </button>
                 <button 
-                  className="icon-btn settings-btn" 
+                  className={`${styles.iconBtn} ${styles.settingsBtn}`} 
                   title="설정" 
                   onClick={(e) => {
                     e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
@@ -101,13 +101,13 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
                 </button>
               </div>
               <h3>{project.title}</h3>
-              <p className="project-duration">{project.duration}</p>
-              <div className="progress-bar-container">
+              <p className={styles.projectDuration}>{project.duration}</p>
+              <div className={styles.progressBarContainer}>
                 <span>진행률</span>
                 <span>{project.progress}%</span>
-                <div className="progress-bar">
+                <div className={styles.progressBar}>
                   <div
-                    className="progress"
+                    className={styles.progress}
                     style={{
                       width: `${project.progress}%`,
                       backgroundColor: project.disabled ? '#CCCBE4' : undefined
@@ -116,11 +116,11 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
                 </div>
               </div>
               {/* 기술 스택 */}
-              <div className="project-stack">
+              <div className={styles.projectStack}>
                 {project.stack.map((tech, index) => (
                   <span
                     key={index}
-                    className={project.disabled ? 'tech-tag-disabled' : 'tech-tag-in-process'}
+                    className={project.disabled ? styles.techTagDisabled : styles.techTagInProcess}
                   >
                     {tech}
                   </span>

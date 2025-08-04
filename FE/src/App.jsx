@@ -6,6 +6,7 @@ import Home from './pages/Home/Home';
 import Schedule from './pages/Schedule/Schedule';
 import Project from './pages/Project/Project';
 import ProjectCreate from './pages/ProjectCreate/ProjectCreate';
+import ProjectCreateStep2 from './pages/ProjectCreate/ProjectCreateStep2';
 import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
@@ -138,6 +139,14 @@ function AppContent() {
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <ProjectCreate />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/project/create/step2"
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+                <ProjectCreateStep2 />
               </ProtectedRoute>
             }
           />
