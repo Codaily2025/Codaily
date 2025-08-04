@@ -1,5 +1,5 @@
 import React from 'react'
-import './Badge.css'
+import './Badge.css' 
 
 const Badge = ({ content, color = 'red' }) => {
     return (

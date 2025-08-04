@@ -3,6 +3,8 @@ import ProfileEditModal from "../ProfileEditModal"
 import ProjectEditModal from "../ProjectEditModal"
 import EventDetailModal from './EventDetailModal'
 import NicknameCheckModal from './NicknameCheckModal'
+import TaskDetailModal from './TaskDetailModal'
+
 
 // modal 타입별 컴포넌트 맵핑
 const MODAL_COMPONENTS = {
@@ -10,6 +12,7 @@ const MODAL_COMPONENTS = {
     NICKNAME_CHECK: NicknameCheckModal,
     PROFILE_EDIT: ProfileEditModal,
     PROJECT_EDIT: ProjectEditModal,
+    TASK_DETAIL: TaskDetailModal,
     // CONFIRMATION: ConfirmationModal,
     // DELETION: DeleteModal,
     // ...

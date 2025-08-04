@@ -1,7 +1,15 @@
 import React from 'react'
 import KanbanCard from '@/components/molecules/KanbanCard'
+import useModalStore from '@/store/modalStore'
 
 const KanbanBoard = () => {
+    const { openModal } = useModalStore()
+    
+    const handleTaskClick = (cardData) => {
+      console.log(`Task Clicked!`)
+      openModal('TASK_DETAIL', { event: cardData })
+    }
+
     // 확인용 하드코딩 데이터
     const kanbanData = {
     todo: [
@@ -90,6 +98,7 @@ const KanbanBoard = () => {
                 title={card.title}
                 details={card.details}
                 dueDate={card.dueDate}
+                onClick={() => handleTaskClick(card)}
               />
             ))}
           </div>
