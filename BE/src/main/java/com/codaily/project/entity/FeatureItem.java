@@ -1,5 +1,7 @@
 package com.codaily.project.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,25 +39,38 @@ public class FeatureItem {
     @Column(length=50)
     private String category;
 
-    @Column(length=50)
-    private String status;
+    @Column(nullable = false, length=50)
+    @Builder.Default
+    private String status = "TODO";
 
     @Column(nullable = false)
     private Boolean isReduced = false;
-    private Integer estimatedTime;
+    private Double estimatedTime;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
+    @JsonIgnore
     private Project project;
+
+    @JsonProperty("projectId")
+    public Long getProjectId(){
+        return project != null ? project.getProjectId() : null;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "spec_id")
+    @JsonIgnore
     private Specification specification;
 
     @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_feature_id")
+    @JsonIgnore
     private FeatureItem parentFeature;
 
     @OneToMany(mappedBy = "parentFeature", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<FeatureItem> childFeatures = new ArrayList<>();
+
+    @Transient
+    private Double remainingTime;
 }

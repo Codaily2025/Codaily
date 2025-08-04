@@ -28,7 +28,7 @@ public class CalendarResponse {
         private String featureTitle;
         private String featureDescription;
         private LocalDate scheduleDate;
-        private Integer allocatedHours;
+        private Double allocatedHours;
         private String category;
         private Integer priorityLevel;
         private String status;

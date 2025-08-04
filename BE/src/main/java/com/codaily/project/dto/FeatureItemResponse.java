@@ -17,7 +17,7 @@ public class FeatureItemResponse {
     private String category;
     private String status;
     private Integer priorityLevel;
-    private Integer estimatedTime;
+    private Double estimatedTime;
     private Boolean isSelected;
     private Boolean isCustom;
     private Boolean isReduced;

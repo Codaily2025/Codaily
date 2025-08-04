@@ -1,15 +1,13 @@
 package com.codaily.project.service;
 
 import com.codaily.global.exception.ProjectNotFoundException;
-import com.codaily.management.dto.FeatureScheduleResponse;
 import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.management.entity.FeatureItemSchedule;
-import com.codaily.management.entity.Schedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
-import com.codaily.project.dto.FeatureItemCreate;
+import com.codaily.project.dto.FeatureItemCreateRequest;
 import com.codaily.project.dto.FeatureItemResponse;
-import com.codaily.project.dto.FeatureItemUpdate;
+import com.codaily.project.dto.FeatureItemUpdateRequest;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
@@ -42,7 +40,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final ScheduleRepository scheduleRepository;
 
     @Override
-    public FeatureItemResponse createFeature(Long projectId, FeatureItemCreate featureItem) {
+    public FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest featureItem) {
         if (projectId == null || featureItem == null) {
             throw new IllegalArgumentException("프로젝트 ID와 생성 정보는 필수입니다.");
         }
@@ -105,7 +103,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 }
 
     @Override
-    public FeatureItemResponse updateFeature(Long projectId, Long featureId, FeatureItemUpdate update) {
+    public FeatureItemResponse updateFeature(Long projectId, Long featureId, FeatureItemUpdateRequest update) {
         if (projectId == null || featureId == null || update == null) {
             throw new IllegalArgumentException();
         }
@@ -150,7 +148,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             if (update.getEstimatedTime() < 0) {
                 throw new IllegalArgumentException("예상 시간은 0 이상이어야 합니다.");
             }
-            Integer oldTime = feature.getEstimatedTime();
+            Double oldTime = feature.getEstimatedTime();
             feature.setEstimatedTime(update.getEstimatedTime());
             if (!java.util.Objects.equals(oldTime, update.getEstimatedTime())) {
                 needsRescheduling = true;
@@ -190,18 +188,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     }
 
     @Override
-    public List<FeatureScheduleResponse> getFeatureSchedules(Long projectId, Long featureId) {
-        return null;
-    }
-
-    @Override
-    public List<FeatureScheduleResponse> getSchedulesByDate(Long projectId, LocalDate date) {
-        return null;
-    }
-
-    @Override
     public void rescheduleProject(Long projectId) {
-        // 재스케줄링 가능한 기능들을 우선순위 순으로 조회
+        // 재스케줄링 가능한 기능들을 조회
         List<FeatureItem> features = getSchedulableFeatures(projectId);
 
         if (features.isEmpty()) {
@@ -212,8 +200,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         // 기존 스케줄 삭제 (재스케줄링 대상만)
         deleteExistingSchedules(features);
 
-        // 시작 날짜 결정
-        LocalDate startDate = determineStartDate();
+        LocalDate startDate = LocalDate.now();
 
         // 우선순위 순으로 다시 스케줄링
         scheduleFeatures(features, startDate, projectId);
@@ -221,55 +208,150 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         log.info("프로젝트 재스케줄링 완료 - 기능 수: {}", features.size());
     }
 
-    private void scheduleFeatures(List<FeatureItem> features, LocalDate startDate, Long projectId) {
-        LocalDate currentDate = startDate;
-        Map<String, Integer> weeklySchedule = getWeeklyScheduleMap(projectId);
+    @Override
+    public void scheduleProjectInitially(Long projectId) {
+        Project project = projectRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
-        // PriorityQueue로 실시간 우선순위 관리
-        PriorityQueue<FeatureItem> remainingFeatures = new PriorityQueue<>();
-        remainingFeatures.addAll(features);
+        List<FeatureItem> features = featureItemRepository.findByProject_ProjectId(projectId);
 
-        while (!remainingFeatures.isEmpty()) {
-            FeatureItem currentFeature = remainingFeatures.poll();
-            currentDate = scheduleFeature(currentFeature, currentDate, weeklySchedule);
+        LocalDate startDate = project.getStartDate() != null ? project.getStartDate() : LocalDate.now();
+        scheduleFeatures(features, startDate, projectId);
+
+    }
+
+    @Override
+    public void updateDailyStatus() {
+        List<Project> activeProjects = projectRepository.findActiveProjects();
+
+        for(Project project : activeProjects){
+            // 지연된 기능들 일정 재생성
+            handleOverdueFeatures(project.getProjectId());
+            // 오늘 시작할 기능들 IN_PROGRESS로
+            startTodayFeatures(project.getProjectId(), LocalDate.now());
         }
     }
 
-    private LocalDate scheduleFeature(FeatureItem feature, LocalDate startDate, Map<String, Integer> weeklySchedule) {
-        int remainingHours = feature.getEstimatedTime();
-        LocalDate currentDate = startDate;
-        Long projectId = feature.getProject().getProjectId();
+    private void startTodayFeatures(Long projectId, LocalDate today) {
+        List<FeatureItem> todayFeatures = featureItemRepository.findTodayFeatures(projectId, today);
 
-        int maxDays = 90;
+        for(FeatureItem feature : todayFeatures){
+            if("TODO".equals(feature.getStatus())){
+                feature.setStatus("IN_PROGRESS");
+                featureItemRepository.save(feature);
+            }
+        }
+    }
+
+    private void handleOverdueFeatures(Long projectId) {
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+
+        List<FeatureItem> overdueFeatures = featureItemRepository.findOverdueFeatures(projectId, yesterday);
+
+        if(!overdueFeatures.isEmpty()){
+            for(FeatureItem feature : overdueFeatures){
+                if(! "DONE".equals(feature.getStatus())){
+                    feature.setStatus("TODO");
+                    featureItemRepository.save(feature);
+                }
+            }
+        }
+
+        List<Long> featureIds = overdueFeatures.stream()
+                .map(FeatureItem::getFeatureId)
+                .collect(Collectors.toList());
+        featureItemScheduleRepository.deleteByFeatureItemFeatureIdIn(featureIds);
+
+        rescheduleProject(projectId);
+    }
+
+
+
+    private void scheduleFeatures(List<FeatureItem> features, LocalDate startDate, Long projectId) {
+        Project project = projectRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트가 존재하지 않습니다."));
+
+        LocalDate projectEndDate = project.getEndDate();
+        Map<String, Integer> weeklySchedule = getWeeklyScheduleMap(projectId);
+        
+        PriorityQueue<FeatureItem> remainingFeatures = new PriorityQueue<>(
+                Comparator.comparing(FeatureItem::getPriorityLevel, Comparator.nullsLast(Comparator.naturalOrder()))
+        );
+        remainingFeatures.addAll(features);
+        
+        List<FeatureItem> scheduledFeatures = new ArrayList<>();
+        List<FeatureItem> unscheduledFeatures = new ArrayList<>();
+        LocalDate currentDate = startDate;
+        
+        while(!remainingFeatures.isEmpty()){
+            FeatureItem currentFeature = remainingFeatures.poll();
+
+            double remainingHours = scheduleWithinProject(currentFeature, currentDate, weeklySchedule, projectId, projectEndDate);
+
+            //remainingHours가 0이면 해당 작업의 estimatedTime만큼 다 배정이 된 것
+            if(remainingHours == 0){
+                scheduledFeatures.add(currentFeature);
+            }
+            //배정해야할 시간이 남았으면 남은 시간 저장 후 unscheduledFeatures에 추가
+            else{
+                currentFeature.setRemainingTime(remainingHours);
+                unscheduledFeatures.add(currentFeature);
+            }
+        }
+        //배정되지 않은 스케줄들이 있으면 요일별 작업 가능 시간 기반으로 스케줄링
+        if(!unscheduledFeatures.isEmpty()){
+            LocalDate extendedStartDate = projectEndDate.plusDays(1);
+            scheduleWithWeeklyPattern(unscheduledFeatures, extendedStartDate, weeklySchedule, projectId);
+        }
+        
+    }
+
+    private void scheduleWithWeeklyPattern(List<FeatureItem> features, LocalDate startDate, Map<String, Integer> weeklySchedule, Long projectId) {
+        LocalDate currentDate = startDate;
+
+        for (FeatureItem feature : features) {
+            currentDate = scheduleFeatureWithWeeklyPattern(feature, currentDate, weeklySchedule, projectId);
+        }
+    }
+
+    private LocalDate scheduleFeatureWithWeeklyPattern(FeatureItem feature, LocalDate startDate, Map<String, Integer> weeklySchedule, Long projectId) {
+        double remainingHours = feature.getRemainingTime();
+        LocalDate currentDate = startDate;
+
+        int maxDays = 365;
         int dayCount = 0;
 
         while (remainingHours > 0 && dayCount < maxDays) {
-            int availableHours = getAvailableHours(projectId, currentDate, weeklySchedule);
+            // 해당 날짜의 요일별 작업 가능 시간 확인
+            String dayName = currentDate.getDayOfWeek().toString();
+            double availableHours = weeklySchedule.getOrDefault(dayName, 0);
 
             if (availableHours > 0) {
-                int allocatedHours = getAllocatedHours(projectId, currentDate);
-                int freeHours = Math.max(0, availableHours - allocatedHours);
+                // 해당 날짜에 이미 배정된 시간 확인
+                double allocatedHours = getAllocatedHours(projectId, currentDate);
+                double freeHours = Math.max(0, availableHours - allocatedHours);
 
                 if (freeHours > 0) {
-                    int hoursToSchedule = Math.min(remainingHours, freeHours);
+                    double hoursToSchedule = Math.min(remainingHours, freeHours);
 
                     // 스케줄 생성
                     FeatureItemSchedule schedule = FeatureItemSchedule.builder()
                             .featureItem(feature)
                             .scheduleDate(currentDate)
                             .allocatedHours(hoursToSchedule)
+                            .withinProjectPeriod(false)
                             .build();
 
                     featureItemScheduleRepository.save(schedule);
                     remainingHours -= hoursToSchedule;
 
-                    // 현재 날짜에 시간이 남았다면 다음 기능도 같은 날 시작 가능
+                    // 현재 날짜 작업이 완료되었고 시간이 남은 경우
                     if (remainingHours == 0) {
-                        int totalUsed = allocatedHours + hoursToSchedule;
+                        double totalUsed = allocatedHours + hoursToSchedule;
                         if (totalUsed < availableHours) {
-                            return currentDate; // 같은 날 반환
+                            return currentDate; // 같은 날 반환 (다음 기능도 같은 날 시작 가능)
                         } else {
-                            return getNextWorkingDay(projectId, currentDate, weeklySchedule);
+                            return currentDate.plusDays(1);
                         }
                     }
                 }
@@ -279,19 +361,55 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             dayCount++;
         }
 
-
         if (remainingHours > 0) {
-            log.warn("스케줄링 미완료 - 기능 ID: {}, 남은 시간: {}h", feature.getFeatureId(), remainingHours);
+            log.warn("스케줄링 미완료 - 기능 ID: {}, 남은 시간: {}h (최대 기간 초과)",
+                    feature.getFeatureId(), remainingHours);
         }
 
         return currentDate;
     }
 
+    private double scheduleWithinProject(FeatureItem feature, LocalDate startDate, Map<String, Integer> weeklySchedule, Long projectId, LocalDate projectEndDate) {
+        double remainingHours = feature.getEstimatedTime();
+        LocalDate currentDate = startDate;
+
+        while(remainingHours > 0 && !currentDate.isAfter(projectEndDate)){
+            double availableHours = getAvailableHours(projectId, currentDate, weeklySchedule);
+
+            //availableHours > 0 이면 그 날에 작업 배정 가능
+            if(availableHours > 0){
+                // 해당 날짜에 이미 배정된 시간
+                double allocatedHours = getAllocatedHours(projectId, currentDate);
+                // 작업 배정 가능한 시간
+                double freeHours = Math.max(0, availableHours - allocatedHours);
+
+                if(freeHours > 0){
+                    //작업하는 데 걸리는 시간과 작업 배정 가능 시간 중 작은 것을 골라 그 시간만큼 배정
+                    double hoursToSchedule = Math.min(remainingHours, freeHours);
+
+                    FeatureItemSchedule schedule = FeatureItemSchedule.builder()
+                            .featureItem(feature)
+                            .scheduleDate(currentDate)
+                            .allocatedHours(hoursToSchedule)
+                            .withinProjectPeriod(true)
+                            .build();
+
+                    featureItemScheduleRepository.save(schedule);
+                    remainingHours -= hoursToSchedule;
+
+                }
+            }
+
+            currentDate = currentDate.plusDays(1);
+        }
+        return remainingHours;
+    }
+
     private int getAvailableHours(Long projectId, LocalDate date, Map<String, Integer> weeklySchedule) {
         // 해당 날짜가 작업 가능한 날인지 확인
-        List<Schedule> schedules = scheduleRepository.findByProject_ProjectIdAndScheduledDate(projectId, date);
+        boolean isWorkingDay = scheduleRepository.existsByProject_ProjectIdAndScheduledDate(projectId, date);
 
-        if (schedules.isEmpty()) {
+        if (!isWorkingDay) {
             return 0; // 작업 불가능한 날
         }
 
@@ -300,26 +418,13 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         return weeklySchedule.getOrDefault(dayName, 0);
     }
 
-    private int getAllocatedHours(Long projectId, LocalDate date) {
+    private double getAllocatedHours(Long projectId, LocalDate date) {
         List<FeatureItemSchedule> schedules = featureItemScheduleRepository
                 .findByFeatureItem_Project_ProjectIdAndScheduleDate(projectId, date);
 
         return schedules.stream()
-                .mapToInt(FeatureItemSchedule::getAllocatedHours)
+                .mapToDouble(FeatureItemSchedule::getAllocatedHours)
                 .sum();
-    }
-
-    private LocalDate getNextWorkingDay(Long projectId, LocalDate fromDate, Map<String, Integer> weeklySchedule) {
-        LocalDate nextDate = fromDate.plusDays(1);
-
-        for (int i = 0; i < 14; i++) {
-            if (getAvailableHours(projectId, nextDate, weeklySchedule) > 0) {
-                return nextDate;
-            }
-            nextDate = nextDate.plusDays(1);
-        }
-
-        return fromDate.plusDays(1);
     }
 
     private Map<String, Integer> getWeeklyScheduleMap(Long projectId) {
@@ -331,17 +436,6 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                         DaysOfWeek::getHours,
                         (existing, replacement) -> existing
                 ));
-    }
-
-    private LocalDate determineStartDate() {
-        Optional<LocalDate> latestProgressDate = featureItemScheduleRepository
-                .findLatestScheduleDateForProgressFeatures();
-
-        if (latestProgressDate.isPresent()) {
-            return latestProgressDate.get();
-        } else {
-            return LocalDate.now();
-        }
     }
 
     private void deleteExistingSchedules(List<FeatureItem> features) {
@@ -365,7 +459,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private boolean isSchedulable(FeatureItem feature) {
         String status = feature.getStatus();
 
-        if(status.equals("DONE") || status.equals("IN PROGRESS"))
+        if(status.equals("DONE") || status.equals("IN_PROGRESS"))
             return false;
 
         return true;

@@ -16,6 +16,6 @@ public class FeatureScheduleResponse {
     private Long featureId;
     private String featureTitle;
     private LocalDate scheduleDate;
-    private Integer allocatedHours;
+    private Double allocatedHours;
     private String status;
 }

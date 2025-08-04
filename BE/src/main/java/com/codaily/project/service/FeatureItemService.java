@@ -1,25 +1,21 @@
 package com.codaily.project.service;
 
-import com.codaily.management.dto.FeatureScheduleResponse;
-import com.codaily.project.dto.FeatureItemCreate;
+import com.codaily.project.dto.FeatureItemCreateRequest;
 import com.codaily.project.dto.FeatureItemResponse;
-import com.codaily.project.dto.FeatureItemUpdate;
-
-import java.time.LocalDate;
-import java.util.List;
+import com.codaily.project.dto.FeatureItemUpdateRequest;
 
 public interface FeatureItemService {
-    FeatureItemResponse createFeature(Long projectId, FeatureItemCreate createDto);
+    FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest createDto);
 
     FeatureItemResponse getFeature(Long projectId, Long featureId);
 
-    FeatureItemResponse updateFeature(Long projectId, Long featureId, FeatureItemUpdate update);
+    FeatureItemResponse updateFeature(Long projectId, Long featureId, FeatureItemUpdateRequest update);
 
     void deleteFeature(Long projectId, Long featureId);
 
-    List<FeatureScheduleResponse> getFeatureSchedules(Long projectId, Long featureId);
+    void rescheduleProject(Long projectId);
 
-    List<FeatureScheduleResponse> getSchedulesByDate(Long projectId, LocalDate date);
+    void scheduleProjectInitially(Long projectId);
 
-    public void rescheduleProject(Long projectId);
+    void updateDailyStatus();
 }

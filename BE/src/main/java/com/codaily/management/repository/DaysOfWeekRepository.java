@@ -7,6 +7,4 @@ import java.util.List;
 
 public interface DaysOfWeekRepository extends JpaRepository<DaysOfWeek, Long> {
     List<DaysOfWeek> findByProject_ProjectId(Long projectId);
-    List<DaysOfWeek> findByProject_ProjectIdAndDateName(Long projectId, String dateName);
-    boolean existsByProject_ProjectIdAndDateName(Long projectId, String dateName);
 }

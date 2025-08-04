@@ -6,7 +6,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FeatureItemCreate {
+public class FeatureItemCreateRequest {
     private String title;
     private String description;
     private String field;

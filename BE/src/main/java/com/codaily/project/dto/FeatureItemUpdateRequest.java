@@ -6,7 +6,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FeatureItemUpdate {
+public class FeatureItemUpdateRequest {
     private String title;
     private String description;
     private String field;

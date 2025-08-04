@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
-    List<Schedule> findByProject_ProjectIdAndScheduledDate(Long projectId, LocalDate date);
+    boolean existsByProject_ProjectIdAndScheduledDate(Long projectId, LocalDate date);
 }
