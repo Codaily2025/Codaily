@@ -40,4 +40,6 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
             "AND s.scheduleDate = :today " +
             "AND s.featureItem.status = 'TODO'")
     List<FeatureItem> findTodayFeatures(Long projectId, LocalDate today);
+
+    List<FeatureItem> findAllBySpecification_SpecId(Long specId);
 }

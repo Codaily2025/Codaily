@@ -4,8 +4,11 @@ import com.codaily.auth.entity.User;
 import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.management.entity.Schedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
+import com.codaily.project.dto.FeatureItemReduceItem;
+import com.codaily.project.dto.FeatureItemReduceResponse;
 import com.codaily.project.dto.ProjectCreateRequest;
 import com.codaily.project.dto.ProjectRepositoryResponse;
+import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.entity.Specification;
@@ -16,9 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -129,4 +130,55 @@ public class ProjectServiceImpl implements ProjectService {
 
         return totalHours;
     }
+
+    @Override
+    @Transactional
+    public FeatureItemReduceResponse reduceFeatureItemsIfNeeded(Long projectId, Long specId) {
+        int totalEstimated = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
+        int totalAvailable = calculateTotalUserAvailableHours(projectId);
+
+        List<FeatureItem> items = featureItemRepository.findAllBySpecification_SpecId(specId);
+
+        List<FeatureItem> sorted = items.stream()
+                .sorted(Comparator
+                        .comparingInt(FeatureItem::getPriorityLevel)
+                        .thenComparing(Comparator.comparingDouble(FeatureItem::getEstimatedTime).reversed()))
+                .toList();
+
+        List<FeatureItemReduceItem> resultDtos = new ArrayList<>();
+        double accumulated = 0;
+        int reducedCount = 0, keptCount = 0;
+
+        for (FeatureItem item : sorted) {
+            boolean reduced;
+            if (accumulated + item.getEstimatedTime() <= totalAvailable) {
+                reduced = false;
+                accumulated += item.getEstimatedTime();
+                item.setIsReduced(false);
+                keptCount++;
+            } else {
+                reduced = true;
+                item.setIsReduced(true);
+                reducedCount++;
+            }
+
+            resultDtos.add(FeatureItemReduceItem.builder()
+                    .id(item.getFeatureId())
+                    .title(item.getTitle())
+                    .description(item.getDescription())
+                    .estimatedTime(item.getEstimatedTime())
+                    .priorityLevel(item.getPriorityLevel())
+                    .isReduced(reduced)
+                    .build());
+        }
+
+        return FeatureItemReduceResponse.builder()
+                .totalEstimatedTime(totalEstimated)
+                .totalAvailableTime(totalAvailable)
+                .reducedCount(reducedCount)
+                .keptCount(keptCount)
+                .features(resultDtos)
+                .build();
+    }
+
 }
