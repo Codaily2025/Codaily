@@ -1,21 +1,14 @@
 package com.codaily.project.controller;
 
-import com.codaily.project.dto.FeatureItemCreateRequest;
-import com.codaily.project.dto.FeatureItemResponse;
-import com.codaily.project.dto.FeatureItemUpdateRequest;
-import com.codaily.project.dto.UpdateStatusRequest;
+import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
-import com.codaily.project.service.FeatureFieldServiceImpl;
-import com.codaily.project.service.FeatureItemServiceImpl;
+import com.codaily.project.service.FeatureFieldService;
+import com.codaily.project.service.FeatureItemService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
@@ -25,13 +18,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FeatureItemController {
 
-    private final FeatureItemServiceImpl featureItemServiceImpl;
-    private final FeatureFieldServiceImpl featureFieldServiceImpl;
+    private final FeatureItemService featureItemService;
+    private final FeatureFieldService featureFieldService;
 
     @PostMapping("/schedule")
-    @Operation(summary="초기 일정 생성", description = "요구사항 명세서 생성 후 첫 일정 생성")
-    public ResponseEntity<String> scheduleProject(@PathVariable Long projectId){
-        featureItemServiceImpl.scheduleProjectInitially(projectId);
+    @Operation(summary = "초기 일정 생성", description = "요구사항 명세서 생성 후 첫 일정 생성")
+    public ResponseEntity<String> scheduleProject(@PathVariable Long projectId) {
+        featureItemService.scheduleProjectInitially(projectId);
         return ResponseEntity.ok("프로젝트 스케줄링이 완료되었습니다.");
     }
 
@@ -40,7 +33,7 @@ public class FeatureItemController {
     public ResponseEntity<FeatureItemResponse> createFeature(
             @PathVariable Long projectId,
             @RequestBody FeatureItemCreateRequest create) {
-        FeatureItemResponse createdFeature = featureItemServiceImpl.createFeature(projectId, create);
+        FeatureItemResponse createdFeature = featureItemService.createFeature(projectId, create);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdFeature);
     }
 
@@ -48,11 +41,10 @@ public class FeatureItemController {
     @Operation(summary = "기능 상세 조회")
     public ResponseEntity<FeatureItemResponse> getFeature(
             @PathVariable Long projectId,
-            @PathVariable Long featureId){
-        FeatureItemResponse feature = featureItemServiceImpl.getFeature(projectId, featureId);
+            @PathVariable Long featureId) {
+        FeatureItemResponse feature = featureItemService.getFeature(projectId, featureId);
         return ResponseEntity.ok(feature);
     }
-    private final FeatureItemService featureItemService;
 
     @PutMapping("/{featureId}")
     @Operation(summary = "기능 수정", description = "우선순위, 예상시간 수정 시 일정 재생성")
@@ -60,9 +52,10 @@ public class FeatureItemController {
             @PathVariable Long projectId,
             @PathVariable Long featureId,
             @RequestBody FeatureItemUpdateRequest update) {
-        FeatureItemResponse updatedFeature = featureItemServiceImpl.updateFeature(projectId, featureId, update);
+        FeatureItemResponse updatedFeature = featureItemService.updateFeature(projectId, featureId, update);
         return ResponseEntity.ok(updatedFeature);
     }
+
     @PutMapping("/update")
     public ResponseEntity<String> updateFeatureItem(@RequestBody FeatureSaveItem request) {
         featureItemService.updateFeatureItem(request);
@@ -74,21 +67,21 @@ public class FeatureItemController {
     public ResponseEntity<Void> deleteFeature(
             @PathVariable Long projectId,
             @PathVariable Long featureId) {
-        featureItemServiceImpl.deleteFeature(projectId, featureId);
+        featureItemService.deleteFeature(projectId, featureId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/field-tabs")
     @Operation(summary = "대주제별 조회", description = "칸반 대주제 탭")
-    public ResponseEntity<List<String>> getFieldTabs(@PathVariable Long projectId){
-        List<String> fieldTabs = featureFieldServiceImpl.getFieldTabs(projectId);
+    public ResponseEntity<List<String>> getFieldTabs(@PathVariable Long projectId) {
+        List<String> fieldTabs = featureFieldService.getFieldTabs(projectId);
         return ResponseEntity.ok(fieldTabs);
     }
 
     @GetMapping("/field/{field}/by-status")
     @Operation(summary = "대주제 & 상태별 조회", description = "대주제 탭 하단 칸반 상태 조회")
-    public ResponseEntity<Map<String, List<FeatureItem>>> getFeaturesByFieldAndStatus(@PathVariable Long projectId, @PathVariable String field){
-        Map<String, List<FeatureItem>> result = featureFieldServiceImpl.getFeaturesByFieldAndStatus(projectId, field);
+    public ResponseEntity<Map<String, List<FeatureItem>>> getFeaturesByFieldAndStatus(@PathVariable Long projectId, @PathVariable String field) {
+        Map<String, List<FeatureItem>> result = featureFieldService.getFeaturesByFieldAndStatus(projectId, field);
         return ResponseEntity.ok(result);
     }
 
@@ -98,8 +91,8 @@ public class FeatureItemController {
             @PathVariable Long projectId,
             @PathVariable Long featureId,
             @RequestBody UpdateStatusRequest request
-    ){
-        FeatureItem updateFeature = featureFieldServiceImpl.updateFeatureStatus(featureId, request.getNewStatus());
+    ) {
+        FeatureItem updateFeature = featureFieldService.updateFeatureStatus(featureId, request.getNewStatus());
         return ResponseEntity.ok(updateFeature);
     }
 }

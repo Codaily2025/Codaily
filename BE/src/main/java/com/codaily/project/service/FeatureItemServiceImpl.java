@@ -8,7 +8,6 @@ import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.project.dto.FeatureItemCreateRequest;
 import com.codaily.project.dto.FeatureItemResponse;
 import com.codaily.project.dto.FeatureItemUpdateRequest;
-import com.codaily.project.dto.FeatureItemUpdate;
 import com.codaily.project.dto.FeatureSaveContent;
 import com.codaily.project.dto.FeatureSaveItem;
 import com.codaily.project.dto.FeatureSaveRequest;
@@ -22,7 +21,6 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
 import com.codaily.project.repository.SpecificationRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -499,8 +497,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid specId"));
 
         // 1. 상세 기능들의 예상시간 총합 계산
-        int totalEstimatedTime = chunk.getSubFeature().stream()
-                .mapToInt(sub -> sub.getEstimatedTime() != null ? sub.getEstimatedTime() : 0)
+        double totalEstimatedTime = chunk.getSubFeature().stream()
+                .mapToDouble(sub -> sub.getEstimatedTime() != null ? sub.getEstimatedTime() : 0)
                 .sum();
 
         // 2. 주 기능 저장

@@ -1,9 +1,14 @@
 package com.codaily.project.service;
 
 import com.codaily.auth.entity.User;
+import com.codaily.management.entity.DaysOfWeek;
+import com.codaily.management.entity.Schedule;
+import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.project.dto.ProjectCreateRequest;
 import com.codaily.project.dto.ProjectRepositoryResponse;
-import com.codaily.project.entity.*;
+import com.codaily.project.entity.Project;
+import com.codaily.project.entity.ProjectRepositories;
+import com.codaily.project.entity.Specification;
 import com.codaily.project.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -57,10 +62,9 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public void createProject(ProjectCreateRequest request, User user) {
+    public Project createProject(ProjectCreateRequest request, User user) {
         Specification spec = specificationRepository.save(
                 Specification.builder()
-                        .user(user)
                         .title("자동 생성 중")
                         .content("")
                         .format("json")
@@ -94,10 +98,11 @@ public class ProjectServiceImpl implements ProjectService {
         List<DaysOfWeek> days = request.getWorkingHours().entrySet().stream()
                 .map(entry -> DaysOfWeek.builder()
                         .project(savedProject)
-                        .dayName(entry.getKey())
+                        .dateName(entry.getKey())
                         .hours(entry.getValue())
                         .build())
                 .toList();
         daysOfWeekRepository.saveAll(days);
+        return project;
     }
 }

@@ -2,12 +2,11 @@ package com.codaily.project.service;
 
 import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.UserRepository;
-import com.codaily.auth.service.provider.SocialOAuth;
+import com.codaily.management.entity.DaysOfWeek;
+import com.codaily.management.entity.Schedule;
+import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.project.dto.ProjectCreateRequest;
-import com.codaily.project.entity.DaysOfWeek;
 import com.codaily.project.entity.Project;
-import com.codaily.project.entity.Schedule;
-import com.codaily.project.repository.DaysOfWeekRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
 import org.junit.jupiter.api.Test;
@@ -58,24 +57,23 @@ public class ProjectServiceTest {
                 .build());
 
         // when
-        projectService.createProject(request, user);
+        Project savedProject = projectService.createProject(request, user);
 
         // then
-        List<Project> projects = projectRepository.findAll();
-        assertEquals(1, projects.size());
+        Project fetch = projectRepository.findByProjectId(savedProject.getProjectId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트를 찾을 수 없습니다."));
 
-        Project saved = projects.get(0);
-        assertEquals("검색 엔진 프로젝트", saved.getTitle());
-        assertEquals(LocalDate.of(2025, 4, 1), saved.getStartDate());
+        assertEquals("검색 엔진 프로젝트", fetch.getTitle());
+        assertEquals(LocalDate.of(2025, 4, 1), fetch.getStartDate());
 
         List<Schedule> schedules = scheduleRepository.findAll();
         assertEquals(2, schedules.size());
-        assertEquals(saved.getProjectId(), schedules.get(0).getProject().getProjectId());
+        assertEquals(fetch.getProjectId(), schedules.get(0).getProject().getProjectId());
 
         List<DaysOfWeek> days = daysOfWeekRepository.findAll();
         assertEquals(2, days.size());
 
-        List<String> dayNames = days.stream().map(DaysOfWeek::getDayName).toList();
+        List<String> dayNames = days.stream().map(DaysOfWeek::getDateName).toList();
         assertTrue(dayNames.contains("월"));
         assertTrue(dayNames.contains("수"));
 

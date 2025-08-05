@@ -25,7 +25,7 @@ class FeatureItemServiceImplTest {
     @BeforeEach
     void setUp() {
         featureItemRepository = mock(FeatureItemRepository.class);
-        featureItemService = new FeatureItemServiceImpl(null, null, featureItemRepository); // projectRepo, specRepo는 null로 둠 (사용 안함)
+        featureItemService = new FeatureItemServiceImpl(null,null,featureItemRepository,null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
     }
 
     @Test
@@ -36,7 +36,7 @@ class FeatureItemServiceImplTest {
                 .featureId(featureId)
                 .title("이전 제목")
                 .description("이전 설명")
-                .estimatedTime(1)
+                .estimatedTime(1.0)
                 .priorityLevel(3)
                 .build();
 
@@ -44,7 +44,7 @@ class FeatureItemServiceImplTest {
                 .id(featureId)
                 .title("수정된 제목")
                 .description("수정된 설명")
-                .estimatedTime(5)
+                .estimatedTime(5.0)
                 .priorityLevel(9)
                 .build();
 
@@ -70,7 +70,7 @@ class FeatureItemServiceImplTest {
                 .id(featureId)
                 .title("제목")
                 .description("설명")
-                .estimatedTime(3)
+                .estimatedTime(3.0)
                 .priorityLevel(7)
                 .build();
 
@@ -102,7 +102,6 @@ class FeatureItemServiceImplTest {
                 .title("사양서 제목")
                 .content("사양 내용")
                 .format("json")
-                .user(dummyUser)
                 .priorityLevel(1)
                 .build();
 
@@ -124,7 +123,7 @@ class FeatureItemServiceImplTest {
         FeatureItem child1 = FeatureItem.builder()
                 .featureId(123123124L)
                 .title("하위 기능 1")
-                .estimatedTime(5)
+                .estimatedTime(5.0)
                 .parentFeature(parentFeature)
                 .specification(spec)
                 .project(project)
@@ -133,7 +132,7 @@ class FeatureItemServiceImplTest {
         FeatureItem child2 = FeatureItem.builder()
                 .featureId(123123125L)
                 .title("하위 기능 2")
-                .estimatedTime(12)
+                .estimatedTime(12.0)
                 .parentFeature(parentFeature)
                 .specification(spec)
                 .project(project)
