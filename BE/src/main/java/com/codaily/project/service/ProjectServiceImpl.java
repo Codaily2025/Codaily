@@ -112,8 +112,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public int calculateTotalUserAvailableHours(Long projectId) {
-        List<Schedule> schedules = scheduleRepository.findAllByProjectId(projectId);
-        List<DaysOfWeek> daysOfWeeks = daysOfWeekRepository.findAllByProjectId(projectId);
+        List<Schedule> schedules = scheduleRepository.findAllByProject_ProjectId(projectId);
+        List<DaysOfWeek> daysOfWeeks = daysOfWeekRepository.findAllByProject_ProjectId(projectId);
 
         Map<DayOfWeek, Integer> hoursByDay = new HashMap<>();
         for (DaysOfWeek dow : daysOfWeeks) {

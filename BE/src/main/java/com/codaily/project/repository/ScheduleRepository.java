@@ -10,5 +10,5 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
 
     boolean existsByProject_ProjectIdAndScheduledDate(Long projectId, LocalDate date);
 
-    List<Schedule> findAllByProjectId(Long projectId);
+    List<Schedule> findAllByProject_ProjectId(Long projectId);
 }

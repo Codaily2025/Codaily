@@ -8,5 +8,5 @@ import java.util.List;
 public interface DaysOfWeekRepository extends JpaRepository<DaysOfWeek, Long> {
     List<DaysOfWeek> findByProject_ProjectId(Long projectId);
 
-    List<DaysOfWeek> findAllByProjectId(Long projectId);
+    List<DaysOfWeek> findAllByProject_ProjectId(Long projectId);
 }
