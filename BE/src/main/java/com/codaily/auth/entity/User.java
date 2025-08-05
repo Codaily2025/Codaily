@@ -47,7 +47,7 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String githubScope;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(columnDefinition = "TEXT")

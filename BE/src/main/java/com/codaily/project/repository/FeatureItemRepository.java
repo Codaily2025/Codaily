@@ -33,3 +33,4 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
           "AND s.featureItem.status = 'TODO'")
    List<FeatureItem> findTodayFeatures(Long projectId, LocalDate today);
 }
+

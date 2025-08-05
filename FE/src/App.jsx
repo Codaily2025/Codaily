@@ -6,9 +6,12 @@ import Home from './pages/Home/Home';
 import Schedule from './pages/Schedule/Schedule';
 import Project from './pages/Project/Project';
 import ProjectCreate from './pages/ProjectCreate/ProjectCreate';
+import ProjectCreateStep2 from './pages/ProjectCreate/ProjectCreateStep2';
 import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import ModalManager from './components/organisms/ModalManager';
 
 // 보호된 라우트 컴포넌트 : 로그인 상태가 아니면 접근 불가
 const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => { 
@@ -28,7 +31,6 @@ const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => {
   }
   return children;
 };
-
 
 function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // 기본값을 false로 변경
@@ -84,7 +86,7 @@ function AppContent() {
 
   const handleLogin = () => {
     setIsLoggedIn(true);
-    navigate('/project'); // 로그인 후 프로젝트 페이지로 이동
+    navigate('/'); // 로그인 후 프로젝트 페이지로 이동
   };
 
   const handleRedirectToLogin = () => {
@@ -95,6 +97,9 @@ function AppContent() {
   const handleLoginClick = () => {
     navigate('/login');
   };
+
+  const { pathname } = useLocation();
+  const isHomePage = pathname === '/';
 
   return (
     <div className="App">
@@ -107,7 +112,7 @@ function AppContent() {
         onLogoutClick={handleLogoutClick}
         onLoginClick={handleLoginClick}
       />
-      <main className="main-content">
+      <main className={`main-content ${isHomePage ? 'main-content--home-page' : ''}`}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
@@ -122,7 +127,7 @@ function AppContent() {
             } 
           />
           <Route 
-            path="/project" 
+            path="/project/:id" 
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <Project />
@@ -134,6 +139,14 @@ function AppContent() {
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <ProjectCreate />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/project/create/step2"
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+                <ProjectCreateStep2 />
               </ProtectedRoute>
             }
           />
@@ -159,11 +172,17 @@ function AppContent() {
   );
 }
 
+// QueryClient 인스턴스 생성
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <AppContent />
+        {/* <ModalManager /> */}
+      </Router>
+    </QueryClientProvider>
   );
 }
 

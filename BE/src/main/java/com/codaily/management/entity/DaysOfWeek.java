@@ -23,6 +23,8 @@ public class DaysOfWeek {
     @Column(nullable = false, length = 20)
     private String dateName;
 
+    private String dayName;
+
     @Column(nullable = false)
     private Integer hours;
 }

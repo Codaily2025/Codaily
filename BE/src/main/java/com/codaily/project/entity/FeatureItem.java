@@ -31,6 +31,7 @@ public class FeatureItem {
     @Column(length=50)
     private String field;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isSelected = true;
     private Boolean isCustom = false;
@@ -43,6 +44,7 @@ public class FeatureItem {
     @Builder.Default
     private String status = "TODO";
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isReduced = false;
     private Double estimatedTime;
