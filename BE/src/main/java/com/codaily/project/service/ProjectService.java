@@ -15,4 +15,6 @@ public interface ProjectService {
     void deleteRepositoryById(Long repoId);
 
     Project createProject(ProjectCreateRequest request, User user);
+
+    int calculateTotalUserAvailableHours(Long projectId);
 }

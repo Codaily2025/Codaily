@@ -14,8 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -104,5 +107,26 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
         daysOfWeekRepository.saveAll(days);
         return project;
+    }
+
+    @Override
+    @Transactional
+    public int calculateTotalUserAvailableHours(Long projectId) {
+        List<Schedule> schedules = scheduleRepository.findAllByProjectId(projectId);
+        List<DaysOfWeek> daysOfWeeks = daysOfWeekRepository.findAllByProjectId(projectId);
+
+        Map<DayOfWeek, Integer> hoursByDay = new HashMap<>();
+        for (DaysOfWeek dow : daysOfWeeks) {
+            DayOfWeek day = DayOfWeek.valueOf(dow.getDateName().toUpperCase());
+            hoursByDay.put(day, dow.getHours());
+        }
+
+        int totalHours = 0;
+        for (Schedule schedule : schedules) {
+            DayOfWeek day = schedule.getScheduledDate().getDayOfWeek();
+            totalHours += hoursByDay.getOrDefault(day, 0);
+        }
+
+        return totalHours;
     }
 }
