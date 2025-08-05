@@ -13,8 +13,6 @@ public enum ErrorCode {
 
     // 프로젝트 관련
     PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "프로젝트를 찾을 수 없습니다."),
-    FEATURE_NOT_FOUND(HttpStatus.NOT_FOUND, "기능을 찾을 수 없습니다."),
-    SPECIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "명세서를 찾을 수 없습니다."),
 
     // 캘린더 관련
     CALENDAR_DATA_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "캘린더 데이터 처리 중 오류가 발생했습니다."),

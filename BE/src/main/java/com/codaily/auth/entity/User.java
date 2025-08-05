@@ -2,7 +2,6 @@ package com.codaily.auth.entity;
 
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,7 +46,7 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String githubScope;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(columnDefinition = "TEXT")
@@ -58,8 +57,10 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
     private List<Project> projects;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Specification> specifications;
 
     @PrePersist
     protected void onCreate() {

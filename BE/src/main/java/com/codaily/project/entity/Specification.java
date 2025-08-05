@@ -18,6 +18,10 @@ public class Specification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long specId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
     @Column(nullable = false, length = 100)
     private String title;
 
