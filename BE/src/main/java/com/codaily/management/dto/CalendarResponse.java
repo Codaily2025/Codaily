@@ -23,12 +23,13 @@ public class CalendarResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CalendarEvent {
+        private Long projectId;
         private Long scheduleId;
         private Long featureId;
         private String featureTitle;
         private String featureDescription;
         private LocalDate scheduleDate;
-        private Integer allocatedHours;
+        private Double allocatedHours;
         private String category;
         private Integer priorityLevel;
         private String status;
