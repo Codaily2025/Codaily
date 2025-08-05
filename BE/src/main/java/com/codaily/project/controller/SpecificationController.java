@@ -3,7 +3,9 @@ package com.codaily.project.controller;
 import com.codaily.common.gpt.handler.ChatResponseStreamHandler;
 import com.codaily.project.dto.SpecificationTimeResponse;
 import com.codaily.project.service.FeatureItemService;
+import com.codaily.project.service.SpecificationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class SpecificationController {
 
     private final ChatResponseStreamHandler chatResponseStreamHandler;
+    private final SpecificationService specificationService;
     private final FeatureItemService featureItemService;
 
     @PostMapping(value = "/{specId}/regenerate", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -32,4 +35,13 @@ public class SpecificationController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{projectId}/document")
+    public ResponseEntity<byte[]> downloadSpecDocument(@PathVariable Long projectId) {
+        byte[] pdf = specificationService.generateSpecDocument(projectId);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=specification.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
 }

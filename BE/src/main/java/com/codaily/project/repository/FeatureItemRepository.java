@@ -42,4 +42,10 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     List<FeatureItem> findTodayFeatures(Long projectId, LocalDate today);
 
     List<FeatureItem> findAllBySpecification_SpecId(Long specId);
+
+    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL")
+    List<FeatureItem> findMainFeaturesByProjectId(@Param("projectId") Long projectId);
+
+    List<FeatureItem> findByParentFeature(FeatureItem parentFeature);
+
 }
