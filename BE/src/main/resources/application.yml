@@ -54,11 +54,15 @@ github:
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
 
-  springdoc:
-    api-docs:
-      path: /api-docs
-    swagger-ui:
-      path: /swagger-ui.html
-      tags-sorter: alpha
-      operations-sorter: alpha
-    packages-to-scan: com.codaily
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    url: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  override-with-generic-response: false

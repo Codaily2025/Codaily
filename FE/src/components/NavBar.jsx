@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './NavBar.module.css';
+import codaily_logo from '../assets/nav_logo.png'
 import logo from '../assets/codaily.svg';
 
 const NavBar = ({ isLoggedIn, activeMenu = '프로젝트', onMenuClick, onLogoClick, onMyPageClick, onLogoutClick, onLoginClick }) => {
@@ -41,8 +42,9 @@ const NavBar = ({ isLoggedIn, activeMenu = '프로젝트', onMenuClick, onLogoCl
       <div className={styles.navInner}>
         {/* 로고 */}
         <div className={styles.logoContainer} onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
-          <img src={logo} alt="logo" className={styles.logoImage} />
-          <div className={styles.logoText}>odaily</div>
+          <img src={codaily_logo} alt="logo" className={styles.codaily_logo} />
+          {/* <img src={logo} alt="logo" className={styles.logoImage} /> */}
+          {/* <div className={styles.logoText}>odaily</div> */}
         </div>
 
         {/* 메뉴 */}
