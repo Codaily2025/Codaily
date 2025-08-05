@@ -1,4 +1,5 @@
 package com.codaily.project.service;
+
 import com.codaily.global.exception.ProjectNotFoundException;
 import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.management.entity.FeatureItemSchedule;
@@ -7,7 +8,10 @@ import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.project.dto.FeatureItemCreateRequest;
 import com.codaily.project.dto.FeatureItemResponse;
 import com.codaily.project.dto.FeatureItemUpdateRequest;
+import com.codaily.project.dto.FeatureSaveContent;
+import com.codaily.project.dto.FeatureSaveItem;
 import com.codaily.project.dto.FeatureSaveRequest;
+import com.codaily.project.dto.FeatureSaveResponse;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
@@ -17,10 +21,10 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
 import com.codaily.project.repository.SpecificationRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -273,18 +277,18 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
         LocalDate projectEndDate = project.getEndDate();
         Map<String, Integer> weeklySchedule = getWeeklyScheduleMap(projectId);
-        
+
         PriorityQueue<FeatureItem> remainingFeatures = new PriorityQueue<>(
                 Comparator.comparing(FeatureItem::getPriorityLevel, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(FeatureItem::getEstimatedTime)
                         .thenComparing(FeatureItem::getFeatureId)
         );
         remainingFeatures.addAll(features);
-        
+
         List<FeatureItem> scheduledFeatures = new ArrayList<>();
         List<FeatureItem> unscheduledFeatures = new ArrayList<>();
         LocalDate currentDate = startDate;
-        
+
         while(!remainingFeatures.isEmpty()){
             FeatureItem currentFeature = remainingFeatures.poll();
 
@@ -305,7 +309,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             LocalDate extendedStartDate = projectEndDate.plusDays(1);
             scheduleWithWeeklyPattern(unscheduledFeatures, extendedStartDate, weeklySchedule, projectId);
         }
-        
+
     }
 
     private void scheduleWithWeeklyPattern(List<FeatureItem> features, LocalDate startDate, Map<String, Integer> weeklySchedule, Long projectId) {
@@ -467,50 +471,6 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         return true;
     }
 
-    @Override
-    @Transactional
-    public void saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid projectId"));
-        Specification spec = specificationRepository.findById(specId)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid specId"));
-
-        // 1. 하위 기능들의 예상시간 총합 계산
-        double totalEstimatedTime = chunk.getSubFunctions().stream()
-                .mapToDouble(sub -> sub.getEstimatedTime() != null ? sub.getEstimatedTime() : 0)
-                .sum();
-
-        // 2. main 기능 저장
-        FeatureItem mainFeature = FeatureItem.builder()
-                .title(chunk.getMainFunction().getTitle())
-                .description(chunk.getMainFunction().getDescription())
-                .field(chunk.getFunctionGroup())
-                .project(project)
-                .specification(spec)
-                .estimatedTime((double) totalEstimatedTime) // 총합 예상시간 저장
-                .isCustom(false)
-                .build();
-
-        featureItemRepository.save(mainFeature);
-
-        // 3. 하위 기능 저장
-        for (FeatureSaveRequest.SubFunction sub : chunk.getSubFunctions()) {
-            FeatureItem subFeature = FeatureItem.builder()
-                    .title(sub.getTitle())
-                    .description(sub.getDescription())
-                    .field(chunk.getFunctionGroup())
-                    .project(project)
-                    .specification(spec)
-                    .priorityLevel(sub.getPriorityLevel())
-                    .parentFeature(mainFeature)
-                    .estimatedTime(sub.getEstimatedTime())
-                    .isCustom(false)
-                    .build();
-
-            featureItemRepository.save(subFeature);
-        }
-    }
-
     private FeatureItemResponse convertToResponseDto(FeatureItem feature) {
         return FeatureItemResponse.builder()
                 .featureId(feature.getFeatureId())
@@ -528,5 +488,111 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .specificationId(feature.getSpecification() != null ? feature.getSpecification().getSpecId() : null)
                 .parentFeatureId(feature.getParentFeature() != null ? feature.getParentFeature().getFeatureId() : null)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public FeatureSaveResponse saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid projectId"));
+        Specification spec = specificationRepository.findById(specId)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid specId"));
+
+        // 1. 상세 기능들의 예상시간 총합 계산
+        double totalEstimatedTime = chunk.getSubFeature().stream()
+                .mapToDouble(sub -> sub.getEstimatedTime() != null ? sub.getEstimatedTime() : 0)
+                .sum();
+
+        // 2. 주 기능 저장
+        FeatureItem mainFeature = FeatureItem.builder()
+                .title(chunk.getMainFeature().getTitle())
+                .description(chunk.getMainFeature().getDescription())
+                .field(chunk.getField())
+                .project(project)
+                .specification(spec)
+                .estimatedTime(totalEstimatedTime)
+                .isCustom(false)
+                .build();
+
+        FeatureItem savedMain = featureItemRepository.save(mainFeature);
+
+        FeatureSaveItem mainFeatureDto = FeatureSaveItem.builder()
+                .id(savedMain.getFeatureId())
+                .title(savedMain.getTitle())
+                .description(savedMain.getDescription())
+                .estimatedTime(savedMain.getEstimatedTime())
+                .priorityLevel(null)
+                .build();
+
+        // 3. 상세 기능 저장
+        List<FeatureSaveItem> subFeatureDtos = chunk.getSubFeature().stream().map(sub -> {
+            FeatureItem subFeature = FeatureItem.builder()
+                    .title(sub.getTitle())
+                    .description(sub.getDescription())
+                    .field(chunk.getField())
+                    .project(project)
+                    .specification(spec)
+                    .priorityLevel(sub.getPriorityLevel())
+                    .parentFeature(savedMain)
+                    .estimatedTime(sub.getEstimatedTime())
+                    .isCustom(false)
+                    .build();
+            FeatureItem savedSub = featureItemRepository.save(subFeature);
+
+            return FeatureSaveItem.builder()
+                    .id(savedSub.getFeatureId())
+                    .title(savedSub.getTitle())
+                    .description(savedSub.getDescription())
+                    .estimatedTime(savedSub.getEstimatedTime())
+                    .priorityLevel(savedSub.getPriorityLevel())
+                    .build();
+        }).toList();
+
+        FeatureSaveContent content = FeatureSaveContent.builder()
+                .projectId(projectId)
+                .specId(specId)
+                .mainFeature(mainFeatureDto)
+                .subFeature(subFeatureDtos)
+                .build();
+
+        return FeatureSaveResponse.builder()
+                .type("spec")
+                .content(content)
+                .build();
+    }
+
+//    @Override
+//    @Transactional
+//    public void updateFeatureItem(FeatureSaveItem request) {
+//        FeatureItem item = featureItemRepository.findById(request.getId())
+//                .orElseThrow(() -> new IllegalArgumentException("해당 기능이 존재하지 않습니다."));
+//
+//        item.setTitle(request.getTitle());
+//        item.setDescription(request.getDescription());
+//        item.setEstimatedTime(request.getEstimatedTime());
+//        item.setPriorityLevel(request.getPriorityLevel());
+//    }
+
+    @Override
+    @Transactional
+    public FeatureSaveResponse regenerateSpec(FeatureSaveRequest chunk, Long projectId, Long specId) {
+        // 1. 기존 명세 항목 전부 삭제
+        featureItemRepository.deleteBySpecification_SpecId(specId);
+
+        // 2. 새로 들어온 chunk 저장
+        return saveSpecChunk(chunk, projectId, specId); // 기존 저장 메서드 재사용
+    }
+
+    @Override
+    @Transactional
+    public void deleteBySpecId(Long specId) {
+        featureItemRepository.deleteBySpecification_SpecId(specId);
+    }
+
+    @Override
+    @Transactional
+    public int calculateTotalEstimatedTime(Long specId) {
+        Integer total = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
+        return total != null ? total : 0;
     }
 }

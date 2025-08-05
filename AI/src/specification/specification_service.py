@@ -9,13 +9,13 @@ from typing import AsyncGenerator
 
 
 MIN_GROUPS = 0
-MAX_GROUPS = 2
+MAX_GROUPS = 8
 
 MIN_MAIN_FUNCTIONS = 0
-MAX_MAIN_FUNCTIONS = 2
+MAX_MAIN_FUNCTIONS = 8
 
 MIN_SUB_FUNCTIONS = 0
-MAX_SUB_FUNCTIONS = 2
+MAX_SUB_FUNCTIONS = 8
 
 
 # 1. 환경 변수 로드
@@ -90,7 +90,7 @@ def parse_bullet_items(response: str, key_name: str) -> list[dict]:
             name, desc = content.split(":", 1)
             result.append({
                 key_name: name.strip(),
-                "설명": desc.strip()
+                "description": desc.strip()
             })
     return result
 
@@ -107,14 +107,19 @@ def generate_main_functions(project_description: str, function_group: str) -> li
     prompt = ChatPromptTemplate.from_messages([
         ("system", (
             "당신은 사용자의 프로젝트 설명을 바탕으로 기능 명세서를 작성하는 전문가입니다.\n\n"
-            "출력 형식은 반드시 다음 예시를 따르세요:\n"
-            "- 회원가입: 이메일과 비밀번호로 계정 생성\n"
-            "- 로그인: 계정으로 서비스에 접근\n"
+            "출력 형식은 반드시 다음 예시를 따르세요 (기능명은 짧고, 설명은 한 줄로):\n"
+            "- 회원가입: 사용자가 이메일과 비밀번호로 계정을 생성할 수 있음\n"
+            "- 로그인: 사용자가 계정으로 서비스에 로그인할 수 있음\n"
+            "- 장바구니 담기: 사용자가 상품을 장바구니에 추가할 수 있음\n\n"
+            "작성 기준:\n"
+            "- 기능명은 가능한 한 간결하고 구체적인 **명사형 표현**으로 작성하세요\n"
+            "- 설명은 **사용자 관점**에서, 이 기능을 통해 **무엇을 할 수 있는지 한 줄로** 작성하세요\n"
+            "- 형식 오류나 누락이 없도록 주의하세요"
         )),
         ("user", (
             "**아래 조건을 정확히 지켜서 주요 기능을 도출하세요.**\n"
             "- 개수: **{min}개 이상, {max}개 이하**\n"
-            "- 형식: `- 기능명: 설명` (설명은 한 줄)\n\n"
+            "- 형식: `- 기능명: 설명` (설명은 한 줄이며 사용자 관점)\n\n"
             "▼ 프로젝트 설명:\n"
             "{{description}}\n\n"
             "▼ 기능 그룹:\n"
@@ -129,7 +134,7 @@ def generate_main_functions(project_description: str, function_group: str) -> li
     })
 
     # 문자열 응답을 리스트[dict]로 파싱
-    result = parse_bullet_items(response, "기능명")
+    result = parse_bullet_items(response, "title")
 
     return result
 
@@ -147,9 +152,9 @@ def parse_bullet_items_with_duration_and_priority(response: str, key_name: str) 
             try:
                 result.append({
                     key_name: name,
-                    "설명": desc,
-                    "예상시간": float(duration.replace("시간", "").strip()),
-                    "우선순위": int(priority)
+                    "description": desc,
+                    "estimated_time": float(duration.replace("시간", "").strip()),
+                    "priority_level": int(priority)
                 })
             except ValueError:
                 continue  # 숫자 형식 오류 방지
@@ -163,16 +168,19 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
     """
     prompt = ChatPromptTemplate.from_messages([
         ("system", (
-            "당신은 사용자의 프로젝트 설명을 바탕으로 기능 명세서를 작성하는 전문가입니다.\n\n"
-            "각 항목은 다음 형식을 반드시 따라야 합니다:\n"
+            "당신은 사용자의 프로젝트 설명을 바탕으로 **상세 기능 목록을 작성하는 전문가**입니다.\n\n"
+            "각 항목은 반드시 다음 형식을 따라야 합니다:\n"
             "- 상세기능명: 설명: 예상시간(정수): 우선순위(1~10 정수)\n\n"
             "예시:\n"
-            "- 이메일 입력: 사용자의 이메일 주소를 입력 받음: 1: 8\n"
-            "- 가입 버튼 클릭: 회원가입을 완료하는 버튼: 1: 10\n\n"
-            "주의사항:\n"
-            "- 주 기능과 **동일하거나 유사한 상세 기능은 작성하지 마세요.**\n"
-            "- 상세 기능은 주 기능을 실제 구현 단위로 **작게 나눈 단계들**이어야 합니다.\n"
-            "- 각 항목의 마지막에는 예상 소요 시간을 `:` 뒤에 **정수**로, 그 뒤에는 우선순위를 1~10 정수로 적으세요.\n\n"
+            "- 이메일 입력 필드 표시: 사용자가 이메일을 입력할 수 있는 입력창을 화면에 표시: 1: 8\n"
+            "- 가입 버튼 클릭 처리: 사용자가 가입 버튼을 클릭하면 계정 생성 요청을 서버에 전송: 1: 10\n"
+            "- 비밀번호 확인 검증: 비밀번호와 비밀번호 확인 값이 같은지 실시간으로 검증: 1: 7\n\n"
+            "작성 규칙:\n"
+            "- 각 항목은 실제 개발 단위로 나뉠 수 있는 작고 명확한 단계여야 합니다.\n"
+            "- 상세기능명은 **시스템이 수행하는 동작을 구체적인 동사로 시작**하세요.\n"
+            "- 설명은 사용자가 겪는 행동 또는 시스템의 반응을 **한 문장**으로 요약하세요.\n"
+            "- 예상 시간은 정수 시간 단위로, 우선순위는 1~10 사이의 정수로 작성하세요. (숫자가 작을수록 더 높은 우선순위입니다.)\n"
+            "- 주 기능과 **동일하거나 유사한 기능은 제외**하세요.\n\n"
             "우선순위는 다음 기준에 따라 판단하세요:\n"
             "1. 다른 기능의 선행 조건인지\n"
             "2. 사용자 경험에서의 중요도\n"
@@ -182,8 +190,8 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
         ("user", (
             "**다음 조건을 정확히 따르세요:**\n"
             "- 개수: **{min}개 이상, {max}개 이하**\n"
-            "- 형식: `- 상세기능명: 설명: 예상시간` (예상시간은 정수만)\n"
-            "- 주 기능과 중복되거나 거의 같은 상세 기능은 제외하세요.\n"
+            "- 형식: `- 상세기능명: 설명: 예상시간: 우선순위` (모두 빠짐없이 작성)\n"
+            "- 주 기능과 중복되거나 거의 같은 상세 기능은 작성하지 마세요.\n\n"
             "▼ 프로젝트 설명:\n"
             "{{description}}\n\n"
             "▼ 기능 그룹:\n"
@@ -201,30 +209,30 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
     })
 
     # 문자열 응답을 list[dict]로 파싱
-    result = result = parse_bullet_items_with_duration_and_priority(response, "상세기능명")
+    result = result = parse_bullet_items_with_duration_and_priority(response, "title")
 
     return result
 
 
-def build_function_spec_json(function_spec_data: list) -> dict:
-    """
-    기능 그룹, 주 기능, 상세 기능 데이터를 기반으로 기능 명세 JSON을 생성합니다.
-    """
-    result = {}
+# def build_function_spec_json(function_spec_data: list) -> dict:
+#     """
+#     기능 그룹, 주 기능, 상세 기능 데이터를 기반으로 기능 명세 JSON을 생성합니다.
+#     """
+#     result = {}
 
-    for item in function_spec_data:
-        group = item["function_group"] # str
-        main = item["main_function"]  # dict: {"기능명": ..., "설명": ...}
-        subs = item["sub_functions"]  # list[dict]: [{"기능명": ..., "설명": ...}, ...]
+#     for item in function_spec_data:
+#         group = item["function_group"] # str
+#         main = item["main_function"]  # dict: {"기능명": ..., "설명": ...}
+#         subs = item["sub_functions"]  # list[dict]: [{"기능명": ..., "설명": ...}, ...]
 
-        if group not in result:
-            result[group] = []
+#         if group not in result:
+#             result[group] = []
 
-        result[group].append({
-            "기능명": main["기능명"],
-            "설명": main["설명"],
-            "상세 기능": subs
-        })
+#         result[group].append({
+#             "field": main["기능명"],
+#             "설명": main["설명"],
+#             "상세 기능": subs
+#         })
 
     return result
 
@@ -232,12 +240,12 @@ def build_function_spec_json(function_spec_data: list) -> dict:
 
 
 async def process_main_function_and_put(project_description: str, group: str, main_func: dict, queue: asyncio.Queue):
-    main_func_full = f"{main_func['기능명']}. {main_func['설명']}"
+    main_func_full = f"{main_func['title']}. {main_func['description']}"
     sub_functions = await asyncio.to_thread(generate_sub_functions, project_description, group, main_func_full)
     result = {
-        "function_group": group,
-        "main_function": main_func,
-        "sub_functions": sub_functions
+        "field": group,
+        "main_feature": main_func,
+        "sub_feature": sub_functions
     }
     await queue.put(result)
 
