@@ -1,9 +1,6 @@
 package com.codaily.project.service;
 
-import com.codaily.project.dto.FeatureItemCreateRequest;
-import com.codaily.project.dto.FeatureItemResponse;
-import com.codaily.project.dto.FeatureItemUpdateRequest;
-import com.codaily.project.dto.FeatureSaveRequest;
+import com.codaily.project.dto.*;
 
 public interface FeatureItemService {
     FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest createDto);
@@ -20,5 +17,13 @@ public interface FeatureItemService {
 
     void updateDailyStatus();
 
-    void saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId);
+    FeatureSaveResponse saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId);
+
+//    void updateFeatureItem(FeatureSaveItem request);
+
+    FeatureSaveResponse regenerateSpec(FeatureSaveRequest chunk, Long projectId, Long specId);
+
+    void deleteBySpecId(Long specId);
+
+    int calculateTotalEstimatedTime(Long specId);
 }

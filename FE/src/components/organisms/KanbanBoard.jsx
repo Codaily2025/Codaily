@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import KanbanCard from '@/components/molecules/KanbanCard'
 import useModalStore from '@/store/modalStore'
 
-const KanbanBoard = () => {
+const KanbanBoard = ({ currentProject }) => {
     const { openModal } = useModalStore()
     
     const handleTaskClick = (cardData) => {
@@ -10,57 +10,46 @@ const KanbanBoard = () => {
       openModal('TASK_DETAIL', { event: cardData })
     }
 
-    // 확인용 하드코딩 데이터
-    const kanbanData = {
-    todo: [
-      {
-        id: 1,
-        category: '일반 로그인 구현',
-        title: 'JwtTokenProvider 클래스 구현',
-        details: '토큰 생성, 파싱, 검증 메서드 구현',
-        dueDate: '2025/07/30 17:19'
-      },
-      {
-        id: 2,
-        category: '일반 로그인 구현',
-        title: 'JwtTokenProvider 클래스 구현',
-        details: '토큰 생성, 파싱, 검증 메서드 구현',
-        dueDate: '2025/07/30 17:19'
+    // 프로젝트 데이터에서 칸반 데이터 추출
+    const kanbanData = useMemo(() => {
+      if (!currentProject?.features) {
+        return { todo: [], inProgress: [], completed: [] }
       }
-    ],
-    inProgress: [
-      {
-        id: 3,
-        category: '일반 로그인 구현',
-        title: 'JwtTokenProvider 클래스 구현',
-        details: '토큰 생성, 파싱, 검증 메서드 구현',
-        dueDate: '2025/07/30 17:19'
-      }
-    ],
-    completed: [
-      {
-        id: 4,
-        category: '일반 로그인 구현',
-        title: 'JwtTokenProvider 클래스 구현',
-        details: '토큰 생성, 파싱, 검증 메서드 구현',
-        dueDate: '2025/07/30 17:19'
-      },
-      {
-        id: 5,
-        category: '일반 로그인 구현',
-        title: 'JwtTokenProvider 클래스 구현',
-        details: '토큰 생성, 파싱, 검증 메서드 구현',
-        dueDate: '2025/07/30 17:19'
-      },
-      {
-        id: 6,
-        category: '일반 로그인 구현',
-        title: 'JwtTokenProvider 클래스 구현',
-        details: '토큰 생성, 파싱, 검증 메서드 구현',
-        dueDate: '2025/07/30 17:19'
-      }
-    ]
-  }
+
+      const todo = []
+      const inProgress = []
+      const completed = []
+
+      currentProject.features.forEach(feature => {
+        if (feature.tasks) {
+          feature.tasks.forEach(task => {
+            const taskData = {
+              id: task.id,
+              category: task.category,
+              title: task.title,
+              details: task.details,
+              dueDate: task.dueDate
+            }
+
+            switch (task.status) {
+              case 'todo':
+                todo.push(taskData)
+                break
+              case 'in_progress':
+                inProgress.push(taskData)
+                break
+              case 'completed':
+                completed.push(taskData)
+                break
+              default:
+                todo.push(taskData)
+            }
+          })
+        }
+      })
+
+      return { todo, inProgress, completed }
+    }, [currentProject])
 
   // 칸반 보드 내 칼럼
   const columns = [

@@ -14,4 +14,6 @@ public interface DaysOfWeekRepository extends JpaRepository<DaysOfWeek, Long> {
     @Modifying
     @Query("DELETE FROM DaysOfWeek d WHERE d.project.projectId = :projectId")
     void deleteByProjectId(Long projectId);
+
+    List<DaysOfWeek> findAllByProject_ProjectId(Long projectId);
 }

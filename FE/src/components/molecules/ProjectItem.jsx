@@ -9,17 +9,18 @@ const ProjectItem = ({ project, isExpanded, onToggle }) => {
   ];
 
   return (
-    <div className="project-item">
-      <div className="project-header" onClick={onToggle}>
-        <div className="project-info">
+    // className 구체화
+    <div className="project-sidebar-item">
+      <div className="project-sidebar-header" onClick={onToggle}>
+        <div className="project-sidebar-info">
           <FolderOpen size={20} className="project-icon" />
-          <span className="project-name">{project.name}</span>
+          <span className="project-sidebar-name">{project.name}</span>
         </div>
         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
       </div>
       
       {isExpanded && (
-        <div className="project-submenu">
+        <div className="project-sidebar-submenu">
           {subMenuItems.map((item) => (
             <div key={item.label} className="submenu-item">
               <item.icon size={16} className="submenu-icon" />

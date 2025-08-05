@@ -1,5 +1,6 @@
 package com.codaily.common.gpt.dispatcher;
 
+import com.codaily.common.gpt.handler.MessageType;
 import com.codaily.common.gpt.handler.SseMessageHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +13,14 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class SseMessageDispatcher {
-    private final List<SseMessageHandler> handlers;
+    private final List<SseMessageHandler<?>> handlers;
 
-    public void dispatch(String type, JsonNode content, Long projectId, Long specId) {
-        handlers.stream()
-                .filter(h -> h.getType().equals(type))
+    public <T> T dispatch(MessageType messageType, JsonNode content, Long projectId, Long specId) {
+        return handlers.stream()
+                .filter(h -> h.getType().equals(messageType))
                 .findFirst()
-                .ifPresent(handler -> handler.handle(content, projectId, specId));
+                .map(h -> ((SseMessageHandler<T>) h).handle(content, projectId, specId))
+                .orElseThrow(() -> new IllegalArgumentException("No handler found for type: " + messageType));
     }
 
 }
