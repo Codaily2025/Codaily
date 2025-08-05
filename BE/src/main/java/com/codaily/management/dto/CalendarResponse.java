@@ -23,6 +23,7 @@ public class CalendarResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class CalendarEvent {
+        private Long projectId;
         private Long scheduleId;
         private Long featureId;
         private String featureTitle;

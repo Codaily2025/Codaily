@@ -5,6 +5,7 @@ import com.codaily.management.exception.CalendarDataException;
 import com.codaily.global.exception.ProjectNotFoundException;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.management.entity.FeatureItemSchedule;
+import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.repository.ProjectRepository;
 import jakarta.transaction.Transactional;
@@ -107,7 +108,11 @@ public class CalendarServiceImpl implements CalendarService{
         }
     }
     private CalendarResponse.CalendarEvent convertToCalendarEvent(FeatureItemSchedule schedule) {
+        FeatureItem featureItem = schedule.getFeatureItem();
+        Project project = featureItem.getProject();
+
         return CalendarResponse.CalendarEvent.builder()
+                .projectId(project.getProjectId())
                 .scheduleId(schedule.getScheduleId())
                 .featureId(schedule.getFeatureItem().getFeatureId())
                 .featureTitle(schedule.getFeatureItem().getTitle())
