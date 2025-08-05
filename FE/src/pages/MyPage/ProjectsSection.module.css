@@ -1,15 +1,15 @@
-.projects-section {
+.projectsSection {
   margin-bottom: 40px;
 }
 
-.projects-header {
+.projectsHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
 
-.project-filters {
+.projectFilters {
   background: #FAFAFA;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05) inset;
   border-radius: 16px;
@@ -17,7 +17,7 @@
   padding: 4px;
 }
 
-.filter-btn {
+.filterBtn {
   border: none;
   background: none;
   padding: 8px 16px;
@@ -30,31 +30,31 @@
 }
 
 /* 포커스 시 테두리 제거 */
-.filter-btn:focus {
+.filterBtn:focus {
   outline: none;
 }
 
-.filter-btn:hover {
+.filterBtn:hover {
   color: #404040;
 }
 
-.filter-btn.active {
+.filterBtn.active {
   background: white;
   box-shadow: 0px 2px 4px -2px rgba(0, 0, 0, 0.10);
   color: #5A597D;
 }
 
-.filter-btn.active:hover {
+.filterBtn.active:hover {
   color: #5A597D;
 }
 
-.project-list {
+.projectList {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 20px;
 }
 
-.project-card {
+.projectCard {
   background: white;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.10);
   border-radius: 10px;
@@ -64,40 +64,40 @@
   cursor: pointer;
 }
 
-.project-card.disabled {
+.projectCard.disabled {
   background: rgba(250, 250, 250, 0.40);
   color: #A1A1A1;
 }
 
-.project-card h3 {
+.projectCard h3 {
   font-size: 16px;
   font-weight: 600;
   color: #404040;
   margin: 0 0 5px 0;
 }
 
-.project-card .project-duration {
+.projectCard .projectDuration {
   font-size: 14px;
   color: #737373;
   margin-bottom: 15px;
 }
 
-.project-card.disabled h3,
-.project-card.disabled .project-duration {
+.projectCard.disabled h3,
+.projectCard.disabled .projectDuration {
   color: #A1A1A1;
 }
 
-.progress-bar-container {
+.progressBarContainer {
   margin-bottom: 15px;
   font-size: 13px;
   color: #737373;
 }
 
-.progress-bar-container>span:last-of-type {
+.progressBarContainer>span:last-of-type {
   float: right;
 }
 
-.progress-bar {
+.progressBar {
   width: 100%;
   background: #F5F5F5;
   border-radius: 4px;
@@ -111,13 +111,13 @@
   border-radius: 4px;
 }
 
-.project-stack {
+.projectStack {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.tech-tag-disabled {
+.techTagDisabled {
   background: #F5F5F5;
   color: #A1A1A1;
   padding: 5px 12px;
@@ -126,7 +126,7 @@
   font-weight: 500;
 }
 
-.tech-tag-in-process {
+.techTagInProcess {
   position: relative;
   width: fit-content;
   height: 26px;
@@ -142,7 +142,7 @@
   justify-content: center;
 }
 
-.no-projects-container {
+.noProjectsContainer {
   background: white;
   border-radius: 12px;
   border: 1px solid #E5E5E5;
@@ -151,27 +151,27 @@
   margin-top: 20px;
 }
 
-.no-projects-content {
+.noProjectsContent {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
 }
 
-.no-projects-title {
+.noProjectsTitle {
   color: #737373;
   font-size: 18px;
   font-weight: 700;
   margin: 0;
 }
 
-.no-projects-subtitle {
+.noProjectsSubtitle {
   color: #A1A1A1;
   font-size: 14px;
   margin: 0;
 }
 
-.create-project-btn {
+.createProjectBtn {
   background: white;
   border-radius: 6px;
   border: 1px solid #D4D4D4;
@@ -183,7 +183,7 @@
 }
 
 /* 우측 상단 삭제, 설정 버튼 영역 - 기본 감춤 */
-.card-actions {
+.cardActions {
   position: absolute;
   top: 20px;
   right: 20px;
@@ -192,7 +192,7 @@
 }
 
 /* 카드 hover 시 표시 */
-.project-card:hover .card-actions {
+.projectCard:hover .cardActions {
   display: flex;
 }
 
@@ -212,7 +212,7 @@
 }
 
 /* 삭제 버튼 스타일 */
-.icon-btn.delete-btn {
+.iconBtn.deleteBtn {
   width: 24px;
   height: 24px;
   background-image: url('../../assets/delete_icon.svg');
@@ -222,12 +222,12 @@
 }
 
 /* 삭제 버튼 hover 스타일, 빨간색 아이콘으로 대체 */
-.icon-btn.delete-btn:hover {
+.iconBtn.deleteBtn:hover {
   background-image: url('../../assets/delete_icon_hover.svg');
 }
 
 /* 설정 버튼 스타일 */
-.icon-btn.settings-btn {
+.iconBtn.settingsBtn {
   width: 24px;
   height: 24px;
   background-image: url('../../assets/setting_icon.svg');
@@ -237,6 +237,6 @@
 }
 
 /* 설정 버튼 hover 스타일, 보라색 아이콘으로 대체 */
-.icon-btn.settings-btn:hover {
+.iconBtn.settingsBtn:hover {
   background-image: url('../../assets/setting_icon_hover.svg');
 }

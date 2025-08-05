@@ -2,14 +2,14 @@
     margin-bottom: 40px;
 }
 
-.progress-header {
+.progressHeader {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
 }
 
-.progress-header h2 {
+.progressHeader h2 {
     margin: 0;
     /* h2의 기본 마진 제거 */
     font-size: 20px;
@@ -18,7 +18,7 @@
 }
 
 /* 연도 네비게이터 */
-.year-navigator {
+.yearNavigator {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -27,7 +27,7 @@
     font-weight: 600;
 }
 
-.year-navigator .nav-button {
+.yearNavigator .navButton {
     background: none;
     border: none;
     font-size: 22px;
@@ -36,17 +36,17 @@
     padding: 0 8px;
 }
 
-.nav-button:focus {
+.navButton:focus {
     outline: none;
 }
 
-.year-navigator .nav-button:disabled {
+.yearNavigator .navButton:disabled {
     color: #D4D4D4;
     cursor: not-allowed;
 }
 
 /* Heatmap Section */
-.heatmap-container {
+.heatmapContainer {
     background: none;
     border: none;
     /* border-radius: 12px; */
@@ -60,26 +60,26 @@
 }
 
 /* 월 표시 */
-.heatmap-months {
+.heatmapMonths {
     display: flex;
     padding-left: 30px;
     /* 요일 라벨 너비만큼 여백 */
 }
 
-.heatmap-months .heatmap-month {
+.heatmapMonths .heatmapMonth {
     flex: 1 1 0;
     color: rgba(115, 115, 115, 0.50);
     font-size: 13px;
 }
 
 /* 요일과 그리드를 감싸는 영역 */
-.heatmap-body {
+.heatmapBody {
     display: flex;
     gap: 10px;
 }
 
 /* 요일 라벨 */
-.heatmap-weekdays {
+.heatmapWeekdays {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -92,7 +92,7 @@
     /* 위아래 패딩으로 위치 조정 */
 }
 
-.heatmap-grid {
+.heatmapGrid {
     display: grid;
     /* 한 주에 7개의 셀 */
     grid-template-rows: repeat(7, 1fr);
@@ -104,7 +104,7 @@
     /* 가로 스크롤 허용 */
 }
 
-.heatmap-cell {
+.heatmapCell {
     width: 14px;
     /* 셀 크기 */
     height: 14px;
@@ -115,24 +115,24 @@
 }
 
 /* 레벨 */
-.heatmap-cell.level-0 {
+.heatmapCell.level-0 {
     background-color: #F9FAFB;
 }
 
-.heatmap-cell.level-1 {
+.heatmapCell.level-1 {
     background-color: #E4E3F3;
 }
 
-.heatmap-cell.level-2 {
+.heatmapCell.level-2 {
     background-color: #B4B3DC;
 }
 
-.heatmap-cell.level-3 {
+.heatmapCell.level-3 {
     background-color: #6C6B93;
 }
 
 /* 기간 외 셀 스타일 (연한 테두리만 있는 셀) */
-.placeholder-cell {
+.heatmapCellPlaceholderCell {
     width: 14px;
     height: 14px;
     border-radius: 2px;
@@ -141,7 +141,7 @@
 }
 
 /* Heatmap 푸터 */
-.heatmap-footer {
+.heatmapFooter {
     width: 100%;
     display: inline-flex;
     /* display: flex; */
@@ -152,7 +152,7 @@
     font-size: 13px;
 }
 
-.footer-date {
+.heatmapFooterDate {
     color: #A1A1A1;
     font-size: 17px;
     font-family: 'Inter', sans-serif;
@@ -160,7 +160,7 @@
     line-height: 30px;
 }
 
-.heatmap-legend {
+.heatmapLegend {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -168,13 +168,13 @@
 }
 
 /* 레벨 셀 스타일 */
-.heatmap-legend .heatmap-cell {
+.heatmapLegend .heatmapCell {
     width: 17px;
     height: 17px;
 }
 
 /* More, Less 라벨 */
-.legend-label {
+.legendLabel {
     color: rgba(115, 115, 115, 0.5);
     font-size: 13px;
     font-family: 'Inter', sans-serif;

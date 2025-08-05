@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { memo } from 'react'; /* 메모이제이션 : 불필요한 렌더링에서 보호 */
 /* 프로젝트 필터링 선택할 때마다 재렌더링 되는 것 방지 */
-import './ProgressSection.css';
+import styles from './ProgressSection.module.css';
 
 // 예시를 위해 임시 데이터를 사용합니다.
 const getDummyHeatmapDataForYear = (year) => {
@@ -43,15 +43,15 @@ const ProgressSection = () => {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   return (
-    <section className="progress-section">
-      <div className="progress-header">
+    <section className={styles.progressSection}>
+      <div className={styles.progressHeader}>
         <h2>Progress</h2>
-        <div className="year-navigator">
-          <button onClick={handlePrevYear} className="nav-button">&lt;</button>
+        <div className={styles.yearNavigator}>
+          <button onClick={handlePrevYear} className={styles.navButton}>&lt;</button>
           <span>{year}</span>
           <button 
             onClick={handleNextYear} 
-            className="nav-button"
+            className={styles.navButton}
             disabled={year >= currentYear}
           >
             &gt;
@@ -59,58 +59,58 @@ const ProgressSection = () => {
         </div>
       </div>
 
-      <div className="heatmap-container">
+      <div className={styles.heatmapContainer}>
         {/* Month Labels */}
-        <div className="heatmap-months">
+        <div className={styles.heatmapMonths}>
           {months.map(month => (
-            <div key={month} className="heatmap-month">{month}</div>
+            <div key={month} className={styles.heatmapMonth}>{month}</div>
           ))}
         </div>
         
-        <div className="heatmap-body">
+        <div className={styles.heatmapBody}>
             {/* Weekday Labels */}
-            <div className="heatmap-weekdays">
+            <div className={styles.heatmapWeekdays}>
                 <span>M</span>
                 <span>W</span>
                 <span>F</span>
             </div>
             
             {/* Heatmap Grid - 기존 로직을 이 안에 배치 */}
-            <div className="heatmap-grid">
+            <div className={styles.heatmapGrid}>
               {/* 앞쪽 기간 외 셀 */}
               {[...Array(leadingEmptyDays)].map((_, i) => (
-                <div key={`start-pad-${i}`} className="heatmap-cell placeholder-cell" />
+                <div key={`start-pad-${i}`} className={styles.heatmapCellPlaceholderCell} />
               ))}
               {/* 실제 데이터 셀 */}
               {heatmapData.map((data, index) => (
                   <div
                       key={index}
-                      className={`heatmap-cell level-${data.level}`}
+                      className={`${styles.heatmapCell} ${styles[`level-${data.level}`]}`}
                       title={`Date: ${data.date.toDateString()}, Level: ${data.level}`}
                   ></div>
               ))}
               {/* 뒤쪽 기간 외 셀 */}
               {[...Array(trailingEmptyDays)].map((_, i) => (
-                <div key={`end-pad-${i}`} className="heatmap-cell placeholder-cell" />
+                <div key={`end-pad-${i}`} className={styles.heatmapCellPlaceholderCell} />
               ))}
             </div>
         </div>
 
         {/* Footer */}
-        <div className="heatmap-footer">
+        <div className={styles.heatmapFooter}>
           <div>
             {/* 현재 연도일 때만 주 정보 표시 */}
             {/* {year === currentYear && (
               <span className="week-info">Today</span>
             )} */}
-            <div className="footer-date">2025 Monday first</div>
+              <div className={styles.footerDate}>2025 Monday first</div>
           </div>
-          <div className="heatmap-legend">
-            <span className="legend-label">Less</span>
-            <div className="heatmap-cell level-1"></div>
-            <div className="heatmap-cell level-2"></div>
-            <div className="heatmap-cell level-3"></div>
-            <span className="legend-label">More</span>
+          <div className={styles.heatmapLegend}>
+            <span className={styles.legendLabel}>Less</span>
+            <div className={`${styles.heatmapCell} ${styles['level-1']}`}></div>
+            <div className={`${styles.heatmapCell} ${styles['level-2']}`}></div>
+            <div className={`${styles.heatmapCell} ${styles['level-3']}`}></div>
+            <span className={styles.legendLabel}>More</span>
           </div>
         </div>
       </div>
