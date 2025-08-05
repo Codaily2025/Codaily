@@ -7,6 +7,7 @@ import Schedule from './pages/Schedule/Schedule';
 import Project from './pages/Project/Project';
 import ProjectCreate from './pages/ProjectCreate/ProjectCreate';
 import ProjectCreateStep2 from './pages/ProjectCreate/ProjectCreateStep2';
+import ProjectCreateStep4 from './pages/ProjectCreate/ProjectCreateStep4';
 import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
@@ -147,6 +148,15 @@ function AppContent() {
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <ProjectCreateStep2 />
+              </ProtectedRoute>
+            }
+          />
+          {/* 확인용 라우트 설정 */}
+          <Route 
+            path="/project/create/step4"
+            element={
+              <ProtectedRoute isLoggedIn={true} onRedirectToLogin={handleRedirectToLogin}>
+                <ProjectCreateStep4 />
               </ProtectedRoute>
             }
           />

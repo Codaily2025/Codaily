@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Calendar from '../organisms/Calendar'
 import TaskCard from '@/components/molecules/TaskCard'
 import KanbanBoard from '@/components/organisms/KanbanBoard'
@@ -6,41 +6,45 @@ import Sidebar from '@/components/organisms/Sidebar'
 import Badge from '@/components/atoms/Badge'
 import { Menu } from 'lucide-react'
 
-
-// 확인용 하드코딩 데이터
-const mockTasks = [
-  {
-    id: 1,
-    category: '회원',
-    title: '일반 로그인 구현',
-    details: 'JwtTokenProvider 클래스 구현\nJwtAuthenticationFilter 구현',
-    tags: [
-      { text: '매우높음', type: 'high' }
-    ]
-  },
-  {
-    id: 2,
-    category: '회원',
-    title: '일반 로그인 구현',
-    details: 'JwtTokenProvider 클래스 구현\nJwtAuthenticationFilter 구현',
-    tags: [
-      { text: '매우높음', type: 'high' }
-    ]
-  },
-  {
-    id: 3,
-    category: '회원',
-    title: '일반 로그인 구현',
-    details: 'JwtTokenProvider 클래스 구현\nJwtAuthenticationFilter 구현',
-    tags: [
-      { text: '매우높음', type: 'high' }
-    ]
-  }
-]
-
-const ProjectTemplate = () => {
+const ProjectTemplate = ({ currentProject, projects = [] }) => {
   // 사이드바 
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // 프로젝트 데이터에서 오늘 할 일 추출
+  const todayTasks = useMemo(() => {
+    if (!currentProject?.features) return []
+    
+    const tasks = []
+    currentProject.features.forEach(feature => {
+      if (feature.tasks) {
+        feature.tasks.forEach(task => {
+          // 오늘 날짜와 비교하여 오늘 할 일만 필터링 (데이터 전처리 로직으로 분리 예정)
+          if (task.status === 'todo' || task.status === 'in_progress') {
+            tasks.push({
+              id: task.id,
+              category: task.category,
+              title: task.title,
+              details: task.details,
+              tags: [
+                { text: task.status === 'in_progress' ? '진행중' : '할일', type: task.status === 'in_progress' ? 'medium' : 'low' }
+              ]
+            })
+          }
+        })
+      }
+    })
+    return tasks
+  }, [currentProject])
+
+  // 현재 진행 중인 기능 이름들
+  const currentFeatures = useMemo(() => {
+    if (!currentProject?.features) return "프로젝트 기능"
+    
+    return currentProject.features
+      .filter(feature => feature.status === 'in_progress' || feature.status === 'todo')
+      .map(feature => feature.name)
+      .join(' | ') || currentProject?.title || "프로젝트 기능"
+  }, [currentProject])
 
   return (
     <div className='project-template'>
@@ -54,6 +58,8 @@ const ProjectTemplate = () => {
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        projects={projects}
+        isLoading={false}
       />
 
       {/* 상단 영역 - 2개 컬럼 */}
@@ -85,21 +91,27 @@ const ProjectTemplate = () => {
         }}>
           <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
             오늘 할 일
-            <Badge content={mockTasks.length} />
+            <Badge content={todayTasks.length} />
           </h2>
           {/* TaskCard 리스트 렌더링 */}
           <div className="task-list">
-            {mockTasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                category={task.category}
-                title={task.title}
-                details={task.details}
-                tags={task.tags}
-                score={task.score}
-                scoreColor={task.scoreColor}
-              />
-            ))}
+            {todayTasks.length > 0 ? (
+              todayTasks.map((task) => (
+                <TaskCard
+                  key={task.id}
+                  category={task.category}
+                  title={task.title}
+                  details={task.details}
+                  tags={task.tags}
+                  score={task.score}
+                  scoreColor={task.scoreColor}
+                />
+              ))
+            ) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                오늘 할 일이 없습니다.
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -113,10 +125,10 @@ const ProjectTemplate = () => {
         minHeight: '300px'
       }}>
         <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
-          DB 구축 | 로그인 | 회원가입
+          {currentFeatures}
         </h2>
         {/* 칸반 보드 렌더링 */}
-        <KanbanBoard />
+        <KanbanBoard currentProject={currentProject} />
       </div>
 
 

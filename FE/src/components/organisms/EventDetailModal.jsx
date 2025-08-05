@@ -5,6 +5,7 @@ import CloseButton from '../atoms/CloseButton'
 
 const EventDetailModal = ({ data, onClose }) => {
     const event = data?.event
+    console.log(event)
     
   if (!event) return null
 

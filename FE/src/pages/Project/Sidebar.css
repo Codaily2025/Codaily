@@ -64,11 +64,11 @@
     overflow-y: auto;
 }
 
-.project-item {
+.project-sidebar-item {
     margin-bottom: 8px;
 }
 
-.project-header {
+.project-sidebar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -80,31 +80,32 @@
     border: 1px solid #e5e7eb;
 }
 
-.project-header:hover {
+.project-sidebar-header:hover {
     background-color: #f9fafb;
     border-color: #d1d5db;
 }
 
-.project-info {
+.project-sidebar-info {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.project-icon {
+.project-sidebar-icon {
     color: #6b7280;
 }
 
-.project-name {
+.project-sidebar-name {
     font-size: 16px;
     font-weight: 500;
     color: #374151;
 }
 
-.project-submenu {
+.project-sidebar-submenu {
     background-color: white;
     border-radius: 8px;
     margin-top: 4px;
+    margin-bottom: 16px;
     padding: 8px 0;
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
