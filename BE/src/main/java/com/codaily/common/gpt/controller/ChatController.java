@@ -1,18 +1,21 @@
 package com.codaily.common.gpt.controller;
 
-import com.codaily.common.gpt.handler.MessageType;
 import com.codaily.common.gpt.handler.ChatResponseStreamHandler;
+import com.codaily.common.gpt.handler.MessageType;
 import com.codaily.common.gpt.service.ChatService;
 import com.codaily.project.service.FeatureItemService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Log4j2
@@ -27,18 +30,66 @@ public class ChatController {
     private final ChatResponseStreamHandler chatStreamHandler;
 
     @Operation(
-            summary = "실시간 GPT 채팅",
-            description = "사용자의 메시지를 분석하여 GPT 응답을 실시간으로 스트리밍합니다. 명세서 생성을 위한 intent 판단도 포함됩니다.",
-            parameters = {
-                    @Parameter(name = "userId", description = "사용자 ID", required = true),
-                    @Parameter(name = "message", description = "사용자 입력 메시지", required = true),
-                    @Parameter(name = "projectId", description = "프로젝트 ID", required = true),
-                    @Parameter(name = "specId", description = "명세서 ID", required = true)
-            },
+            summary = "실시간 GPT 채팅 (SSE)",
+            description = """
+        사용자 메시지를 분석하여 intent를 분류한 뒤,
+        GPT 응답을 실시간으로 SSE로 반환합니다.
+
+        ### 응답 형식
+        - intent = `chat` → ChatMessageResponse
+        - intent = `spec`, `spec:regenerate` → FeatureSaveResponse
+        """,
             responses = {
-                    @ApiResponse(responseCode = "200", description = "SSE 연결 성공", content = @Content(mediaType = MediaType.TEXT_EVENT_STREAM_VALUE)),
-//                    @ApiResponse(responseCode = "400", description = "잘못된 요청"),
-//                    @ApiResponse(responseCode = "500", description = "서버 오류")
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "SSE 연결 성공",
+                            content = @Content(
+                                    mediaType = MediaType.TEXT_EVENT_STREAM_VALUE,
+                                    examples = {
+                                            @ExampleObject(
+                                                    name = "chat",
+                                                    summary = "일반 GPT 채팅 응답",
+                                                    value = """
+                        event: message
+                        data: {
+                          "type": "chat",
+                          "content": "안녕하세요! 무엇을 도와드릴까요?"
+                        }
+                        """
+                                            ),
+                                            @ExampleObject(
+                                                    name = "spec",
+                                                    summary = "명세서 기능 응답",
+                                                    value = """
+                        event: message
+                        data: {
+                          "type": "spec",
+                          "content": {
+                            "projectId": 1,
+                            "specId": 10,
+                            "mainFeature": {
+                              "id": 1,
+                              "title": "로그인 기능",
+                              "description": "사용자 인증을 처리합니다.",
+                              "estimatedTime": 1.5,
+                              "priorityLevel": 1
+                            },
+                            "subFeature": [
+                              {
+                                "id": 2,
+                                "title": "이메일 입력",
+                                "description": "사용자 이메일을 입력받습니다.",
+                                "estimatedTime": 0.5,
+                                "priorityLevel": 2
+                              }
+                            ]
+                          }
+                        }
+                        """
+                                            )
+                                    }
+                            )
+                    )
             }
     )
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

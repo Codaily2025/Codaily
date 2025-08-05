@@ -30,9 +30,9 @@ public class SpecificationController {
     @Operation(
             summary = "명세서 재생성 (SSE)",
             description = """
-        기존 명세서를 삭제하고 새로운 명세서를 실시간으로 생성합니다. 
-        결과는 SSE(Stream) 방식으로 반환되며, 생성 중간 상태도 스트리밍됩니다.
-        """,
+                    기존 명세서를 삭제하고 새로운 명세서를 실시간으로 생성합니다. 
+                    결과는 SSE(Stream) 방식으로 반환되며, 생성 중간 상태도 스트리밍됩니다.
+                    """,
             responses = {
                     @ApiResponse(
                             responseCode = "200",

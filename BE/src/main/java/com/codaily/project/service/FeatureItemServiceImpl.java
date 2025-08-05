@@ -547,6 +547,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         }).toList();
 
         FeatureSaveContent content = FeatureSaveContent.builder()
+                .projectId(projectId)
+                .specId(specId)
                 .mainFeature(mainFeatureDto)
                 .subFeature(subFeatureDtos)
                 .build();
