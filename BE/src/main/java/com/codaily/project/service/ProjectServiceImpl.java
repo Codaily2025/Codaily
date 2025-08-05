@@ -100,4 +100,10 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
         daysOfWeekRepository.saveAll(days);
     }
+
+    @Override
+    public Project findById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트 없음"));
+    }
 }

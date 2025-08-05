@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     boolean existsByProjectId(Long projectId);
+
+    Optional<Project> findById(Long projectId);
 }

@@ -10,4 +10,6 @@ public interface GithubService {
     public Mono<Map<String, Object>> getRepositoryInfo(String accessToken, String owner, String repoName);
 
     public Mono<Map<String, Object>> fetchUserInfo(String accessToken);
+
+    public void registerWebhook(String owner, String repo, String accessToken);
 }
