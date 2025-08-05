@@ -175,12 +175,12 @@ function AppContent() {
 // QueryClient 인스턴스 생성
 const queryClient = new QueryClient();
 
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <AppContent />
-        {/* <ModalManager /> */}
       </Router>
     </QueryClientProvider>
   );
