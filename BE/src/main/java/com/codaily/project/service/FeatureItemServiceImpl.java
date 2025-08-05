@@ -557,17 +557,17 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .build();
     }
 
-    @Override
-    @Transactional
-    public void updateFeatureItem(FeatureSaveItem request) {
-        FeatureItem item = featureItemRepository.findById(request.getId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 기능이 존재하지 않습니다."));
-
-        item.setTitle(request.getTitle());
-        item.setDescription(request.getDescription());
-        item.setEstimatedTime(request.getEstimatedTime());
-        item.setPriorityLevel(request.getPriorityLevel());
-    }
+//    @Override
+//    @Transactional
+//    public void updateFeatureItem(FeatureSaveItem request) {
+//        FeatureItem item = featureItemRepository.findById(request.getId())
+//                .orElseThrow(() -> new IllegalArgumentException("해당 기능이 존재하지 않습니다."));
+//
+//        item.setTitle(request.getTitle());
+//        item.setDescription(request.getDescription());
+//        item.setEstimatedTime(request.getEstimatedTime());
+//        item.setPriorityLevel(request.getPriorityLevel());
+//    }
 
     @Override
     @Transactional
