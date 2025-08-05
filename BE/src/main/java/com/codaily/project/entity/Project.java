@@ -1,6 +1,8 @@
 package com.codaily.project.entity;
 
 import com.codaily.auth.entity.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.*;
@@ -22,7 +24,13 @@ public class Project {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
+
+    @JsonProperty("userId")
+    public Long getUserId(){
+        return user != null ? user.getUserId() : null;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "spec_id")

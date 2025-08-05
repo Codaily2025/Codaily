@@ -6,13 +6,13 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FeatureItemCreate {
+public class FeatureItemCreateRequest {
     private String title;
     private String description;
     private String field;
     private String category;
     private Integer priorityLevel;
-    private Integer estimatedTime;
+    private Double estimatedTime;
     private Boolean isCustom;
     private Long projectId;
     private Long specificationId;

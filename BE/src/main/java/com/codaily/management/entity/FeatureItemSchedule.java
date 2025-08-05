@@ -26,5 +26,8 @@ public class FeatureItemSchedule {
     private LocalDate scheduleDate;
 
     @Column(nullable = false)
-    private Integer allocatedHours;
+    private Double allocatedHours;
+
+    @Column(nullable = false)
+    private boolean withinProjectPeriod;
 }
