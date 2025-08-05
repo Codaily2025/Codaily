@@ -1,6 +1,7 @@
 package com.codaily.management.service;
 
 import com.codaily.management.dto.CalendarResponse;
+import com.codaily.management.dto.TodayScheduleResponse;
 import com.codaily.management.exception.CalendarDataException;
 import com.codaily.global.exception.ProjectNotFoundException;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
@@ -107,6 +108,72 @@ public class CalendarServiceImpl implements CalendarService{
             throw new CalendarDataException("캘린더 데이터 조회 중 오류가 발생했습니다.", e);
         }
     }
+
+    @Override
+    public TodayScheduleResponse getTodayScheduleForUser(Long userId) {
+        if(userId == null || userId <= 0){
+            throw new IllegalArgumentException("사용자 ID는 양수여야 합니다.");
+        }
+        List<Project> projectList = projectRepository.findByUser_UserIdAndStatus(userId, "IN_PROGRESS");
+        List<TodayScheduleResponse.TodayTask> allTasks = new ArrayList<>();
+
+        for(Project project : projectList){
+            List<FeatureItemSchedule> featureItems = scheduleRepository.findByFeatureItem_Project_ProjectIdAndScheduleDate(project.getProjectId(), LocalDate.now());
+
+            for(FeatureItemSchedule schedule : featureItems){
+                FeatureItem feature = schedule.getFeatureItem();
+
+                TodayScheduleResponse.TodayTask task = TodayScheduleResponse.TodayTask.builder()
+                        .scheduleId(schedule.getScheduleId())
+                        .featureId(feature.getFeatureId())
+                        .featureTitle(feature.getTitle())
+                        .featureDescription(feature.getDescription())
+                        .allocatedHours(schedule.getAllocatedHours())
+                        .category(feature.getCategory())
+                        .status(feature.getStatus())
+                        .projectId(project.getProjectId())
+                        .build();
+
+                allTasks.add(task);
+            }
+        }
+
+        return TodayScheduleResponse.builder()
+                .date(LocalDate.now())
+                .tasks(allTasks)
+                .build();
+    }
+
+    @Override
+    public TodayScheduleResponse getTodayScheduleForProject(Long projectId) {
+        Project project = projectRepository.findByProjectId(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
+
+        List<FeatureItemSchedule> featureItems = scheduleRepository.findByFeatureItem_Project_ProjectIdAndScheduleDate(projectId, LocalDate.now());
+        List<TodayScheduleResponse.TodayTask> allTasks = new ArrayList<>();
+
+        for(FeatureItemSchedule schedule : featureItems){
+            FeatureItem feature = schedule.getFeatureItem();
+
+            TodayScheduleResponse.TodayTask task = TodayScheduleResponse.TodayTask.builder()
+                    .scheduleId(schedule.getScheduleId())
+                    .featureId(feature.getFeatureId())
+                    .featureTitle(feature.getTitle())
+                    .featureDescription(feature.getDescription())
+                    .allocatedHours(schedule.getAllocatedHours())
+                    .category(feature.getCategory())
+                    .status(feature.getStatus())
+                    .projectId(project.getProjectId())
+                    .build();
+
+            allTasks.add(task);
+        }
+        return TodayScheduleResponse.builder()
+                .date(LocalDate.now())
+                .tasks(allTasks)
+                .build();
+    }
+
     private CalendarResponse.CalendarEvent convertToCalendarEvent(FeatureItemSchedule schedule) {
         FeatureItem featureItem = schedule.getFeatureItem();
         Project project = featureItem.getProject();

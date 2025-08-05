@@ -280,6 +280,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
         PriorityQueue<FeatureItem> remainingFeatures = new PriorityQueue<>(
                 Comparator.comparing(FeatureItem::getPriorityLevel, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(FeatureItem::getEstimatedTime)
+                        .thenComparing(FeatureItem::getFeatureId)
         );
         remainingFeatures.addAll(features);
 
