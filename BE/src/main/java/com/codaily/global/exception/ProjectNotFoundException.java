@@ -1,4 +1,4 @@
-package com.codaily.management.exception;
+package com.codaily.global.exception;
 
 import com.codaily.global.exception.BusinessException;
 import com.codaily.global.exception.ErrorCode;

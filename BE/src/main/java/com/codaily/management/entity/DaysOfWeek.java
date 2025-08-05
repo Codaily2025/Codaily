@@ -1,5 +1,6 @@
-package com.codaily.project.entity;
+package com.codaily.management.entity;
 
+import com.codaily.project.entity.Project;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,7 +21,7 @@ public class DaysOfWeek {
     private Project project;
 
     @Column(nullable = false, length = 20)
-    private String dayName;
+    private String dateName;
 
     @Column(nullable = false)
     private Integer hours;

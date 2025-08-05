@@ -2,9 +2,9 @@ package com.codaily.management.service;
 
 import com.codaily.management.dto.CalendarResponse;
 import com.codaily.management.exception.CalendarDataException;
-import com.codaily.management.exception.ProjectNotFoundException;
+import com.codaily.global.exception.ProjectNotFoundException;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
-import com.codaily.project.entity.FeatureItemSchedule;
+import com.codaily.management.entity.FeatureItemSchedule;
 import com.codaily.project.repository.ProjectRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

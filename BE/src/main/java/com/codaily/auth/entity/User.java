@@ -59,9 +59,6 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Project> projects;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Specification> specifications;
-
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
