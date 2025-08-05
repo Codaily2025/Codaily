@@ -18,4 +18,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     List<Project> findByUser_UserId(Long userId);
 
     List<Project> findByUser_UserIdAndStatus(Long userId, String status);
+
+    void deleteByProjectId(Long projectId);
+
+    List<Project> findByStatusAndUser_UserIdOrderByCreatedAtDesc(String status, Long userId);
 }
