@@ -140,6 +140,7 @@ public class ProjectServiceImpl implements ProjectService {
         List<FeatureItem> items = featureItemRepository.findAllBySpecification_SpecId(specId);
 
         List<FeatureItem> sorted = items.stream()
+                .filter(item -> item.getPriorityLevel() != null)
                 .sorted(Comparator
                         .comparingInt(FeatureItem::getPriorityLevel)
                         .thenComparing(Comparator.comparingDouble(FeatureItem::getEstimatedTime).reversed()))
