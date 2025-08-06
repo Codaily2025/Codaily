@@ -24,6 +24,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 
 @Log4j2
@@ -123,6 +124,29 @@ public class GithubLinkController {
                     projectService.saveRepositoryForProject(projectId, repoName, repoUrl);
                 })
                 .thenReturn(ResponseEntity.noContent().build());
+    }
+
+    @DeleteMapping ("/unlink")
+    @Operation(summary = "GitHub 연동 해제", description = "GitHub 연동을 해제합니다. 기존 데이터는 유지됩니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "GitHub 연동 해제 성공"),
+            @ApiResponse(responseCode = "400", description = "연동 해제 실패")
+    })
+    public ResponseEntity<Map<String, Object>> unlinkGithub(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        try {
+            userService.unlinkGithub(userDetails.getUserId());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "GitHub 연동이 해제되었습니다. 기존 데이터는 유지됩니다.");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("GitHub 연동 해제 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     private Mono<String> fetchAccessToken(String code) {

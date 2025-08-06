@@ -100,7 +100,7 @@ public class GithubServiceImpl implements GithubService {
                             .retrieve()
                             .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
                             })
-                            .onErrorReturn(new ArrayList<>()) // 접근 권한 없는 레포는 건너뛰기
+                            .onErrorReturn(new ArrayList<>())
                             .flatMapMany(Flux::fromIterable);
                 })
                 .collectList()
@@ -113,14 +113,13 @@ public class GithubServiceImpl implements GithubService {
 
         return getUserCommits(accessToken, username, oneYearAgo)
                 .map(commits -> {
-                    // 날짜별 커밋 수 계산
                     Map<String, Integer> dailyCommits = commits.stream()
                             .collect(Collectors.groupingBy(
                                     commit -> {
                                         Map<String, Object> commitInfo = (Map<String, Object>) commit.get("commit");
                                         Map<String, Object> author = (Map<String, Object>) commitInfo.get("author");
                                         String dateStr = (String) author.get("date");
-                                        return dateStr.substring(0, 10); // YYYY-MM-DD 형식으로 추출
+                                        return dateStr.substring(0, 10);
                                     },
                                     Collectors.summingInt(commit -> 1)
                             ));

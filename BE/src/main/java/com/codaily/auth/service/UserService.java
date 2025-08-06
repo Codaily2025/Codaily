@@ -22,4 +22,6 @@ public interface UserService {
     void syncGithubTechStack(Long userId, Set<String> githubTechnologies);
 
     void updateCustomTechStack(Long userId, Set<String> technologies);
+
+    void unlinkGithub(Long userId);
 }
