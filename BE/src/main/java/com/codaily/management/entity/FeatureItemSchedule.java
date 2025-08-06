@@ -29,5 +29,5 @@ public class FeatureItemSchedule {
     private Double allocatedHours;
 
     @Column(nullable = false)
-    private boolean withinProjectPeriod;
+    private Boolean withinProjectPeriod;
 }

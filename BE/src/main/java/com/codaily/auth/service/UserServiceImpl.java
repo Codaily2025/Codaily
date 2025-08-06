@@ -1,17 +1,26 @@
 package com.codaily.auth.service;
 
 
+import com.codaily.auth.entity.TechStack;
 import com.codaily.auth.entity.User;
+import com.codaily.auth.repository.TechStackRepository;
 import com.codaily.auth.repository.UserRepository;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Mono;
+
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final TechStackRepository techStackRepository;
 
     @Override
     public void linkGithub(Long userId, GithubFetchProfileResponse profile, String accessToken) {
@@ -51,4 +60,57 @@ public class UserServiceImpl implements UserService {
                 .map(User::getGithubAccessToken)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
     }
+
+    @Override
+    public String getGithubUsername(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("해당 유저를 찾을 수 없습니다."));
+        return user.getGithubAccount();
+    }
+
+    @Override
+    public Set<String> getUserTechStack(Long userId) {
+        return techStackRepository.findTechnologiesByUserId(userId);
+    }
+
+    @Override
+    @Transactional
+    public void syncGithubTechStack(Long userId, Set<String> githubTechnologies) {
+        User user = findById(userId);
+
+        // 기존 GitHub 자동 추가 기술스택 삭제
+        techStackRepository.deleteByUserUserIdAndIsCustomFalse(userId);
+
+        // 새로운 GitHub 기술스택 추가
+        for (String tech : githubTechnologies) {
+            Optional<TechStack> existing = techStackRepository.findByUserUserIdAndNameAndIsCustomTrue(userId, tech);
+            if (existing.isEmpty()) {
+                TechStack techStack = TechStack.builder()
+                        .user(user)
+                        .name(tech)
+                        .isCustom(false)
+                        .build();
+                techStackRepository.save(techStack);
+            }
+        }
+
+    }
+
+    @Override
+    @Transactional
+    public void updateCustomTechStack(Long userId, Set<String> technologies) {
+        User user = findById(userId);
+
+        techStackRepository.deleteByUserUserId(userId);
+
+        for (String tech : technologies) {
+            TechStack techStack = TechStack.builder()
+                    .user(user)
+                    .name(tech)
+                    .isCustom(true)
+                    .build();
+            techStackRepository.save(techStack);
+        }
+    }
+
 }

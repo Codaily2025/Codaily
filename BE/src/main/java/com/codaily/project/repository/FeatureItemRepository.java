@@ -48,15 +48,7 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     List<FeatureItem> findByParentFeature(FeatureItem parentFeature);
 
-<<<<<<< HEAD
-   @Query("SELECT DISTINCT s.featureItem FROM FeatureItemSchedule s " +
-          "WHERE s.featureItem.project.projectId = :projectId " +
-          "AND s.scheduleDate = :today " +
-          "AND s.featureItem.status = 'TODO'")
-   List<FeatureItem> findTodayFeatures(Long projectId, LocalDate today);
-
    @Query("SELECT f.featureId FROM FeatureItem f WHERE f.project.projectId = :projectId")
    List<Long> findFeatureIdByProject_ProjectId(Long projectId);
-=======
->>>>>>> 2b27733e58b7b6351281d1977369c99a7bf985f9
+
 }

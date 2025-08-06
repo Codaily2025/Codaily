@@ -189,6 +189,7 @@ public class CalendarServiceImpl implements CalendarService{
                 .category(schedule.getFeatureItem().getCategory())
                 .priorityLevel(schedule.getFeatureItem().getPriorityLevel())
                 .status(schedule.getFeatureItem().getStatus())
+                .withinProjectPeriod(schedule.getWithinProjectPeriod())
                 .build();
     }
 }

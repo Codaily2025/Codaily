@@ -33,5 +33,6 @@ public class CalendarResponse {
         private String category;
         private Integer priorityLevel;
         private String status;
+        private Boolean withinProjectPeriod;
     }
 }
