@@ -6,7 +6,7 @@ const Schedule = () => {
   return (
     <div className="schedule-container">
       <h1>일정</h1>
-      <Calendar />
+        <Calendar />
     </div>
   );
 };

@@ -1,7 +1,11 @@
-const SaveButton = ({ onClick }) => {
+import useFormStore from "@/store/formStore"
+
+const SaveButton = () => {
+  const { handleSave } = useFormStore()
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleSave}
       style={{
         backgroundColor: '#5A597D',
         color: '#fff',

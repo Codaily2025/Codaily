@@ -11,12 +11,13 @@ body {
 }
 
 .container {
-    display: flex;
+    width: 550px;
+    /* display: flex; */
     min-height: 100vh;
 }
 
 /* Main Content */
-.main-content {
+.info-content {
     flex: 1;
     padding: 30px 40px;
 }
@@ -33,14 +34,19 @@ body {
 .profile-avatar-section {
     display: flex;
     align-items: center;
-    margin-bottom: 30px;
+    justify-content: center;
+    height: 100px;
+    margin: 15px 0px 30px 0px;
 }
 
 .profile-avatar {
-    width: 80px;
-    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100%;
     border-radius: 50%;
-    background: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='%23f0f0f0' rx='40'/><text x='40' y='50' text-anchor='middle' fill='%23999' font-size='24'>👤</text></svg>");
+    background: #D6D5EB;
     background-size: cover;
     position: relative;
 }
@@ -68,7 +74,9 @@ body {
 }
 
 .form-group {
-    flex: 1;
+    /* flex: 1; */
+    flex: none;
+    width: 100%;
 }
 
 .form-group.full-width {

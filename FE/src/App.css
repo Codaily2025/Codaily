@@ -5,7 +5,7 @@
   background-color: #ffffff;
   min-height: 100vh;
   /* padding-top: 20px; */
-  padding-top: 10px;
+  /* padding-top: 10px; */
   /* App을 화면 중앙에 정렬 */
   display: flex;
   flex-direction: column;
@@ -17,6 +17,10 @@
   justify-content: center;
   padding: 50px 0px 40px;
   box-sizing: border-box;
+}
+
+.main-content--home-page {
+  padding-top: 6px;
 }
 /* .main-content { */
   /* max-width: 1200px; */

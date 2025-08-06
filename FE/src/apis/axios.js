@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const BASE_URL = 'https://localhost:8080/api/'
+const BASE_URL = 'http://localhost:8080/api/'
 
 const axiosInstance = (url, options) => {
     const instance = axios.create({ baseURL: url, ...options })
@@ -9,7 +9,7 @@ const axiosInstance = (url, options) => {
 
 const axiosAuthInstance = (url, options) => {
     // 저장된 사용자 토큰 가져오기
-    // const token =
+    const token = ''
     const instance = axios.create({
         baseURL: url,
         headers: { Authorization: 'Bearer ' + token },          // JWT Bearer 토큰
