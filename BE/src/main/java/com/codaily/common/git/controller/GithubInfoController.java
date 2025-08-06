@@ -100,6 +100,7 @@ public class GithubInfoController {
     }
 
     @GetMapping("/streak")
+    @Operation(summary = "깃 허브 스트릭 조회", description = "깃 허브에서 커밋 기록을 가져와 스트릭 수를 조회합니다.")
     public Mono<ResponseEntity<Map<String, Object>>> getGitHubStreak(@AuthenticationPrincipal PrincipalDetails userDetails) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
 
