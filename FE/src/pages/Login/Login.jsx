@@ -46,7 +46,7 @@ const Login = ({ onLogin }) => {
 
       {/* 오른쪽 이미지 영역 */}
       <div className="login-image-section">
-        <img src={mainImage} className="background-image" alt="Decorative background" />
+        <img src={mainImage} className="login-background-image" alt="Decorative background" />
         <img src={logoInImage} className="foreground-image" alt="Codaily logo" />
       </div>
     </div>
