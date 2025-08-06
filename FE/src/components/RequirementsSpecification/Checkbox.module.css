@@ -1,0 +1,21 @@
+
+/* 체크박스 스타일 */
+.checkbox {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    background: white;
+    overflow: hidden;
+    border-radius: 6px;
+    outline: 1px #5A597D solid;
+    outline-offset: -1px;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+  }
+  
+  .checkboxIcon {
+    left: 3px;
+    top: 3px;
+    position: absolute;
+  }
