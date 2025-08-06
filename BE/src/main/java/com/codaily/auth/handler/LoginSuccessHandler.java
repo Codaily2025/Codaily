@@ -1,3 +1,4 @@
+// src/main/java/com/codaily/auth/handler/LoginSuccessHandler.java
 package com.codaily.auth.handler;
 
 import com.codaily.auth.service.JwtTokenProvider;
@@ -23,27 +24,28 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = oAuth2User.getAttribute("email");
-        log.info("OAuth2User attributes: " + oAuth2User.getAttributes());
+        log.info("=== LoginSuccessHandler called ===");
+        log.info("Request URI: " + request.getRequestURI());
+        log.info("Authentication: " + authentication);
+        
+        if (authentication != null && authentication.getPrincipal() instanceof OAuth2User) {
+            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+            String email = oAuth2User.getAttribute("email");
+            log.info("OAuth2User attributes: " + oAuth2User.getAttributes());
 
+            // 1. JWT 토큰 생성
+            String token = jwtTokenProvider.createToken(email);
+            log.info("Generated JWT token for user: " + email);
 
-        // 1. JWT 토큰 생성
-        String token = jwtTokenProvider.createToken(email);
-
-        // 2. JSON 응답으로도 넘김 (JS 방식 접근용)
-        response.setContentType("application/json");
-        response.setCharacterEncoding("utf-8");
-        response.getWriter().write("{\"token\": \"" + token + "\"}");
-
-        // 3. HttpOnly 쿠키 설정 (브라우저 자동 전송용)
-        Cookie cookie = new Cookie("jwt", token);
-        cookie.setHttpOnly(true);                     // JS 접근 불가
-        cookie.setPath("/");                          // 전체 경로에 대해 전송
-        cookie.setMaxAge(60 * 60 * 24);               // 1일 유지 (초 단위)
-        cookie.setSecure(true);                       // https 환경에서만 동작 (로컬은 false로 테스트 가능)
-        response.addCookie(cookie);
+            // 2. 프론트엔드로 리다이렉트 (토큰을 URL 파라미터로 전달)
+            String redirectUrl = "http://localhost:5173/oauth/callback?token=" + token;
+            log.info("Redirecting to: " + redirectUrl);
+            response.sendRedirect(redirectUrl);
+        } else {
+            log.error("Authentication or OAuth2User is null");
+            // 토큰 API 엔드포인트로 리다이렉트
+            response.sendRedirect("http://localhost:8080/api/auth/oauth2/token");
+        }
     }
 }
-
 
