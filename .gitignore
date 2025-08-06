@@ -1,0 +1,98 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+application-secret.properties
+
+application-secret.yml
+
+keystore.p12
+
+
+
+
+
+# Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE settings
+.vscode/
+.idea/
+*.iml
+
+# FastAPI specific
+*.db
+*.sqlite3
+
+# Environment files
+.env
+
+# Log files
+*.log
+
+# Backup and temporary files
+*.swp
+*.bak
+*.tmp
+
+# MacOS specific (if you're working on macOS)
+.DS_Store
+
+# Windows specific
+Thumbs.db
+
+# Python coverage reports
+.coverage
+*.coveragerc
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Static and media files for production (if any)
+static/
+media/
+
+# Spring Boot's static files should not be excluded
+!src/main/resources/static/
