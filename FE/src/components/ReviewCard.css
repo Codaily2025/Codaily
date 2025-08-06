@@ -1,0 +1,104 @@
+.review-card {
+  display: flex;
+  /* 패딩까지 포함해서 보기 */
+  box-sizing: border-box;
+  width: 355px;
+  height: 165px;
+  padding: 15px 18px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 18px;
+  border: 1px solid #D4D4D4;
+  background: #FFF;
+  box-shadow: 1px 1px 4px 0 rgba(212, 212, 212, 0.40);
+  cursor: pointer;
+}
+
+.review-card:hover {
+  /* outline: 2px solid #a3a3a3; */
+  outline: 3px solid #B4B3DC;
+  /* border와 outline 차이 */
+  /* border는 테두리 영역을 포함하지 않음 */
+  /* outline은 테두리 영역을 포함함 */
+  /* border는 옵션의 두께만큼 박스의 전체 크기도 늘어나게 하는 반면 
+  outline은 박스의 크기를 늘리는 게 아니라 단지 테두리만 생기는 것뿐 */
+  outline-offset: -2px;
+}
+
+.review-card.selected {
+  outline: 3px solid #B4B3DC;
+  outline-offset: -2px;
+  background: #f9f9ff;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.card-category {
+  /* width: 34px; */
+  max-width: 100%;
+  color: #8483AB;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%; /* 14px */
+  letter-spacing: 0.14px;
+  text-transform: uppercase;
+}
+
+.card-title {
+  width: 219px;
+  color: #404040;
+  font-family: Inter;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 32px; /* 177.778% */
+}
+
+.card-details {
+  width: 219px;
+  color: #737373;
+  font-family: Inter;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 24px; /* 171.429% */
+  margin: 0px
+}
+
+.card-tags {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.tag {
+  padding: 2px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tag-high { background-color: #fee2e2; color: #ef4444; }
+.tag-medium { background-color: #fef9c3; color: #f59e0b; }
+.tag-low { background-color: #dcfce7; color: #22c55e; }
+
+.card-score {
+  display: flex;
+  width: 42px;
+  height: 98px;
+  padding: 10px 0 0.5px 0;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.score-red { color: #f43f5e; }
+.score-orange { color: #f97316; }
+.score-green { color: #22c55e; }

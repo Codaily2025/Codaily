@@ -1,0 +1,119 @@
+.login-page-container {
+  display: flex;
+  /* 오른쪽 정렬 */
+  /* justify-content: flex-end; */
+  justify-content: center;
+  margin-left: 100px;
+  align-items: center;
+  width: 100%;
+  /* min-height: 100vh; */
+  /* 높이를 595px로 고정 */
+  height: 595px;
+  background-color: white;
+  gap: 100px; /* 좌우 섹션 사이의 간격 */
+}
+
+/* 왼쪽 로그인 영역 */
+.login-form-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.welcome-heading {
+  color: #6C6B93;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-shadow: 0px 4px 4px rgba(108, 107, 147, 0.10);
+  margin: 0;
+}
+
+.login-subheading {
+  color: #A0AEC0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 8px;
+  margin-bottom: 30px;
+}
+
+.social-login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 400px;
+}
+
+.social-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 내부 요소 가운데 정렬 */
+  width: 100%;
+  height: 64px;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 15px;
+  box-shadow: 0px 4px 4px rgba(108, 107, 147, 0.25);
+  cursor: pointer;
+  
+  color: #404040;
+  font-size: 18px;
+  font-weight: 400;
+  text-align: center;
+  gap: 12px; /* 아이콘과 텍스트 사이 간격 */
+  padding: 0 20px;
+  transition: background-color 0.2s;
+}
+
+.social-login-button:hover {
+    background-color: #f9f9f9;
+}
+
+.social-login-button:focus {
+  outline: none;
+}
+
+.social-login-button img {
+  width: 30px;
+  height: 30px;
+}
+
+/* 오른쪽 이미지 영역 */
+.login-image-section {
+  position: relative;
+  width: 647px;
+  max-width: 45vw;
+  height: auto;
+  /* height: 595px; */
+  /* 화면이 작아지면 이미지가 보이지 않도록 처리 */
+  display: block; 
+  border-radius: 25px;
+  overflow: hidden;
+}
+
+/* @media (max-width: 768px) {
+  .login-image-section {
+    display: none;
+  }
+} */
+
+.login-background-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.foreground-image {
+  position: absolute;
+  /* width: 236px; */
+  /* height: 107px; */
+  width: 36.5%;     /* 236px / 647px ≈ 36.5% */
+  height: auto;
+  /* left: 205px; */
+  /* top: 244px; */
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%); /* 이미지 중앙 정렬 */
+}
