@@ -18,6 +18,16 @@
   /* gap: 20px; Spacing between elements */
 }
 
+.main-content-container {
+  width: 1250px;
+  height: 783px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
 /* Main Chat Area */
 .chat-main-content {
   width: 1250px;
@@ -26,6 +36,11 @@
 
 .chat-window-container {
   width: 100%;
+}
+
+.chat-window-container.split-view {
+  width: 552px;
+  flex-shrink: 0;
 }
 
 .chat-window {
@@ -56,15 +71,16 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Space between messages */
-  /* padding-right: 15px; For scrollbar */
+  /* gap: 20px;  */
+  gap: 24px; 
+  /* padding-right: 15px; 스크롤바 자리 */
   /* 스크롤바 숨기기 */
   scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  -ms-overflow-style: none; /* IE & Edge */
   padding-bottom: 10px;
 }
 
-/* Chrome, Safari and Opera */
+/* Chrome, Safari, Opera */
 .chat-scroll-area::-webkit-scrollbar {
   display: none;
 }

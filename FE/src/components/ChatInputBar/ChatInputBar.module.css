@@ -19,6 +19,11 @@
   margin-top: 38px;
 }
 
+/* 분할 화면일 때 ChatInputBar 너비 조정 */
+.inputBarContainer.split-view {
+  width: 552px;
+}
+
 /* 파일 업로드 숨기기 -> 파일 버튼 클릭 시 파일 선택 창 표시 */
 .hiddenFileInput {
   display: none;
