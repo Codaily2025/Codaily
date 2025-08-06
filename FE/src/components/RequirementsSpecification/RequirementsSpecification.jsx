@@ -100,276 +100,377 @@ const RequirementsSpecification = () => {
 
                 {/* 주요 기능 */}
                 <div className={styles.card}>
-                    <div className={styles.featuresTitle}>
-                        <div className={styles.featuresTitleText}>주요 기능</div>
+                {/* <div className={styles.mainFeaturesCard}> */}
+                    <div className={styles.mainFeaturesHeader}>
+                        <div className={styles.mainFeaturesTitle}>주요 기능</div>
                     </div>
-                    <div className={styles.featuresList}>
+                    <div className={styles.mainFeaturesList}>
                         {/* 회원가입 기능 */}
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureHeader}>
-                                <div className={styles.featureTitle}>
-                                    <div className={styles.featureName}>회원가입</div>
-                                    <div className={`${styles.priorityBadge} ${styles.priorityLow}`}>
-                                        <div className={`${styles.priorityText} ${styles.priorityLowText}`}>Low</div>
+                        <div className={styles.mainFeatureCard}>
+                            <div className={styles.mainFeatureHeader}>
+                                <div className={styles.mainFeatureHeaderLeft}>
+                                    <div className={styles.checkbox}>
+                                        <div className={styles.checkboxIcon}>
+                                            <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className={styles.mainFeatureName}>회원가입</div>
+                                    <div className={styles.priorityBadgeLow}>
+                                        <div className={styles.priorityTextLow}>Low</div>
                                     </div>
                                 </div>
-                                <div className={styles.featureActions}>
-                                    <div className={styles.timeEstimate}>
-                                        <div className={styles.clockIcon}>
-                                            <div className={styles.clockIconInner1}></div>
-                                            <div className={styles.clockIconInner2}></div>
+                                <div className={styles.mainFeatureHeaderRight}>
+                                    <div className={styles.timeIndicator}>
+                                        <div className={styles.timeIconContainer}>
+                                            <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                            <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
                                         </div>
-                                        <div className={styles.timeText}>
-                                            <div className={styles.timeValue}>5시간</div>
+                                        <div className={styles.timeTextContainer}>
+                                            <div className={styles.timeValueText}>5시간</div>
                                         </div>
                                     </div>
-                                    <div className={styles.expandIcon}>
-                                        <div className={styles.expandIconInner}></div>
+                                    <div className={styles.expandIconContainer}>
+                                        <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M15 13L10 8L5 13" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
                                     </div>
                                 </div>
                             </div>
-                            <div className={styles.featureContent}>
-                                <div className={styles.featureItems}>
-                                    <div className={styles.featureItem}>
-                                        <div className={styles.featureItemContent}>
-                                            <div className={styles.featureItemName}>
-                                                <div className={styles.featureItemText}>일반 회원가입</div>
+                            <div className={styles.mainFeatureContent}>
+                                <div className={styles.mainFeatureItems}>
+                                    <div className={styles.subTaskItem}>
+                                        <div className={styles.subTaskLeft}>
+                                            <div className={styles.checkbox}>
+                                                <div className={styles.checkboxIcon}>
+                                                    <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                </div>
                                             </div>
-                                            <div className={`${styles.priorityBadge} ${styles.priorityNormal}`}>
-                                                <div className={`${styles.priorityText} ${styles.priorityNormalText}`}>Normal</div>
+                                            <div className={styles.subTaskNameContainer}>
+                                                <div className={styles.subTaskName}>일반 회원가입</div>
+                                            </div>
+                                            <div className={styles.priorityBadgeNormal}>
+                                                <div className={styles.priorityTextNormal}>Normal</div>
                                             </div>
                                         </div>
-                                        <div className={styles.featureItemActions}>
-                                            <div className={styles.timeEstimate}>
-                                                <div className={styles.clockIcon}>
-                                                    <div className={styles.clockIconInner1}></div>
-                                                    <div className={styles.clockIconInner2}></div>
+                                        <div className={styles.subTaskRight}>
+                                            <div className={styles.subTaskActions}>
+                                                <div className={styles.timeIconContainer}>
+                                                    <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
                                                 </div>
-                                                <div className={styles.timeText}>
-                                                    <div className={styles.timeValue}>2시간</div>
+                                                <div className={styles.timeTextContainer}>
+                                                    <div className={styles.timeValueText}>2시간</div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div style={{alignSelf: 'stretch', justifyContent: 'flex-start', alignItems: 'center', gap: '10px', display: 'inline-flex'}}>
-                                        <div className={styles.featureItem} style={{width: '453px', height: '55px'}}>
-                                            <div className={styles.featureItemContent}>
-                                                <div className={styles.featureItemName}>
-                                                    <div className={styles.featureItemText}>카카오톡 회원가입 연동</div>
-                                                </div>
-                                                <div className={`${styles.priorityBadge} ${styles.priorityLow}`}>
-                                                    <div className={`${styles.priorityText} ${styles.priorityLowText}`}>Low</div>
+                                    <div className={styles.subTaskItem}>
+                                        <div className={styles.subTaskLeft}>
+                                            <div className={styles.checkbox}>
+                                                <div className={styles.checkboxIcon}>
+                                                    <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
                                                 </div>
                                             </div>
-                                            <div className={styles.featureItemActions} style={{width: '57px'}}>
-                                                <div className={styles.timeEstimate}>
-                                                    <div className={styles.clockIcon}>
-                                                        <div className={styles.clockIconInner1}></div>
-                                                        <div className={styles.clockIconInner2}></div>
-                                                    </div>
-                                                    <div className={styles.timeText}>
-                                                        <div className={styles.timeValue}>3시간</div>
-                                                    </div>
+                                            <div className={styles.subTaskNameContainer}>
+                                                <div className={styles.subTaskName}>카카오톡 회원가입 연동</div>
+                                            </div>
+                                            <div className={styles.priorityBadgeLow}>
+                                                <div className={styles.priorityTextLow}>Low</div>
+                                            </div>
+                                        </div>
+                                        <div className={styles.subTaskTime}>
+                                            <div className={styles.subTaskActions}>
+                                                <div className={styles.timeIconContainer}>
+                                                    <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    </svg>
+                                                </div>
+                                                <div className={styles.timeTextContainer}>
+                                                    <div className={styles.timeValueText}>3시간</div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div style={{width: '21px', height: '21px', background: '#D9D9D9'}}></div>
                                     </div>
-                                    <div className={styles.addTaskButton} style={{paddingTop: '8px'}}>
-                                        <div style={{justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'flex'}}>
-                                            <div style={{width: '16px', height: '16px', background: '#D9D9D9'}}></div>
-                                            <div className={styles.addTaskText}>
-                                                <div className={styles.addTaskTextContent}>새 작업 추가</div>
+                                    <div className={styles.addNewTaskSection}>
+                                        <div className={styles.addNewTaskButton}>
+                                            <div className={styles.addIconContainer}>
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M8 3.33325V12.6666" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                <path d="M3.33594 8H12.6693" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            </div>
+                                            <div className={styles.addNewTaskText}>
+                                                <div className={styles.addNewTaskTextContent}>새 작업 추가</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
+                        
                         {/* 데이터 수집 및 전처리 기능 */}
-                        <div className={styles.featureCard}>
-                            <div className={styles.featureHeader}>
-                                <div className={styles.featureTitle}>
-                                    <div className={styles.featureName} style={{width: '145px', height: '23px'}}>데이터 수집 및 전처리</div>
-                                    <div className={`${styles.priorityBadge} ${styles.priorityHigh}`}>
-                                        <div className={`${styles.priorityText} ${styles.priorityHighText}`}>High</div>
+                        <div className={styles.mainFeatureCard}>
+                            <div className={styles.mainFeatureHeader}>
+                                <div className={styles.mainFeatureHeaderLeft}>
+                                    <div className={styles.checkbox}>
+                                        <div className={styles.checkboxIcon}>
+                                            <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div className={styles.mainFeatureDataName}>데이터 수집 및 전처리</div>
+                                    <div className={styles.priorityBadgeHigh}>
+                                        <div className={styles.priorityTextHigh}>High</div>
                                     </div>
                                 </div>
-                                <div className={styles.featureActions}>
-                                    <div className={styles.timeEstimate}>
-                                        <div className={styles.clockIcon}>
-                                            <div className={styles.clockIconInner1}></div>
-                                            <div className={styles.clockIconInner2}></div>
+                                <div className={styles.mainFeatureHeaderRight}>
+                                    <div className={styles.timeIndicator}>
+                                        <div className={styles.timeIconContainer}>
+                                            <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                            <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
                                         </div>
-                                        <div className={styles.timeText}>
-                                            <div className={styles.timeValue}>8시간</div>
+                                        <div className={styles.timeTextContainer}>
+                                            <div className={styles.timeValueText}>8시간</div>
                                         </div>
                                     </div>
-                                    <div className={styles.expandIcon}>
-                                        <div className={styles.expandIconInner}></div>
-                                    </div>
-                                    <div className={styles.deleteIcon}>
-                                        <div className={styles.deleteIconInner}></div>
+                                    <div className={styles.expandIconContainer}>
+                                        <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M15 13L10 8L5 13" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
                                     </div>
                                 </div>
                             </div>
-                            <div className={styles.featureContent}>
-                                <div className={styles.featureItems}>
-                                    <div className={styles.expandedContent}>
-                                        <div className={styles.expandedHeader}>
-                                            <div className={styles.featureItemContent}>
-                                                <div className={styles.featureItemName}>
-                                                    <div className={styles.featureItemText}>데이터 수집</div>
-                                                </div>
-                                                <div className={`${styles.priorityBadge} ${styles.priorityHigh}`}>
-                                                    <div className={`${styles.priorityText} ${styles.priorityHighText}`}>High</div>
-                                                </div>
-                                            </div>
-                                            <div className={styles.featureItemActions}>
-                                                <div className={styles.timeEstimate}>
-                                                    <div className={styles.clockIcon}>
-                                                        <div className={styles.clockIconInner1}></div>
-                                                        <div className={styles.clockIconInner2}></div>
+                            <div className={styles.mainFeatureContent}>
+                                <div className={styles.mainFeatureItems}>
+                                    <div className={styles.expandedSection}>
+                                        <div className={styles.expandedSectionHeader}>
+                                            <div className={styles.expandedSectionHeaderInner}>
+                                                <div className={styles.subTaskLeft}>
+                                                    <div className={styles.checkbox}>
+                                                        <div className={styles.checkboxIcon}>
+                                                            <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            </svg>
+                                                        </div>
                                                     </div>
-                                                    <div className={styles.timeText}>
-                                                        <div className={styles.timeValue}>4시간</div>
+                                                    <div className={styles.subTaskNameContainer}>
+                                                        <div className={styles.subTaskName}>데이터 수집</div>
+                                                    </div>
+                                                    <div className={styles.priorityBadgeHigh}>
+                                                        <div className={styles.priorityTextHigh}>High</div>
                                                     </div>
                                                 </div>
-                                                <div className={styles.expandIcon}>
-                                                    <div className={styles.expandIconInner}></div>
-                                                </div>
-                                                <div className={styles.deleteIcon}>
-                                                    <div className={styles.deleteIconInner}></div>
+                                                <div className={styles.mainFeatureHeaderRight}>
+                                                    <div className={styles.timeIndicator}>
+                                                        <div className={styles.timeIconContainer}>
+                                                            <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            </svg>
+                                                        </div>
+                                                        <div className={styles.timeTextContainer}>
+                                                            <div className={styles.timeValueText}>4시간</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.expandIconContainer}>
+                                                        <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M15 13L10 8L5 13" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className={styles.expandedBody}>
-                                            <div className={styles.expandedItems}>
-                                                <div className={styles.expandedItem}>
-                                                    <div className={styles.expandedItemContent}>
-                                                        <div className={styles.featureItemContent}>
-                                                            <div className={styles.featureItemName}>
-                                                                <div className={styles.featureItemText}>웹페이지 크롤링</div>
-                                                            </div>
-                                                            <div className={`${styles.priorityBadge} ${styles.priorityNormal}`}>
-                                                                <div className={`${styles.priorityText} ${styles.priorityNormalText}`}>Normal</div>
+                                        <div className={styles.expandedSectionBody}>
+                                            <div className={styles.expandedSectionItems}>
+                                                <div className={styles.expandedSectionItem}>
+                                                    <div className={styles.subTaskLeft}>
+                                                        <div className={styles.checkbox}>
+                                                            <div className={styles.checkboxIcon}>
+                                                                <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                                </svg>
                                                             </div>
                                                         </div>
-                                                        <div className={styles.expandedItemActions}>
-                                                            <div className={styles.timeEstimate}>
-                                                                <div className={styles.clockIcon}>
-                                                                    <div className={styles.clockIconInner1}></div>
-                                                                    <div className={styles.clockIconInner2}></div>
-                                                                </div>
-                                                                <div className={styles.timeText}>
-                                                                    <div className={styles.timeValue}>2시간</div>
-                                                                </div>
-                                                            </div>
+                                                        <div className={styles.subTaskNameContainer}>
+                                                            <div className={styles.subTaskName}>웹페이지 크롤링</div>
+                                                        </div>
+                                                        <div className={styles.priorityBadgeNormal}>
+                                                            <div className={styles.priorityTextNormal}>Normal</div>
                                                         </div>
                                                     </div>
-                                                    <div className={styles.deleteIcon}>
-                                                        <div className={`${styles.deleteIconInner} ${styles.deleteIconRed}`}></div>
-                                                    </div>
-                                                </div>
-                                                <div className={styles.featureItem}>
-                                                    <div className={styles.featureItemContent}>
-                                                        <div className={styles.featureItemName}>
-                                                            <div className={styles.featureItemText}>API</div>
-                                                        </div>
-                                                        <div className={`${styles.priorityBadge} ${styles.priorityNormal}`}>
-                                                            <div className={`${styles.priorityText} ${styles.priorityNormalText}`}>Normal</div>
-                                                        </div>
-                                                    </div>
-                                                    <div className={styles.featureItemActions}>
-                                                        <div className={styles.timeEstimate}>
-                                                            <div className={styles.clockIcon}>
-                                                                <div className={styles.clockIconInner1}></div>
-                                                                <div className={styles.clockIconInner2}></div>
+                                                    <div className={styles.subTaskRight}>
+                                                        <div className={styles.subTaskActions}>
+                                                            <div className={styles.timeIconContainer}>
+                                                                <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                                <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                                </svg>
                                                             </div>
-                                                            <div className={styles.timeText}>
-                                                                <div className={styles.timeValue}>2시간</div>
+                                                            <div className={styles.timeTextContainer}>
+                                                                <div className={styles.timeValueText}>2시간</div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className={styles.addTaskButton} style={{paddingTop: '8px'}}>
-                                                    <div style={{justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'flex'}}>
-                                                        <div style={{width: '16px', height: '16px', background: '#D9D9D9'}}></div>
-                                                        <div className={styles.addTaskText}>
-                                                            <div className={styles.addTaskTextContent}>새 작업 추가</div>
+                                                <div className={styles.expandedSectionItem}>
+                                                    <div className={styles.subTaskLeft}>
+                                                        <div className={styles.checkbox}>
+                                                            <div className={styles.checkboxIcon}>
+                                                                <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+                                                        <div className={styles.subTaskNameContainer}>
+                                                            <div className={styles.subTaskName}>API</div>
+                                                        </div>
+                                                        <div className={styles.priorityBadgeNormal}>
+                                                            <div className={styles.priorityTextNormal}>Normal</div>
+                                                        </div>
+                                                    </div>
+                                                    <div className={styles.subTaskRight}>
+                                                        <div className={styles.subTaskActions}>
+                                                            <div className={styles.timeIconContainer}>
+                                                                <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                                <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                                </svg>
+                                                            </div>
+                                                            <div className={styles.timeTextContainer}>
+                                                                <div className={styles.timeValueText}>2시간</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className={styles.addNewTaskSection}>
+                                                    <div className={styles.addNewTaskButton}>
+                                                        <div className={styles.addIconContainer}>
+                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M8 3.33325V12.6666" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M3.33594 8H12.6693" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            </svg>
+                                                        </div>
+                                                        <div className={styles.addNewTaskText}>
+                                                            <div className={styles.addNewTaskTextContent}>새 작업 추가</div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className={styles.collapsedItem}>
-                                        <div className={styles.collapsedItemInner}>
-                                            <div className={styles.featureItemContent}>
-                                                <div className={styles.featureItemName}>
-                                                    <div className={styles.featureItemText}>데이터 전처리</div>
+                                    <div className={styles.simpleToggleItem}>
+                                        <div className={styles.simpleToggleInner}>
+                                            <div className={styles.subTaskLeft}>
+                                                <div className={styles.checkbox}>
+                                                    <div className={styles.checkboxIcon}>
+                                                        <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </div>
                                                 </div>
-                                                <div className={`${styles.priorityBadge} ${styles.priorityHigh}`}>
-                                                    <div className={`${styles.priorityText} ${styles.priorityHighText}`}>High</div>
+                                                <div className={styles.subTaskNameContainer}>
+                                                    <div className={styles.subTaskName}>데이터 전처리</div>
+                                                </div>
+                                                <div className={styles.priorityBadgeHigh}>
+                                                    <div className={styles.priorityTextHigh}>High</div>
                                                 </div>
                                             </div>
-                                            <div className={styles.collapsedItemActions}>
-                                                <div className={styles.timeEstimate}>
-                                                    <div className={styles.clockIcon}>
-                                                        <div className={styles.clockIconInner1}></div>
-                                                        <div className={styles.clockIconInner2}></div>
+                                            <div className={styles.simpleToggleActions}>
+                                                <div className={styles.timeIndicator}>
+                                                    <div className={styles.timeIconContainer}>
+                                                        <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M8.0026 15.1666C11.6845 15.1666 14.6693 12.1818 14.6693 8.49992C14.6693 4.81802 11.6845 1.83325 8.0026 1.83325C4.32071 1.83325 1.33594 4.81802 1.33594 8.49992C1.33594 12.1818 4.32071 15.1666 8.0026 15.1666Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
                                                     </div>
-                                                    <div className={styles.timeText}>
-                                                        <div className={styles.timeValue}>4시간</div>
+                                                    <div className={styles.timeTextContainer}>
+                                                        <div className={styles.timeValueText}>4시간</div>
                                                     </div>
                                                 </div>
-                                                <div className={styles.collapseIcon}>
-                                                    <div className={styles.collapseIconInner}></div>
+                                                <div className={styles.iconContainer}>
+                                                    <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M12 15.9L6 9.9L7.4 8.5L12 13.1L16.6 8.5L18 9.9L12 15.9Z" fill="#6C757D"/>
+                                                    </svg>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className={styles.addTaskButton} style={{paddingTop: '8px'}}>
-                                        <div style={{justifyContent: 'flex-start', alignItems: 'center', gap: '9px', display: 'flex'}}>
-                                            <div style={{width: '17px', height: '16px', background: '#D9D9D9'}}></div>
-                                            <div className={styles.addTaskText}>
-                                                <div className={styles.addTaskTextContent}>새 작업 추가</div>
+                                    <div className={styles.addNewTaskSection}>
+                                        <div className={styles.addNewTaskButton}>
+                                            <div className={styles.addIconContainer}>
+                                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M8 3.3335V12.6668" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                <path d="M3.33594 8H12.6693" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            </div>
+                                            <div className={styles.addNewTaskText}>
+                                                <div className={styles.addNewTaskTextContent}>새 작업 추가</div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
+                        
                         {/* 배포 기능 */}
-                        <div className={styles.simpleCard}>
-                            <div className={styles.simpleCardContent}>
-                                <div className={styles.simpleCardTitle}>배포</div>
-                                <div className={`${styles.priorityBadge} ${styles.priorityNormal}`}>
-                                    <div className={`${styles.priorityText} ${styles.priorityNormalText}`}>Normal</div>
+                        <div className={styles.simpleFeatureCard}>
+                            <div className={styles.simpleFeatureLeft}>
+                                <div className={styles.checkbox}>
+                                    <div className={styles.checkboxIcon}>
+                                        <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M11.6693 4L5.2526 10.4167L2.33594 7.5" stroke="#5A597D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className={styles.simpleFeatureTitle}>배포</div>
+                                <div className={styles.priorityBadgeNormal}>
+                                    <div className={styles.priorityTextNormal}>Normal</div>
                                 </div>
                             </div>
-                            <div className={styles.simpleCardActions}>
-                                <div className={styles.timeEstimate}>
-                                    <div className={styles.clockIcon}>
-                                        <div className={styles.clockIconInner1}></div>
-                                        <div className={styles.clockIconInner2}></div>
+                            <div className={styles.simpleFeatureRight}>
+                                <div className={styles.timeIndicator}>
+                                    <div className={styles.timeIconContainer}>
+                                        <svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M8.0026 15.1668C11.6845 15.1668 14.6693 12.1821 14.6693 8.50016C14.6693 4.81826 11.6845 1.8335 8.0026 1.8335C4.32071 1.8335 1.33594 4.81826 1.33594 8.50016C1.33594 12.1821 4.32071 15.1668 8.0026 15.1668Z" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M8 4.5V8.5L10.6667 9.83333" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                        </svg>
                                     </div>
-                                    <div className={styles.timeText}>
-                                        <div className={styles.timeValue}>5시간</div>
+                                    <div className={styles.timeTextContainer}>
+                                        <div className={styles.timeValueText}>5시간</div>
                                     </div>
                                 </div>
-                                <div className={styles.collapseIcon}>
-                                    <div className={styles.collapseIconInner}></div>
+                                <div className={styles.iconContainer}>
+                                    <svg width="24" height="25" viewBox="0 0 24 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15.9L6 9.9L7.4 8.5L12 13.1L16.6 8.5L18 9.9L12 15.9Z" fill="#6C757D"/>
+                                    </svg>
                                 </div>
                             </div>
                         </div>
-                        <div className={styles.addTaskButton} style={{paddingTop: '8px', boxShadow: '0px 3px 3px rgba(233, 236, 239, 0.25)'}}>
-                            <div style={{justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'flex'}}>
-                                <div style={{width: '16px', height: '16px', background: '#D9D9D9'}}></div>
-                                <div className={styles.addTaskText}>
-                                    <div className={styles.addTaskTextContent}>새 작업 추가</div>
+                        
+                        <div className={styles.addNewTaskSection}>
+                            <div className={styles.addNewTaskButton}>
+                                <div className={styles.addIconContainer}>
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 3.3335V12.6668" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M3.33594 8H12.6693" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </div>
+                                <div className={styles.addNewTaskText}>
+                                    <div className={styles.addNewTaskTextContent}>새 작업 추가</div>
                                 </div>
                             </div>
                         </div>
