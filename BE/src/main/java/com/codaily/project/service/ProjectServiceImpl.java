@@ -35,7 +35,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();
-        entity.setProjectId(projectId);
+        Project project = projectRepository.getProjectByProjectId(projectId);
+        entity.setProject(project);
         entity.setRepoName(repoName);
         entity.setRepoUrl(repoUrl);
         entity.setCreatedAt(LocalDateTime.now());
