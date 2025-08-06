@@ -24,6 +24,7 @@
 
 .messageBubble {
   max-width: 65%;
+  box-sizing: border-box;
   padding: 20px 25px;
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.10);
   display: flex;
@@ -39,8 +40,8 @@
   outline-offset: -1px;
 }
 
-.messageBubble.large {
-  max-width: 70%;
+.messageBubble.small {
+  max-width: 326px;
 }
 
 .messageText {

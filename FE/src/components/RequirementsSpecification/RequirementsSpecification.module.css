@@ -1,0 +1,793 @@
+/* 요구사항 명세서 사이드바 */
+.requirementsSidebar {
+  width: 677px;
+  height: 783px;
+  background: #F3F2FA;
+  border-radius: 24px;
+  flex-shrink: 0;
+  outline: 1px #E4E3F3 solid;
+  outline-offset: -1px;
+  overflow: auto;
+  position: relative;
+}
+
+/* 스크롤바 숨기기 */
+.requirementsSidebar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Firefox */
+.requirementsSidebar {
+  scrollbar-width: none;
+}
+
+.container {
+  width: 611px;
+  min-height: 1768px;
+  left: 33px;
+  top: 33px;
+  position: absolute;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  display: inline-flex;
+  padding-bottom: 33px;
+}
+
+.header {
+  align-self: stretch;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.headerContent {
+  width: 601px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 16px;
+  display: inline-flex;
+}
+
+.title {
+  width: 382px;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #404040;
+  font-size: 24px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  word-wrap: break-word;
+}
+
+.pdfIcon {
+  width: 24px;
+  height: 23px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pdfIconInner1 {
+  width: 16.50px;
+  height: 20.12px;
+  left: 3.75px;
+  top: 1.44px;
+  position: absolute;
+  background: #2D3748;
+}
+
+.pdfIconInner2 {
+  width: 6.93px;
+  height: 6.64px;
+  left: 12.75px;
+  top: 1.99px;
+  position: absolute;
+  background: #2D3748;
+}
+
+.pdfText {
+  width: 94px;
+  height: 18px;
+  color: #2D3748;
+  font-size: 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+.card {
+  align-self: stretch;
+  padding: 25px;
+  background: white;
+  box-shadow: 0px 2px 8px rgba(108, 107, 147, 0.05);
+  border-radius: 16px;
+  outline: 1px #E4E3F3 solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 18px;
+  display: inline-flex;
+}
+
+.cardHeader {
+  align-self: stretch;
+  padding-top: 2px;
+  padding-bottom: 3px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: flex;
+}
+
+.cardTitle {
+  align-self: stretch;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #525252;
+  font-size: 19.20px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  word-wrap: break-word;
+}
+
+.projectOverview {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: flex;
+}
+
+.overviewItem {
+  align-self: stretch;
+  padding-top: 12px;
+  padding-bottom: 13px;
+  border-bottom: 1px #F3F2FA solid;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
+  display: inline-flex;
+}
+
+.bullet {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #8483AB;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+.itemContent {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.itemLabel {
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+.itemValue {
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+.descriptionContainer {
+  align-self: stretch;
+  height: 194px;
+  position: relative;
+}
+
+.descriptionHeader {
+  left: 0;
+  top: 12px;
+  position: absolute;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
+  display: inline-flex;
+}
+
+.descriptionText {
+  width: 520px;
+  left: 21px;
+  top: 50px;
+  position: absolute;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+.techStackHeader {
+  width: 551px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 2px;
+  display: inline-flex;
+}
+
+.techStackTitle {
+  flex: 1 1 0;
+  padding-top: 2px;
+  padding-bottom: 3px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.addTechButton {
+  padding-bottom: 2px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: inline-flex;
+}
+
+.addTechText {
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #6C757D;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  word-wrap: break-word;
+}
+
+.techTags {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 8px;
+  display: flex;
+}
+
+.techTagRow {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  display: inline-flex;
+}
+
+.techTag {
+  height: 24px;
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  background: #CCCBE4;
+  border-radius: 20px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: flex;
+}
+
+.techTagText {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #5A597D;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+.featuresTitle {
+  width: 541px;
+  height: 25px;
+  padding-top: 2px;
+  padding-bottom: 3px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: flex;
+}
+
+.featuresTitleText {
+  align-self: stretch;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #525252;
+  font-size: 20px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  word-wrap: break-word;
+}
+
+.featuresList {
+  width: 544px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 15px;
+  display: flex;
+}
+
+.featureCard {
+  align-self: stretch;
+  padding: 1px;
+  background: white;
+  box-shadow: 0px 3px 3px rgba(233, 236, 239, 0.25);
+  border-radius: 15px;
+  outline: 1px #E4E3F3 solid;
+  outline-offset: -1px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 266px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.featureHeader {
+  flex: 1 1 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px #E9ECEF solid;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+}
+
+.featureTitle {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.featureName {
+  width: 62px;
+  height: 23px;
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 25px;
+  word-wrap: break-word;
+}
+
+.priorityBadge {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-radius: 999px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.priorityLow {
+  background: #F0FDF4;
+}
+
+.priorityLowText {
+  color: #22C55E;
+}
+
+.priorityNormal {
+  background: #FFFBEB;
+}
+
+.priorityNormalText {
+  color: #F59E0B;
+}
+
+.priorityHigh {
+  background: #FFF1F2;
+}
+
+.priorityHighText {
+  color: #E53E3E;
+}
+
+.priorityText {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  text-transform: capitalize;
+  word-wrap: break-word;
+}
+
+.featureActions {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 17px;
+  display: flex;
+}
+
+.timeEstimate {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+  display: flex;
+}
+
+.clockIcon {
+  width: 16px;
+  height: 16px;
+  position: relative;
+}
+
+.clockIconInner1 {
+  width: 13.33px;
+  height: 13.33px;
+  left: 1.33px;
+  top: 1.33px;
+  position: absolute;
+  outline: 1.33px #6C757D solid;
+  outline-offset: -0.67px;
+}
+
+.clockIconInner2 {
+  width: 2.67px;
+  height: 5.33px;
+  left: 8px;
+  top: 4px;
+  position: absolute;
+  outline: 1.33px #6C757D solid;
+  outline-offset: -0.67px;
+}
+
+.timeText {
+  padding-bottom: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.timeValue {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #6C757D;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+.expandIcon {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  transform: rotate(180deg);
+  transform-origin: top left;
+}
+
+.expandIconInner {
+  width: 10px;
+  height: 5px;
+  left: 5px;
+  top: 7.50px;
+  position: absolute;
+  outline: 2.08px #6C757D solid;
+  outline-offset: -1.04px;
+}
+
+.featureContent {
+  width: 542px;
+  padding: 20px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.featureItems {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 16px;
+  display: flex;
+}
+
+.featureItem {
+  align-self: stretch;
+  height: 55px;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: #FAF9FD;
+  box-shadow: 0px 2px 2px rgba(108, 107, 147, 0.15);
+  border-radius: 8px;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.featureItemContent {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.featureItemName {
+  padding-bottom: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.featureItemText {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #212529;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+.featureItemActions {
+  width: 58px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.addTaskButton {
+  align-self: stretch;
+  height: 40px;
+  padding: 11px;
+  border-radius: 8px;
+  outline: 1px #E9ECEF solid;
+  outline-offset: -1px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  display: inline-flex;
+}
+
+.addTaskText {
+  padding-bottom: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  display: inline-flex;
+}
+
+.addTaskTextContent {
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #6C757D;
+  font-size: 14px;
+  font-family: 'Arial', sans-serif;
+  font-weight: 400;
+  word-wrap: break-word;
+}
+
+.expandedContent {
+  width: 502px;
+  box-shadow: 0px 2px 2px rgba(108, 107, 147, 0.15);
+  overflow: hidden;
+  border-radius: 8px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  display: flex;
+}
+
+.expandedHeader {
+  width: 502px;
+  height: 55px;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: #FAF9FD;
+  border-bottom: 1px #E9ECEF solid;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.expandedBody {
+  align-self: stretch;
+  padding: 20px;
+  background: #FAF9FD;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.expandedItems {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 14px;
+  display: flex;
+}
+
+.expandedItem {
+  width: 462px;
+  height: 55px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.expandedItemContent {
+  width: 418px;
+  height: 55px;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: white;
+  border-radius: 8px;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+}
+
+.expandedItemActions {
+  width: 58px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.deleteIcon {
+  width: 24px;
+  height: 24px;
+  position: relative;
+}
+
+.deleteIconInner {
+  width: 16px;
+  height: 18px;
+  left: 4px;
+  top: 3px;
+  position: absolute;
+  background: #CAD5E2;
+}
+
+.deleteIconRed {
+  background: #FF6467;
+}
+
+.collapsedItem {
+  align-self: stretch;
+  box-shadow: 0px 2px 2px rgba(108, 107, 147, 0.15);
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.collapsedItemInner {
+  flex: 1 1 0;
+  height: 55px;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: #F8F9FA;
+  border-radius: 8px;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+}
+
+.collapsedItemActions {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.collapseIcon {
+  width: 24px;
+  height: 24px;
+  position: relative;
+}
+
+.collapseIconInner {
+  width: 12px;
+  height: 7.40px;
+  left: 6px;
+  top: 8px;
+  position: absolute;
+  background: #6C757D;
+}
+
+.simpleCard {
+  width: 544px;
+  height: 55px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  background: white;
+  box-shadow: 0px 3px 3px rgba(233, 236, 239, 0.25);
+  border-radius: 15px;
+  outline: 1px #CAD5E2 solid;
+  outline-offset: -1px;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.simpleCardContent {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  display: flex;
+}
+
+.simpleCardTitle {
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 34px;
+  word-wrap: break-word;
+}
+
+.simpleCardActions {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
