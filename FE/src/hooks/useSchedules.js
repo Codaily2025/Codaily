@@ -13,31 +13,30 @@ const STALE_TIME = 60 * 60 * 1000
 
 // API 응답 데이터를 FullCalendar events 형식으로 변환
 export const transformSchedulesToEvents = (schedules) => {
-    if (!schedules || !Array.isArray(schedules)) return []
+    // console.log(`transformSchedulesToEvents 호출, schedules: `, schedules)
+    if (!schedules) return []
     
-    return schedules.flatMap(schedule => 
-        schedule.events?.map(event => ({
-            title: event.featureTitle,
-            date: event.scheduleDate,
-            extendedProps: {
-                scheduleId: event.scheduleId,
-                featureId: event.featureId,
-                projectId: event.projectId,
-                featureDescription: event.featureDescription,
-                allocatedHours: event.allocatedHours,
-                category: event.category,
-                priorityLevel: event.priorityLevel,
-                status: event.status
-            }
-        })) || []
-    )
+    return schedules.events?.map(event => ({
+        title: event.featureTitle,
+        date: event.scheduleDate,
+        extendedProps: {
+            scheduleId: event.scheduleId,
+            featureId: event.featureId,
+            projectId: event.projectId,
+            featureDescription: event.featureDescription,
+            allocatedHours: event.allocatedHours,
+            category: event.category,
+            priorityLevel: event.priorityLevel,
+            status: event.status
+        }
+    })) || []
 }
 
 // 사용자 전체 프로젝트 일정 조회 (월별)
-export const useUserScheduleByMonth = () => {
+export const useUserScheduleByMonth = (year, month) => {
     return useQuery({
-        queryKey: SCHEDULE_QUERY_KEYS.monthly(),
-        queryFn: getUserSchedule,
+        queryKey: SCHEDULE_QUERY_KEYS.byMonth(year, month),
+        queryFn: () => getUserSchedule({ year, month }),
         staleTime: STALE_TIME,
         cacheTime: STALE_TIME * 2, // 2시간 캐시
         retry: 2,
