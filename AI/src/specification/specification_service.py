@@ -9,13 +9,13 @@ from typing import AsyncGenerator
 
 
 MIN_GROUPS = 0
-MAX_GROUPS = 8
+MAX_GROUPS = 2
 
 MIN_MAIN_FUNCTIONS = 0
-MAX_MAIN_FUNCTIONS = 8
+MAX_MAIN_FUNCTIONS = 2
 
 MIN_SUB_FUNCTIONS = 0
-MAX_SUB_FUNCTIONS = 8
+MAX_SUB_FUNCTIONS = 2
 
 
 # 1. 환경 변수 로드
@@ -243,10 +243,14 @@ async def process_main_function_and_put(project_description: str, group: str, ma
     main_func_full = f"{main_func['title']}. {main_func['description']}"
     sub_functions = await asyncio.to_thread(generate_sub_functions, project_description, group, main_func_full)
     result = {
-        "field": group,
-        "main_feature": main_func,
-        "sub_feature": sub_functions
+        "type": "spec",
+        "content": {
+            "field": group,
+            "main_feature": main_func,
+            "sub_feature": sub_functions
+        }
     }
+
     await queue.put(result)
 
 
@@ -273,6 +277,13 @@ async def stream_function_specification(project_description: str) -> AsyncGenera
         asyncio.create_task(process_group(project_description, group, queue))
         for group in function_groups
     ]
+
+    async def generate_summary():
+        summary = await asyncio.to_thread(wrap_project_summary_as_sse, project_description)
+        await queue.put(summary)
+
+    group_tasks.append(asyncio.create_task(generate_summary()))
+
     asyncio.create_task(watch_all_groups(group_tasks, finished_flag))
 
     while not (finished_flag["done"] and queue.empty()):
@@ -281,6 +292,50 @@ async def stream_function_specification(project_description: str) -> AsyncGenera
             yield item
         except asyncio.TimeoutError:
             continue
+
+
+def generate_project_summary(history_text: str) -> dict:
+    """
+    주어진 대화 내용을 기반으로 프로젝트 제목, 설명, 명세서 제목을 추출합니다.
+    """
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", (
+            "당신은 사용자의 대화를 분석하여 프로젝트의 제목, 설명, 명세서 제목을 추출하는 전문가입니다.\n\n"
+            "**다음 형식을 반드시 지켜서 출력하세요.**\n"
+            "프로젝트 제목: ...\n"
+            "프로젝트 설명: ...\n"
+            "명세서 제목: ..."
+        )),
+        ("user", "{history_text}")
+    ])
+
+    chain = prompt | model | StrOutputParser()
+    raw_output = chain.invoke({"history_text": history_text})
+
+    # 파싱
+    lines = raw_output.strip().split("\n")
+    project_title = next((l.replace("프로젝트 제목:", "").strip() for l in lines if l.startswith("프로젝트 제목:")), "")
+    project_desc = next((l.replace("프로젝트 설명:", "").strip() for l in lines if l.startswith("프로젝트 설명:")), "")
+    spec_title = next((l.replace("명세서 제목:", "").strip() for l in lines if l.startswith("명세서 제목:")), "")
+
+    return {
+        "projectTitle": project_title,
+        "projectDescription": project_desc,
+        "specTitle": spec_title
+    }
+
+
+def wrap_project_summary_as_sse(history_text: str) -> dict:
+    """
+    대화 내용을 바탕으로 생성된 프로젝트 요약을
+    {"type": "project:summarization", "content": {...}} 형식으로 감싸 반환합니다.
+    """
+    summary = generate_project_summary(history_text)
+    return {
+        "type": "project:summarization",
+        "content": summary
+    }
+
 
 
 

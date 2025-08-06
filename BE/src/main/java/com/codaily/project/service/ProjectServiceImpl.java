@@ -183,4 +183,24 @@ public class ProjectServiceImpl implements ProjectService {
                 .build();
     }
 
+    @Transactional
+    public void updateProjectAndSpec(Long projectId, Long specId,
+                                     String projectTitle, String projectDescription, String specTitle) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+
+        Specification spec = specificationRepository.findById(specId)
+                .orElseThrow(() -> new IllegalArgumentException("Specification not found: " + specId));
+
+        // 프로젝트 정보 업데이트
+        project.setTitle(projectTitle);
+        project.setDescription(projectDescription);
+        project.setUpdatedAt(LocalDateTime.now());
+
+        // 명세서 정보 업데이트
+        spec.setTitle(specTitle);
+        spec.setUpdatedAt(LocalDateTime.now());
+    }
+
 }

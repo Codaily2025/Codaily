@@ -27,11 +27,7 @@ async def monitor_sse_stream(stream: AsyncIterable[dict], wrapper_type: str = "s
     total_sub_functions = 0
 
     async for chunk in stream:
-        wrapper = {
-            "type": wrapper_type,
-            "content": chunk
-        }
-        yield f"data: {json.dumps(wrapper, ensure_ascii=False)}\n\n"
+        yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
 
         if not first_chunk_sent:
             elapsed_first = time.perf_counter() - start_time
@@ -40,7 +36,7 @@ async def monitor_sse_stream(stream: AsyncIterable[dict], wrapper_type: str = "s
 
         # sub_function 개수 누적
         try:
-            sub_funcs = chunk.get("sub_feature", [])
+            sub_funcs = chunk.get("content", {}).get("sub_feature", [])
             total_sub_functions += len(sub_funcs)
         except Exception as e:
             print(f"[{wrapper_type}] sub_feature 파싱 실패 (무시됨): {e}")
@@ -86,6 +82,7 @@ async def chat_stream(intent: str, user_id: str, message: str):
         formatted_text = format_history_to_text(history.messages)
         async def spec_event_generator():
             async for line in monitor_sse_stream(stream_function_specification(formatted_text), wrapper_type=intent):
+                # print(line)
                 yield line
         return StreamingResponse(spec_event_generator(), media_type="text/event-stream")
 

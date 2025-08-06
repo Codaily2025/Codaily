@@ -20,4 +20,7 @@ public interface ProjectService {
     int calculateTotalUserAvailableHours(Long projectId);
 
     public FeatureItemReduceResponse reduceFeatureItemsIfNeeded(Long projectId, Long specId);
+
+    void updateProjectAndSpec(Long projectId, Long specId,
+                              String projectTitle, String projectDescription, String specTitle);
 }
