@@ -37,15 +37,17 @@
 
 .header {
   align-self: stretch;
+  justify-content: space-between;
   padding-top: 8px;
   padding-bottom: 8px;
-  justify-content: space-between;
   align-items: center;
   display: inline-flex;
 }
 
 .headerContent {
-  width: 601px;
+  /* width: 601px; */
+  width: 460px;
+  /* width: 100%; 콘텐츠 너비에 맞춰 조정 */
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
@@ -54,7 +56,8 @@
 }
 
 .title {
-  width: 382px;
+  width: 300px;
+  /* width: 100%; */
   justify-content: center;
   display: flex;
   flex-direction: column;
@@ -91,14 +94,13 @@
 }
 
 .pdfText {
-  width: 94px;
+  width: 115px;
   height: 18px;
   color: #2D3748;
   font-size: 16px;
-  font-family: 'DM Sans', sans-serif;
   font-weight: 700;
   line-height: 24px;
-  word-wrap: break-word;
+  /* word-wrap: break-word; */
 }
 
 .card {
@@ -264,12 +266,13 @@
 }
 
 .techTags {
-  align-self: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  /* align-self: stretch;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: flex-start;
-  gap: 8px;
-  display: flex;
+  align-items: flex-start; */
+  gap: 8px 5px;
 }
 
 .techTagRow {
@@ -277,30 +280,6 @@
   align-items: center;
   gap: 5px;
   display: inline-flex;
-}
-
-.techTag {
-  height: 24px;
-  padding-left: 12px;
-  padding-right: 12px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  background: #CCCBE4;
-  border-radius: 20px;
-  justify-content: flex-start;
-  align-items: flex-start;
-  display: flex;
-}
-
-.techTagText {
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
-  color: #5A597D;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  word-wrap: break-word;
 }
 
 .featuresTitle {
@@ -873,20 +852,22 @@
 
 .mainFeatureHeaderRight {
   justify-content: flex-start;
+  /* justify-content: center; */
   align-items: center;
   gap: 10px;
   display: flex;
 }
 
 .mainFeatureName {
-  width: 62px;
+  /* width: 62px; */
   height: 23px;
   color: #525252;
   font-size: 16px;
   font-family: 'Inter', sans-serif;
   font-weight: 600;
   line-height: 25px;
-  word-wrap: break-word;
+  /* word-break: break-all; */
+  /* word-wrap: break-word; */
 }
 
 .mainFeatureDataName {
@@ -982,134 +963,6 @@
   display: flex;
   flex-direction: column;
   color: #212529;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  word-wrap: break-word;
-}
-
-/* 체크박스 스타일 */
-.checkbox {
-  width: 20px;
-  height: 20px;
-  position: relative;
-  background: white;
-  overflow: hidden;
-  border-radius: 6px;
-  outline: 1px #5A597D solid;
-  outline-offset: -1px;
-  justify-content: center;
-  align-items: center;
-  display: flex;
-}
-
-.checkboxIcon {
-  left: 3px;
-  top: 3px;
-  position: absolute;
-}
-
-/* 우선순위 배지 스타일 */
-.priorityBadgeLow {
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  background: #F0FDF4;
-  border-radius: 999px;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  display: inline-flex;
-}
-
-.priorityBadgeNormal {
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  background: #FFFBEB;
-  border-radius: 999px;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  display: inline-flex;
-}
-
-.priorityBadgeHigh {
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  background: #FFF1F2;
-  border-radius: 999px;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  display: inline-flex;
-}
-
-.priorityTextLow {
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
-  color: #22C55E;
-  font-size: 12px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  text-transform: capitalize;
-  word-wrap: break-word;
-}
-
-.priorityTextNormal {
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
-  color: #F59E0B;
-  font-size: 12px;
-  font-family: 'Inter', sans-serif;
-  font-weight: 600;
-  text-transform: capitalize;
-  word-wrap: break-word;
-}
-
-.priorityTextHigh {
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
-  color: #E53E3E;
-  font-size: 12px;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 600;
-  text-transform: capitalize;
-  word-wrap: break-word;
-}
-
-/* 시간 표시 스타일 */
-.timeIndicator {
-  justify-content: flex-start;
-  align-items: center;
-  gap: 6px;
-  display: flex;
-}
-
-.timeIconContainer {
-  position: relative;
-}
-
-.timeTextContainer {
-  padding-bottom: 2px;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  display: inline-flex;
-}
-
-.timeValueText {
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
-  color: #6C757D;
   font-size: 14px;
   font-family: 'Inter', sans-serif;
   font-weight: 500;
