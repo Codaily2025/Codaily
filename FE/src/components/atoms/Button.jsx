@@ -7,7 +7,7 @@ const Button = ({ children, onClick, type = 'primary', className = '', style = {
         cursor: 'pointer',
         marginTop: '16px',
         // fontWeight: 'bold',
-        // fontSize: '14px',
+        fontSize: '14px',
         // transition: 'all 0.2s ease',
     }
 

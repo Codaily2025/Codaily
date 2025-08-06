@@ -95,18 +95,7 @@
 }
 
 .repoUrlContainer {
-  margin: 12px 0 24px;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(-8px);
-}
-
-.repoUrlContainer.show {
-  max-height: 60px;
-  opacity: 1;
-  transform: translateY(0);
+  margin: 12px 0;
 }
 
 .repoUrlInput {
