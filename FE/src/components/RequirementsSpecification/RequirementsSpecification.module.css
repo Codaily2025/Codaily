@@ -791,3 +791,540 @@
   gap: 10px;
   display: flex;
 }
+
+/* 주요 기능 섹션 스타일 */
+.mainFeaturesCard {
+  width: 611px;
+  padding: 25px;
+  background: white;
+  box-shadow: 0px 2px 8px rgba(108, 107, 147, 0.05);
+  border-radius: 16px;
+  outline: 1px #E4E3F3 solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 20px;
+  display: inline-flex;
+}
+
+.mainFeaturesHeader {
+  align-self: stretch;
+  height: 25px;
+  position: relative;
+}
+
+.mainFeaturesTitle {
+  left: 0;
+  top: 0;
+  position: absolute;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #525252;
+  font-size: 20px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  word-wrap: break-word;
+}
+
+.mainFeaturesList {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 15px;
+  display: flex;
+}
+
+/* 기능 카드 스타일 */
+.mainFeatureCard {
+  align-self: stretch;
+  padding: 1px;
+  background: white;
+  box-shadow: 0px 3px 3px rgba(115, 115, 115, 0.25);
+  border-radius: 15px;
+  outline: 1px #E4E3F3 solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  display: flex;
+}
+
+.mainFeatureHeader {
+  align-self: stretch;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px #E9ECEF solid;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.mainFeatureHeaderLeft {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+
+.mainFeatureHeaderRight {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.mainFeatureName {
+  width: 62px;
+  height: 23px;
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 25px;
+  word-wrap: break-word;
+}
+
+.mainFeatureDataName {
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 25px;
+  word-wrap: break-word;
+}
+
+.mainFeatureContent {
+  align-self: stretch;
+  padding: 20px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.mainFeatureItems {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 16px;
+  display: flex;
+}
+
+/* 하위 작업 스타일 */
+.subTaskItem {
+  align-self: stretch;
+  height: 55px;
+  box-sizing: border-box;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: #FAF9FD;
+  box-shadow: 0px 3px 3px rgba(180, 179, 220, 0.25);
+  border-radius: 8px;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.subTaskLeft {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+
+.subTaskRight {
+  width: 58px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.subTaskActions {
+  align-self: stretch;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+  display: inline-flex;
+}
+
+.subTaskTime {
+  width: 57px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 10px;
+  display: inline-flex;
+}
+
+.subTaskNameContainer {
+  padding-bottom: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.subTaskName {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #212529;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+/* 체크박스 스타일 */
+.checkbox {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  background: white;
+  overflow: hidden;
+  border-radius: 6px;
+  outline: 1px #5A597D solid;
+  outline-offset: -1px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+}
+
+.checkboxIcon {
+  left: 3px;
+  top: 3px;
+  position: absolute;
+}
+
+/* 우선순위 배지 스타일 */
+.priorityBadgeLow {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  background: #F0FDF4;
+  border-radius: 999px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.priorityBadgeNormal {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  background: #FFFBEB;
+  border-radius: 999px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.priorityBadgeHigh {
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  background: #FFF1F2;
+  border-radius: 999px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.priorityTextLow {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #22C55E;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  text-transform: capitalize;
+  word-wrap: break-word;
+}
+
+.priorityTextNormal {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #F59E0B;
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  text-transform: capitalize;
+  word-wrap: break-word;
+}
+
+.priorityTextHigh {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #E53E3E;
+  font-size: 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  text-transform: capitalize;
+  word-wrap: break-word;
+}
+
+/* 시간 표시 스타일 */
+.timeIndicator {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+  display: flex;
+}
+
+.timeIconContainer {
+  position: relative;
+}
+
+.timeTextContainer {
+  padding-bottom: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: inline-flex;
+}
+
+.timeValueText {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #6C757D;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+/* 확장된 섹션 스타일 */
+.expandedSection {
+  align-self: stretch;
+  box-shadow: 0px 3px 3px rgba(180, 179, 220, 0.25);
+  overflow: hidden;
+  border-radius: 8px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  display: flex;
+}
+
+.expandedSectionHeader {
+  align-self: stretch;
+  /* height: 55px; */
+  height: 60px;
+  box-sizing: border-box;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: #FAF9FD;
+  border-bottom: 1px #E9ECEF solid;
+  outline-offset: -1px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.expandedSectionHeaderInner {
+  align-self: stretch;
+  /* height: 55px; */
+  height: 60px;
+  box-sizing: border-box;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.expandedSectionBody {
+  align-self: stretch;
+  padding: 20px;
+  background: #FAF9FD;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.expandedSectionItems {
+  align-self: stretch;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 14px;
+  display: flex;
+}
+
+.expandedSectionItem {
+  align-self: stretch;
+  height: 55px;
+  /* height: 60px; */
+  box-sizing: border-box;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: white;
+  box-shadow: 0px 3px 3px rgba(115, 115, 115, 0.25);
+  border-radius: 8px;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+/* 단순 토글 아이템 스타일 */
+.simpleToggleItem {
+  align-self: stretch;
+  box-shadow: 0px 3px 3px rgba(180, 179, 220, 0.25);
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  display: inline-flex;
+}
+
+.simpleToggleInner {
+  flex: 1 1 0;
+  height: 55px;
+  box-sizing: border-box;
+  padding-left: 17px;
+  padding-right: 17px;
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: #FAF9FD;
+  border-radius: 8px;
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+}
+
+.simpleToggleActions {
+  padding-top: 7px;
+  padding-bottom: 7px;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+/* 단순 카드 스타일 (배포 등) */
+.simpleFeatureCard {
+  align-self: stretch;
+  /* height: 55px; */
+  height: 60px;
+  box-sizing: border-box;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  background: white;
+  box-shadow: 0px 3px 3px rgba(115, 115, 115, 0.25);
+  border-radius: 15px;
+  outline: 1px #E4E3F3 solid;
+  outline-offset: -1px;
+  justify-content: space-between;
+  align-items: center;
+  display: inline-flex;
+}
+
+.simpleFeatureLeft {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  display: flex;
+}
+
+.simpleFeatureTitle {
+  color: #525252;
+  font-size: 16px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  line-height: 34px;
+  word-wrap: break-word;
+}
+
+.simpleFeatureRight {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+/* 새 작업 추가 버튼 스타일 */
+.addNewTaskSection {
+  align-self: stretch;
+  padding-top: 8px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  display: flex;
+}
+
+.addNewTaskButton {
+  align-self: stretch;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 11px;
+  border-radius: 8px;
+  outline: 1px #E9ECEF solid;
+  outline-offset: -1px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  display: inline-flex;
+}
+
+.addNewTaskText {
+  padding-bottom: 2px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  display: inline-flex;
+}
+
+.addNewTaskTextContent {
+  text-align: center;
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+  color: #6C757D;
+  font-size: 14px;
+  font-family: 'Arial', sans-serif;
+  font-weight: 400;
+  word-wrap: break-word;
+}
+
+/* 아이콘 컨테이너 스타일 */
+.iconContainer {
+  position: relative;
+}
+
+.addIconContainer {
+  position: relative;
+}
+
+.expandIconContainer {
+  position: relative;
+}
