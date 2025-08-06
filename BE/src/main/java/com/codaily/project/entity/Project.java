@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.*;
 
 import java.time.LocalDate;
@@ -28,7 +29,7 @@ public class Project {
     private User user;
 
     @JsonProperty("userId")
-    public Long getUserId(){
+    public Long getUserId() {
         return user != null ? user.getUserId() : null;
     }
 
@@ -56,15 +57,18 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<FeatureItem> featureItems;
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectRepositories> projectRepositories = new ArrayList<>();
+
     @PrePersist
-    protected void onCreated(){
-        if(createdAt == null){
+    protected void onCreated() {
+        if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
     }
 
     @PreUpdate
-    protected void updateDate(){
+    protected void updateDate() {
         updatedAt = LocalDateTime.now();
     }
 }
