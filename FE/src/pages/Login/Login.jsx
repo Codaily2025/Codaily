@@ -7,18 +7,24 @@ import naverIcon from '../../assets/naver_icon.png';
 import mainImage from '../../assets/main_image.png';
 import logoInImage from '../../assets/logo_in_image.png';
 
+import { useMutation } from '@tanstack/react-query';
+import { defaultInstance } from '../../apis/axios2';
+import { useAuthStore } from '../../stores/authStore';
+
 const Login = ({ onLogin }) => {
   const navigate = useNavigate();
 
   const handleSocialLogin = (provider) => {
-    // 실제로는 여기서 각 소셜 로그인 API를 호출합니다
-    console.log(`${provider} 로그인 시도`);
-    
-    // 임시로 바로 로그인 처리
-    if (onLogin) {
-      onLogin();
+    if (provider === 'google') {
+      // 구글 OAuth 로그인 - 백엔드 OAuth 엔드포인트로 리다이렉트
+      window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    } else if (provider === 'naver') {
+      // 네이버 OAuth 로그인
+      window.location.href = 'http://localhost:8080/oauth2/authorization/naver';
+    } else {
+      // 카카오는 아직 구현되지 않음
+      console.log(`${provider} 로그인은 아직 구현되지 않았습니다.`);
     }
-    navigate('/'); // 로그인 후 프로젝트 페이지로 이동
   };
 
   return (
