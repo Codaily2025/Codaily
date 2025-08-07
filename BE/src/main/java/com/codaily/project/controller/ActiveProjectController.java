@@ -3,6 +3,7 @@ package com.codaily.project.controller;
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.project.dto.ActiveProjectsResponse;
 import com.codaily.project.service.ActiveProjectService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ public class ActiveProjectController {
 
     private final ActiveProjectService activeProjectService;
 
+    @Operation(summary = "활성 프로젝트 조회")
     @GetMapping("/projects/active")
     public ResponseEntity<ActiveProjectsResponse> getActiveProjects(
             @AuthenticationPrincipal PrincipalDetails userDetails) {
