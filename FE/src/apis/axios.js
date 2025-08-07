@@ -1,5 +1,7 @@
 import axios from "axios"
 
+// axios 모듈 수정 금지
+// 주석 처리만 가능
 const BASE_URL = 'http://localhost:8080/api/'
 
 const axiosInstance = (url, options) => {
@@ -17,6 +19,8 @@ const axiosAuthInstance = (url, options) => {
     })
     return instance
 }
+
+// TODO: 요청, 응답 인터셉터 구현 예정
 
 export const defaultInstance = axiosInstance(BASE_URL)
 export const authInstance = axiosAuthInstance(BASE_URL)
