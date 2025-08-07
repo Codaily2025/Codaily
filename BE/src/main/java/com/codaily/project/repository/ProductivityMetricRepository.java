@@ -10,11 +10,6 @@ import java.util.Optional;
 
 public interface ProductivityMetricRepository extends JpaRepository<ProductivityMetric, Long> {
 
-    Optional<ProductivityMetric> findByUserIdAndProjectIdAndDate(
-            Long userId, Long projectId, LocalDate date);
-
-    List<ProductivityMetric> findByUserIdAndProjectIdAndDateBetween(
-            Long userId, Long projectId, LocalDate startDate, LocalDate endDate);
 
     @Query("SELECT AVG(pm.productivityScore) FROM ProductivityMetric pm WHERE pm.userId = :userId")
     Double findPersonalAverageScore(@Param("userId") Long userId);

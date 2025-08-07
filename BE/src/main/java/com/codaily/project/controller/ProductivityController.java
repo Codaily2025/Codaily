@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 @Slf4j
 @RestController
 @RequestMapping("/api")
@@ -55,9 +57,29 @@ public class ProductivityController {
                 projectId, period, startDate, endDate);
 
         try {
+            // period 검증
+            if (!"weekly".equals(period) && !"monthly".equals(period)) {
+                log.warn("잘못된 period 파라미터: {}", period);
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 날짜 파싱 검증
+            LocalDate inputDate = LocalDate.parse(startDate);
+            LocalDate start, end;
+
+            if ("weekly".equals(period)) {
+                // 해당 날짜가 속한 주의 월요일~일요일
+                start = inputDate.with(java.time.DayOfWeek.MONDAY);
+                end = inputDate.with(java.time.DayOfWeek.SUNDAY);
+            } else { // monthly
+                // 해당 날짜가 속한 월의 1일~말일
+                start = inputDate.withDayOfMonth(1);
+                end = inputDate.withDayOfMonth(inputDate.lengthOfMonth());
+            }
+
             Long userId = userDetails.getUserId();
             ProductivityChartResponse response = productivityService.getProductivityChart(
-                    userId, projectId, period, startDate, endDate);
+                    userId, projectId, period, start.toString(), end.toString());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("생산성 그래프 데이터 조회 중 오류 발생", e);
