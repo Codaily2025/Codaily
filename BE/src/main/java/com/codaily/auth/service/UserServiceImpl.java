@@ -6,6 +6,7 @@ import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.TechStackRepository;
 import com.codaily.auth.repository.UserRepository;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,6 +122,35 @@ public class UserServiceImpl implements UserService {
         user.setGithubAccessToken(null);
         user.setGithubAccount(null);
 
+        userRepository.save(user);
+    }
+
+    @Override
+    public String getUserNickname(Long userId) {
+        if (userId == null) {
+            throw new IllegalArgumentException("사용자 ID는 null일 수 없습니다.");
+        }
+
+        String nickname = userRepository.findNicknameByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return nickname;
+    }
+
+    @Override
+    public void updateUserNickname(Long userId, String newNickname) {
+        if (userId == null) {
+            throw new IllegalArgumentException("사용자 ID는 null일 수 없습니다.");
+        }
+
+        if (newNickname == null || newNickname.trim().isEmpty()) {
+            throw new IllegalArgumentException("닉네임은 필수입니다.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. ID: " + userId));
+
+        user.setNickname(newNickname.trim());
         userRepository.save(user);
     }
 

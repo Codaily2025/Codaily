@@ -24,4 +24,8 @@ public interface UserService {
     void updateCustomTechStack(Long userId, Set<String> technologies);
 
     void unlinkGithub(Long userId);
+
+    String getUserNickname(Long userId);
+
+    void updateUserNickname(Long userId, String newNickname);
 }
