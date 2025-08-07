@@ -6,18 +6,19 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Map;
-
 @Getter
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class CodeReviewItemDto {
-    private String category;
+public class ReviewItemDto {
 
-    @JsonProperty("checklist_item")
-    private String checklistItem;
+    @JsonProperty("file_path")
+    private String filePath;
 
-    private List<ReviewItemDto> items;
+    @JsonProperty("line_range")
+    private String lineRange;
+
+    private String severity;
+
+    private String message;
 }

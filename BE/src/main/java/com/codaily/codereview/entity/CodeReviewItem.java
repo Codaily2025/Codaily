@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "code_review_item")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

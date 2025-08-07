@@ -20,11 +20,6 @@ public class FeatureItemChecklistServiceImpl implements FeatureItemChecklistServ
     private final FeatureItemRepository featureItemRepository;
 
     @Override
-    public List<FeatureItemChecklist> getChecklistByFeatureId(Long featureId) {
-        return checklistRepository.findByFeatureItem_FeatureId(featureId);
-    }
-
-    @Override
     public FeatureItemChecklist addChecklistItem(Long featureId, String item, String description) {
         FeatureItem feature = featureItemRepository.findById(featureId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 기능이 존재하지 않습니다"));
@@ -55,5 +50,23 @@ public class FeatureItemChecklistServiceImpl implements FeatureItemChecklistServ
             checklist.updateDone(isDone); // ✅ 상태 업데이트
         }
     }
+
+    @Override
+    public List<FeatureItemChecklist> findByFeatureItem_FeatureId(Long featureId) {
+        return checklistRepository.findByFeatureItem_FeatureId(featureId)
+                .orElseThrow(() -> new IllegalArgumentException("체크리스트를 찾을 수 없습니다."));
+    }
+
+    @Override
+    public FeatureItemChecklist findByFeatureItem_FeatureIdAndItem(Long featureId, String item) {
+        return checklistRepository.findByFeatureItem_IdAndItem(featureId, item)
+                .orElseThrow(() -> new IllegalArgumentException("체크리스트 항목을 찾을 수 없습니다."));
+    }
+
+    @Override
+    public boolean existsByFeatureItem_FeatureIdAndItem(Long featureId, String item) {
+        return checklistRepository.existsByFeatureItem_FeatureIdAndItem(featureId, item);
+    }
+
 
 }

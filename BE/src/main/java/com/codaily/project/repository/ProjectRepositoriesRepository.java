@@ -1,4 +1,5 @@
 package com.codaily.project.repository;
+import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,5 +11,7 @@ public interface ProjectRepositoriesRepository extends JpaRepository<ProjectRepo
 
 //    List<ProjectRepositories> findByProjectId(Long projectId);
     Optional<ProjectRepositories> findByProject_Id(Long projectId);
+    Optional<ProjectRepositories> findByProject_ProjectIdAndRepoName(Long projectId, String repoName);
+    Optional<ProjectRepositories> findByRepoName(String repoName);
 }
 

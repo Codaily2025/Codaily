@@ -22,6 +22,10 @@ public class ProjectRepositories {
     @Column(name = "project_id", nullable = false)
     private Long projectId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private Project project;
+
     @Column(name = "repo_name", nullable = false, length = 255)
     private String repoName;
 

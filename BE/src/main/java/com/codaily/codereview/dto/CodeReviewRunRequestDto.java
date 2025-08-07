@@ -16,9 +16,6 @@ public class CodeReviewRunRequestDto {
     private Long commitId;
     private String commitHash;
     private Long featureId; // ✅ 기능명 유추된 후에 세팅 (or null)
-    private List<String> checklist; // ✅ 표준 구현 항목들
     private List<DiffFile> diffFiles;
-    private List<FullFile> fullFiles;
-    private List<String> availableFeatures;
 }
 

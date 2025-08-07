@@ -1,5 +1,6 @@
 package com.codaily.project.service;
 
+import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.project.dto.FeatureSaveContent;
 import com.codaily.project.dto.FeatureSaveItem;
 import com.codaily.project.dto.FeatureSaveRequest;
@@ -125,5 +126,17 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     public int calculateTotalEstimatedTime(Long specId) {
         Integer total = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
         return total != null ? total : 0;
+    }
+
+    @Override
+    public FeatureItem findByProjectIdAndTitle(Long projectId, String featureName) {
+        return featureItemRepository.findByProjectIdAndTitle(projectId, featureName)
+                .orElseThrow(() -> new IllegalArgumentException(featureName + "의 기능을 찾을 수 없습니다"));
+    }
+
+    @Override
+    public FeatureItem findById(Long featureId) {
+        return featureItemRepository.findById(featureId)
+                .orElseThrow(() -> new IllegalArgumentException("기능을 찾을 수 없습니다."));
     }
 }
