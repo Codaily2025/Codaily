@@ -9,4 +9,6 @@ public class ProjectSummaryContent {
     private String projectTitle;
     private String projectDescription;
     private String specTitle;
+    private Long projectId;
+    private Long specId;
 }

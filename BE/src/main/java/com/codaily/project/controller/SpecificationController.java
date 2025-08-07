@@ -1,5 +1,6 @@
 package com.codaily.project.controller;
 
+import com.codaily.common.gpt.dto.ChatStreamRequest;
 import com.codaily.common.gpt.handler.ChatResponseStreamHandler;
 import com.codaily.project.dto.SpecificationTimeResponse;
 import com.codaily.project.service.FeatureItemService;
@@ -55,7 +56,7 @@ public class SpecificationController {
             @Parameter(description = "사용자 ID", example = "system") @RequestParam(defaultValue = "system") String userId
     ) {
         String defaultMessage = "[SYSTEM] 명세서를 다시 생성해 주세요.";
-        return chatResponseStreamHandler.stream("spec:regenerate", userId, defaultMessage, projectId, specId);
+        return chatResponseStreamHandler.stream(new ChatStreamRequest("spec:regenerate", userId, defaultMessage, projectId, specId, null, null));
     }
 
     @GetMapping("/{specId}/total-time")

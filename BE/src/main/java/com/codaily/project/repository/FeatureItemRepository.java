@@ -48,4 +48,5 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     List<FeatureItem> findByParentFeature(FeatureItem parentFeature);
 
+    FeatureItem getFeatureItemByFeatureId(Long featureId);
 }

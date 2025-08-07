@@ -7,8 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChatIntentResponse {
-    private String intent; // "chat", "spec", "spec:regenerate"
+public class ChatStreamRequest {
+    private String intent;
+    private String userId;
+    private String message;
+    private Long projectId;
+    private Long specId;
     private Long featureId;
     private String field;
 }

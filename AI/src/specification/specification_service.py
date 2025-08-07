@@ -209,7 +209,7 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
     })
 
     # 문자열 응답을 list[dict]로 파싱
-    result = result = parse_bullet_items_with_duration_and_priority(response, "title")
+    result = parse_bullet_items_with_duration_and_priority(response, "title")
 
     return result
 
@@ -234,21 +234,18 @@ def generate_sub_functions(project_description: str, function_group: str, main_f
 #             "상세 기능": subs
 #         })
 
-    return result
+#    return result
 
 
 
 
-async def process_main_function_and_put(project_description: str, group: str, main_func: dict, queue: asyncio.Queue):
+async def process_main_function(project_description: str, group: str, main_func: dict, queue: asyncio.Queue):
     main_func_full = f"{main_func['title']}. {main_func['description']}"
     sub_functions = await asyncio.to_thread(generate_sub_functions, project_description, group, main_func_full)
     result = {
-        "type": "spec",
-        "content": {
             "field": group,
             "main_feature": main_func,
             "sub_feature": sub_functions
-        }
     }
 
     await queue.put(result)
@@ -257,7 +254,7 @@ async def process_main_function_and_put(project_description: str, group: str, ma
 async def process_group(project_description: str, group: str, queue: asyncio.Queue):
     main_functions = await asyncio.to_thread(generate_main_functions, project_description, group)
     tasks = [
-        asyncio.create_task(process_main_function_and_put(project_description, group, main_func, queue))
+        asyncio.create_task(process_main_function(project_description, group, main_func, queue))
         for main_func in main_functions
     ]
     await asyncio.gather(*tasks)
@@ -266,6 +263,13 @@ async def process_group(project_description: str, group: str, queue: asyncio.Que
 async def watch_all_groups(group_tasks: list[asyncio.Task], finished_flag: dict):
     await asyncio.gather(*group_tasks)
     finished_flag["done"] = True
+
+
+def wrap_main_function(ref): 
+    return {
+        "type": "spec",
+        "content": ref
+    }
 
 
 async def stream_function_specification(project_description: str) -> AsyncGenerator[str, None]:
@@ -289,9 +293,17 @@ async def stream_function_specification(project_description: str) -> AsyncGenera
     while not (finished_flag["done"] and queue.empty()):
         try:
             item = await asyncio.wait_for(queue.get(), timeout=1.0)
-            yield item
+            if isinstance(item, dict) and "type" in item and "content" in item:
+                # 이미 감싸진 구조라면 그냥 json.dumps만 해줌
+                yield item
+            else:
+                # print(wrap_as_sse_chunk("spec", item))
+                yield wrap_as_sse_chunk("spec", item)
+            # yield item
         except asyncio.TimeoutError:
             continue
+
+
 
 
 def generate_project_summary(history_text: str) -> dict:
@@ -335,6 +347,145 @@ def wrap_project_summary_as_sse(history_text: str) -> dict:
         "type": "project:summarization",
         "content": summary
     }
+
+
+def wrap_as_sse_chunk(chunk_type: str, content: dict | list) -> str:
+    return {
+        "type": chunk_type,
+        "content": content
+    }
+
+
+
+
+def generate_main_feature_from_message(message_text: str, field: str) -> dict:
+    """
+    사용자 메시지로부터 주 기능 1개 (title, description) 생성
+    """
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", (
+            "당신은 사용자의 요청을 바탕으로 명세에 들어갈 주 기능 항목을 구성하는 전문가입니다.\n"
+            "기능 그룹: {field}\n\n"
+            "출력 형식은 반드시 다음 예시를 따르세요 (기능명은 짧고, 설명은 한 줄로):\n"
+            "- 회원가입: 사용자가 이메일과 비밀번호로 계정을 생성할 수 있음\n"
+            "- 로그인: 사용자가 계정으로 서비스에 로그인할 수 있음\n"
+            "- 장바구니 담기: 사용자가 상품을 장바구니에 추가할 수 있음\n\n"
+            "작성 기준:\n"
+            "- 기능명은 가능한 한 간결하고 구체적인 **명사형 표현**으로 작성하세요\n"
+            "- 설명은 **사용자 관점**에서, 이 기능을 통해 **무엇을 할 수 있는지 한 줄로** 작성하세요\n"
+            "- 형식 오류나 누락이 없도록 주의하세요"
+            "아래 형식으로 반드시 한 줄만 출력하세요(하이픈은 무조건 있어야 합니다.):\n"
+            "- 형식: `- 기능명: 설명`\n"
+        )),
+        ("user", "{message_text}")
+    ])
+
+    chain = prompt | model | StrOutputParser()
+    raw = chain.invoke({
+        "field": field,
+        "message_text": message_text.strip()
+    })
+
+    # print(raw)
+    # 파싱
+    parsed = parse_bullet_items(raw, key_name="title")
+    # print(parsed)
+    return parsed[0] if parsed else {"title": "(제목 없음)", "description": ""}
+
+
+async def generate_sub_feature(
+    history: list,
+    title: str,
+    field: str
+):
+    """
+    주어진 주 기능을 기반으로 GPT를 통해 상세 기능 1개를 생성합니다.
+    """
+    # history를 하나의 문자열로 변환
+    message_text = "\n".join(m.content for m in history)
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", (
+            "당신은 소프트웨어 기능 명세 전문가입니다.\n"
+            "사용자의 요청과 주어진 주 기능, 기능 그룹을 바탕으로 **상세 기능 하나**를 구체적으로 정의하세요.\n\n"
+            "출력 형식은 아래 예시를 반드시 따르세요:\n"
+            "- 상세기능명: 설명: 예상시간(정수): 우선순위(1~10 정수)\n\n"
+            "예시:\n"
+            "- 이메일 입력 필드 표시: 사용자가 이메일을 입력할 수 있는 입력창을 화면에 표시: 1: 8\n"
+            "- 가입 버튼 클릭 처리: 사용자가 가입 버튼을 클릭하면 계정 생성 요청을 서버에 전송: 1: 10\n\n"
+            "작성 기준:\n"
+            "1. 상세기능명은 시스템이 수행하는 **구체적인 동작을 동사로 시작**하세요.\n"
+            "2. 설명은 **사용자 관점**에서 시스템의 반응이나 효과를 **한 문장**으로 요약하세요.\n"
+            "3. 예상 시간은 1~10 사이의 정수로, 단위는 시간입니다.\n"
+            "4. 우선순위는 작을수록 더 중요합니다 (1이 가장 높음).\n"
+            "5. 절대로 항목은 **1개만** 생성하세요. 여러 개를 나열하지 마세요.\n"
+            "6. 주 기능과 **동일하거나 유사한 상세 기능은 제외**하세요.\n"
+            "7. 사용자의 요청을 충실히 반영하세요.\n"
+        )),
+        ("user", (
+            "**요청을 바탕으로 상세 기능 1개만 작성하세요. 형식 오류 없이 정확하게!**\n\n"
+            "▼ 기능 그룹 (field): {field}\n"
+            "▼ 주 기능 (main title): {title}\n"
+            "▼ 사용자 요청/대화 내용:\n"
+            "{message_text}"
+        ))
+    ])
+
+    # LLM 호출 및 파싱
+    chain = prompt | model | StrOutputParser()
+    response = await asyncio.to_thread(chain.invoke, {
+        "field": field,
+        "title": title,
+        "message_text": message_text
+    })
+
+    # print(response)
+    parsed = parse_bullet_items_with_duration_and_priority(response, key_name="title")
+    # print(parsed)
+    if not parsed:
+        raise ValueError("상세 기능 생성 실패: 유효한 항목이 없습니다.")
+    # print(parsed[0])
+    return parsed[0]
+
+
+def generate_group_title(user_message: str) -> str:
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", (
+            "당신은 사용자의 요구로부터 적절한 소프트웨어 기능 분류 이름을 도출하는 전문가입니다.\n\n"
+            "출력은 반드시 **하나의 단어 또는 짧은 문장 형태의 이름**이어야 하며, 설명은 제외합니다.\n\n"
+            "예시:\n"
+            "- 사용자 요청: '친구 추천 기능을 만들고 싶어요'\n"
+            "- 출력: '소셜 추천'\n\n"
+            "요청 내용:\n{user_message}"
+        ))
+    ])
+
+    chain = prompt | model | StrOutputParser()
+    return chain.invoke({"user_message": user_message}).strip()
+
+
+async def stream_single_group(project_description: str, group_title: str) -> AsyncGenerator[str, None]:
+    queue = asyncio.Queue()
+    finished_flag = {"done": False}
+
+    async def single_group_task():
+        await process_group(project_description, group_title, queue)
+
+    task = asyncio.create_task(single_group_task())
+
+    async def monitor():
+        await task
+        finished_flag["done"] = True
+
+    asyncio.create_task(monitor())
+
+    while not (finished_flag["done"] and queue.empty()):
+        try:
+            item = await asyncio.wait_for(queue.get(), timeout=1.0)
+            yield item
+        except asyncio.TimeoutError:
+            continue
+
 
 
 

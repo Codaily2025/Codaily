@@ -12,14 +12,14 @@ import org.springframework.stereotype.Component;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class RegenerateSpecMessageHandler implements SseMessageHandler<FeatureSaveResponse> {
+public class AddMainFeatureHandler implements SseMessageHandler<FeatureSaveResponse> {
 
     private final FeatureItemService featureItemService;
     private final ObjectMapper objectMapper;
 
     @Override
     public MessageType getType() {
-        return MessageType.SPEC_REGENERATE;
+        return MessageType.SPEC_ADD_FEATURE_MAIN;
     }
 
     @Override
@@ -31,10 +31,10 @@ public class RegenerateSpecMessageHandler implements SseMessageHandler<FeatureSa
     public FeatureSaveResponse handle(JsonNode content, Long projectId, Long specId, Long featureId) {
         try {
             FeatureSaveRequest request = objectMapper.treeToValue(content, FeatureSaveRequest.class);
-            return featureItemService.saveSpecChunk(request, projectId, specId, "spec:regenerate");
+            return featureItemService.saveSpecChunk(request, projectId, specId, "spec:add:feature:main");
         } catch (Exception e) {
-            log.error("명세 재생성 실패", e);
-            throw new RuntimeException("명세 재생성 실패", e);
+            log.error("주 기능 추가 실패", e);
+            throw new RuntimeException("주 기능 추가 실패", e);
         }
     }
 }

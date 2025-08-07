@@ -29,7 +29,7 @@ public class ProjectSummaryHandler implements SseMessageHandler<ProjectSummaryRe
     }
 
     @Override
-    public ProjectSummaryResponse handle(JsonNode content, Long projectId, Long specId) {
+    public ProjectSummaryResponse handle(JsonNode content, Long projectId, Long specId, Long featureId) {
         try {
             ProjectSummaryRequest summary = objectMapper.treeToValue(content, ProjectSummaryRequest.class);
 
@@ -47,6 +47,8 @@ public class ProjectSummaryHandler implements SseMessageHandler<ProjectSummaryRe
                             .projectTitle(summary.getProjectTitle())
                             .projectDescription(summary.getProjectDescription())
                             .specTitle(summary.getSpecTitle())
+                            .projectId(projectId)
+                            .specId(specId)
                             .build())
                     .build();
 
