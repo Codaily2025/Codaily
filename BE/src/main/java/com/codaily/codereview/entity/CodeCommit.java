@@ -22,3 +22,4 @@ public class CodeCommit {
     private String message;
     private LocalDateTime committedAt;
 }
+
