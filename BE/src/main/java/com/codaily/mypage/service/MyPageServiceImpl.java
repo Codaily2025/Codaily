@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class MyPageProjectServiceImpl implements MyPageProjectService{
+public class MyPageServiceImpl implements MyPageService {
 
     private final FeatureItemSchedulesRepository schedulesRepository;
     private final FeatureItemRepository featureItemRepository;
@@ -79,6 +79,13 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
         return projects.stream()
                 .map(this::converToList)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean isProjectOwner(Long projectId, Long userId) {
+        return projectRepository.findById(projectId)
+                .map(project -> project.getUserId().equals(userId))
+                .orElse(false);
     }
 
     private ProjectListResponse converToList(Project project){

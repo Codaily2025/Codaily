@@ -5,7 +5,7 @@ import com.codaily.mypage.dto.ProjectStatusResponse;
 
 import java.util.List;
 
-public interface MyPageProjectService {
+public interface MyPageService {
     List<ProjectListResponse> getProjectList(Long userId);
 
     void deleteProject(Long projectId);
@@ -13,4 +13,6 @@ public interface MyPageProjectService {
     ProjectStatusResponse completeProject(Long projectId);
 
     List<ProjectListResponse> searchProjectsByStatus(Long userId, String status);
+
+    boolean isProjectOwner(Long projectId, Long userId);
 }

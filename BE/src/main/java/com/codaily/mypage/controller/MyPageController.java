@@ -6,10 +6,11 @@ import com.codaily.mypage.dto.NicknameUpdateRequest;
 import com.codaily.mypage.dto.ProjectListResponse;
 import com.codaily.mypage.dto.ProjectStatusResponse;
 import com.codaily.mypage.dto.ProjectUpdateRequest;
-import com.codaily.mypage.service.MyPageProjectServiceImpl;
+import com.codaily.mypage.service.MyPageServiceImpl;
 import com.codaily.project.service.ProjectServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +24,7 @@ import java.util.Map;
 @RequestMapping("/api")
 public class MyPageController {
 
-    private final MyPageProjectServiceImpl myPageProjectService;
+    private final MyPageServiceImpl myPageProjectService;
     private final UserServiceImpl userService;
     private final ProjectServiceImpl projectService;
 
@@ -43,6 +44,12 @@ public class MyPageController {
             @PathVariable Long projectId,
             @AuthenticationPrincipal PrincipalDetails userDetails
     ){
+        Long userId = userDetails.getUserId();
+
+        if (!myPageProjectService.isProjectOwner(projectId, userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         myPageProjectService.deleteProject(projectId);
         return ResponseEntity.ok().build();
     }
@@ -50,8 +57,15 @@ public class MyPageController {
     @PatchMapping("/projects/{projectId}/complete")
     @Operation(summary = "프로젝트 완료 처리")
     public ResponseEntity<ProjectStatusResponse> completeProject(
-            @PathVariable Long projectId
+            @PathVariable Long projectId,
+            @AuthenticationPrincipal PrincipalDetails userDetails
     ){
+        Long userId = userDetails.getUserId();
+
+        if (!myPageProjectService.isProjectOwner(projectId, userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         ProjectStatusResponse response = myPageProjectService.completeProject(projectId);
         return ResponseEntity.ok(response);
     }
@@ -94,7 +108,15 @@ public class MyPageController {
     @Operation(summary = "프로젝트 수정", description = "프로젝트 기본 정보, 스케줄, 요일별 작업시간 수정")
     public ResponseEntity<Void> updateProject(
             @PathVariable Long projectId,
-            @RequestBody ProjectUpdateRequest request) {
+            @RequestBody ProjectUpdateRequest request,
+            @AuthenticationPrincipal PrincipalDetails userDetails
+            ) {
+        Long userId = userDetails.getUserId();
+
+        if (!myPageProjectService.isProjectOwner(projectId, userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         projectService.updateProject(projectId, request);
         return ResponseEntity.ok().build();
     }
