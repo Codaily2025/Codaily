@@ -34,60 +34,25 @@ public class ChatController {
     @Operation(
             summary = "실시간 GPT 채팅 (SSE)",
             description = """
-                        사용자 메시지를 분석하여 intent를 분류한 뒤,
-                        해당 intent에 맞는 응답을 실시간 SSE로 반환합니다.
+                    사용자 메시지를 분석해 intent를 분류한 뒤, 해당 intent에 맞는 응답을 실시간 SSE로 전송합니다.
                     
-                        ### intent별 응답 및 조각 구성
-                        #### 1. 명세서 생성 요청 (`spec`)
-                        - 전체 명세서 요약 정보가 포함된 JSON 한 조각 전송
-                        - 예: `"온라인 쇼핑몰 플랫폼 개발"` 명세서 요약
+                    intent는 다음과 같이 분류됩니다:
                     
-                        #### 2. 필드별 기능명세 (`spec:add:field`)
-                        - 한 필드에 대한 주기능 + 상세기능 묶음이 여러 조각으로 순차 전송
-                        - 각 조각은 다음 구조를 가짐:
-                            ```json
-                            {
-                              "projectId": 3,
-                              "specId": 1,
-                              "field": "배송",
-                              "mainFeature": { ... },
-                              "subFeature": [ ... ]
-                            }
-                            ```
+                    - `chat` : 일반 GPT 메시지 응답입니다. 단일 텍스트 조각이 전송됩니다.
                     
-                        #### 3. 주 기능 추가 (`spec:add:feature:main`)
-                        - 사용자 입력으로 특정 주 기능과 그에 따른 상세 기능을 생성
-                        - 조각 형태는 위 `spec:add:field`와 동일
-                        - 예: `"상품 리뷰를 남길 수 있었으면 좋겠어요"` → 리뷰 작성 기능 추가
+                    - `spec` : 명세서 전체 생성 요청이며, 주/부 기능 조각 여러 개가 순차적으로 전송됩니다. (`spec:add:field`와 구조 유사)
                     
-                        #### 4. 상세 기능 추가 (`spec:add:feature:sub`)
-                        - 기존 주 기능에 상세 기능 하나를 추가하는 단일 조각 전송
-                        - 예: `"결제할 때 포인트를 사용할 수 있었으면 좋겠어요"` → 아래 구조로 전송:
-                            ```json
-                            {
-                              "projectId": 3,
-                              "specId": 1,
-                              "parentFeatureId": 2078,
-                              "featureSaveItem": {
-                                "id": 2084,
-                                "title": "포인트 사용 선택 인터페이스 표시",
-                                ...
-                              }
-                            }
-                            ```
+                    - `spec:regenerate` : 기존 명세서를 삭제하고 새로 생성하며, `spec`과 동일하게 복수 조각이 전송됩니다.
                     
-                        #### 5. 일반 채팅 (`chat`)
-                        - GPT의 자연어 응답이 단일 메시지로 전송됨
-                            ```json
-                            {
-                              "type": "chat",
-                              "content": "안녕하세요! 무엇을 도와드릴까요?"
-                            }
-                            ```
+                    - `spec:summarization` : 명세서 요약 정보를 1개 조각으로 전송합니다.
                     
-                        ---
-                        모든 응답은 `event: message`로 전송되며, 각 조각은 가장 바깥 중괄호 단위로 분리됩니다.
-                        복수 조각이 순차 전송될 수 있습니다 (특히 `spec:add:field`, `spec`).
+                    - `spec:add:field` : 기능 그룹(필드) 단위로 주기능 + 상세기능을 하나의 조각으로 묶어 여러 개 순차 전송합니다.
+                    
+                    - `spec:add:feature:main` : 사용자의 요청에 따라 주기능과 상세기능을 생성하여 1개 조각으로 전송합니다.
+                    
+                    - `spec:add:feature:sub` : 기존 주기능에 상세기능 하나를 추가하며, 해당 기능만을 담은 단일 조각이 전송됩니다.
+                    
+                    모든 응답은 `event: message` 형식으로 전송되며, 각 조각은 최상위 중괄호 기준으로 구분됩니다.
                     """,
             responses = {
                     @ApiResponse(
@@ -103,7 +68,7 @@ public class ChatController {
                                                             event: message
                                                             data: {
                                                               "type": "chat",
-                                                              "content": "안녕하세요! 무엇을 도와드릴까요?"
+                                                              "content": "안"
                                                             }
                                                             """
                                             ),

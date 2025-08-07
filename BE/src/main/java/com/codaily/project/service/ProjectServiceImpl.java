@@ -80,8 +80,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = Project.builder()
                 .user(user)
-                .title(request.getTitle())
-                .description(request.getDescription())
+                .title("프로젝트 생성 중")
+                .description("프로젝트 생성 중입니다.")
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .status("TODO")
@@ -165,7 +165,7 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             resultDtos.add(FeatureItemReduceItem.builder()
-                    .id(item.getFeatureId())
+                    .featureId(item.getFeatureId())
                     .title(item.getTitle())
                     .description(item.getDescription())
                     .estimatedTime(item.getEstimatedTime())
