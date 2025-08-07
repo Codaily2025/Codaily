@@ -21,6 +21,7 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
 import com.codaily.project.repository.SpecificationRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -193,6 +194,9 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
     @Override
     public void rescheduleProject(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new EntityNotFoundException("프로젝트를 찾을 수 없습니다. ID: " + projectId));
+
         // 재스케줄링 가능한 기능들을 조회
         List<FeatureItem> features = getSchedulableFeatures(projectId);
 
@@ -204,7 +208,15 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         // 기존 스케줄 삭제 (재스케줄링 대상만)
         deleteExistingSchedules(features);
 
-        LocalDate startDate = LocalDate.now();
+        LocalDate today = LocalDate.now();
+        LocalDate projectStartDate = project.getStartDate();
+
+        LocalDate startDate;
+        if (projectStartDate != null && projectStartDate.isAfter(today)) {
+            startDate = projectStartDate;
+        } else {
+            startDate = today;
+        }
 
         // 우선순위 순으로 다시 스케줄링
         scheduleFeatures(features, startDate, projectId);

@@ -54,19 +54,19 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
 
     @Override
     public ProjectStatusResponse completeProject(Long projectId) {
-        Project project = projectRepository.findByProjectId(projectId)
+        Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트가 존재하지 않습니다."));
 
-        if ("DONE".equals(project.getStatus())) {
+        if (Project.ProjectStatus.COMPLETED.equals(project.getStatus())) {
             throw new IllegalStateException("이미 완료된 프로젝트입니다.");
         }
 
-        project.setStatus("DONE");
+        project.setStatus(Project.ProjectStatus.COMPLETED);
         projectRepository.save(project);
 
         return ProjectStatusResponse.builder()
                 .projectId(project.getProjectId())
-                .status(project.getStatus())
+                .status(project.getStatus().toString())
                 .build();
     }
 
@@ -85,7 +85,7 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
                 .title(project.getTitle())
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
-                .status(project.getStatus())
+                .status(project.getStatus().toString())
                 .build();
     }
 }

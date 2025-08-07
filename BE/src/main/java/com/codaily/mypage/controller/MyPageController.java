@@ -4,7 +4,9 @@ import com.codaily.auth.service.UserServiceImpl;
 import com.codaily.mypage.dto.NicknameUpdateRequest;
 import com.codaily.mypage.dto.ProjectListResponse;
 import com.codaily.mypage.dto.ProjectStatusResponse;
+import com.codaily.mypage.dto.ProjectUpdateRequest;
 import com.codaily.mypage.service.MyPageProjectServiceImpl;
+import com.codaily.project.service.ProjectServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,7 @@ public class MyPageController {
 
     private final MyPageProjectServiceImpl myPageProjectService;
     private final UserServiceImpl userService;
+    private final ProjectServiceImpl projectService;
 
     @GetMapping
     @Operation(summary = "프로젝트 목록 조회", description = "해당 사용자의 프로젝트 전체 표시")
@@ -79,4 +82,14 @@ public class MyPageController {
         return ResponseEntity.ok().build();
     }
 
+    @PatchMapping("/{projectId}")
+    @Operation(summary = "프로젝트 수정", description = "프로젝트 기본 정보, 스케줄, 요일별 작업시간 수정")
+    public ResponseEntity<Void> updateProject(
+            @PathVariable Long userId,
+            @PathVariable Long projectId,
+            @RequestBody ProjectUpdateRequest request) {
+
+        projectService.updateProject(projectId, request);
+        return ResponseEntity.ok().build();
+    }
 }
