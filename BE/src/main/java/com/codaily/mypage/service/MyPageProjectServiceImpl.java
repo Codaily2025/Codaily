@@ -60,13 +60,14 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
         if ("DONE".equals(project.getStatus())) {
             throw new IllegalStateException("이미 완료된 프로젝트입니다.");
         }
+        //e
+        project.setStatus(Project.ProjectStatus.valueOf("DONE"));
 
-        project.setStatus("DONE");
         projectRepository.save(project);
 
         return ProjectStatusResponse.builder()
                 .projectId(project.getProjectId())
-                .status(project.getStatus())
+                .status(project.getStatus().name())
                 .build();
     }
 
@@ -85,7 +86,7 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
                 .title(project.getTitle())
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
-                .status(project.getStatus())
+                .status(project.getStatus().name())
                 .build();
     }
 }
