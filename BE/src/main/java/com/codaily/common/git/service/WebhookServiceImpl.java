@@ -1,6 +1,5 @@
 package com.codaily.common.git.service;
 
-import com.codaily.auth.entity.User;
 import com.codaily.auth.service.UserService;
 import com.codaily.codereview.dto.*;
 import com.codaily.codereview.entity.ChangeType;
@@ -9,7 +8,6 @@ import com.codaily.codereview.repository.CodeCommitRepository;
 import com.codaily.codereview.repository.FeatureItemChecklistRepository;
 import com.codaily.common.git.WebhookPayload;
 import com.codaily.project.entity.FeatureItem;
-import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepositoriesRepository;
@@ -21,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -40,13 +39,11 @@ public class WebhookServiceImpl implements WebhookService {
 
     private final FeatureItemRepository featureItemRepository;
     private final UserService userService;
-    private final FeatureItemChecklistRepository featureItemChecklistRepository;
-    private final ProjectService projectService;
-    private final GithubService githubService;
     private final ProjectRepositoriesRepository projectRepositoriesRepository;
     private final WebClient webClient;
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepositoriesService projectRepositoriesService;
+
 
 
     @Value("${github.api-url}")
@@ -82,7 +79,7 @@ public class WebhookServiceImpl implements WebhookService {
             Long commitId = codeCommitRepository.save(entity).getCommitId();
             Long projectId = repositories.getProject().getProjectId();
 
-            sendDiffFilesToPython(projectId, commitId, commit.getId(), diffFiles);
+            sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId);
         }
     }
 
@@ -115,12 +112,17 @@ public class WebhookServiceImpl implements WebhookService {
 
 
     @Override
+    @Async
     public void sendDiffFilesToPython(Long projectId,
                                       Long commitId,
                                       String commitHash,
-                                      List<DiffFile> diffFiles) {
+                                      String commitMessage,
+                                      List<DiffFile> diffFiles,
+                                      Long userId) {
 
-        String url = "http://localhost:8000/api/feature-inference";
+        WebClient webClient = WebClient.builder()
+                .baseUrl("http://localhost:8000") // Python 서버 전용
+                .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
         List<String> availableFeatures = featureItems.stream()
@@ -131,25 +133,22 @@ public class WebhookServiceImpl implements WebhookService {
                 .projectId(projectId)
                 .commitId(commitId)
                 .commitHash(commitHash)
+                .commitMessage(commitMessage)
                 .diffFiles(diffFiles)
                 .availableFeatures(availableFeatures)
+                .jwtToken(userService.getGithubAccessToken(userId)) // ✅ 기존 jwtToken 그대로 전달
                 .build();
 
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<FeatureInferenceRequestDto> entity = new HttpEntity<>(requestDto, headers);
-        RestTemplate restTemplate = new RestTemplate();
-
-        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            log.info("✅ Python 서버로 diffFiles 전송 성공");
-        } else {
-            log.error("❌ 전송 실패: {}", response.getBody());
-        }
+        webClient.post()
+                .uri("/api/code-review/feature-inference")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .retrieve()
+                .toBodilessEntity()
+                .doOnSuccess(res -> log.info("✅ Python 서버로 diffFiles 전송 성공"))
+                .doOnError(error -> log.error("❌ 전송 실패", error))
+                .subscribe(); // ✅ 비동기 실행 (subscribe 없으면 실행 안됨)
     }
-
 
     @Override
     public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId) {
@@ -208,92 +207,4 @@ public class WebhookServiceImpl implements WebhookService {
                 .filter(file -> filePaths.contains(file.getFilePath()))
                 .collect(Collectors.toList());
     }
-
-
-//    @Override
-//    public void sendChecklistEvaluationRequest(Long projectId, Long featureId, String featureName,
-//                                               List<FullFile> fullFiles, List<ChecklistItemDto> checklistItems) {
-//        String url = "http://localhost:8000/api/checklist-evaluation";
-//
-//        ChecklistEvaluationRequestDto requestDto = ChecklistEvaluationRequestDto.builder()
-//                .projectId(projectId)
-//                .featureId(featureId)
-//                .featureName(featureName)
-//                .fullFiles(fullFiles)
-//                .checklist(checklistItems)
-//                .build();
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        HttpEntity<ChecklistEvaluationRequestDto> entity = new HttpEntity<>(requestDto, headers);
-//
-//        RestTemplate restTemplate = new RestTemplate();
-//        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-//
-//        if (response.getStatusCode().is2xxSuccessful()) {
-//            log.info("✅ checklist 평가 요청 전송 성공");
-//        } else {
-//            log.error("❌ checklist 평가 요청 실패: {}", response.getBody());
-//        }
-//    }
-//
-//    @Override
-//    public void sendCodeReviewItemRequest(ChecklistEvaluationResponseDto responseDto) {
-//        String url = "http://localhost:8000/api/code-review/items";
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//        HttpEntity<ChecklistEvaluationResponseDto> entity = new HttpEntity<>(responseDto, headers);
-//        RestTemplate restTemplate = new RestTemplate();
-//
-//        ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-//
-//        if (response.getStatusCode().is2xxSuccessful()) {
-//            log.info("✅ code-review 항목 요청 전송 성공");
-//        } else {
-//            log.error("❌ code-review 요청 실패: {}", response.getBody());
-//        }
-//    }
-
-
-//    @Override
-//    public List<FullFile> getFullFilesFromCommit(WebhookPayload.Commit commit, String owner, String repo, String token) {
-//        List<String> targetFiles = new ArrayList<>();
-//        targetFiles.addAll(commit.getAdded());
-//        targetFiles.addAll(commit.getModified());
-//
-//        List<FullFile> fullFiles = new ArrayList<>();
-//
-//        for (String filePath : targetFiles) {
-//            String rawUrl = String.format(
-//                    "https://raw.githubusercontent.com/%s/%s/%s/%s",
-//                    owner, repo, commit.getId(), filePath
-//            );
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setBearerAuth(token);
-//            HttpEntity<Void> entity = new HttpEntity<>(headers);
-//            RestTemplate restTemplate = new RestTemplate();
-//
-//            try {
-//                ResponseEntity<String> response = restTemplate.exchange(rawUrl, HttpMethod.GET, entity, String.class);
-//                if (response.getStatusCode().is2xxSuccessful()) {
-//                    fullFiles.add(new FullFile(filePath, response.getBody()));
-//                }
-//            } catch (Exception e) {
-//                log.warn("❌ 파일 로딩 실패: {}", filePath);
-//            }
-//        }
-//
-//        return fullFiles;
-//    }
-
-//    public List<String> getChecklistByFeatureName(String featureName) {
-//        return featureItemChecklistRepository.findByFeatureTitle(featureName)
-//                .stream()
-//                .map(FeatureItemChecklist::getItem)
-//                .toList();
-//    }
-
 }

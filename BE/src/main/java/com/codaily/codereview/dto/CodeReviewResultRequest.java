@@ -42,4 +42,7 @@ public class CodeReviewResultRequest {
 
     @JsonProperty("review_summaries")
     private List<String> reviewSummaries; // nullable
+
+    @JsonProperty("force_done")
+    private boolean forceDone;
 }

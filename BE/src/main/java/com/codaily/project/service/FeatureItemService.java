@@ -16,4 +16,5 @@ public interface FeatureItemService {
     int calculateTotalEstimatedTime(Long specId);
     FeatureItem findByProjectIdAndTitle(Long projectId, String featureName);
     FeatureItem findById(Long featureId);
+    void generateFeatureItemChecklist(Long projectId);
 }

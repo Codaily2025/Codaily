@@ -9,7 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "code_review")
+@Table(name = "code_reviews")
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -28,8 +28,8 @@ public class CodeReview {
     @JoinColumn(name = "feature_id", nullable = false)
     private FeatureItem featureItem;
 
-    @Column(name = "overall_score")
-    private Double overallScore;
+    @Column(name = "quality_score")
+    private Double qualityScore;
 
     @Lob
     @Column(nullable = false)

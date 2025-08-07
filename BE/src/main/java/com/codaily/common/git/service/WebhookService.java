@@ -13,15 +13,11 @@ public interface WebhookService {
     public void sendDiffFilesToPython(Long projectId,
                                       Long commitId,
                                       String commitHash,
-                                      List<DiffFile> diffFiles);
+                                      String commitMessage,
+                                      List<DiffFile> diffFiles,
+                                      Long userId);
 
     public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId);
     public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths);
-
-//    void sendChecklistEvaluationRequest(Long projectId, Long featureId, String featureName, List<FullFile> fullFiles, List<ChecklistItemDto> checklistItems);
-
-//    public void sendCodeReviewItemRequest(ChecklistEvaluationResponseDto responseDto);
-
-        //    public List<String> getChecklistByFeatureName(String featureName);
 
     }

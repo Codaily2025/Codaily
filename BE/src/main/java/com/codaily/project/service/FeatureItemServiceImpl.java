@@ -1,6 +1,10 @@
 package com.codaily.project.service;
 
+import com.codaily.codereview.dto.FeatureChecklistFeatureDto;
+import com.codaily.codereview.dto.FeatureChecklistRequestDto;
+import com.codaily.codereview.dto.FeatureChecklistResponseDto;
 import com.codaily.codereview.entity.FeatureItemChecklist;
+import com.codaily.codereview.repository.FeatureItemChecklistRepository;
 import com.codaily.project.dto.FeatureSaveContent;
 import com.codaily.project.dto.FeatureSaveItem;
 import com.codaily.project.dto.FeatureSaveRequest;
@@ -12,17 +16,26 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.SpecificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FeatureItemServiceImpl implements FeatureItemService {
     private final ProjectRepository projectRepository;
     private final SpecificationRepository specificationRepository;
     private final FeatureItemRepository featureItemRepository;
+    private final FeatureItemChecklistRepository featureItemChecklistRepository;
+    private final WebClient gptWebClient;
+
+
 
     @Override
     @Transactional
@@ -87,6 +100,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .subFeature(subFeatureDtos)
                 .build();
 
+        generateFeatureItemChecklist(projectId);
+
         return FeatureSaveResponse.builder()
                 .type("spec")
                 .content(content)
@@ -138,5 +153,56 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     public FeatureItem findById(Long featureId) {
         return featureItemRepository.findById(featureId)
                 .orElseThrow(() -> new IllegalArgumentException("기능을 찾을 수 없습니다."));
+    }
+
+    @Override
+    @Transactional
+    public void generateFeatureItemChecklist(Long projectId) {
+        List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
+
+        List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
+                .map(item -> new FeatureChecklistFeatureDto(
+                        item.getFeatureId(),
+                        item.getTitle(),
+                        item.getDescription()))
+                .toList();
+
+        FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder().features(dtoList).build();
+
+        try {
+            FeatureChecklistResponseDto response = gptWebClient
+                    .post()
+                    .uri("/api/generate-checklist")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(FeatureChecklistResponseDto.class)
+                    .block();
+
+            Map<String, List<String>> checklistMap = response.getChecklistMap();
+
+            if (checklistMap == null) {
+                log.warn("Checklist 응답이 비어있습니다.");
+                return;
+            }
+
+            // ✅ checklist 저장
+            checklistMap.forEach((featureIdStr, checklistItems) -> {
+                Long featureId = Long.parseLong(featureIdStr);
+                FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
+                List<FeatureItemChecklist> checklistList = checklistItems.stream()
+                        .map(item -> FeatureItemChecklist.builder()
+                                .featureItem(featureItem).item(item).done(false).build())
+                        .toList();
+
+                featureItemChecklistRepository.saveAll(checklistList);
+            });
+
+            log.info("✅ Checklist 생성 및 저장 완료");
+
+        } catch (WebClientResponseException e) {
+            log.error("Checklist 생성 실패: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Checklist 생성 중 예외 발생", e);
+        }
     }
 }

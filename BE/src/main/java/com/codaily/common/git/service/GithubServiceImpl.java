@@ -1,7 +1,5 @@
 package com.codaily.common.git.service;
 
-import com.codaily.codereview.dto.DiffFile;
-import com.codaily.codereview.dto.FeatureInferenceRequestDto;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;

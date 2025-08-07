@@ -6,6 +6,5 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProjectRepositoriesService {
-    ProjectRepositories findByProject_ProjectIdAndRepoName(Long projectId, String repoName);
     ProjectRepositories getRepoByName(String repoName);
 }

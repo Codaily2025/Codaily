@@ -11,5 +11,7 @@ public class FeatureInferenceRequestDto {
     private String commitHash;
     private List<DiffFile> diffFiles;
     private List<String> availableFeatures;
+    private String jwtToken;
+    private String commitMessage;
 }
 

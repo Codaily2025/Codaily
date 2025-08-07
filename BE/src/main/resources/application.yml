@@ -57,4 +57,3 @@ github:
 gpt:
   api:
     feature-inference-url: http://localhost:8000/api/feature-inference
-    feature-evaluation: http://localhost:8000/api/feature-evaluation

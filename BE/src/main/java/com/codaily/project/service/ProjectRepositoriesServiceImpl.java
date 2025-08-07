@@ -12,12 +12,6 @@ public class ProjectRepositoriesServiceImpl implements ProjectRepositoriesServic
     private final ProjectRepositoriesRepository repository;
 
     @Override
-    public ProjectRepositories findByProject_ProjectIdAndRepoName(Long projectId, String repoName) {
-        return repository.findByProject_ProjectIdAndRepoName(projectId, repoName)
-                .orElseThrow(() -> new IllegalArgumentException("레포지토리를 찾을 수 없습니다."));
-    }
-
-    @Override
     public ProjectRepositories getRepoByName(String repoName) {
         return repository.findByRepoName(repoName)
                 .orElseThrow(() -> new IllegalArgumentException("레포지토리를 찾을 수 없습니다."));

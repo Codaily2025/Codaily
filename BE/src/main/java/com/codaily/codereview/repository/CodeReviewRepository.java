@@ -6,5 +6,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface CodeReviewRepository extends JpaRepository<CodeReview, Long> {
-    List<CodeReview> findByFeatureItemId(Long featureId);
 }

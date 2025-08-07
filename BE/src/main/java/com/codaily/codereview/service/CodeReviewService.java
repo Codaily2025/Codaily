@@ -7,17 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 public interface CodeReviewService {
-
-//    void runCodeReviewAsync(CodeReviewRunRequestDto requestDto);
-
-//    void handleFeatureInferenceResult(FeatureInferenceResponseDto response);
-
-//    void handleChecklistEvaluationResult(ChecklistEvaluationResponseDto response);
-
-//    void handleCodeReviewItems(FeatureReviewResultDto dto);
-
-//    void saveCodeReviewSummary(FeatureReviewSummaryDto dto);
-
     void saveCodeReviewResult(CodeReviewResultRequest request);
     void saveChecklistReviewItems(CodeReviewResultRequest request);
     void saveFeatureName(Long projectId, List<String> featureNames, Long commitId);
