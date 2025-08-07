@@ -74,7 +74,7 @@ public class Project {
 
     // status 값들을 enum으로 관리
     public enum ProjectStatus {
-        TODO, IN_PROGRESS, COMPLETED, ON_HOLD, CANCELLED
+        TODO, IN_PROGRESS, COMPLETED
     }
 
     @Enumerated(EnumType.STRING)

@@ -3,6 +3,7 @@ package com.codaily.project.controller;
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.project.dto.*;
 import com.codaily.project.service.TaskDetailService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,10 +21,8 @@ public class TaskDetailController {
 
     private final TaskDetailService taskDetailService;
 
-    /**
-     * 작업 상세 정보 조회
-     * GET /api/projects/{projectId}/tasks/{taskId}/details
-     */
+    //작업 상세 정보 조회
+    @Operation(summary = "작업 상세 조회", description = "")
     @GetMapping("/{projectId}/tasks/{taskId}/details")
     public ResponseEntity<TaskDetailResponse> getTaskDetail(
             @PathVariable Long projectId,
@@ -41,10 +40,8 @@ public class TaskDetailController {
                 ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * 작업 정보 수정
-     * PUT /api/projects/{projectId}/tasks/{taskId}/details
-     */
+    //작업 정보 수정
+    @Operation(summary = "작업 정보 수정")
     @PutMapping("/{projectId}/tasks/{taskId}/details")
     public ResponseEntity<TaskDetailResponse> updateTask(
             @PathVariable Long projectId,
@@ -63,10 +60,8 @@ public class TaskDetailController {
                 ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * 작업 상태만 수정 (간단한 상태 변경용)
-     * PATCH /api/projects/{projectId}/tasks/{taskId}/status
-     */
+    //작업 상태만 수정 (간단한 상태 변경용)
+    @Operation(summary = "작업 상태 수정")
     @PatchMapping("/{projectId}/tasks/{taskId}/status")
     public ResponseEntity<TaskDetailResponse> updateTaskStatus(
             @PathVariable Long projectId,
@@ -89,10 +84,8 @@ public class TaskDetailController {
                 ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * 하위 작업 생성
-     * POST /api/projects/{projectId}/tasks/{taskId}/subtasks
-     */
+    //하위 작업 생성
+    @Operation(summary = "하위 작업 생성")
     @PostMapping("/{projectId}/tasks/{taskId}/subtasks")
     public ResponseEntity<SubTaskCreateResponse> createSubTask(
             @PathVariable Long projectId,
@@ -111,10 +104,8 @@ public class TaskDetailController {
                 ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * 캘린더 특정 날짜의 작업 정보 조회
-     * GET /api/projects/{projectId}/calendar/{date}
-     */
+    //캘린더 특정 날짜의 작업 정보 조회
+    @Operation(summary = "캘린더 특정 날짜의 작업 정보 조회")
     @GetMapping("/{projectId}/calendar/{date}")
     public ResponseEntity<CalendarTaskResponse> getCalendarTasks(
             @PathVariable Long projectId,

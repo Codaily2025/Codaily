@@ -35,4 +35,5 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByProjectIdAndDate(@Param("projectId") Long projectId, @Param("date") LocalDate date);
 
 
+
 }

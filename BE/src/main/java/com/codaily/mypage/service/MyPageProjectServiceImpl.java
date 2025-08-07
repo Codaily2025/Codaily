@@ -60,6 +60,8 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
         if (Project.ProjectStatus.COMPLETED.equals(project.getStatus())) {
             throw new IllegalStateException("이미 완료된 프로젝트입니다.");
         }
+        //e
+        project.setStatus(Project.ProjectStatus.valueOf("DONE"));
 
         project.setStatus(Project.ProjectStatus.COMPLETED);
         projectRepository.save(project);
