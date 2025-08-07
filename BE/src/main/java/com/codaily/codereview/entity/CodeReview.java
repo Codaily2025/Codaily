@@ -31,27 +31,21 @@ public class CodeReview {
     @Column(name = "quality_score")
     private Double qualityScore;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
-    @Lob
     @Column(name = "convention")
     private String convention;
 
-    @Lob
     @Column(name = "refactor_suggestion")
     private String refactorSuggestion;
 
-    @Lob
-    @Column(name = "complexity")
+    @Column
     private String complexity;
 
-    @Lob
     @Column(name = "bug_risk")
     private String bugRisk;
 
-    @Lob
     @Column(name = "security_risk")
     private String securityRisk;
 
@@ -59,4 +53,3 @@ public class CodeReview {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }
-

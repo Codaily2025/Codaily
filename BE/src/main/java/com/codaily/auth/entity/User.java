@@ -2,6 +2,7 @@ package com.codaily.auth.entity;
 
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -57,10 +58,12 @@ public class User {
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Project> projects;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Specification> specifications;
+    @JsonIgnore
+    private List<TechStack> techStacks = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

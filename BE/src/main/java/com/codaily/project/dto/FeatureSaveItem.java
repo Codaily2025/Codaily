@@ -9,6 +9,6 @@ public class FeatureSaveItem {
     private Long id;
     private String title;
     private String description;
-    private Integer estimatedTime;
+    private Double estimatedTime;
     private Integer priorityLevel;
 }

@@ -23,7 +23,14 @@
   position: absolute;
 }
 
-.logoImage {
+.codaily_logo {
+  /* width: 110px; */
+  height: 44px;
+  width: 98px;
+
+}
+
+/* .logoImage {
   width: 29px;
   height: 30px;
   position: absolute;
@@ -41,7 +48,7 @@
   color: #5A597D;
   line-height: 37.8px;
   letter-spacing: 0.28px;
-}
+} */
 
 .menuContainer {
   position: absolute;

@@ -21,12 +21,12 @@ spring:
     oauth2:
       client:
         registration:
-#          github:
-#            client-id: ${GITHUB.CLIENT_ID}
-#            client-secret: ${GITHUB.CLIENT_SECRET}
-#            redirect-uri: http://localhost:8080/oauth/github/callback
-#            token-uri: https://github.com/login/oauth/access_token
-#            user-uri: https://api.github.com/user
+          #          github:
+          #            client-id: ${GITHUB.CLIENT_ID}
+          #            client-secret: ${GITHUB.CLIENT_SECRET}
+          #            redirect-uri: http://localhost:8080/oauth/github/callback
+          #            token-uri: https://github.com/login/oauth/access_token
+          #            user-uri: https://api.github.com/user
           google:
             client-id: ${GOOGLE.CLIENT_ID}
             client-secret: ${GOOGLE.CLIENT_SECRET}
@@ -57,3 +57,19 @@ github:
 gpt:
   api:
     feature-inference-url: http://localhost:8000/api/feature-inference
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    url: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  override-with-generic-response: false
+
+server:
+  port: 8081

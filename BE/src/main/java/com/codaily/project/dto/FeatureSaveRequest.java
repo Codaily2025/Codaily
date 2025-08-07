@@ -29,7 +29,7 @@ public class FeatureSaveRequest {
         private String description;
 
         @JsonProperty("estimated_time")
-        private Integer estimatedTime;
+        private Double estimatedTime;
 
         @JsonProperty("priority_level")
         private Integer priorityLevel;
