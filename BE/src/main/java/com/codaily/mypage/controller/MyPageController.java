@@ -1,5 +1,6 @@
 package com.codaily.mypage.controller;
 
+import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.service.UserServiceImpl;
 import com.codaily.mypage.dto.NicknameUpdateRequest;
 import com.codaily.mypage.dto.ProjectListResponse;
@@ -10,6 +11,7 @@ import com.codaily.project.service.ProjectServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -18,18 +20,19 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/users/{userId}")
+@RequestMapping("/api")
 public class MyPageController {
 
     private final MyPageProjectServiceImpl myPageProjectService;
     private final UserServiceImpl userService;
     private final ProjectServiceImpl projectService;
 
-    @GetMapping
+    @GetMapping("/projects")
     @Operation(summary = "프로젝트 목록 조회", description = "해당 사용자의 프로젝트 전체 표시")
     public ResponseEntity<List<ProjectListResponse>> getProjectList(
-            @PathVariable Long userId
-    ){
+            @AuthenticationPrincipal PrincipalDetails userDetails
+            ){
+        Long userId = userDetails.getUserId();
         List<ProjectListResponse> projects = myPageProjectService.getProjectList(userId);
         return ResponseEntity.ok(projects);
     }
@@ -37,8 +40,8 @@ public class MyPageController {
     @DeleteMapping("/projects/{projectId}")
     @Operation(summary ="프로젝트 삭제")
     public ResponseEntity<Void> deleteProject(
-            @PathVariable Long userId,
-            @PathVariable Long projectId
+            @PathVariable Long projectId,
+            @AuthenticationPrincipal PrincipalDetails userDetails
     ){
         myPageProjectService.deleteProject(projectId);
         return ResponseEntity.ok().build();
@@ -47,7 +50,7 @@ public class MyPageController {
     @PatchMapping("/projects/{projectId}/complete")
     @Operation(summary = "프로젝트 완료 처리")
     public ResponseEntity<ProjectStatusResponse> completeProject(
-            @PathVariable Long userId, @PathVariable Long projectId
+            @PathVariable Long projectId
     ){
         ProjectStatusResponse response = myPageProjectService.completeProject(projectId);
         return ResponseEntity.ok(response);
@@ -56,16 +59,20 @@ public class MyPageController {
     @GetMapping("/projects/search")
     @Operation(summary = "프로젝트 상태 별 검색", description = "전체/진행중인 프로젝트/완료된 프로젝트")
     public ResponseEntity<List<ProjectListResponse>> searchProjectByStatus(
-            @PathVariable Long userId,
+            @AuthenticationPrincipal PrincipalDetails userDetails,
             @RequestParam String status
     ){
+        Long userId = userDetails.getUserId();
         List<ProjectListResponse> projects = myPageProjectService.searchProjectsByStatus(userId, status);
         return ResponseEntity.ok(projects);
     }
 
     @GetMapping("/nickname")
     @Operation(summary = "닉네임 조회", description = "마이페이지에 닉네임 표시")
-    public ResponseEntity<Map<String, String>> getUserNickname(@PathVariable Long userId) {
+    public ResponseEntity<Map<String, String>> getUserNickname(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long userId = userDetails.getUserId();
         String nickname = userService.getUserNickname(userId);
         Map<String, String> response = new HashMap<>();
         response.put("nickname", nickname);
@@ -75,20 +82,19 @@ public class MyPageController {
     @PatchMapping("/nickname")
     @Operation(summary = "닉네임 수정", description = "마이페이지에서 닉네임 수정")
     public ResponseEntity<Void> modifyUserNickname(
-            @PathVariable Long userId,
+            @AuthenticationPrincipal PrincipalDetails userDetails,
             @RequestBody NicknameUpdateRequest request) {
 
+        Long userId = userDetails.getUserId();
         userService.updateUserNickname(userId, request.getNickname());
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/{projectId}")
+    @PatchMapping("projects/{projectId}")
     @Operation(summary = "프로젝트 수정", description = "프로젝트 기본 정보, 스케줄, 요일별 작업시간 수정")
     public ResponseEntity<Void> updateProject(
-            @PathVariable Long userId,
             @PathVariable Long projectId,
             @RequestBody ProjectUpdateRequest request) {
-
         projectService.updateProject(projectId, request);
         return ResponseEntity.ok().build();
     }

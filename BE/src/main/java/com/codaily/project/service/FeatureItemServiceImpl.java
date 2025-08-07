@@ -235,11 +235,12 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         Project project = projectRepository.findByProjectId(projectId)
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
 
-        List<FeatureItem> features = featureItemRepository.findByProject_ProjectId(projectId);
-
+        List<FeatureItem> features = featureItemRepository.findByProject_ProjectId(projectId)
+                .stream()
+                .filter(feature -> feature.getParentFeature() != null)
+                .collect(Collectors.toList());
         LocalDate startDate = project.getStartDate() != null ? project.getStartDate() : LocalDate.now();
         scheduleFeatures(features, startDate, projectId);
-
     }
 
     @Override
@@ -476,6 +477,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         return allFeatures.stream()
                 .filter(this::isSchedulable)
                 .filter(feature -> feature.getEstimatedTime() != null && feature.getEstimatedTime() > 0)
+                .filter(feature -> feature.getParentFeature() != null)
                 .collect(Collectors.toList());
     }
 
