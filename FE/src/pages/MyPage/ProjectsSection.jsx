@@ -1,21 +1,27 @@
+// src/pages/MyPage/ProjectsSection.jsx
 import React, { useState } from 'react';
 import styles from './ProjectsSection.module.css';
 import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
 import useModalStore from "../../store/modalStore";
+import { useProjectStore } from '../../stores/mypageProjectStore';
 
-const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
+const ProjectsSection = () => {
   const navigate = useNavigate();
+  const [activeFilter, setActiveFilter] = useState('전체'); // 필터 상태를 컴포넌트 내부에서 관리
   // 삭제 
-  const [localProjects, setLocalProjects] = useState(projects);
+  // const [localProjects, setLocalProjects] = useState(projects);
   // 설정 모달 관련 상태 관리
   const [selectedProject, setSelectedProject] = useState(null);
   // const [showModal, setShowModal] = useState(false);
   const { isOpen, modalType, closeModal, openModal } = useModalStore()
 
+  const { projects, deleteProject, updateProject } = useProjectStore();
+
   // 삭제 핸들러
   const handleDelete = (id) => {
-    setLocalProjects(prev => prev.filter(project => project.id !== id));
+    // setLocalProjects(prev => prev.filter(project => project.id !== id));
+    deleteProject(id);
   };
 
   // 설정 모달 관련 핸들러
@@ -36,7 +42,8 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   };
 
 
-  const filteredProjects = localProjects.filter((project) => {
+  // const filteredProjects = localProjects.filter((project) => {
+  const filteredProjects = projects.filter((project) => {
     if (activeFilter === '전체') return true;
     if (activeFilter === '진행 중') return !project.disabled;
     if (activeFilter === '완료') return project.disabled;
@@ -137,9 +144,10 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
           onClose={() => closeModal()}
           onSave={(updatedProject) => {
             console.log('🧩 저장된 프로젝트:', updatedProject);
-            setLocalProjects(prev =>
-              prev.map(p => p.id === updatedProject.id ? updatedProject : p)
-            );
+            // setLocalProjects(prev =>
+            //   prev.map(p => p.id === updatedProject.id ? updatedProject : p)
+            // );
+            updateProject(updatedProject); // Zustand 스토어에 업데이트된 프로젝트 저장
             // setShowModal(false);
             closeModal();
           }}
