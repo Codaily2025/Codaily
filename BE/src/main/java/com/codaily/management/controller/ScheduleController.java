@@ -3,6 +3,7 @@ package com.codaily.management.controller;
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.management.dto.CalendarResponse;
 import com.codaily.management.dto.TodayScheduleResponse;
+import com.codaily.management.service.CalendarService;
 import com.codaily.management.service.CalendarServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import java.time.YearMonth;
 @RequiredArgsConstructor
 public class ScheduleController {
 
-    private final CalendarServiceImpl calendarServiceImpl;
+    private final CalendarService calendarService;
 
     @GetMapping("/calendar")
     @Operation(summary= "사용자 전체 프로젝트 캘린더 조회", description = "사용자의 모든 프로젝트 월별 일정 조회")
@@ -30,7 +31,7 @@ public class ScheduleController {
             yearMonth = YearMonth.now();
         }
         Long userId = userDetails.getUserId();
-        CalendarResponse response = calendarServiceImpl.getAllProjectsCalendar(userId, yearMonth);
+        CalendarResponse response = calendarService.getAllProjectsCalendar(userId, yearMonth);
         return ResponseEntity.ok(response);
     }
 
@@ -43,7 +44,7 @@ public class ScheduleController {
         if(yearMonth == null){
             yearMonth = YearMonth.now();
         }
-        CalendarResponse response = calendarServiceImpl.getCalendar(projectId, yearMonth);
+        CalendarResponse response = calendarService.getCalendar(projectId, yearMonth);
         return ResponseEntity.ok(response);
     }
 
@@ -53,7 +54,7 @@ public class ScheduleController {
             @AuthenticationPrincipal PrincipalDetails userDetails
     ){
         Long userId = userDetails.getUserId();
-        TodayScheduleResponse response = calendarServiceImpl.getTodayScheduleForUser(userId);
+        TodayScheduleResponse response = calendarService.getTodayScheduleForUser(userId);
         return ResponseEntity.ok(response);
     }
 
@@ -62,7 +63,7 @@ public class ScheduleController {
     public ResponseEntity<TodayScheduleResponse> getTodayScheduleForProject(
             @PathVariable Long projectId
     ){
-        TodayScheduleResponse response = calendarServiceImpl.getTodayScheduleForProject(projectId);
+        TodayScheduleResponse response = calendarService.getTodayScheduleForProject(projectId);
         return ResponseEntity.ok(response);
     }
 }

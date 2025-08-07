@@ -1,13 +1,13 @@
 package com.codaily.mypage.controller;
 
 import com.codaily.auth.config.PrincipalDetails;
-import com.codaily.auth.service.UserServiceImpl;
+import com.codaily.auth.service.UserService;
 import com.codaily.mypage.dto.NicknameUpdateRequest;
 import com.codaily.mypage.dto.ProjectListResponse;
 import com.codaily.mypage.dto.ProjectStatusResponse;
 import com.codaily.mypage.dto.ProjectUpdateRequest;
-import com.codaily.mypage.service.MyPageServiceImpl;
-import com.codaily.project.service.ProjectServiceImpl;
+import com.codaily.mypage.service.MyPageService;
+import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,9 +24,9 @@ import java.util.Map;
 @RequestMapping("/api")
 public class MyPageController {
 
-    private final MyPageServiceImpl myPageProjectService;
-    private final UserServiceImpl userService;
-    private final ProjectServiceImpl projectService;
+    private final MyPageService myPageProjectService;
+    private final UserService userService;
+    private final ProjectService projectService;
 
     @GetMapping("/projects")
     @Operation(summary = "프로젝트 목록 조회", description = "해당 사용자의 프로젝트 전체 표시")
