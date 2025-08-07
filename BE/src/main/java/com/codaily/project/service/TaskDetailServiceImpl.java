@@ -226,7 +226,7 @@ public class TaskDetailServiceImpl implements TaskDetailService {
                 .description(feature.getDescription())
                 .category(feature.getCategory())
                 .priorityLevel(feature.getPriorityLevel())
-                .estimatedTime(feature.getEstimatedTime())
+                .estimatedTime(feature.getEstimatedTime().intValue())
                 .build();
     }
 
