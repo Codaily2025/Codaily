@@ -1,6 +1,6 @@
 // src/stores/profileStore.js
 import { create } from 'zustand'
-import { dummyProfile, fetchNickname, updateNickname } from '../apis/profile' // 더미 데이터와 API 함수
+import { dummyProfile, fetchNickname as apiFetchNickname, updateNickname as apiUpdateNickname } from '../apis/profile' // 더미 데이터와 API 함수
 
 export const useProfileStore = create((set, get) => ({
   profile: dummyProfile,
@@ -27,11 +27,11 @@ export const useProfileStore = create((set, get) => ({
   fetchNickname: async (userId) => {
     set({ isLoading: true, error: null });
     try {
-      const nicknameData = await fetchNickname(userId);
+      const nicknameData = await apiFetchNickname(userId);
       set((state) => ({
         profile: { 
           ...state.profile, 
-          nickname: nicknameData.additionalProp1 || 'TempNickname' 
+          nickname: nicknameData.nickname || 'TempNickname' 
         },
         isLoading: false
       }));
@@ -49,7 +49,7 @@ export const useProfileStore = create((set, get) => ({
   updateNickname: async (userId, nickname) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await updateNickname(userId, nickname);
+      const response = await apiUpdateNickname(userId, nickname);
       set((state) => ({
         profile: { 
           ...state.profile, 

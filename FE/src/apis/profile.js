@@ -14,7 +14,7 @@ export const dummyProfile = {
 export async function fetchNickname(userId) {
     try {
         const response = await authInstance.get(`/users/${userId}/nickname`);
-        console.log('fetchNickname response:', response.data);
+        // console.log('fetchNickname response:', response.data);
         return response.data;
     } catch (error) {
         console.error('닉네임 조회 실패:', error);
@@ -34,8 +34,8 @@ export async function updateNickname(userId, nickname) {
                 // 'Authorization': `Bearer ${token}`
             }
         });
-        console.log('updateNickname response:', response.data);
-        return response.data;
+        console.log('updateNickname response:', nickname);
+        return { nickname: nickname };
     } catch (error) {
         console.error('닉네임 수정 실패:', error);
         throw error;
@@ -51,9 +51,10 @@ export async function fetchProfile() {
     try {
         const nicknameData = await fetchNickname(1);
         console.log('fetchProfile nicknameData:', nicknameData);
+        // {nickname: 'TempNickname111'}
         return {
             profileImage: null,
-            nickname: nicknameData.additionalProp1 || 'TempNickname', // API 응답에서 닉네임 추출
+            nickname: nicknameData.nickname || 'TempNickname', // API 응답에서 닉네임 추출
             email: 'code@example.com',
             githubAccount: 'hiabc',
         };
