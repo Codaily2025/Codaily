@@ -24,5 +24,6 @@ public class TodayScheduleResponse {
         private Double allocatedHours;
         private String category;
         private String status;
+        private Boolean withinProjectPeriod;
     }
 }

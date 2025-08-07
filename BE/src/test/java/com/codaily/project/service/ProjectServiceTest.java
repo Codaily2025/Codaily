@@ -2,9 +2,10 @@ package com.codaily.project.service;
 
 import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.UserRepository;
-import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.management.entity.Schedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
+import com.codaily.project.dto.ProjectCreateRequest;
+import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.project.dto.FeatureItemReduceItem;
 import com.codaily.project.dto.FeatureItemReduceResponse;
 import com.codaily.project.dto.ProjectCreateRequest;
