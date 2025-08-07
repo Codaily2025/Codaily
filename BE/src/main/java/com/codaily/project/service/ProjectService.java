@@ -23,4 +23,7 @@ public interface ProjectService {
     public FeatureItemReduceResponse reduceFeatureItemsIfNeeded(Long projectId, Long specId);
 
     public void updateProject(Long projectId, ProjectUpdateRequest request);
+
+    void updateProjectAndSpec(Long projectId, Long specId,
+                              String projectTitle, String projectDescription, String specTitle);
 }

@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @Builder
 public class FeatureItemReduceItem {
-    private Long id;
+    private Long featureId;
     private String title;
     private String description;
     private Double estimatedTime;

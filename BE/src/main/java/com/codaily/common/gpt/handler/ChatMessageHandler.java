@@ -20,7 +20,7 @@ public class ChatMessageHandler implements SseMessageHandler<ChatMessageResponse
     }
 
     @Override
-    public ChatMessageResponse handle(JsonNode content, Long projectId, Long specId) {
+    public ChatMessageResponse handle(JsonNode content, Long projectId, Long specId, Long featureId) {
         String msg = content.asText();
         return ChatMessageResponse.builder()
                 .type("chat")
