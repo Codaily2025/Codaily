@@ -84,7 +84,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .description(request.getDescription())
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
-                .status("TODO")
+                .status(Project.ProjectStatus.TODO)
                 .specification(spec)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())

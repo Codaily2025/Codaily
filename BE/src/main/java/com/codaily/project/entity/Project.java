@@ -45,8 +45,8 @@ public class Project {
     private LocalDate startDate;
     private LocalDate endDate;
 
-    @Column(length = 20)
-    private String status;
+//    @Column(length = 20)
+//    private String status;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -71,4 +71,13 @@ public class Project {
     protected void updateDate() {
         updatedAt = LocalDateTime.now();
     }
+
+    // status 값들을 enum으로 관리
+    public enum ProjectStatus {
+        TODO, IN_PROGRESS, COMPLETED, ON_HOLD, CANCELLED
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private ProjectStatus status;
 }
