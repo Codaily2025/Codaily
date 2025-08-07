@@ -6,78 +6,94 @@ import TimeIndicator from './TimeIndicator';
 import PriorityBadge from './PriorityBadge';
 
 // 초기 데이터 구조 정의
-const initialFeaturesData = [
+const initialRequirementsData = [
   {
-    id: 1,
-    name: '회원가입',
-    priority: 'Low',
-    hours: 5,
-    checked: true,
-    isOpen: false,
-    subTasks: [
-      { id: 11, name: '일반 회원가입', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
-      { id: 12, name: '카카오톡 회원가입 연동', priority: 'Normal', hours: 3, checked: true, isOpen: false, subTasks: [] },
-    ],
-  },
-  {
-    id: 2,
-    name: '데이터 수집 및 전처리',
-    priority: 'High',
-    hours: 8,
-    checked: true,
-    isOpen: false,
-    subTasks: [
+    requirementId: 1,
+    completionDate: '2025-08-23',
+    projectOverview: {
+      projectName: 'RAG 요리 레시피 챗봇',
+      projectPurpose: '가정에서 쉽게 요리하고 싶은 사람들을 위한 AI 요리 도우미',
+      projectDescription: '식품영양DB API를 활용한 사용자 맞춤형 메뉴 추천 플랫폼입니다. 사용자가 레시피를 요청하면 해당 요리의 레시피 정보를 알려줍니다. 사용자가 영양 정보를 요청하면 특정 요리의 영양 정보를 알려줍니다. 사용자가 사용하기를 원하는 재료를 입력하면 재료들을 활용할 수 있는 레시피를 알려줍니다. RAG 파이프라인을 사용해 AI 기반의 응답을 생성하여 사용자에게 모바일 웹 화면으로 보여줍니다.',
+    },
+    techStack: ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'],
+    mainFeatures: [
       {
-        id: 21,
-        name: '데이터 수집',
-        priority: 'High',
-        hours: 4,
+        id: 1,
+        name: '회원가입',
+        priority: 'Low',
+        hours: 5,
         checked: true,
         isOpen: false,
         subTasks: [
-          { id: 211, name: '웹페이지 크롤링', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
-          { id: 212, name: 'API', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
+          { id: 11, name: '일반 회원가입', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
+          { id: 12, name: '카카오톡 회원가입 연동', priority: 'Normal', hours: 3, checked: true, isOpen: false, subTasks: [] },
         ],
       },
       {
-        id: 22,
-        name: '데이터 전처리',
+        id: 2,
+        name: '데이터 수집 및 전처리',
         priority: 'High',
-        hours: 4,
+        hours: 8,
         checked: true,
         isOpen: false,
         subTasks: [
-          { id: 221, name: '결측치 처리', priority: 'Normal', hours: 1, checked: true, isOpen: false, subTasks: [] },
-          { id: 222, name: '데이터 정규화', priority: 'High', hours: 2, checked: true, isOpen: false, subTasks: [] },
-          { id: 223, name: '텍스트 토큰화', priority: 'Normal', hours: 1, checked: true, isOpen: false, subTasks: [] },
+          {
+            id: 21,
+            name: '데이터 수집',
+            priority: 'High',
+            hours: 4,
+            checked: true,
+            isOpen: false,
+            subTasks: [
+              { id: 211, name: '웹페이지 크롤링', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
+              { id: 212, name: 'API', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
+            ],
+          },
+          {
+            id: 22,
+            name: '데이터 전처리',
+            priority: 'High',
+            hours: 4,
+            checked: true,
+            isOpen: false,
+            subTasks: [
+              { id: 221, name: '결측치 처리', priority: 'Normal', hours: 1, checked: true, isOpen: false, subTasks: [] },
+              { id: 222, name: '데이터 정규화', priority: 'High', hours: 2, checked: true, isOpen: false, subTasks: [] },
+              { id: 223, name: '텍스트 토큰화', priority: 'Normal', hours: 1, checked: true, isOpen: false, subTasks: [] },
+            ],
+          },
+        ]
+      },
+      {
+        id: 3,
+        name: '배포',
+        priority: 'Normal',
+        hours: 5,
+        checked: true,
+        isOpen: false,
+        subTasks: [
+          { id: 31, name: 'EC2 인스턴스 설정', priority: 'High', hours: 2, checked: true, isOpen: false, subTasks: [] },
+          { id: 32, name: 'RDS 데이터베이스 연결', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
+          { id: 33, name: 'S3 버킷 생성 및 정적 파일 호스팅', priority: 'Low', hours: 1, checked: true, isOpen: false, subTasks: [] },
         ],
       },
-    ],
-  },
-  {
-    id: 3,
-    name: '배포',
-    priority: 'Normal',
-    hours: 5,
-    checked: true,
-    isOpen: false,
-    subTasks: [
-      { id: 31, name: 'EC2 인스턴스 설정', priority: 'High', hours: 2, checked: true, isOpen: false, subTasks: [] },
-      { id: 32, name: 'RDS 데이터베이스 연결', priority: 'Normal', hours: 2, checked: true, isOpen: false, subTasks: [] },
-      { id: 33, name: 'S3 버킷 생성 및 정적 파일 호스팅', priority: 'Low', hours: 1, checked: true, isOpen: false, subTasks: [] },
-    ],
-  },
-];
+    ]
+  }];
 
-const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
+const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, parentId }) => {
   return (
     /* 클릭했을 때 상위 task의 드롭다운이 닫히면 안됨, 이벤트 막기 */
     <div className={styles.expandedSectionItem} onClick={(e) => {
       e.stopPropagation();
-      onToggleOpen(task.parentId);
+      // onToggleOpen(parentId);
     }}>
       <div className={styles.subTaskLeft}>
-        <Checkbox checked={task.checked} onChange={() => onToggleChecked(task.id)} />
+        <Checkbox 
+        checked={task.checked} 
+        onChange={(e) => {
+          e.stopPropagation();
+          onToggleChecked(task.id);
+        }} />
         <div className={styles.subTaskNameContainer}>
           <div className={styles.subTaskName}>{task.name}</div>
         </div>
@@ -93,7 +109,6 @@ const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) =
 };
 
 const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
-  console.log(task);
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
     <div className={styles.expandIconContainer} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
@@ -110,7 +125,13 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
           <div className={styles.expandedSectionHeader}>
             <div className={styles.expandedSectionHeaderInner}>
               <div className={styles.subTaskLeft}>
-                <Checkbox checked={task.checked} onChange={() => onToggleChecked(task.id)} />
+                <Checkbox 
+                checked={task.checked} 
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onToggleChecked(task.id);
+                }}
+                />
                 <div className={styles.subTaskNameContainer}>
                   <div className={styles.subTaskName}>{task.name}</div>
                 </div>
@@ -118,7 +139,7 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
               </div>
               <div className={styles.mainFeatureHeaderRight}>
                 <TimeIndicator hours={task.hours} />
-                <div className={styles.expandIconContainer}>
+                <div className={styles.expandIconContainer} style={{ transform: task.isOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>
                   <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M15 13L10 8L5 13" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -138,7 +159,12 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
       ) : (
         <div className={styles.subTaskItem} onClick={() => onToggleOpen(task.id)}>
           <div className={styles.subTaskLeft}>
-            <Checkbox checked={task.checked} onChange={() => onToggleChecked(task.id)} />
+            <Checkbox 
+            checked={task.checked} 
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleChecked(task.id);
+            }} />
             <div className={styles.subTaskNameContainer}>
               <div className={styles.subTaskName}>{task.name}</div>
             </div>
@@ -147,7 +173,7 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
           {hasSecondSubTasks ? (
             <div className={styles.mainFeatureHeaderRight}>
               <TimeIndicator hours={task.hours} />
-              <div className={styles.expandIconContainer}>
+              <div className={styles.expandIconContainer} style={{ transform: task.isOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>
                 <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M15 13L10 8L5 13" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -183,7 +209,12 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
     <div className={level === 0 ? styles.mainFeatureCard : styles.subTaskItem}>
       <div className={styles.mainFeatureHeader} onClick={() => hasSubTasks && onToggleOpen(task.id)}>
         <div className={styles.mainFeatureHeaderLeft}>
-          <Checkbox checked={task.checked} onChange={() => onToggleChecked(task.id)} />
+          <Checkbox 
+          checked={task.checked} 
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggleChecked(task.id);
+          }} />
           <div className={styles.mainFeatureName}>{task.name}</div>
           <PriorityBadge level={task.priority} />
         </div>
@@ -229,71 +260,60 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
 
 const RequirementsSpecification = () => {
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
-  const [features, setFeatures] = useState(initialFeaturesData);
+  const [requirements] = useState(initialRequirementsData);
+  const [features, setFeatures] = useState(initialRequirementsData[0].mainFeatures);
 
-  // 열림/닫힘 상태를 토글하는 함수 (재귀적)
+  // 열림/닫힘 상태를 토글하는 함수
   const handleToggleOpen = useCallback((taskId) => {
-    const toggle = (tasks) => {
+    const toggleOpen = (tasks) => {
       return tasks.map(task => {
         if (task.id === taskId) {
           return { ...task, isOpen: !task.isOpen };
         }
         if (task.subTasks) {
-          return { ...task, subTasks: toggle(task.subTasks) };
+          return { ...task, subTasks: toggleOpen(task.subTasks) };
         }
         return task;
       });
     };
-    setFeatures(prevFeatures => toggle(prevFeatures));
+    setFeatures(prevFeatures => toggleOpen(prevFeatures));
   }, []);
 
-  // 체크 상태를 토글하는 함수 (재귀적)
+  // 체크 상태를 토글하는 함수
   const handleToggleChecked = useCallback((taskId) => {
-    let targetTaskNewCheckedState = false;
+    console.log('토글 호출, taskId:', taskId);
+    let newState;
 
-    // 모든 하위 태스크의 체크 상태를 부모에 맞춰 변경하는 함수
-    const checkAllChildren = (tasks, checked) => {
-      return tasks.map(task => ({
-        ...task,
-        checked,
-        subTasks: task.subTasks ? checkAllChildren(task.subTasks, checked) : [],
-      }));
-    };
-
-    // 특정 태스크를 찾아서 토글하고, 하위 태스크들도 업데이트하는 함수
-    const toggleAndCheckChildren = (tasks) => {
-      return tasks.map(task => {
-        if (task.id === taskId) {
-          targetTaskNewCheckedState = !task.checked;
+    const toggleAndPropagate = list =>
+      list.map(item => {
+        if (item.id === taskId) {
+          const newChecked = !item.checked;
           return {
-            ...task,
-            checked: targetTaskNewCheckedState,
-            subTasks: task.subTasks ? checkAllChildren(task.subTasks, targetTaskNewCheckedState) : [],
+            ...item,
+            checked: newChecked,
+            subTasks: item.subTasks?.map(st => ({ ...st, checked: newChecked, subTasks: st.subTasks ? /* 재귀 */ [] : [] })) ?? []
           };
         }
-        if (task.subTasks) {
-          return { ...task, subTasks: toggleAndCheckChildren(task.subTasks) };
+        if (item.subTasks) {
+          return { ...item, subTasks: toggleAndPropagate(item.subTasks) };
         }
-        return task;
+        return item;
       });
-    };
-
-    // 부모의 체크 상태를 자식에 따라 업데이트하는 함수
-    const updateParentChecks = (tasks) => {
-      return tasks.map(task => {
-        if (task.subTasks && task.subTasks.length > 0) {
-          const updatedSubTasks = updateParentChecks(task.subTasks);
-          const allChildrenChecked = updatedSubTasks.every(child => child.checked);
-          return { ...task, subTasks: updatedSubTasks, checked: allChildrenChecked };
+  
+    // 2) 부모 체크는 자식 전부 체크되어야만 true
+    const updateParents = list =>
+      list.map(item => {
+        if (item.subTasks && item.subTasks.length) {
+          const updatedSubs = updateParents(item.subTasks);
+          const allChecked = updatedSubs.every(st => st.checked);
+          return { ...item, subTasks: updatedSubs, checked: allChecked };
         }
-        return task;
+        return item;
       });
-    };
-
-    setFeatures(prevFeatures => {
-      const newFeaturesWithToggled = toggleAndCheckChildren(prevFeatures);
-      // 상향식(bottom-up)으로 부모 체크박스 상태를 업데이트합니다.
-      return updateParentChecks(newFeaturesWithToggled).reverse();
+  
+    setFeatures(prev => {
+      newState = toggleAndPropagate(prev);
+      return updateParents(newState);
     });
 
   }, []);
@@ -304,20 +324,21 @@ const RequirementsSpecification = () => {
       <div className={styles.container}>
         {/* 헤더 */}
         <div className={styles.header}>
-          <div className={styles.headerContent}>
+          <div className={styles.headerTitleContent}>
             <div className={styles.title}>요구사항 명세서</div>
           </div>
-          <div className={styles.pdfIcon}>
-            <div className={styles.pdfIconInner1}></div>
-            <div className={styles.pdfIconInner2}></div>
-          </div>
-          <div className={styles.pdfText}>PDF 내보내기</div>
+          <button className={styles.pdfDownloadWrapper}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+              <path d="M21 15.5V19.5C21 20.0304 20.7893 20.5391 20.4142 20.9142C20.0391 21.2893 19.5304 21.5 19 21.5H5C4.46957 21.5 3.96086 21.2893 3.58579 20.9142C3.21071 20.5391 3 20.0304 3 19.5V15.5M7 10.5L12 15.5M12 15.5L17 10.5M12 15.5V3.5" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className={styles.pdfText}>PDF 내보내기</div>
+          </button>
         </div>
 
         {/* 예상 작업 완료일 */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <div className={styles.cardTitle}>📈 예상 작업 완료일 : 2025.08.23</div>
+            <div className={styles.cardTitle}>📈 예상 작업 완료일 : {requirements[0].completionDate}</div>
           </div>
         </div>
 
@@ -331,14 +352,14 @@ const RequirementsSpecification = () => {
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel}>프로젝트명: </span>
-                <span className={styles.itemValue}>RAG 요리 레시피 챗봇</span>
+                <span className={styles.itemValue}>{requirements[0].projectOverview.projectName}</span>
               </div>
             </div>
             <div className={styles.overviewItem}>
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel}>목적:</span>
-                <span className={styles.itemValue}> 가정에서 쉽게 요리하고 싶은 사람들을 위한 AI 요리 도우미</span>
+                <span className={styles.itemValue}> {requirements[0].projectOverview.projectPurpose}</span>
               </div>
             </div>
             <div className={styles.descriptionContainer}>
@@ -347,7 +368,7 @@ const RequirementsSpecification = () => {
                 <div className={styles.itemLabel}>설명</div>
               </div>
               <div className={styles.descriptionText}>
-                식품영양DB API를 활용한 사용자 맞춤형 메뉴 추천 플랫폼입니다. 사용자가 레시피를 요청하면 해당 요리의 레시피 정보를 알려줍니다. 사용자가 영양 정보를 요청하면 특정 요리의 영양 정보를 알려줍니다. 사용자가 사용하기를 원하는 재료를 입력하면 재료들을 활용할 수 있는 레시피를 알려줍니다. RAG 파이프라인을 사용해 AI 기반의 응답을 생성하여 사용자에게 모바일 웹 화면으로 보여줍니다.
+                {requirements[0].projectOverview.projectDescription}
               </div>
             </div>
           </div>

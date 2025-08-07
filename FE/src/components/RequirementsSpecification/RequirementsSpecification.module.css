@@ -23,7 +23,7 @@
 
 .container {
   width: 611px;
-  min-height: 1768px;
+  min-height: 900px;
   left: 33px;
   top: 33px;
   position: absolute;
@@ -36,70 +36,79 @@
 }
 
 .header {
-  align-self: stretch;
+  display: flex;
+  padding: 8px 0;
   justify-content: space-between;
-  padding-top: 8px;
-  padding-bottom: 8px;
   align-items: center;
-  display: inline-flex;
+  align-self: stretch;
+  /* align-self: stretch; */
+  /* justify-content: space-between; */
+  /* padding-top: 8px; */
+  /* padding-bottom: 8px; */
+  /* align-items: center; */
+  /* display: inline-flex; */
 }
 
-.headerContent {
-  /* width: 601px; */
-  width: 460px;
-  /* width: 100%; 콘텐츠 너비에 맞춰 조정 */
+.headerTitleContent {
+  display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: flex-start;
   gap: 16px;
-  display: inline-flex;
+  /* width: 601px; */
+  /* width: 460px; */
+  /* width: 100%; 콘텐츠 너비에 맞춰 조정 */
+  /* flex-direction: column; */
+  /* justify-content: flex-start; */
+  /* align-items: flex-start; */
+  /* gap: 16px; */
+  /* display: inline-flex; */
 }
 
 .title {
-  width: 300px;
-  /* width: 100%; */
-  justify-content: center;
-  display: flex;
-  flex-direction: column;
   color: #404040;
+  font-family: Inter;
   font-size: 24px;
-  font-family: 'Inter', sans-serif;
+  font-style: normal;
   font-weight: 600;
-  word-wrap: break-word;
+  line-height: normal;
+  /* width: 300px; */
+  /* width: 100%; */
+  /* justify-content: center; */
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* color: #404040; */
+  /* font-size: 24px; */
+  /* font-weight: 600; */
+  /* word-wrap: break-word; */
 }
 
-.pdfIcon {
-  width: 24px;
-  height: 23px;
-  position: relative;
-  overflow: hidden;
+.pdfDownloadWrapper {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.pdfIconInner1 {
-  width: 16.50px;
-  height: 20.12px;
-  left: 3.75px;
-  top: 1.44px;
-  position: absolute;
-  background: #2D3748;
+.pdfDownloadWrapper:focus {
+  outline: none;
 }
 
-.pdfIconInner2 {
-  width: 6.93px;
-  height: 6.64px;
-  left: 12.75px;
-  top: 1.99px;
-  position: absolute;
-  background: #2D3748;
-}
 
 .pdfText {
-  width: 115px;
-  height: 18px;
   color: #2D3748;
   font-size: 16px;
-  font-weight: 700;
-  line-height: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%;
+  /* 24px */
+  /* width: 115px; */
+  /* height: 18px; */
+  /* font-size: 16px; */
+  /* font-weight: 700; */
+  /* line-height: 24px; */
   /* word-wrap: break-word; */
 }
 
