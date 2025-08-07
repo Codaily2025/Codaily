@@ -1,11 +1,16 @@
 package com.codaily.project.service;
 
 import com.codaily.project.dto.*;
+import com.codaily.project.entity.FeatureItem;
+
+import java.util.List;
 
 public interface FeatureItemService {
     FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest createDto);
 
     FeatureItemResponse getFeature(Long projectId, Long featureId);
+
+    FeatureItemResponse getFeature(Long featureId);
 
     FeatureItemResponse updateFeature(Long projectId, Long featureId, FeatureItemUpdateRequest update);
 
@@ -17,7 +22,7 @@ public interface FeatureItemService {
 
     void updateDailyStatus();
 
-    FeatureSaveResponse saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId);
+    FeatureSaveResponse saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId, String type);
 
 //    void updateFeatureItem(FeatureSaveItem request);
 
@@ -26,4 +31,8 @@ public interface FeatureItemService {
     void deleteBySpecId(Long specId);
 
     int calculateTotalEstimatedTime(Long specId);
+
+    List<FeatureItem> getAllMainFeature(Long projectId);
+
+    SubFeatureSaveResponse saveSubFeatureChunk(SubFeatureSaveRequest request, Long projectId, Long specId);
 }

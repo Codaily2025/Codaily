@@ -20,4 +20,5 @@ public interface FeatureItemSchedulesRepository extends JpaRepository<FeatureIte
     List<FeatureItemSchedule> findByFeatureItem_Project_ProjectIdAndScheduleDate(Long projectId, LocalDate date);
 
     void deleteByFeatureItemFeatureIdIn(List<Long> featureIds);
+
 }

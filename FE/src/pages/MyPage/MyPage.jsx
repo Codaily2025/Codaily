@@ -10,7 +10,7 @@ import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
 import useModalStore from '../../store/modalStore';
 // import { fetchProfile } from '../../apis/profile'; // 서버 호출
 // import { useQuery, useQueryClient } from '@tanstack/react-query'; // 쿼리 클라이언트 사용
-import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
+import { useProfileQuery, useNicknameQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 import { useProfileStore } from '../../stores/profileStore'; // 프로필 스토어 사용
 
 
@@ -27,6 +27,7 @@ const Mypage = () => {
   const setProfile = useProfileStore((state) => state.setProfile); // 프로필 저장
   const profile = useProfileStore((state) => state.profile); // 프로필 가져오기
   const { data: fetchedProfile, isLoading, isError, error } = useProfileQuery(); // 프로필 조회 훅
+  const { data: nicknameData, isLoading: nicknameLoading } = useNicknameQuery(1); // 닉네임 조회 (userId 1 사용)
   const [activeFilter, setActiveFilter] = useState('전체'); // 필터 기본값 : 전체
 
   // 실제 애플리케이션에서는 API로부터 프로젝트 데이터를 받아와야 함
@@ -93,7 +94,19 @@ const Mypage = () => {
     }
   }, [fetchedProfile, setProfile]);
 
-  if (isLoading) return <div>로딩 중...</div>;
+  // 닉네임 데이터가 로드되면 프로필 업데이트
+  useEffect(() => {
+    if (nicknameData) {
+      const current = useProfileStore.getState().profile;
+      console.log('닉네임 데이터:', nicknameData);
+      setProfile({
+        ...current,
+        nickname: nicknameData.additionalProp1 || 'TempNickname'
+      });
+    }
+  }, [nicknameData, setProfile]);
+
+  if (isLoading || nicknameLoading) return <div>로딩 중...</div>;
 
   if (isError) return <div>에러 발생: {error.message}</div>;
 
@@ -113,7 +126,7 @@ const Mypage = () => {
           </button>
           <div className="info-section">
             <label>닉네임</label>
-            <div className="info-box">{profile.nickname}</div>
+            <div className="info-box">{nicknameData.nickname}</div>
           </div>
           <div className="info-section">
             <label>사용 가능한 기술 스택</label>
