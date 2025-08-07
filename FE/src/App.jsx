@@ -11,10 +11,8 @@ import ProjectCreateStep4 from './pages/ProjectCreate/ProjectCreateStep4';
 import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
-import OAuthCallback from './pages/OAuthCallback';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ModalManager from './components/organisms/ModalManager';
-import { useAuthStore } from './stores/authStore';
 
 // 보호된 라우트 컴포넌트 : 로그인 상태가 아니면 접근 불가
 const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => { 
@@ -36,7 +34,7 @@ const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => {
 };
 
 function AppContent() {
-  const { isAuthenticated, logout } = useAuthStore();
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // 기본값을 false로 변경
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -83,12 +81,13 @@ function AppContent() {
   };
 
   const handleLogoutClick = () => {
-    logout();
+    setIsLoggedIn(false);
     navigate('/');
   };
 
   const handleLogin = () => {
-    // OAuth 콜백에서 처리되므로 여기서는 아무것도 하지 않음
+    setIsLoggedIn(true);
+    navigate('/'); // 로그인 후 프로젝트 페이지로 이동
   };
 
   const handleRedirectToLogin = () => {
@@ -106,7 +105,7 @@ function AppContent() {
   return (
     <div className="App">
       <NavBar 
-        isLoggedIn={isAuthenticated} 
+        isLoggedIn={isLoggedIn} 
         activeMenu={getActiveMenu()} 
         onMenuClick={handleMenuClick}
         onLogoClick={handleLogoClick}
@@ -118,13 +117,12 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/oauth/callback" element={<OAuthCallback />} />
           
           {/* 보호된 라우트들 : 로그인 상태가 아니면 접근 불가 */}
           <Route 
             path="/schedule" 
             element={
-              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <Schedule />
               </ProtectedRoute>
             } 
@@ -132,7 +130,7 @@ function AppContent() {
           <Route 
             path="/project/:id" 
             element={
-              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <Project />
               </ProtectedRoute>
             } 
@@ -140,7 +138,7 @@ function AppContent() {
           <Route 
             path="/project/create"
             element={
-              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <ProjectCreate />
               </ProtectedRoute>
             }
@@ -148,7 +146,7 @@ function AppContent() {
           <Route 
             path="/project/create/step2"
             element={
-              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <ProjectCreateStep2 />
               </ProtectedRoute>
             }
@@ -165,7 +163,7 @@ function AppContent() {
           <Route 
             path="/history" 
             element={
-              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <History />
               </ProtectedRoute>
             } 
@@ -173,7 +171,7 @@ function AppContent() {
           <Route 
             path="/mypage" 
             element={
-              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <MyPage />
               </ProtectedRoute>
             } 
@@ -193,6 +191,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AppContent />
+        {/* ModalManager 삭제 금지 - 주석 처리만 */}
+        <ModalManager />
       </Router>
     </QueryClientProvider>
   );

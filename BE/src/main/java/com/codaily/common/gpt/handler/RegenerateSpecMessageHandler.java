@@ -9,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-
 @Log4j2
 @Component
 @RequiredArgsConstructor
@@ -30,10 +28,10 @@ public class RegenerateSpecMessageHandler implements SseMessageHandler<FeatureSa
     }
 
     @Override
-    public FeatureSaveResponse handle(JsonNode content, Long projectId, Long specId) {
+    public FeatureSaveResponse handle(JsonNode content, Long projectId, Long specId, Long featureId) {
         try {
             FeatureSaveRequest request = objectMapper.treeToValue(content, FeatureSaveRequest.class);
-            return featureItemService.saveSpecChunk(request, projectId, specId);
+            return featureItemService.saveSpecChunk(request, projectId, specId, "spec:regenerate");
         } catch (Exception e) {
             log.error("명세 재생성 실패", e);
             throw new RuntimeException("명세 재생성 실패", e);

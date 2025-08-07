@@ -48,4 +48,8 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     List<FeatureItem> findByParentFeature(FeatureItem parentFeature);
 
+   @Query("SELECT f.featureId FROM FeatureItem f WHERE f.project.projectId = :projectId")
+   List<Long> findFeatureIdByProject_ProjectId(Long projectId);
+
+    FeatureItem getFeatureItemByFeatureId(Long featureId);
 }

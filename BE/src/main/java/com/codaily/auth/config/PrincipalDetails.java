@@ -1,4 +1,3 @@
-// src/main/java/com/codaily/auth/config/PrincipalDetails.java
 package com.codaily.auth.config;
 
 import com.codaily.auth.entity.User;

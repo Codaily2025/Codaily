@@ -66,3 +66,6 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
   override-with-generic-response: false
+
+server:
+  port: 8081

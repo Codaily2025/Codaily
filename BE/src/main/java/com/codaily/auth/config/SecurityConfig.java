@@ -1,5 +1,3 @@
-// src/main/java/com/codaily/auth/config/SecurityConfig.java
-
 package com.codaily.auth.config;
 
 import com.codaily.auth.config.filter.JwtAuthenticationFilter;
@@ -19,11 +17,6 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 @Configuration
 @RequiredArgsConstructor
@@ -43,12 +36,10 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/api/**", "/api/login", "/oauth/**", "/public/**").permitAll()
-                        .requestMatchers("/login/oauth2/code/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                         .anyRequest().authenticated()
@@ -56,10 +47,6 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .oauth2Login(oauth -> oauth
                         .successHandler(loginSuccessHandler) // JWT 발급 처리 핸들러
-                        .authorizationEndpoint(auth -> auth
-                                .baseUri("/oauth2/authorization"))
-                        .redirectionEndpoint(redirect -> redirect
-                                .baseUri("/login/oauth2/code/*"))
                 )
                 .logout(logout -> logout
                         .logoutUrl("/api/logout")
@@ -72,20 +59,6 @@ public class SecurityConfig {
                 );
 
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
     }
 
     @Bean
