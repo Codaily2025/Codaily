@@ -74,12 +74,22 @@ prompt = ChatPromptTemplate.from_messages([
         "- 이 intent는 'spec:add:feature:main'보다 우선적으로 판단되어야 합니다.\n"
         "- 이 경우 field는 반드시 null로 설정하세요.\n\n"
 
+        "- 사용자의 요청 문장이 기존 주 기능 또는 기능 그룹(field)과 관련 있는지를 판단할 때는 다음 절차를 따르세요:\n"
+        "1. 먼저, 사용자의 요청 문장을 기존 주 기능의 title들과 비교하여, 명확하게 연관된 주 기능이 있다면 그 기능의 id와 field를 사용하세요. 이 경우 intent는 'spec:add:feature:sub'가 됩니다.\n"
+        "2. 주 기능들과는 관련이 없지만, 기존 기능 그룹(field) 중 하나와는 관련이 있는 경우라면 intent는 'spec:add:feature:main'이고, 해당 기능 그룹명을 field로 지정하세요.\n"
+        "3. 사용자의 요청이 기존 모든 기능 그룹(field)과도 무관할 경우, intent는 'spec:add:field'이며, 이 경우 field는 반드시 null로 설정하세요.\n"
+        "※ 유사도 판단 시에는 주 기능 title 및 기능 그룹명을 사용자의 문장에서 직접적으로 언급했는지, 또는 문맥상 같은 의미를 가지는지를 판단 기준으로 삼습니다.\n\n"
+        "- {{\"intent\": \"spec:add:feature:sub\", \"featureId\": 5, \"field\": \"결제\"}}  ← \"포인트를 결제에 사용할 수 있었으면...\" → '결제' 기능의 하위 기능\n"
+        "- {{\"intent\": \"spec:add:feature:main\", \"featureId\": null, \"field\": \"상품 관리\"}} ← \"상품 리뷰를 남기고 싶어요\" → 기존 상품 관련 기능 그룹은 있지만 해당 주 기능은 없음\n"
+        "- {{\"intent\": \"spec:add:field\", \"featureId\": null, \"field\": null}} ← \"배송과 관련된 기능 추가\" → 기존에 배송 관련 기능 그룹 없음\n\n"
+
         "출력 예시:\n"
         "- {{\"intent\": \"chat\", \"featureId\": null, \"field\": null}}\n"
         "- {{\"intent\": \"spec:regenerate\", \"featureId\": null, \"field\": null}}\n"
         "- {{\"intent\": \"spec:add:feature:main\", \"featureId\": null, \"field\": \"알림 설정\"}}\n"
         "- {{\"intent\": \"spec:add:feature:sub\", \"featureId\": 2, \"field\": \"일정 관리\"}}\n"
-        "- {{\"intent\": \"spec:add:field\", \"featureId\": null, \"field\": null}}\n\n"
+        "- {{\"intent\": \"spec:add:field\", \"featureId\": null, \"field\": null}}\n"
+
 
         "현재 주 기능 목록은 다음과 같은 형식으로 제공됩니다:\n"
         "- id: 1, title: \"작업 생성\", field: \"프로젝트 관리\"\n"
@@ -89,6 +99,7 @@ prompt = ChatPromptTemplate.from_messages([
         "- 각 항목은 하나의 주 기능을 나타내며, 다음 정보를 포함합니다:\n"
         "- title: 주 기능의 이름\n"
         "- field: 이 주 기능이 속한 상위 기능 그룹 이름\n\n"
+
 
         "※ 중요: JSON 외 다른 문장이나 설명을 절대 포함하지 마세요."
     ),
