@@ -1,9 +1,8 @@
-// 여러 InputGroup 가로로 배치하는 컨테이너
 import React from 'react'
 
-const FormRow = ({ children }) => {
+const FormRow = ({ children, className = '' }) => {
     return (
-        <div className='form-row'>
+        <div className={className}>
             {children}
         </div>
     )

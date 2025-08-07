@@ -1,22 +1,32 @@
-// Label + Input
 import React from 'react'
-import Label from '@/components/atoms/Label'
-import Input from '@/components/atoms/Input'
-import useFormField from '../../hooks/useFormField'
+import FieldLabel from '@/components/atoms/FieldLabel'
+import TextInput from '@/components/atoms/TextInput'
 
-const InputGroup = ({ label, fieldName, placeholder, className="form-group", children }) => {
-    // label 이름 - inputId 맵핑
-    // const inputId = `input-${label?.toLowerCase().replace(/\s+/g, '-')}`
-    // const field = useFormField(fieldName)
-    const inputId = `input-${label?.toLowerCase()}`
+const InputGroup = ({ 
+    label, 
+    fieldName, 
+    placeholder, 
+    type = 'text', 
+    className = '', 
+    labelClassName = '',
+    inputClassName = '',
+    children 
+}) => {
+    const inputId = `input-${fieldName}`
 
     return (
         <div className={className}>
-            {label && <Label htmlFor={inputId}>{label}</Label>}
-            <Input 
+            {label && (
+                <FieldLabel htmlFor={inputId} className={labelClassName}>
+                    {label}
+                </FieldLabel>
+            )}
+            <TextInput 
                 id={inputId}
                 fieldName={fieldName}
                 placeholder={placeholder}
+                type={type}
+                className={inputClassName}
             />
             {children}
         </div>
