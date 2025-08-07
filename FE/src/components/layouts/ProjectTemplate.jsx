@@ -58,7 +58,7 @@ const ProjectTemplate = ({ currentProject, projects = [] }) => {
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        projects={projects}
+        projects={projects}     // TODO: props가 아니라 전역에서 가져오기
         isLoading={false}
       />
 
@@ -128,7 +128,7 @@ const ProjectTemplate = ({ currentProject, projects = [] }) => {
           {currentFeatures}
         </h2>
         {/* 칸반 보드 렌더링 */}
-        <KanbanBoard currentProject={currentProject} />
+        <KanbanBoard />
       </div>
 
 

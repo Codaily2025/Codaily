@@ -36,7 +36,7 @@ const Calendar = () => {
 
   return (
       <FullCalendar
-        defaultView="dayGridMonth"
+        initialView="dayGridMonth"
         plugins={[dayGridPlugin]}
         displayEventTime={false}
         events={events}
