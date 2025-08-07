@@ -84,8 +84,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = Project.builder()
                 .user(user)
-                .title(request.getTitle())
-                .description(request.getDescription())
+                .title("프로젝트 생성 중")
+                .description("프로젝트 생성 중입니다.")
                 .startDate(request.getStartDate())
                 .endDate(request.getEndDate())
                 .status(Project.ProjectStatus.TODO)
@@ -169,7 +169,7 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             resultDtos.add(FeatureItemReduceItem.builder()
-                    .id(item.getFeatureId())
+                    .featureId(item.getFeatureId())
                     .title(item.getTitle())
                     .description(item.getDescription())
                     .estimatedTime(item.getEstimatedTime())
@@ -245,8 +245,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         scheduleRepository.saveAll(newSchedules);
     }
-    
-    
+
+
 
     private boolean isDateChanged(Project project, ProjectUpdateRequest request) {
         boolean startDateChanged = false;
@@ -307,6 +307,26 @@ public class ProjectServiceImpl implements ProjectService {
                 .collect(Collectors.toList());
 
         return !currentDates.equals(requestDates);
+    }
+
+    @Transactional
+    public void updateProjectAndSpec(Long projectId, Long specId,
+                                     String projectTitle, String projectDescription, String specTitle) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
+
+        Specification spec = specificationRepository.findById(specId)
+                .orElseThrow(() -> new IllegalArgumentException("Specification not found: " + specId));
+
+        // 프로젝트 정보 업데이트
+        project.setTitle(projectTitle);
+        project.setDescription(projectDescription);
+        project.setUpdatedAt(LocalDateTime.now());
+
+        // 명세서 정보 업데이트
+        spec.setTitle(specTitle);
+        spec.setUpdatedAt(LocalDateTime.now());
     }
 
 }
