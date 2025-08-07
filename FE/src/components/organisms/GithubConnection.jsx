@@ -33,21 +33,23 @@ const GithubConnection = () => {
                 <Title className={styles.sectionTitle}>Github 연동</Title>
 
                 <div className={styles.repoOptions}>
-                    {/* TODO: RepositoryOptionCard 간격 조정하기 */}
                     <RepositoryOptionCard 
                         text="기존 레포지토리 연결"
                         selected={selectedOption == 'existing'}
                         onClick={() => handleSelect('existing')}
                         className={`${styles.repoCard} ${selectedOption === 'existing' ? styles.selected : ''}`}
                     />
-                    <RepositoryUrlInput 
-                        show={selectedOption === 'existing'}
-                        value={repositoryUrl}
-                        onChange={(e) => setRepositoryUrl(e.target.value)}
-                        className={`${styles.repoUrlContainer} ${selectedOption === 'existing' ? styles.show : ''}`}
-                        inputClassName={styles.repoUrlInput}
-                    />
-
+                    
+                    {/* 조건부 렌더링: 'existing' 선택 시에만 렌더링 */}
+                    {selectedOption === 'existing' && (
+                        <RepositoryUrlInput 
+                            show={true}
+                            value={repositoryUrl}
+                            onChange={(e) => setRepositoryUrl(e.target.value)}
+                            className={styles.repoUrlContainer}
+                            inputClassName={styles.repoUrlInput}
+                        />
+                    )}
 
                     <RepositoryOptionCard 
                         text="새로운 레포지토리 생성"

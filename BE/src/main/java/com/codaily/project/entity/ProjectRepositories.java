@@ -19,8 +19,9 @@ public class ProjectRepositories {
     @Column(name = "repo_id")
     private Long repoId;
 
-    @Column(name = "project_id", nullable = false)
-    private Long projectId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
     @Column(name = "repo_name", nullable = false, length = 255)
     private String repoName;
@@ -30,4 +31,11 @@ public class ProjectRepositories {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreated() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

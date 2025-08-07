@@ -191,6 +191,8 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AppContent />
+        {/* ModalManager 삭제 금지 - 주석 처리만 */}
+        <ModalManager />
       </Router>
     </QueryClientProvider>
   );

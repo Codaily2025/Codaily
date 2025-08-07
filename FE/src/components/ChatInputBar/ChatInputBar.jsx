@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from './ChatInputBar.module.css';
 
-const ChatInputBar = ({ onSend, isSending }) => {
+const ChatInputBar = ({ onSend, isSending, isSplitView = false }) => {
   const [inputValue, setInputValue] = useState('');
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null); // 텍스트 입력 길이에 따라 세로 길이 확장
@@ -55,7 +55,7 @@ const ChatInputBar = ({ onSend, isSending }) => {
   };
 
   return (
-    <div className={styles.inputBarContainer}>
+    <div className={`${styles.inputBarContainer} ${isSplitView ? styles['split-view'] : ''}`}>
       <input
         type="file"
         ref={fileInputRef}
