@@ -5,6 +5,7 @@ import NavBar from './components/NavBar';
 import Home from './pages/Home/Home';
 import Schedule from './pages/Schedule/Schedule';
 import Project from './pages/Project/Project';
+import Signup from './pages/Signup/Signup';
 import ProjectCreate from './pages/ProjectCreate/ProjectCreate';
 import ProjectCreateStep2 from './pages/ProjectCreate/ProjectCreateStep2';
 import ProjectCreateStep4 from './pages/ProjectCreate/ProjectCreateStep4';
@@ -128,10 +129,26 @@ function AppContent() {
             } 
           />
           <Route 
+            path="/project" 
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+                <Project />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/project/:id" 
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
                 <Project />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/signup" 
+            element={
+              <ProtectedRoute isLoggedIn={true} onRedirectToLogin={handleRedirectToLogin}>
+                <Signup />
               </ProtectedRoute>
             } 
           />

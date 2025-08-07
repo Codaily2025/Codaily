@@ -1,9 +1,22 @@
 import React, { useMemo } from 'react'
 import KanbanCard from '@/components/molecules/KanbanCard'
 import useModalStore from '@/store/modalStore'
+import useProjectStore from '@/stores/projectStore'
+import { useKanbanTabFields } from '@/hooks/useProjects'
 
-const KanbanBoard = ({ currentProject }) => {
+const KanbanBoard = () => {
     const { openModal } = useModalStore()
+    const { currentProject } = useProjectStore()
+    
+    // 전역 상태에서 현재 프로젝트의 칸반 탭 필드 가져오기
+    const { 
+        data: kanbanTabFields, 
+        isLoading: isKanbanTabsLoading, 
+        error: kanbanTabsError 
+    } = useKanbanTabFields(currentProject?.id)
+    
+    console.log('KanbanBoard - currentProject:', currentProject)
+    console.log('KanbanBoard - kanbanTabFields:', kanbanTabFields)
     
     const handleTaskClick = (cardData) => {
       console.log(`Task Clicked!`)
@@ -65,34 +78,34 @@ const KanbanBoard = ({ currentProject }) => {
 
   return (
     <div className="kanban-board">
-      {columns.map((column) => (
+        {columns.map((column) => (
         <div key={column.id} className="kanban-column">
-          <div className="kanban-column-header" style={{ backgroundColor: column.color }}>
-            <div className="kanban-column-info">
-              <span className="kanban-column-count">{column.cards.length}</span>
-              <span className="kanban-column-title">{column.title}</span>
+            <div className="kanban-column-header" style={{ backgroundColor: column.color }}>
+              <div className="kanban-column-info">
+                <span className="kanban-column-count">{column.cards.length}</span>
+                <span className="kanban-column-title">{column.title}</span>
+              </div>
+              <button 
+                className="kanban-add-btn" 
+                onClick={() => handleAddCard(column.id)}
+              >
+                +
+              </button>
             </div>
-            <button 
-              className="kanban-add-btn" 
-              onClick={() => handleAddCard(column.id)}
-            >
-              +
-            </button>
+            <div className="kanban-column-content">
+              {column.cards.map((card) => (
+                <KanbanCard
+                  key={card.id}
+                  category={card.category}
+                  title={card.title}
+                  details={card.details}
+                  dueDate={card.dueDate}
+                  onClick={() => handleTaskClick(card)}
+                />
+              ))}
+            </div>
           </div>
-          <div className="kanban-column-content">
-            {column.cards.map((card) => (
-              <KanbanCard
-                key={card.id}
-                category={card.category}
-                title={card.title}
-                details={card.details}
-                dueDate={card.dueDate}
-                onClick={() => handleTaskClick(card)}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
+        ))}
     </div>
   )
 

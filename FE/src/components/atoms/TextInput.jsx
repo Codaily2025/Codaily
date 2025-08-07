@@ -1,12 +1,27 @@
-const TextInput = ({ value, onChange, placeholder, className = '' }) => {
+import React from 'react'
+import useFormField from '@/hooks/useFormField'
+
+const TextInput = ({ 
+    type = 'text', 
+    placeholder, 
+    fieldName,
+    className = '',
+    id,
+    style,
+    ...props 
+}) => {
+    const field = fieldName ? useFormField(fieldName) : null
+    
     return (
-        <input 
-            type="text" 
-            value={value}
-            onChange={onChange}
+        <input
+            type={type}
             placeholder={placeholder}
-            // className={`text-input ${className}`.trim()}
+            value={field?.value || ''}
+            onChange={field?.onChange}
             className={className}
+            id={id}
+            style={style}
+            {...props}
         />
     )
 }
