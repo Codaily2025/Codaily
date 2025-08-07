@@ -28,7 +28,7 @@ public class CodeCommitServiceImpl implements CodeCommitService{
                 .project(projectService.findById(projectId))
                 .commitHash(commit.getId())
                 .message(commit.getMessage())
-                .fieldCommittedAt(LocalDateTime.parse(commit.getTimestamp()))
+                .committedAt(LocalDateTime.parse(commit.getTimestamp()))
                 .build();
 
         return codeCommitRepository.save(entity).getCommitId();

@@ -5,14 +5,12 @@ import com.codaily.codereview.dto.*;
 import com.codaily.codereview.entity.ChangeType;
 import com.codaily.codereview.entity.CodeCommit;
 import com.codaily.codereview.repository.CodeCommitRepository;
-import com.codaily.codereview.repository.FeatureItemChecklistRepository;
 import com.codaily.common.git.WebhookPayload;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepositoriesRepository;
 import com.codaily.project.service.ProjectRepositoriesService;
-import com.codaily.project.service.ProjectService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,7 +72,7 @@ public class WebhookServiceImpl implements WebhookService {
                             .author(commit.getAuthor().getName())
                             .project(repositories.getProject())
                             .message(commit.getMessage())
-                            .fieldCommittedAt(LocalDateTime.parse(commit.getTimestamp())).build();
+                            .committedAt(LocalDateTime.parse(commit.getTimestamp())).build();
 
             Long commitId = codeCommitRepository.save(entity).getCommitId();
             Long projectId = repositories.getProject().getProjectId();
