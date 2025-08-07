@@ -22,6 +22,26 @@ export async function fetchNickname(userId) {
     }
 }
 
+// 닉네임 수정 API
+export async function updateNickname(userId, nickname) {
+    console.log('updateNickname userId:', userId, 'nickname:', nickname);
+    try {
+        const response = await authInstance.patch(`/users/${userId}/nickname`, {
+            nickname: nickname,
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                // 'Authorization': `Bearer ${token}`
+            }
+        });
+        console.log('updateNickname response:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('닉네임 수정 실패:', error);
+        throw error;
+    }
+}
+
 // 프로필 정보를 가져오는 함수
 // 실제 api 사용시 아래 주석 처리된 코드 사용하기
 // return axios.get('/api/profile').then(res => res.data);
