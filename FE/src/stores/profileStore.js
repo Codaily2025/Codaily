@@ -1,6 +1,6 @@
 // src/stores/profileStore.js
 import { create } from 'zustand'
-import { dummyProfile, fetchNickname } from '../apis/profile' // 더미 데이터와 API 함수
+import { dummyProfile, fetchNickname, updateNickname } from '../apis/profile' // 더미 데이터와 API 함수
 
 export const useProfileStore = create((set, get) => ({
   profile: dummyProfile,
@@ -39,6 +39,28 @@ export const useProfileStore = create((set, get) => ({
     } catch (error) {
       set({ 
         error: error.message || '닉네임 조회에 실패했습니다.',
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  // 닉네임 수정 (API 호출)
+  updateNickname: async (userId, nickname) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await updateNickname(userId, nickname);
+      set((state) => ({
+        profile: { 
+          ...state.profile, 
+          nickname: nickname 
+        },
+        isLoading: false
+      }));
+      return response;
+    } catch (error) {
+      set({ 
+        error: error.message || '닉네임 수정에 실패했습니다.',
         isLoading: false 
       });
       throw error;

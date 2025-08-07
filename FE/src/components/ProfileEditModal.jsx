@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfileStore } from '../stores/profileStore';
-import { updateProfile } from '../apis/profile'; // 서버 갱신
+import { updateProfile, updateNickname } from '../apis/profile'; // 서버 갱신
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 
 const ProfileEditModal = ({ isOpen, onClose }) => {
 
-  const { profile: storeProfile, setProfile } = useProfileStore();
+  const { profile: storeProfile, setProfile, updateNickname: updateNicknameStore } = useProfileStore();
   const [formData, setFormData] = useState(storeProfile);
   const [previewImage, setPreviewImage] = useState(storeProfile.profileImage || null) // 이미지 미리보기
   const [errors, setErrors] = useState({}) // 에러 메시지
@@ -43,6 +43,22 @@ const ProfileEditModal = ({ isOpen, onClose }) => {
       // Zustand 전역 상태 업데이터
       setProfile(updated);
       onClose();
+    }
+  })
+
+  // 닉네임 수정 뮤테이션
+  const {mutate: mutateNickname, isLoading: isNicknameLoading, isError: isNicknameError, error: nicknameError} = useMutation({
+    mutationFn: ({ userId, nickname }) => updateNicknameStore(userId, nickname),
+    onSuccess: (updated) => {
+      // React Query 캐시 업데이트
+      queryClient.setQueryData(['profile'], updated);
+      // Zustand 전역 상태 업데이트
+      setProfile(updated);
+      onClose();
+    },
+    onError: (error) => {
+      console.error('닉네임 수정 실패:', error);
+      setErrors(prev => ({ ...prev, nickname: '닉네임 수정에 실패했습니다.' }));
     }
   })
   // 입력 필드 변경 핸들러
@@ -170,7 +186,14 @@ const ProfileEditModal = ({ isOpen, onClose }) => {
       return; // 저장 안 하고 리턴
     }
 
-    mutate(formData);
+    // 닉네임이 변경되었는지 확인
+    if (formData.nickname !== storeProfile.nickname) {
+      // 닉네임 수정 API 호출 (임시로 userId 1 사용)
+      mutateNickname({ userId: 1, nickname: formData.nickname });
+    } else {
+      // 다른 필드만 변경된 경우 기존 로직 사용
+      mutate(formData);
+    }
   };
 
   // 취소 핸들러
@@ -335,10 +358,10 @@ const ProfileEditModal = ({ isOpen, onClose }) => {
           </button>
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isNicknameLoading}
             className={`${styles.actionButton} ${styles.saveButton}`}
           >
-            저장
+            {isLoading || isNicknameLoading ? '저장 중...' : '저장'}
           </button>
         </div>
       </form>
