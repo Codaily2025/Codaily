@@ -1,34 +1,129 @@
-const EventDetailContent = ({ event }) => {
+import React from 'react'
+import FieldItem from './FieldItem'
+import Badge from '../atoms/Badge'
+import Button from '../atoms/Button'
+import Text from '../atoms/Text'
+import Title from '../atoms/Title'
+import { 
+  Calendar, 
+  Box, 
+  Tag, 
+  FileText, 
+  RotateCcw 
+} from 'lucide-react'
+
+const EventDetailContent = ({ event, onClose, className = '', style = {} }) => {
   // 일자 정보 전처리 함수 
-  // yyyy년 MM월 dd일 형식
   const formattedDate = (date) => {
     if (!(date instanceof Date)) return ''
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: '2-digit'
+    })
+  }
 
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
+  // 상태에 따른 Badge 색상 결정
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'completed': return 'green'
+      case 'in_progress': return 'red'
+      case 'todo': return 'gray'
+      case 'pending': return 'blue'
+      default: return 'gray'
+    }
+  }
 
-    return `${year}년 ${month}월 ${day}일`
+  // 상태 텍스트 변환
+  const getStatusText = (status) => {
+    switch(status) {
+      case 'completed': return '완료'
+      case 'in_progress': return 'In Progress'
+      case 'todo': return '예정'
+      case 'pending': return '대기'
+      default: return status
+    }
+  }
+
+  const containerStyle = {
+    width: '100%',
+    ...style
+  }
+
+  const titleStyle = {
+    fontSize: '32px',
+    fontWeight: 700,
+    color: '#1a1a1a',
+    marginBottom: '48px',
+    textAlign: 'left',
+    lineHeight: 1.2
+  }
+
+  const buttonStyle = {
+    backgroundColor: '#e9ecef',
+    color: '#6c757d',
+    marginTop: '48px',
+    padding: '12px 32px',
+    fontSize: '16px',
+    fontWeight: 500,
+    borderRadius: '8px'
   }
 
   const start = formattedDate(event.start)
-  
-  // const end = event.end?.toLocaleTimeString("ko-KR", {
-  //   hour: "2-digit", minute: "2-digit",
-  // })
-  
 
   return (
-    <>
-      <h2 style={{ color: '#404040', marginBottom: '12px' }}>{event.title}</h2>
-      <p>일    자: {start}</p>
-      <p>프로젝트: {event.extendedProps?.projectId}</p>
-      <p>카테고리: {event.extendedProps?.category}</p>
-      <p>기능설명: {event.extendedProps?.featureDescription}</p>
-      <p>우선순위: {event.extendedProps?.priorityLevel}</p>
-      <p>상    태: {event.extendedProps?.status}</p>
-      <p>할당시간: {event.extendedProps?.allocatedHours} 시간</p>
-    </>
+    <div className={`event-detail-content ${className}`} style={containerStyle}>
+      <Title level={1} style={titleStyle}>
+        {event.title}
+      </Title>
+      
+      <FieldItem 
+        icon={<RotateCcw size={24} />}
+        label="Status"
+      >
+        <Badge 
+          content={getStatusText(event.extendedProps?.status)} 
+          color={getStatusColor(event.extendedProps?.status)}
+        />
+      </FieldItem>
+
+      <FieldItem 
+        icon={<Calendar size={24} />}
+        label="Date"
+      >
+        <Text style={{ fontSize: '16px', color: '#1a1a1a', fontWeight: 500 }}>
+          {start}
+        </Text>
+      </FieldItem>
+
+      <FieldItem 
+        icon={<Box size={24} />}
+        label="Project"
+      >
+        <Text style={{ fontSize: '16px', color: '#1a1a1a', fontWeight: 500 }}>
+          {event.extendedProps?.projectId}
+        </Text>
+      </FieldItem>
+
+      <FieldItem 
+        icon={<Tag size={24} />}
+        label="Category"
+      >
+        <Badge 
+          content={event.extendedProps?.category}
+          color="blue"
+        />
+      </FieldItem>
+
+      <FieldItem 
+        icon={<FileText size={24} />}
+        label="Description"
+      >
+        <Text style={{ fontSize: '16px', color: '#1a1a1a', fontWeight: 500 }}>
+          {event.extendedProps?.featureDescription}
+        </Text>
+      </FieldItem>
+    </div>
   )
 }
 
