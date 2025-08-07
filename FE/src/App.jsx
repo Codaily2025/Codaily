@@ -128,6 +128,14 @@ function AppContent() {
             } 
           />
           <Route 
+            path="/project" 
+            element={
+              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+                <Project />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/project/:id" 
             element={
               <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
