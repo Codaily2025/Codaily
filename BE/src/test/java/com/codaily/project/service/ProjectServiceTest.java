@@ -2,10 +2,9 @@ package com.codaily.project.service;
 
 import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.UserRepository;
+import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.management.entity.Schedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
-import com.codaily.project.dto.ProjectCreateRequest;
-import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.project.dto.FeatureItemReduceItem;
 import com.codaily.project.dto.FeatureItemReduceResponse;
 import com.codaily.project.dto.ProjectCreateRequest;
@@ -51,6 +50,8 @@ public class ProjectServiceTest {
     void 프로젝트를_생성하면_DB에_정상적으로_저장된다() {
         // given
         ProjectCreateRequest request = new ProjectCreateRequest();
+        request.setTitle("검색 엔진 프로젝트");
+        request.setDescription("모든 프로젝트에서 사용할 수 있는 검색엔진 구현");
         request.setStartDate(LocalDate.of(2025, 4, 1));
         request.setEndDate(LocalDate.of(2025, 6, 30));
         request.setAvailableDates(List.of(
@@ -76,6 +77,7 @@ public class ProjectServiceTest {
         Project fetch = projectRepository.findByProjectId(savedProject.getProjectId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트를 찾을 수 없습니다."));
 
+        assertEquals("검색 엔진 프로젝트", fetch.getTitle());
         assertEquals(LocalDate.of(2025, 4, 1), fetch.getStartDate());
 
         List<Schedule> schedules = scheduleRepository.findAll();
@@ -110,6 +112,8 @@ public class ProjectServiceTest {
 
         // 3. 프로젝트 생성 요청 구성
         ProjectCreateRequest request = new ProjectCreateRequest();
+        request.setTitle("기능 축소 테스트 프로젝트");
+        request.setDescription("기능 예상 시간이 많으면 줄이기");
         request.setStartDate(LocalDate.of(2025, 8, 4));
         request.setEndDate(LocalDate.of(2025, 8, 5));
         request.setAvailableDates(List.of(

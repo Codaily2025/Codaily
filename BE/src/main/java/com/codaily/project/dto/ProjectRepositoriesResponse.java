@@ -1,13 +1,13 @@
-    package com.codaily.project.dto;
+package com.codaily.project.dto;
 
-    import lombok.AllArgsConstructor;
-    import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-    import java.util.List;
+import java.util.List;
 
-    @Data
-    @AllArgsConstructor
-    public class ProjectRepositoriesResponse {
-        private List<ProjectRepositoryResponse> repositories;
-    }
+@Data
+@AllArgsConstructor
+public class ProjectRepositoriesResponse {
+    private List<ProjectRepositoryResponse> repositories;
+}
 

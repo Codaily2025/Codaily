@@ -10,7 +10,6 @@ import java.util.List;
 public class FeatureSaveContent {
     private Long projectId;
     private Long specId;
-    private String field;
     private FeatureSaveItem mainFeature;
     private List<FeatureSaveItem> subFeature;
 }

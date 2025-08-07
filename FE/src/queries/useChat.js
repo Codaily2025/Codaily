@@ -17,7 +17,7 @@ import { fetchChatHistory, postUserMessage } from '../apis/chatApi';
 import { useChatStore } from '../stores/chatStore';
 
 export const useChatHistoryQuery = () => {
-  // console.log('훅 진입')
+  console.log('훅 진입')
   // zustand 훅
   // 전역 상태 저장소(store)에 접근해 메세지 읽거나 갱신
   // store의 상태와 액션 가져오기

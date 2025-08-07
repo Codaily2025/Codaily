@@ -1,15 +1,14 @@
 package com.codaily.project.service;
 
 import com.codaily.auth.entity.User;
-import com.codaily.project.dto.FeatureItemUpdateRequest;
+import com.codaily.project.dto.FeatureSaveItem;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
-import com.codaily.project.exception.FeatureNotFoundException;
 import com.codaily.project.repository.FeatureItemRepository;
-import com.codaily.project.repository.ProjectRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -22,83 +21,68 @@ class FeatureItemServiceImplTest {
 
     private FeatureItemRepository featureItemRepository;
     private FeatureItemServiceImpl featureItemService;
-    private ProjectRepository projectRepository;
 
     @BeforeEach
     void setUp() {
         featureItemRepository = mock(FeatureItemRepository.class);
-        projectRepository = mock(ProjectRepository.class);
-        featureItemService = new FeatureItemServiceImpl(projectRepository,null,featureItemRepository,null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
+        featureItemService = new FeatureItemServiceImpl(null,null,featureItemRepository,null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
     }
 
     @Test
     void updateFeatureItem_기능정보가_정상적으로_수정된다() {
         // given
-        Long projectId = 1L;
         Long featureId = 123123123L;
-
-        Project mockProject = Project.builder()
-                .projectId(projectId)
-                .build();
-
         FeatureItem existingItem = FeatureItem.builder()
                 .featureId(featureId)
                 .title("이전 제목")
                 .description("이전 설명")
                 .estimatedTime(1.0)
                 .priorityLevel(3)
-                .project(mockProject) // 프로젝트 설정
                 .build();
 
-        FeatureItemUpdateRequest updateRequest = FeatureItemUpdateRequest.builder()
+        FeatureSaveItem updateRequest = FeatureSaveItem.builder()
+                .id(featureId)
                 .title("수정된 제목")
                 .description("수정된 설명")
                 .estimatedTime(5.0)
                 .priorityLevel(9)
                 .build();
 
-        when(projectRepository.existsById(projectId)).thenReturn(true);
-        when(projectRepository.findById(projectId)).thenReturn(Optional.of(mockProject));
-        when(featureItemRepository.findByProject_ProjectIdAndFeatureId(projectId, featureId))
-                .thenReturn(Optional.of(existingItem));
+        when(featureItemRepository.findById(featureId)).thenReturn(Optional.of(existingItem));
 
         // when
-        featureItemService.updateFeature(projectId, featureId, updateRequest);
+        featureItemService.updateFeatureItem(updateRequest);
 
         // then
+        ArgumentCaptor<FeatureItem> captor = ArgumentCaptor.forClass(FeatureItem.class);
+        verify(featureItemRepository, times(1)).findById(featureId);
         assertEquals("수정된 제목", existingItem.getTitle());
         assertEquals("수정된 설명", existingItem.getDescription());
-        assertEquals(5.0, existingItem.getEstimatedTime());
+        assertEquals(5, existingItem.getEstimatedTime());
         assertEquals(9, existingItem.getPriorityLevel());
     }
 
     @Test
     void updateFeatureItem_해당기능이_존재하지_않으면_예외() {
         // given
-        Long projectId = 1L;
         Long featureId = 123123123L;
-
-        FeatureItemUpdateRequest updateRequest = FeatureItemUpdateRequest.builder()
+        FeatureSaveItem updateRequest = FeatureSaveItem.builder()
+                .id(featureId)
                 .title("제목")
                 .description("설명")
                 .estimatedTime(3.0)
                 .priorityLevel(7)
                 .build();
 
-        when(projectRepository.existsById(projectId)).thenReturn(true);
-
-        when(featureItemRepository.findByProject_ProjectIdAndFeatureId(projectId, featureId))
-                .thenReturn(Optional.empty());
+        when(featureItemRepository.findById(featureId)).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(FeatureNotFoundException.class, () -> {
-            featureItemService.updateFeature(projectId, featureId, updateRequest);
+        assertThrows(IllegalArgumentException.class, () -> {
+            featureItemService.updateFeatureItem(updateRequest);
         });
 
-        verify(featureItemRepository, times(1))
-                .findByProject_ProjectIdAndFeatureId(projectId, featureId);
+        verify(featureItemRepository, times(1)).findById(featureId);
     }
-
 
     @Test
     void calculateTotalEstimatedTime_하위기능합계가_정상적으로_반환된다() {
@@ -155,7 +139,6 @@ class FeatureItemServiceImplTest {
                 .build();
 
         // Repository가 SUM 결과를 17로 리턴하도록 설정
-        when(projectRepository.existsById(1L)).thenReturn(true);
         when(featureItemRepository.getTotalEstimatedTimeBySpecId(specId))
                 .thenReturn(17);
 

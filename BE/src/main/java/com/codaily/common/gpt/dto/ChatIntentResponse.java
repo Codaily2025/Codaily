@@ -9,7 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ChatIntentResponse {
     private String intent; // "chat", "spec", "spec:regenerate"
-    private Long featureId;
-    private String field;
 }
 

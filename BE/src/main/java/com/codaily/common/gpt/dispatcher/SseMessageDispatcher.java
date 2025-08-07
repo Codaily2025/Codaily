@@ -15,11 +15,11 @@ import java.util.List;
 public class SseMessageDispatcher {
     private final List<SseMessageHandler<?>> handlers;
 
-    public <T> T dispatch(MessageType messageType, JsonNode content, Long projectId, Long specId, Long featureId) {
+    public <T> T dispatch(MessageType messageType, JsonNode content, Long projectId, Long specId) {
         return handlers.stream()
                 .filter(h -> h.getType().equals(messageType))
                 .findFirst()
-                .map(h -> ((SseMessageHandler<T>) h).handle(content, projectId, specId, featureId))
+                .map(h -> ((SseMessageHandler<T>) h).handle(content, projectId, specId))
                 .orElseThrow(() -> new IllegalArgumentException("No handler found for type: " + messageType));
     }
 

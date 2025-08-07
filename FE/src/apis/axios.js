@@ -9,7 +9,7 @@ const axiosInstance = (url, options) => {
 
 const axiosAuthInstance = (url, options) => {
     // 저장된 사용자 토큰 가져오기
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken') || '';
+    const token = localStorage.getItem('authToken') || ''
     const instance = axios.create({
         baseURL: url,
         headers: { Authorization: 'Bearer ' + token },          // JWT Bearer 토큰

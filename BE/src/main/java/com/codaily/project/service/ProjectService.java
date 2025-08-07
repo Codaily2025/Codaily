@@ -1,7 +1,6 @@
 package com.codaily.project.service;
 
 import com.codaily.auth.entity.User;
-import com.codaily.mypage.dto.ProjectUpdateRequest;
 import com.codaily.project.dto.FeatureItemReduceResponse;
 import com.codaily.project.dto.ProjectCreateRequest;
 import com.codaily.project.dto.ProjectRepositoryResponse;
@@ -21,9 +20,4 @@ public interface ProjectService {
     int calculateTotalUserAvailableHours(Long projectId);
 
     public FeatureItemReduceResponse reduceFeatureItemsIfNeeded(Long projectId, Long specId);
-
-    public void updateProject(Long projectId, ProjectUpdateRequest request);
-
-    void updateProjectAndSpec(Long projectId, Long specId,
-                              String projectTitle, String projectDescription, String specTitle);
 }

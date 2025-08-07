@@ -61,10 +61,6 @@ public class User {
     @JsonIgnore
     private List<Project> projects;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<TechStack> techStacks = new ArrayList<>();
-
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
