@@ -54,7 +54,7 @@ public class FeatureItemRepositoryTest {
         Project project = projectRepository.save(Project.builder()
                 .title("테스트 프로젝트")
                 .description("설명")
-                .status("TODO")
+                .status(Project.ProjectStatus.TODO)
                 .specification(spec)
                 .user(user)
                 .updatedAt(LocalDateTime.now())

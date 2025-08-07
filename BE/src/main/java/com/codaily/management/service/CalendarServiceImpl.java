@@ -114,7 +114,7 @@ public class CalendarServiceImpl implements CalendarService{
         if(userId == null || userId <= 0){
             throw new IllegalArgumentException("사용자 ID는 양수여야 합니다.");
         }
-        List<Project> projectList = projectRepository.findByUser_UserIdAndStatus(userId, "IN_PROGRESS");
+        List<Project> projectList = projectRepository.findByUser_UserIdAndStatus(userId, Project.ProjectStatus.IN_PROGRESS);
         List<TodayScheduleResponse.TodayTask> allTasks = new ArrayList<>();
 
         for(Project project : projectList){
