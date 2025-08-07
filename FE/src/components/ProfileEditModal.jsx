@@ -5,10 +5,17 @@ import { updateProfile, updateNickname } from '../apis/profile'; // 서버 갱�
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 
-const ProfileEditModal = ({ isOpen, onClose }) => {
+const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
 
   const { profile: storeProfile, setProfile, updateNickname: updateNicknameStore } = useProfileStore();
-  const [formData, setFormData] = useState(storeProfile);
+  const [formData, setFormData] = useState(
+    {
+      nickname: storeProfile.nickname ?? "",
+      email: storeProfile.email ?? "",
+      githubAccount: storeProfile.githubAccount ?? "",
+      profileImage: storeProfile.profileImage ?? null,
+    }
+  );
   const [previewImage, setPreviewImage] = useState(storeProfile.profileImage || null) // 이미지 미리보기
   const [errors, setErrors] = useState({}) // 에러 메시지
   const [isEmailVerifying, setIsEmailVerifying] = useState(false); // 이메일 인증 중
@@ -22,7 +29,12 @@ const ProfileEditModal = ({ isOpen, onClose }) => {
   // 모달이 열릴 때마다 Zustand 프로필로 초기화
   useEffect(() => {
     if (isOpen) {
-      setFormData(storeProfile);
+      setFormData({
+        nickname: storeProfile.nickname ?? "",
+        email: storeProfile.email ?? "",
+        githubAccount: storeProfile.githubAccount ?? "",
+        profileImage: storeProfile.profileImage ?? null,
+      });
       setPreviewImage(storeProfile.profileImage || null);
       setErrors({});
       // setIsEmailVerified(false);
@@ -256,7 +268,8 @@ const ProfileEditModal = ({ isOpen, onClose }) => {
               <User size={18} className={styles.inputIcon} />
               <input
                 type="text"
-                value={formData.nickname}
+                // value={nickname}
+                value={formData.nickname ?? ""}
                 onChange={handleChange('nickname')}
                 className={`${styles.inputField} ${styles.nicknameInputField} ${errors.nickname ? styles.inputError : ''}`}
                 placeholder="닉네임을 입력하세요"
@@ -278,7 +291,7 @@ const ProfileEditModal = ({ isOpen, onClose }) => {
                 <Mail size={18} className={styles.inputIcon} />
                 <input
                   type="email"
-                  value={formData.email}
+                  value={formData.email ?? ""}
                   onChange={handleChange('email')}
                   className={`${styles.inputField} ${styles.emailInputField} ${errors.email ? styles.inputError : ''}`}
                   placeholder="이메일을 입력하세요"
@@ -317,7 +330,7 @@ const ProfileEditModal = ({ isOpen, onClose }) => {
                 <Github size={18} className={styles.inputIcon} />
                 <input
                   type="text"
-                  value={`@${formData.githubAccount}`}
+                  value={`@${formData.githubAccount ?? ""}`}
                   readOnly
                   className={`${styles.inputField} ${styles.githubInputField} ${styles.readOnlyInput} ${errors.githubAccount ? styles.inputError : ''}`}
                   placeholder="GitHub 연동 후 계정명이 표시됩니다"
