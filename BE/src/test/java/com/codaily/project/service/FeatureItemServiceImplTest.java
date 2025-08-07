@@ -47,7 +47,7 @@ class FeatureItemServiceImplTest {
                 .description("이전 설명")
                 .estimatedTime(1.0)
                 .priorityLevel(3)
-                .project(mockProject) // ✅ 프로젝트 설정
+                .project(mockProject) // 프로젝트 설정
                 .build();
 
         FeatureItemUpdateRequest updateRequest = FeatureItemUpdateRequest.builder()
@@ -58,6 +58,7 @@ class FeatureItemServiceImplTest {
                 .build();
 
         when(projectRepository.existsById(projectId)).thenReturn(true);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(mockProject));
         when(featureItemRepository.findByProject_ProjectIdAndFeatureId(projectId, featureId))
                 .thenReturn(Optional.of(existingItem));
 
