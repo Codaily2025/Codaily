@@ -281,7 +281,7 @@ const RequirementsSpecification = () => {
 
   // 체크 상태를 토글하는 함수
   const handleToggleChecked = useCallback((taskId) => {
-    console.log('토글 호출, taskId:', taskId);
+    // console.log('토글 호출, taskId:', taskId);
     let newState;
 
     const toggleAndPropagate = list =>
