@@ -20,7 +20,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findByUser_UserId(Long userId);
 
-    List<Project> findByUser_UserIdAndStatus(Long userId, String status);
+    List<Project> findByUser_UserIdAndStatus(Long userId, Enum<Project.ProjectStatus> status);
 
     void deleteByProjectId(Long projectId);
 

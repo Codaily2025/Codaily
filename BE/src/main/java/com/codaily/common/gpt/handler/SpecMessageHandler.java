@@ -28,10 +28,10 @@ public class SpecMessageHandler implements SseMessageHandler<FeatureSaveResponse
     }
 
     @Override
-    public FeatureSaveResponse handle(JsonNode content, Long projectId, Long specId) {
+    public FeatureSaveResponse handle(JsonNode content, Long projectId, Long specId, Long featureId) {
         try {
             FeatureSaveRequest request = objectMapper.treeToValue(content, FeatureSaveRequest.class);
-            return featureItemService.saveSpecChunk(request, projectId, specId);
+            return featureItemService.saveSpecChunk(request, projectId, specId, "spec");
         } catch (Exception e) {
             log.error("명세서 저장 실패", e);
             throw new RuntimeException("명세서 저장 실패", e);
