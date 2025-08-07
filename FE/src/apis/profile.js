@@ -4,6 +4,7 @@ import { authInstance } from './axios';
 
 // profile dummy data (fallback용)
 export const dummyProfile = {
+    userId: 1,               // 임시 userId
     profileImage: null,       // 향후 URL로 교체
     nickname: 'TempNickname',
     email: 'code@example.com',
@@ -34,7 +35,7 @@ export async function updateNickname(userId, nickname) {
                 // 'Authorization': `Bearer ${token}`
             }
         });
-        console.log('updateNickname response:', nickname);
+        console.log('updateNickname response:', response);
         return { nickname: nickname };
     } catch (error) {
         console.error('닉네임 수정 실패:', error);
@@ -48,11 +49,13 @@ export async function updateNickname(userId, nickname) {
 
 export async function fetchProfile() {
     // 임시로 userId 1을 사용 (실제로는 로그인된 사용자의 ID를 사용해야 함)
+    const userId = 1; // 실제로는 로그인된 사용자의 ID를 가져와야 함
     try {
-        const nicknameData = await fetchNickname(1);
-        console.log('fetchProfile nicknameData:', nicknameData);
+        const nicknameData = await fetchNickname(userId);
+        // console.log('fetchProfile nicknameData:', nicknameData);
         // {nickname: 'TempNickname111'}
         return {
+            userId: userId, // userId 추가
             profileImage: null,
             nickname: nicknameData.nickname || 'TempNickname', // API 응답에서 닉네임 추출
             email: 'code@example.com',
@@ -60,7 +63,10 @@ export async function fetchProfile() {
         };
     } catch (error) {
         console.error('프로필 조회 실패, 더미 데이터 사용:', error);
-        return dummyProfile;
+        return {
+            ...dummyProfile,
+            userId: userId, // 더미 데이터에도 userId 추가
+        };
     }
 }
 

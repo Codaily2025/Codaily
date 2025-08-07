@@ -13,7 +13,8 @@ import useModalStore from '../../store/modalStore';
 // import { useProfileQuery, useNicknameQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 import { useProfileStore } from '../../stores/profileStore'; // 프로필 스토어 사용
-
+import { useProjectsQuery } from '../../queries/useProjectsQuery'; // 프로젝트 조회 훅
+import { useProjectStore } from '../../stores/mypageProjectStore'; // 프로젝트 스토어 사용
 
 // 히트맵 그래프를 위한 더미 데이터
 // level: 0 (활동 없음), 1 (적음), 2 (중간), 3 (많음)
@@ -29,67 +30,30 @@ const Mypage = () => {
   const profile = useProfileStore((state) => state.profile); // 프로필 가져오기
   // const { data: fetchedProfile, isLoading, isError, error } = useProfileQuery(); // 프로필 조회 훅
   // const { data: nicknameData, isLoading: nicknameLoading } = useNicknameQuery(1); // 닉네임 조회 (userId 1 사용)
-  const { data: fetchedProfile, isLoading, isError, error } = useProfileQuery(); // 프로필 조회 훅
+  const { 
+    data: fetchedProfile, 
+    isLoading, isError, 
+    error 
+  } = useProfileQuery(); // 프로필 조회 훅
+  console.log('fetchedProfile:', fetchedProfile);
+  // {profileImage: null, nickname: 'google_t1g026xmgb4vsk', email: 'code@example.com', githubAccount: 'hiabc'}
+  const userId = fetchedProfile?.userId;
+  const {
+    data: fetchedProjects,
+    isLoading: isLoadingProjects,
+    isError: isErrorProjects,
+    error: projectsError
+  } = useProjectsQuery(userId);
+
+  console.log('userId:', userId); // undefined
+  console.log('fetchedProjects:', fetchedProjects);
+
+  // Zustand 스토어에 프로젝트 데이터 설정
+  const setProjects = useProjectStore((state) => state.setProjects);
+
   const [activeFilter, setActiveFilter] = useState('전체'); // 필터 기본값 : 전체
 
-  // 실제 애플리케이션에서는 API로부터 프로젝트 데이터를 받아와야 함
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      title: '팀 협업 칸반보드 제작',
-      duration: '2025/06/10 ~ 2025/09/30',
-      progress: 75,
-      stack: ['React', 'WebSocket', 'Express'],
-      disabled: false,
-      timeByDay: {
-        '월': 0,
-        '화': 0,
-        '수': 0,
-        '목': 0,
-        '금': 3,
-        '토': 0,
-        '일': 0
-      },
-      repoUrl: 'https://github.com/sample1.git'
-    },
-    {
-      id: 2,
-      title: 'Next.js 기반 기술 블로그',
-      duration: '2025/07/01 ~ 2025/08/01',
-      progress: 20,
-      stack: ['Next.js', 'TailwindCSS'],
-      disabled: false,
-      timeByDay: {
-        '월': 0,
-        '화': 0,
-        '수': 3,
-        '목': 4,
-        '금': 3,
-        '토': 0,
-        '일': 0
-      },
-      repoUrl: 'https://github.com/sample2.git'
-    },
-    {
-      id: 3,
-      title: '개인 포트폴리오 사이트',
-      duration: '2025/04/05 ~ 2025/05/20',
-      progress: 100,
-      stack: ['HTML', 'CSS', 'JavaScript'],
-      disabled: true,
-      timeByDay: {
-        '월': 0,
-        '화': 0,
-        '수': 0,
-        '목': 0,
-        '금': 0,
-        '토': 0,
-        '일': 0
-      },
-      repoUrl: 'https://github.com/sample3.git'
-    }
-  ]);
-
+  // 조회된 프로필 데이터를 Zustand 스토어에 저장
   useEffect(() => {
     if (fetchedProfile) {
       setProfile(fetchedProfile);
@@ -108,15 +72,17 @@ const Mypage = () => {
   //   }
   // }, [nicknameData, setProfile]);
 
+  // 조회된 프로젝트 데이터를 Zustand 스토어에 저장
   useEffect(() => {
-    if (fetchedProfile) {
-      setProfile(fetchedProfile);
+    if (fetchedProjects) {
+      setProjects(fetchedProjects);
     }
-  }, [fetchedProfile, setProfile]);
+  }, [fetchedProjects, setProjects]);
 
-  if (isLoading) return <div>로딩 중...</div>;
+  if (isLoading || isLoadingProjects) return <div>로딩 중...</div>;
 
   if (isError) return <div>에러 발생: {error.message}</div>;
+  if (isErrorProjects) return <div>에러 발생: {projectsError.message}</div>;
 
   return (
     <div className="mypage-container">
@@ -160,9 +126,9 @@ const Mypage = () => {
         <ProgressSection />
         <MyPageProductivityGraph />
         <ProjectsSection
-          projects={projects}
-          activeFilter={activeFilter}
-          setActiveFilter={setActiveFilter}
+          // projects={fetchedProjects}
+          // activeFilter={activeFilter}
+          // setActiveFilter={setActiveFilter}
         />
         {/* 프로필 수정 모달 */}
         <ProfileEditModal
