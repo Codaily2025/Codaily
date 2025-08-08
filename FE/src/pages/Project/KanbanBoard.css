@@ -1,8 +1,14 @@
 .kanban-board {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.kanban-columns {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
-    height: 100%;
+    flex: 1;
 }
 
 .kanban-column {

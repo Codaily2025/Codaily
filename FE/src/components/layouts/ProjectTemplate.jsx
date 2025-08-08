@@ -124,9 +124,9 @@ const ProjectTemplate = ({ currentProject, projects = [] }) => {
         backgroundColor: '#FAF9FD',
         minHeight: '300px'
       }}>
-        <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
+        {/* <h2 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold' }}>
           {currentFeatures}
-        </h2>
+        </h2> */}
         {/* 칸반 보드 렌더링 */}
         <KanbanBoard />
       </div>
