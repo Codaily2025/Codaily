@@ -15,9 +15,10 @@ public interface WebhookService {
                                       String commitHash,
                                       String commitMessage,
                                       List<DiffFile> diffFiles,
-                                      Long userId);
+                                      Long userId,
+                                      CommitInfoDto commitInfoDto);
 
-    public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId);
-    public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths);
+    public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName);
+    public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths, String repoOwner, String repoName);
 
     }

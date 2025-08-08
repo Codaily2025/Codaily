@@ -5,9 +5,7 @@ import uvicorn
 from src.config.osConfig import *
 from src.specification.specification_router import router as specification_router
 from src.specification.chat_router import router as chat_router
-from src.code_review.code_review_router import feature_inference as feature_inference_router
-from src.code_review.code_review_router import checklist_evaluation as checklist_router
-from src.code_review.code_review_router import code_review_items as code_review_item_router
+from src.code_review.code_review_router import router as code_review_router
 
 
 # 환경 변수 로드
@@ -27,9 +25,7 @@ app.add_middleware(
 # 라우터 등록
 app.include_router(specification_router, prefix="/specification")
 app.include_router(chat_router, prefix="/chat")
-app.include_router(feature_inference_router)
-app.include_router(checklist_router)
-app.include_router(code_review_item_router)
+app.include_router(code_review_router, prefix="/api/code-review")
 
 
 if __name__ == "__main__":

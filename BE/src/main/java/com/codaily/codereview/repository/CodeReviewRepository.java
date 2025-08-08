@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface CodeReviewRepository extends JpaRepository<CodeReview, Long> {
 
@@ -19,4 +20,6 @@ public interface CodeReviewRepository extends JpaRepository<CodeReview, Long> {
 
     @Query("SELECT cr FROM CodeReview cr WHERE cr.projectId = :projectId ORDER BY cr.createdAt DESC")
     List<CodeReview> findByProjectIdOrderByCreatedAtDesc(Long projectId);
+
+    Optional<CodeReview> findByFeatureItem_Id(Long featureId);
 }

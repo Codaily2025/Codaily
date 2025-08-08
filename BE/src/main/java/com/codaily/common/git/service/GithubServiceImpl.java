@@ -100,9 +100,9 @@ public class GithubServiceImpl implements GithubService {
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
         if (response.getStatusCode().is2xxSuccessful()) {
-            log.info("✅ Webhook 등록 성공: {}", repo);
+            log.info("Webhook 등록 성공: {}", repo);
         } else {
-            log.warn("❌ Webhook 등록 실패: {} - {}", repo, response.getBody());
+            log.warn("Webhook 등록 실패: {} - {}", repo, response.getBody());
         }
     }
 

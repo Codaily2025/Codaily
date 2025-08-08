@@ -1,12 +1,11 @@
 package com.codaily.codereview.dto;
 
+import lombok.Builder;
 import lombok.Getter;
 
-import java.util.List;
-
 @Getter
-public class FileFetchRequestDto {
-    private List<String> filePaths;
+@Builder
+public class CommitInfoDto {
     private String repoName;
     private String repoOwner;
 }

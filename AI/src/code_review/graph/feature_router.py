@@ -1,10 +1,10 @@
 from ..state import CodeReviewState
-from code_review.graph.feature_subgraph import build_feature_subgraph
+from ..subgraph import create_feature_graph
 
 
 async def run_feature_router(state: CodeReviewState) -> CodeReviewState:
     feature_names = state.get("feature_names", [])
-    feature_subgraph = build_feature_subgraph()
+    feature_subgraph = create_feature_graph()
     results = {}
 
     for feature_name in feature_names:

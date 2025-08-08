@@ -16,8 +16,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
     private final FeatureItemChecklistService featureItemChecklistService;
     private final FeatureItemService featureItemService;
     private final CodeCommitService codeCommitService;
+    private final CodeReviewItemService codeReviewItemService;
 
 
     @Override
@@ -72,9 +75,9 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                 String lineRange = item.getLineRange();
                 String severity = item.getSeverity();
                 String message = item.getMessage();
-
+                FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
                 CodeReviewItem entity = CodeReviewItem.builder()
-                        .featureItem(featureItemService.findById(featureId))
+                        .featureItem(featureItem)
                         .featureItemChecklist(featureItemChecklistService.findByFeatureItem_FeatureIdAndItem(featureId, checklistItem))
                         .filePath(filePath)
                         .lineRange(lineRange)
@@ -112,10 +115,11 @@ public class CodeReviewServiceImpl implements CodeReviewService {
         // 추가 구현 항목 처리
         for(String extra : extraImplemented) {
             boolean exists = featureItemChecklistService.existsByFeatureItem_FeatureIdAndItem(featureId, extra);
+            FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
 
             if(!exists) {
                 FeatureItemChecklist checklist = FeatureItemChecklist.builder()
-                        .featureItem(featureItemService.findById(featureId))
+                        .featureItem(featureItem)
                         .item(extra)
                         .description(extra)
                         .done(true)
@@ -143,5 +147,75 @@ public class CodeReviewServiceImpl implements CodeReviewService {
         }
 
     }
+
+    @Override
+    public CodeReviewSummaryResponseDto getCodeReviewSummary(Long featureId) {
+        CodeReview review = codeReviewRepository.findByFeatureItem_Id(featureId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 기능에 대한 코드 리뷰 없음"));
+
+        return CodeReviewSummaryResponseDto.builder()
+                .summary(review.getSummary())
+                .convention(review.getConvention())
+                .refactorSuggestion(review.getRefactorSuggestion())
+                .complexity(review.getComplexity())
+                .bugRisk(review.getBugRisk())
+                .securityRisk(review.getSecurityRisk())
+                .qualityScore(review.getQualityScore())
+                .build();
+    }
+
+    @Override
+    public List<CodeReviewItemResponseDto> getCodeReviewItems(Long featureId) {
+        List<CodeReviewItem> items = codeReviewItemRepository.findByCodeReview_FeatureItem_Id(featureId);
+
+        return items.stream().map(item -> CodeReviewItemResponseDto.builder()
+                .category(item.getCategory())
+                .filePath(item.getFilePath())
+                .lineRange(item.getLineRange())
+                .severity(item.getSeverity())
+                .message(item.getMessage())
+                .build()).toList();
+    }
+
+    @Override
+    public ChecklistStatusResponseDto getChecklistStatus(Long featureId) {
+        List<FeatureItemChecklist> checklists = featureItemChecklistService.findByFeatureItem_FeatureId(featureId);
+
+        List<ChecklistItemStatusDto> items = checklists.stream()
+                .map(item -> ChecklistItemStatusDto.builder()
+                        .item(item.getItem()).done(item.isDone()).build()).toList();
+
+        boolean allImplemented = items.stream().allMatch(ChecklistItemStatusDto::isDone);
+
+        return ChecklistStatusResponseDto.builder()
+                .allImplemented(allImplemented)
+                .items(items).build();
+    }
+
+    @Override
+    public CodeReviewScoreResponseDto getQualityScore(Long featureId) {
+        CodeReview review = codeReviewRepository.findByFeatureItem_Id(featureId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 기능에 대한 코드 리뷰 없음"));
+
+        return CodeReviewScoreResponseDto.builder().qualityScore(review.getQualityScore()).build();
+    }
+
+    @Override
+    public SeverityByCategoryResponseDto getSeverityByCategory(Long featureId) {
+        List<CodeReviewItem> items = codeReviewItemService.getCodeReviewById(featureId);
+
+        // Map<category, Map<severity, count>>
+        Map<String, Map<String, Integer>> categorySeverityMap = new HashMap<>();
+
+        for(CodeReviewItem item : items) {
+            String category = item.getCategory();
+            String severity = item.getSeverity();
+
+            categorySeverityMap.computeIfAbsent(category, k -> new HashMap<>())
+                    .merge(severity, 1, Integer::sum);
+        }
+        return SeverityByCategoryResponseDto.builder().categorySeverityCount(categorySeverityMap).build();
+    }
+
 }
 

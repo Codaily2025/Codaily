@@ -12,7 +12,7 @@ import java.util.List;
 public interface ProjectService {
     void saveRepositoryForProject(Long projectId, String repoName, String repoUrl);
 
-    List<ProjectRepositoryResponse> getRepositoriesByProjectId(Long projectId);
+//    List<ProjectRepositoryResponse> getRepositoriesByProjectId(Long projectId);
 
     void deleteRepositoryById(Long repoId);
 

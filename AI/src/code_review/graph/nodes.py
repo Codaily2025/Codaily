@@ -5,7 +5,7 @@ import asyncio
 from copy import deepcopy
 
 from ..state import CodeReviewState
-from ..prompts import feature_inference_prompt, checklist_evaluation_prompt, code_review_prompt, review_summary_prompt
+from ..prompts import feature_inference_prompt, checklist_evaluation_prompt, code_review_prompt, review_summary_prompt, commit_message_completion_prompt, commit_message_prompt
 from ..subgraph import create_feature_graph
 
 # 기능명 추론
@@ -72,13 +72,40 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
     return state
 
 
+async def run_commit_message_completion_check(state: CodeReviewState) -> CodeReviewState:
+    message = state.get("commit_message")
+    if not message:
+        return state  # 메시지 없으면 판단 불가
+
+    print(f"\n🧠 GPT에게 커밋 메시지 판단 요청: {message}")
+
+    prompt_input = {"commit_message": message}
+    result = await commit_message_completion_prompt.ainvoke(prompt_input)
+    result_text = result.content.strip()
+
+    if result_text == "완료":
+        print("✅ GPT 판단: 구현 완료된 커밋")
+        state["force_done_by_commit_message"] = True
+    else:
+        print("❌ GPT 판단: 아직 구현 미완료")
+
+    return state
+
+
 # 체크리스트 기반 구현 여부 확인
 async def run_feature_implementation_check(state: CodeReviewState) -> CodeReviewState:
     feature_name = state["feature_name"]
     checklist = state["checklist"]
     full_files = state["full_files"]
+    commit_message = state.get("commit_message", "")
 
     checklist_items = [item["item"] for item in checklist if not item.get("done", False)]
+
+    # GPT에게 커밋 메시지 분석 요청
+    message_result = await commit_message_prompt.ainvoke({"commit_message": commit_message})
+    force_done = "완료" in message_result.content.strip()
+    state["force_done"] = force_done
+    print(f"📝 커밋 메시지 분석 결과 → force_done: {force_done}")
 
     print(f"\n🔍 기능 구현 평가 시작: {feature_name=}")
     print(f"📋 체크리스트 항목 수: {len(checklist_items)}개")
@@ -136,6 +163,7 @@ async def run_code_review_file_fetch(state: CodeReviewState) -> CodeReviewState:
     project_id = state["project_id"]
     commit_hash = state["commit_hash"]
     checklist_file_map = state.get("checklist_file_map", {})
+    commit_info = state.get("commit_info", {})
 
     # 파일 경로 목록만 뽑아서 중복 제거
     file_paths = sorted(set(path for paths in checklist_file_map.values() for path in paths))
@@ -145,8 +173,18 @@ async def run_code_review_file_fetch(state: CodeReviewState) -> CodeReviewState:
 
     url = f"http://localhost:8080/api/java/project/{project_id}/commit/{commit_hash}/files"
 
+    payload = {
+        "file_paths": file_paths,
+        "repoName": commit_info.get("repo_name"),
+        "repoOwner": commit_info.get("repo_owner")
+    }
+
+    headers = {}
+    if state.jwt_token:
+        headers["Authorization"] = f"Bearer {state.jwt_token}"
+
     async with httpx.AsyncClient() as client:
-        response = await client.post(url, json={"file_paths": file_paths})
+        response = await client.post(url, json==payload, headers=headers)
 
     if response.status_code != 200:
         raise Exception(f"CodeReview 파일 조회 실패: {response.status_code} / {response.text}")
@@ -277,6 +315,7 @@ async def send_result_to_java(state: CodeReviewState) -> CodeReviewState:
         "checklist_file_map": state.get("checklist_file_map", {}),
         "extra_implemented": state.get("extra_implemented", []),
         "code_review_items": state.get("code_review_items", []),
+        "force_done": state.get("force_done", "")
     }
 
     if "review_summary" in state:

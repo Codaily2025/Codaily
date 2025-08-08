@@ -13,5 +13,7 @@ public class FeatureInferenceRequestDto {
     private List<String> availableFeatures;
     private String jwtToken;
     private String commitMessage;
+
+    private CommitInfoDto commitInfoDto;
 }
 

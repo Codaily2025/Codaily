@@ -75,9 +75,16 @@ public class WebhookServiceImpl implements WebhookService {
                             .committedAt(LocalDateTime.parse(commit.getTimestamp())).build();
 
             Long commitId = codeCommitRepository.save(entity).getCommitId();
+            String fullName = payload.getRepository().getFull_name();
+            String[] parts = fullName.split("/");
+            String repoOwner = parts[0];
+            String repoName = parts[1];
+
+            CommitInfoDto commitInfoDto = CommitInfoDto.builder().repoName(repoName).repoOwner(repoOwner).build();
+
             Long projectId = repositories.getProject().getProjectId();
 
-            sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId);
+            sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId, commitInfoDto);
         }
     }
 
@@ -116,7 +123,8 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitHash,
                                       String commitMessage,
                                       List<DiffFile> diffFiles,
-                                      Long userId) {
+                                      Long userId,
+                                      CommitInfoDto commitInfoDto) {
 
         WebClient webClient = WebClient.builder()
                 .baseUrl("http://localhost:8000") // Python 서버 전용
@@ -134,7 +142,8 @@ public class WebhookServiceImpl implements WebhookService {
                 .commitMessage(commitMessage)
                 .diffFiles(diffFiles)
                 .availableFeatures(availableFeatures)
-                .jwtToken(userService.getGithubAccessToken(userId)) // ✅ 기존 jwtToken 그대로 전달
+                .jwtToken(userService.getGithubAccessToken(userId))
+                .commitInfoDto(commitInfoDto)
                 .build();
 
         webClient.post()
@@ -149,15 +158,10 @@ public class WebhookServiceImpl implements WebhookService {
     }
 
     @Override
-    public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId) {
+    public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName) {
         String token = userService.getGithubAccessToken(userId);
-        String owner = userService.findById(userId).getGithubAccount();
 
-        ProjectRepositories repoInfo = projectRepositoriesRepository.findByProject_Id(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("연결된 GitHub repo 없음"));
-        String repo = repoInfo.getRepoName();
-
-        String commitUrl = String.format("%s/repos/%s/%s/commits/%s", githubApiUrl, owner, repo, commitHash);
+        String commitUrl = String.format("%s/repos/%s/%s/commits/%s", githubApiUrl, repoOwner, repoName, commitHash);
         Mono<Map<String, Object>> responseMono = webClient.get()
                 .uri(commitUrl)
                 .headers(h -> {
@@ -175,7 +179,7 @@ public class WebhookServiceImpl implements WebhookService {
         List<FullFile> fullFiles = new ArrayList<>();
         for (Map<String, Object> file : files) {
             String filePath = (String) file.get("filename");
-            String contentUrl = String.format("%s/repos/%s/%s/contents/%s?ref=%s", githubApiUrl, owner, repo, filePath, commitHash);
+            String contentUrl = String.format("%s/repos/%s/%s/contents/%s?ref=%s", githubApiUrl, repoOwner, repoName, filePath, commitHash);
 
             String content = webClient.get()
                     .uri(contentUrl)
@@ -198,8 +202,8 @@ public class WebhookServiceImpl implements WebhookService {
     }
 
     @Override
-    public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths) {
-        List<FullFile> allFiles = getFullFilesFromCommit(commitHash, projectId, userId);
+    public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths, String repoOwner, String repoName) {
+        List<FullFile> allFiles = getFullFilesFromCommit(commitHash, projectId, userId, repoOwner, repoName);
 
         return allFiles.stream()
                 .filter(file -> filePaths.contains(file.getFilePath()))

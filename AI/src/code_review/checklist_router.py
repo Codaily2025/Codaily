@@ -23,16 +23,6 @@ async def generate_checklist(request: FeatureChecklistRequest):
     print(response)               # response 객체 전체
     print(response.content)
 
-    # # 1. LLM 응답에서 content 가져오기
-    # raw = response.content
-
-    # # 2. ```json``` 마크다운 펜스 제거
-    # match = re.search(r"```json\\n(.+?)```", raw, re.S)
-    # json_str = match.group(1) if match else raw
-
-    # # 3. JSON 파싱
-    # checklist_map = json.loads(json_str)
-
      # 3. LLM 응답에서 content 가져오기
     raw = response.content
 

@@ -16,19 +16,19 @@ public class CodeReviewItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String category;           // 예: 보안 위험, 성능 최적화 등
+    @Column
+    private String category;
 
-    @Column(nullable = false)
+    @Column
     private String filePath;
 
-    @Column(nullable = false)
+    @Column
     private String lineRange;
 
-    @Column(nullable = false)
+    @Column
     private String severity;
 
-    @Lob
+    @Column
     private String message;
 
     @ManyToOne(fetch = FetchType.LAZY)

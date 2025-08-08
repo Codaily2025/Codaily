@@ -54,6 +54,10 @@ github:
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
 
+gpt:
+  api:
+    feature-inference-url: http://localhost:8000/api/feature-inference
+
 springdoc:
   api-docs:
     enabled: true

@@ -48,6 +48,9 @@ public class CodeReviewController {
                                                  @RequestBody FileFetchRequestDto fileFetchRequestDto,
                                                  @AuthenticationPrincipal PrincipalDetails userDetails){
         List<String> paths = fileFetchRequestDto.getFilePaths();
+        String repoName = fileFetchRequestDto.getRepoName();
+        String repoOwner = fileFetchRequestDto.getRepoOwner();
+
         Project project = projectService.findById(projectId);
         Long userId = project.getUser().getUserId();
         Long loginUserId = userDetails.getUser().getUserId();
@@ -55,7 +58,7 @@ public class CodeReviewController {
         if(userId != loginUserId) {
             log.info("해당 프로젝트에 접근할 권한이 없습니다.");
         }
-        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths);
+        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
 
         return fullFiles.stream()
                 .map(file -> new FullFileDto(file.getFilePath(), file.getContent()))
@@ -83,6 +86,120 @@ public class CodeReviewController {
         return ResponseEntity.ok().build();
     }
 
+    // 기능 코드리뷰 요약
+    @GetMapping("/{featureId}/summary")
+    public ResponseEntity<CodeReviewSummaryResponseDto> getCodeReviewSummary(
+            @PathVariable Long featureId
+    ) {
+        return ResponseEntity.ok(codeReviewService.getCodeReviewSummary(featureId));
+    }
+
+    /*
+    {
+          "summary": "이 기능은 보안과 리팩토링 측면에서 개선 여지가 있음",
+          "convention": "변수명 컨벤션 미준수 있음",
+          "refactorSuggestion": "중복 로직 분리 필요",
+          "complexity": "복잡한 if-else 구조 있음",
+          "bugRisk": "예외 누락 가능성 있음",
+          "securityRisk": "하드코딩된 키 존재",
+          "qualityScore": 86.0
+}
+     */
+
+    @GetMapping("/{featureId}/items")
+    public ResponseEntity<List<CodeReviewItemResponseDto>> getCodeReviewItems(@PathVariable Long featureId) {
+        return ResponseEntity.ok(codeReviewService.getCodeReviewItems(featureId));
+    }
+
+    /*
+                [
+          {
+            "category": "보안",
+            "filePath": "auth/jwt/JwtService.java",
+            "lineRange": "30-45",
+            "severity": "중간",
+            "message": "JWT 서명 키가 하드코딩되어 있어 보안에 취약함"
+          },
+          {
+            "category": "리팩토링",
+            "filePath": "global/ExceptionHandler.java",
+            "lineRange": "50-52",
+            "severity": "낮음",
+            "message": "Exception 메시지에 사용자 친화적인 안내가 부족함"
+          },
+          {
+            "category": "버그",
+            "filePath": "controller/LoginController.java",
+            "lineRange": "85",
+            "severity": "중간",
+            "message": "실패 시 클라이언트에 구체적인 오류 메시지가 전달되지 않음"
+          }
+        ]
+     */
+
+    @GetMapping("{featureId}/checklist/status")
+    public ResponseEntity<ChecklistStatusResponseDto> getChecklistStatus(@PathVariable Long featureId) {
+        return ResponseEntity.ok(codeReviewService.getChecklistStatus(featureId));
+    }
+
+    /*
+
+                    {
+          "allImplemented": false,
+          "items": [
+            {
+              "item": "JWT 발급",
+              "done": true
+            },
+            {
+              "item": "예외 처리",
+              "done": true
+            },
+            {
+              "item": "로그인 실패 메시지 반환",
+              "done": false
+            }
+          ]
+        }
+
+     */
+
+    @GetMapping("{featureId}/score")
+    public ResponseEntity<CodeReviewScoreResponseDto> getCodeReviewScore(@PathVariable Long featureId) {
+        return ResponseEntity.ok(codeReviewService.getQualityScore(featureId));
+    }
+
+    /*
+        {
+             "qualityScore": 86.0
+        }
+     */
+
+    @GetMapping("{featureId}/severity-by-category")
+    public ResponseEntity<SeverityByCategoryResponseDto> getSeverityByCategory(@PathVariable Long featureId) {
+        return ResponseEntity.ok(codeReviewService.getSeverityByCategory(featureId));
+    }
+    /*
+
+        {
+          "보안": {
+            "높음": 1,
+            "중간": 2,
+            "낮음": 0
+          },
+          "리팩토링": {
+            "높음": 0,
+            "중간": 1,
+            "낮음": 2
+          },
+          "버그": {
+            "높음": 2,
+            "중간": 1,
+            "낮음": 0
+          }
+        }
+
+     */
 }
 
 
