@@ -320,7 +320,7 @@ public class FeatureDetailServiceImpl implements FeatureDetailService {
 
         try {
             LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-            var commits = codeCommitRepository.findByProjectIdAndCommittedAtBetween(
+            var commits = codeCommitRepository.findByProject_ProjectIdAndCommittedAtBetween(
                     feature.getProject().getProjectId(), thirtyDaysAgo, LocalDateTime.now());
             commitsCount = commits.size();
 

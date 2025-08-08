@@ -14,7 +14,7 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
 
     // 특정 사용자의 특정 프로젝트 커밋 조회 (FeatureItem을 통해)
     @Query("SELECT cc FROM CodeCommit cc JOIN cc.featureItem f WHERE f.project.user.userId = :userId AND f.project.projectId = :projectId AND cc.committedAt BETWEEN :start AND :end")
-    List<CodeCommit> findByUserIdAndProjectIdAndCommittedAtBetween(
+    List<CodeCommit> findByUser_UserIdAndProject_ProjectIdAndCommittedAtBetween(
             @Param("userId") Long userId,
             @Param("projectId") Long projectId,
             @Param("start") LocalDateTime start,
@@ -23,7 +23,7 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
 
     // 특정 프로젝트의 커밋 수 조회 (FeatureItem을 통해)
     @Query("SELECT COUNT(cc) FROM CodeCommit cc JOIN cc.featureItem f WHERE f.project.projectId = :projectId AND cc.committedAt BETWEEN :start AND :end")
-    Long countByProjectIdAndCommittedAtBetween(
+    Long countByProject_ProjectIdAndCommittedAtBetween(
             @Param("projectId") Long projectId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
@@ -38,7 +38,7 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
 
     // 특정 프로젝트의 기간별 커밋 조회 (FeatureItem을 통해)
     @Query("SELECT cc FROM CodeCommit cc JOIN cc.featureItem f WHERE f.project.projectId = :projectId AND cc.committedAt BETWEEN :start AND :end")
-    List<CodeCommit> findByProjectIdAndCommittedAtBetween(
+    List<CodeCommit> findByProject_ProjectIdAndCommittedAtBetween(
             @Param("projectId") Long projectId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
@@ -46,11 +46,11 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
 
     // 특정 기능에 연결된 커밋들 조회
     @Query("SELECT cc FROM CodeCommit cc WHERE cc.featureItem.featureId = :featureId ORDER BY cc.committedAt DESC")
-    List<CodeCommit> findByFeatureIdOrderByCommittedAtDesc(@Param("featureId") Long featureId);
+    List<CodeCommit> findByFeature_FeatureIdOrderByCommittedAtDesc(@Param("featureId") Long featureId);
 
     // 특정 기능의 기간별 커밋 조회
     @Query("SELECT cc FROM CodeCommit cc WHERE cc.featureItem.featureId = :featureId AND cc.committedAt BETWEEN :start AND :end")
-    List<CodeCommit> findByFeatureIdAndCommittedAtBetween(
+    List<CodeCommit> findByFeature_FeatureIdAndCommittedAtBetween(
             @Param("featureId") Long featureId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
@@ -58,7 +58,7 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
 
     // 특정 사용자의 전체 커밋 조회 (모든 프로젝트)
     @Query("SELECT cc FROM CodeCommit cc JOIN cc.featureItem f WHERE f.project.user.userId = :userId AND cc.committedAt BETWEEN :start AND :end ORDER BY cc.committedAt DESC")
-    List<CodeCommit> findByUserIdAndCommittedAtBetween(
+    List<CodeCommit> findByUser_UserIdAndCommittedAtBetween(
             @Param("userId") Long userId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
@@ -66,5 +66,5 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
 
     // 특정 프로젝트의 최근 커밋들 조회 (개수 제한)
     @Query("SELECT cc FROM CodeCommit cc JOIN cc.featureItem f WHERE f.project.projectId = :projectId ORDER BY cc.committedAt DESC LIMIT :limit")
-    List<CodeCommit> findRecentCommitsByProjectId(@Param("projectId") Long projectId, @Param("limit") int limit);
+    List<CodeCommit> findRecentCommitsByProject_ProjectId(@Param("projectId") Long projectId, @Param("limit") int limit);
 }
