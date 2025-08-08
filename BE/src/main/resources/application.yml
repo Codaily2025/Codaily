@@ -9,6 +9,13 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+      enabled: true
+      file-size-threshold: 2KB
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -53,6 +60,11 @@ github:
   redirect-uri: http://localhost:8080/oauth/github/callback
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
+
+file:
+  upload:
+    dir: uploads
+    base-url: http://localhost:8080
 
 springdoc:
   api-docs:

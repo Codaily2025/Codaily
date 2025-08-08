@@ -51,7 +51,7 @@ public class User {
     private LocalDateTime createdAt;
 
     @Column(columnDefinition = "TEXT")
-    private String image;
+    private String profileImage;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -75,5 +75,10 @@ public class User {
 
     public enum Role {
         USER, ADMIN
+    }
+
+    @Transient
+    public boolean needsGithubConnection() {
+        return this.githubAccount == null || this.githubAccount.trim().isEmpty();
     }
 }

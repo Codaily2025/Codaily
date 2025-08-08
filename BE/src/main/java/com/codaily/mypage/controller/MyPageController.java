@@ -2,11 +2,9 @@ package com.codaily.mypage.controller;
 
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.service.UserService;
-import com.codaily.mypage.dto.NicknameUpdateRequest;
-import com.codaily.mypage.dto.ProjectListResponse;
-import com.codaily.mypage.dto.ProjectStatusResponse;
-import com.codaily.mypage.dto.ProjectUpdateRequest;
+import com.codaily.mypage.dto.*;
 import com.codaily.mypage.service.MyPageService;
+import com.codaily.project.entity.Project;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +23,7 @@ import java.util.Map;
 @RequestMapping("/api")
 public class MyPageController {
 
-    private final MyPageService myPageProjectService;
+    private final MyPageService myPageService;
     private final UserService userService;
     private final ProjectService projectService;
 
@@ -34,7 +33,7 @@ public class MyPageController {
             @AuthenticationPrincipal PrincipalDetails userDetails
             ){
         Long userId = userDetails.getUserId();
-        List<ProjectListResponse> projects = myPageProjectService.getProjectList(userId);
+        List<ProjectListResponse> projects = myPageService.getProjectList(userId);
         return ResponseEntity.ok(projects);
     }
 
@@ -46,11 +45,11 @@ public class MyPageController {
     ){
         Long userId = userDetails.getUserId();
 
-        if (!myPageProjectService.isProjectOwner(projectId, userId)) {
+        if (!myPageService.isProjectOwner(projectId, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        myPageProjectService.deleteProject(projectId);
+        myPageService.deleteProject(projectId);
         return ResponseEntity.ok().build();
     }
 
@@ -62,11 +61,11 @@ public class MyPageController {
     ){
         Long userId = userDetails.getUserId();
 
-        if (!myPageProjectService.isProjectOwner(projectId, userId)) {
+        if (!myPageService.isProjectOwner(projectId, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        ProjectStatusResponse response = myPageProjectService.completeProject(projectId);
+        ProjectStatusResponse response = myPageService.completeProject(projectId);
         return ResponseEntity.ok(response);
     }
 
@@ -74,10 +73,10 @@ public class MyPageController {
     @Operation(summary = "프로젝트 상태 별 검색", description = "전체/진행중인 프로젝트/완료된 프로젝트")
     public ResponseEntity<List<ProjectListResponse>> searchProjectByStatus(
             @AuthenticationPrincipal PrincipalDetails userDetails,
-            @RequestParam String status
+            @RequestParam Project.ProjectStatus status
     ){
         Long userId = userDetails.getUserId();
-        List<ProjectListResponse> projects = myPageProjectService.searchProjectsByStatus(userId, status);
+        List<ProjectListResponse> projects = myPageService.searchProjectsByStatus(userId, status);
         return ResponseEntity.ok(projects);
     }
 
@@ -94,7 +93,7 @@ public class MyPageController {
     }
 
     @PatchMapping("/nickname")
-    @Operation(summary = "닉네임 수정", description = "마이페이지에서 닉네임 수정")
+    @Operation(summary = "닉네임 수정", description = "마이페이지 & 추가정보 입력에서 닉네임 수정")
     public ResponseEntity<Void> modifyUserNickname(
             @AuthenticationPrincipal PrincipalDetails userDetails,
             @RequestBody NicknameUpdateRequest request) {
@@ -113,11 +112,50 @@ public class MyPageController {
             ) {
         Long userId = userDetails.getUserId();
 
-        if (!myPageProjectService.isProjectOwner(projectId, userId)) {
+        if (!myPageService.isProjectOwner(projectId, userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         projectService.updateProject(projectId, request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/upload-profile-image")
+    @Operation(summary = "프로필 사진 업로드", description = "첫 로그인 후 추가 정보 등록 시 or 마이페이지에서 프로필 사진 업로드 & 수정 가능")
+    public ResponseEntity<ProfileImageUploadResponse> uploadProfileImage(
+            @AuthenticationPrincipal PrincipalDetails principalDetails,
+            @RequestParam("file") MultipartFile file) {
+
+        if (principalDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String imageUrl = myPageService.uploadProfileImage(
+                principalDetails.getUser().getUserId(), file);
+
+        ProfileImageUploadResponse response = ProfileImageUploadResponse.builder()
+                .message("프로필 이미지가 업로드되었습니다.")
+                .imageUrl(imageUrl)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/profile-image")
+    @Operation(summary = "프로필 이미지 삭제")
+    public ResponseEntity<Map<String, String>> deleteProfileImage(
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+
+        if (principalDetails == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        myPageService.deleteProfileImage(
+                principalDetails.getUser().getUserId());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "프로필 이미지가 삭제되었습니다.");
+
+        return ResponseEntity.ok(response);
     }
 }
