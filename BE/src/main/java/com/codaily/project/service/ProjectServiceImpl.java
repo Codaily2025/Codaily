@@ -234,6 +234,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private void updateSchedules(Project project, List<LocalDate> scheduledDates) {
         scheduleRepository.deleteByProject(project);
+        scheduleRepository.flush();
 
         // 새로운 스케줄 생성
         List<Schedule> newSchedules = scheduledDates.stream()
