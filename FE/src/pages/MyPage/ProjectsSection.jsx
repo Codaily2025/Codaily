@@ -1,5 +1,5 @@
 // src/pages/MyPage/ProjectsSection.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './ProjectsSection.module.css';
 import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +27,17 @@ const ProjectsSection = () => {
   // 설정 모달 관련 핸들러
   const handleSettings = (project) => {
     setSelectedProject(project);
-    // setShowModal(true);
-    openModal('PROJECT_EDIT')
+    // if (selectedProject) {
+      openModal('PROJECT_EDIT', project);
+    // }
   };
+
+  // 모달이 닫힐 때 selectedProject 초기화
+  // useEffect(() => {
+  //   if (!isOpen && selectedProject) {
+  //     setSelectedProject(null);
+  //   }
+  // }, [isOpen, selectedProject]);
 
   // 프로젝트 생성 핸들러
   const handleCreateProject = () => {
@@ -49,6 +57,18 @@ const ProjectsSection = () => {
     if (activeFilter === '완료') return project.disabled;
     return true;
   });
+
+  const handleModalClose = useCallback(() => {
+    closeModal();
+    setSelectedProject(null);
+  }, [closeModal]);
+
+  const handleModalSave = useCallback((updatedProject) => {
+    console.log('🧩 저장된 프로젝트:', updatedProject);
+    updateProject(updatedProject);
+    closeModal();
+    setSelectedProject(null);
+  }, [closeModal, updateProject]);
 
   return (
     <section className={styles.projectsSection}>
@@ -124,14 +144,14 @@ const ProjectsSection = () => {
               </div>
               {/* 기술 스택 */}
               <div className={styles.projectStack}>
-                {project.stack.map((tech, index) => (
+                {/* {project.stack.map((tech, index) => (
                   <span
                     key={index}
                     className={project.disabled ? styles.techTagDisabled : styles.techTagInProcess}
                   >
                     {tech}
                   </span>
-                ))}
+                ))} */}
               </div>
             </div>
           ))}
@@ -139,18 +159,10 @@ const ProjectsSection = () => {
       )}
       {isOpen && (modalType === 'PROJECT_EDIT') &&  (
         <ProjectEditModal
-          project={selectedProject}
-          // onClose={() => setShowModal(false)}
-          onClose={() => closeModal()}
-          onSave={(updatedProject) => {
-            console.log('🧩 저장된 프로젝트:', updatedProject);
-            // setLocalProjects(prev =>
-            //   prev.map(p => p.id === updatedProject.id ? updatedProject : p)
-            // );
-            updateProject(updatedProject); // Zustand 스토어에 업데이트된 프로젝트 저장
-            // setShowModal(false);
-            closeModal();
-          }}
+          key={selectedProject?.id}
+          data={selectedProject}
+          onClose={handleModalClose}
+          onSave={handleModalSave}
         />
       )}
     </section>

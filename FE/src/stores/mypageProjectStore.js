@@ -69,7 +69,7 @@ export const fetchProjectsByUserId = async (userId) => {
     //  authInstance.get을 사용
     //  defaultInstance.get을 사용
     // const response = await defaultInstance.get(`/users/${userId}/`);
-    const response = await authInstance.get(`/users/${userId}/`);
+    const response = await authInstance.get(`/users/${userId}`);
     console.log('projects response:', response);
     const projectsFromApi = response.data;
 
