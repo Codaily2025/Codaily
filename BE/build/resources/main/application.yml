@@ -53,7 +53,6 @@ github:
   redirect-uri: http://localhost:8080/oauth/github/callback
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
-  api-url: https://api.github.com
 
 gpt:
   api:
