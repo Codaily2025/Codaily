@@ -10,14 +10,24 @@ const OAuthCallback = () => {
 
   useEffect(() => {
     const token = searchParams.get('token');
+    const error = searchParams.get('error');
+    
+    if (error) {
+      console.error('OAuth login error:', error);
+      alert('로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      navigate('/login', { replace: true });
+      return;
+    }
     
     if (token) {
       // 토큰을 스토어에 저장
       setToken(token);
+      console.log('OAuth login successful, token saved');
       
       // 로그인 성공 후 홈페이지로 리다이렉트
       navigate('/', { replace: true });
     } else {
+      console.log('No token received, redirecting to login');
       // 토큰이 없으면 로그인 페이지로 리다이렉트
       navigate('/login', { replace: true });
     }
