@@ -21,7 +21,7 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT SUM(f.estimatedTime) FROM FeatureItem f WHERE f.specification.specId = :specId AND f.parentFeature IS NULL")
     Integer getTotalEstimatedTimeBySpecId(@Param("specId") Long specId);
 
-    Optional<FeatureItem> findByProjectIdAndTitle(Long projectId, String featureTitle);
+    Optional<FeatureItem> findByProject_ProjectIdAndTitle(Long projectId, String featureTitle);
 
     List<FeatureItem> findByProject_ProjectId(Long projectId);
 

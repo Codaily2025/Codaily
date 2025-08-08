@@ -689,7 +689,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
     @Override
     public FeatureItem findByProjectIdAndTitle(Long projectId, String featureName) {
-        return featureItemRepository.findByProjectIdAndTitle(projectId, featureName)
+        return featureItemRepository.findByProject_ProjectIdAndTitle(projectId, featureName)
                 .orElseThrow(() -> new IllegalArgumentException(featureName + "의 기능을 찾을 수 없습니다"));
     }
 

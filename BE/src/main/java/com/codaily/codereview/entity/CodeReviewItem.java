@@ -14,7 +14,7 @@ public class CodeReviewItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long itemId;
 
     @Column
     private String category;
@@ -38,6 +38,10 @@ public class CodeReviewItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feature_id")
     private FeatureItem featureItem;
+
+    @ManyToOne
+    @JoinColumn(name = "review_id")
+    private CodeReview codeReview;
 
 
     public static CodeReviewItem of(FeatureItemChecklist featureItemChecklist,

@@ -16,7 +16,7 @@ public class CodeReviewItemServiceImpl implements CodeReviewItemService{
     private final CodeReviewItemRepository codeReviewItemRepository;
 
     @Override
-    public List<CodeReviewItem> getCodeReviewById(Long featureId) {
-        return codeReviewItemRepository.findByCodeReview_FeatureItem_Id(featureId);
+    public List<CodeReviewItem> getCodeReviewItemById(Long featureId) {
+        return codeReviewItemRepository.findByFeatureItem_FeatureId(featureId);
     }
 }

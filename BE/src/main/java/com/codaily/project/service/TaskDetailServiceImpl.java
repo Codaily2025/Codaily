@@ -268,7 +268,7 @@ public class TaskDetailServiceImpl implements TaskDetailService {
         try {
             LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
             if (task.getUserId() != null) {
-                var commits = codeCommitRepository.findByUserIdAndProjectIdAndCommittedAtBetween(
+                var commits = codeCommitRepository.findByUser_IdAndProject_IdAndCommittedAtBetween(
                         task.getUserId(), task.getProjectId(), thirtyDaysAgo, LocalDateTime.now());
                 commitsCount = commits.size();
 

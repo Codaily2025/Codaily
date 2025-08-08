@@ -67,7 +67,7 @@ public class ProductivityServiceImpl implements ProductivityService {
 
         // 코드 품질 계산 (20% 가중치)
         if (request.getMetrics().isIncludeCodeQuality()) {
-            List<CodeReview> reviews = reviewRepository.findByProjectIdAndCreatedAtBetween(
+            List<CodeReview> reviews = reviewRepository.findByProject_ProjectIdAndCreatedAtBetween(
                     projectId, startOfDay, endOfDay);
             double avgQuality = reviews.stream()
                     .mapToDouble(r -> r.getQualityScore() != null ? r.getQualityScore() : 0)

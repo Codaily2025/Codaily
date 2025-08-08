@@ -150,7 +150,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
     @Override
     public CodeReviewSummaryResponseDto getCodeReviewSummary(Long featureId) {
-        CodeReview review = codeReviewRepository.findByFeatureItem_Id(featureId)
+        CodeReview review = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 기능에 대한 코드 리뷰 없음"));
 
         return CodeReviewSummaryResponseDto.builder()
@@ -166,7 +166,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
     @Override
     public List<CodeReviewItemResponseDto> getCodeReviewItems(Long featureId) {
-        List<CodeReviewItem> items = codeReviewItemRepository.findByCodeReview_FeatureItem_Id(featureId);
+        List<CodeReviewItem> items = codeReviewItemRepository.findByFeatureItem_FeatureId(featureId);
 
         return items.stream().map(item -> CodeReviewItemResponseDto.builder()
                 .category(item.getCategory())
@@ -194,7 +194,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
     @Override
     public CodeReviewScoreResponseDto getQualityScore(Long featureId) {
-        CodeReview review = codeReviewRepository.findByFeatureItem_Id(featureId)
+        CodeReview review = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 기능에 대한 코드 리뷰 없음"));
 
         return CodeReviewScoreResponseDto.builder().qualityScore(review.getQualityScore()).build();
@@ -202,7 +202,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
     @Override
     public SeverityByCategoryResponseDto getSeverityByCategory(Long featureId) {
-        List<CodeReviewItem> items = codeReviewItemService.getCodeReviewById(featureId);
+        List<CodeReviewItem> items = codeReviewItemService.getCodeReviewItemById(featureId);
 
         // Map<category, Map<severity, count>>
         Map<String, Map<String, Integer>> categorySeverityMap = new HashMap<>();

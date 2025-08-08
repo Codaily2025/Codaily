@@ -48,18 +48,18 @@ public class ProjectServiceImpl implements ProjectService {
         repository.save(entity);
     }
 
-//    @Override
-//    public List<ProjectRepositoryResponse> getRepositoriesByProjectId(Long projectId) {
-//        List<ProjectRepositories> entities = repository.findByProjectId(projectId);
-//        return entities.stream()
-//                .map(repo -> ProjectRepositoryResponse.builder()
-//                        .repoId(repo.getRepoId())
-//                        .repoName(repo.getRepoName())
-//                        .repoUrl(repo.getRepoUrl())
-//                        .createdAt(repo.getCreatedAt())
-//                        .build())
-//                .toList();
-//    }
+    @Override
+    public List<ProjectRepositoryResponse> getRepositoriesByProjectId(Long projectId) {
+        List<ProjectRepositories> entities = repository.findByProjectId(projectId);
+        return entities.stream()
+                .map(repo -> ProjectRepositoryResponse.builder()
+                        .repoId(repo.getRepoId())
+                        .repoName(repo.getRepoName())
+                        .repoUrl(repo.getRepoUrl())
+                        .createdAt(repo.getCreatedAt())
+                        .build())
+                .toList();
+    }
 
     @Override
     public void deleteRepositoryById(Long repoId) {

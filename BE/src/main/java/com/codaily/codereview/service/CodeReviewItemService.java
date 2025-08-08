@@ -5,5 +5,5 @@ import com.codaily.codereview.entity.CodeReviewItem;
 import java.util.List;
 
 public interface CodeReviewItemService {
-    List<CodeReviewItem> getCodeReviewById(Long featureId);
+    List<CodeReviewItem> getCodeReviewItemById(Long featureId);
 }
