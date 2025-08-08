@@ -23,6 +23,7 @@ public class AuthController {
         
         if (principalDetails != null) {
             response.put("authenticated", true);
+            // response.put("userId", principalDetails.getUserId());
             response.put("email", principalDetails.getUsername());
             response.put("nickname", principalDetails.getUser().getNickname());
             response.put("provider", principalDetails.getUser().getSocialProvider());

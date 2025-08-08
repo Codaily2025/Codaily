@@ -5,8 +5,13 @@ import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
 import useModalStore from "../../store/modalStore";
 import { useProjectStore } from '../../stores/mypageProjectStore';
+import { useAuthStore } from '../../stores/authStore';
 
 const ProjectsSection = () => {
+
+  // const { user } = useAuthStore();
+  // const userId = user?.userId;
+  const userId = 1;
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('전체'); // 필터 상태를 컴포넌트 내부에서 관리
   // 삭제 
@@ -63,12 +68,12 @@ const ProjectsSection = () => {
     setSelectedProject(null);
   }, [closeModal]);
 
-  const handleModalSave = useCallback((updatedProject) => {
-    console.log('🧩 저장된 프로젝트:', updatedProject);
-    updateProject(updatedProject);
-    closeModal();
-    setSelectedProject(null);
-  }, [closeModal, updateProject]);
+  // const handleModalSave = useCallback((updatedProject) => {
+  //   console.log('저장된 프로젝트:', updatedProject);
+  //   updateProject(updatedProject);
+  //   closeModal();
+  //   setSelectedProject(null);
+  // }, [closeModal, updateProject]);
 
   return (
     <section className={styles.projectsSection}>
@@ -162,7 +167,8 @@ const ProjectsSection = () => {
           key={selectedProject?.id}
           data={selectedProject}
           onClose={handleModalClose}
-          onSave={handleModalSave}
+          // onSave={handleModalSave}
+          userId={userId}
         />
       )}
     </section>

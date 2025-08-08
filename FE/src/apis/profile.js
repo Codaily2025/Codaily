@@ -1,10 +1,15 @@
 // src/apis/profile.js
 // 유저 프로필 관련 API
 import { authInstance } from './axios';
+import { useAuthStore } from '../stores/authStore';
+
+// const { user } = useAuthStore();
+// const userId = user?.id;
+const userId = 1;
 
 // profile dummy data (fallback용)
 export const dummyProfile = {
-    userId: 1,               // 임시 userId
+    userId: userId,               // 임시 userId
     profileImage: null,       // 향후 URL로 교체
     nickname: 'TempNickname',
     email: 'code@example.com',
