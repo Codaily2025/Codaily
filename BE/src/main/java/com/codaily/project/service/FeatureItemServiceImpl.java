@@ -6,6 +6,15 @@ import com.codaily.management.entity.FeatureItemSchedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.project.dto.*;
+import com.codaily.codereview.dto.FeatureChecklistFeatureDto;
+import com.codaily.codereview.dto.FeatureChecklistRequestDto;
+import com.codaily.codereview.dto.FeatureChecklistResponseDto;
+import com.codaily.codereview.entity.FeatureItemChecklist;
+import com.codaily.codereview.repository.FeatureItemChecklistRepository;
+import com.codaily.project.dto.FeatureSaveContent;
+import com.codaily.project.dto.FeatureSaveItem;
+import com.codaily.project.dto.FeatureSaveRequest;
+import com.codaily.project.dto.FeatureSaveResponse;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
@@ -20,10 +29,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +50,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final FeatureItemSchedulesRepository featureItemScheduleRepository;
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ScheduleRepository scheduleRepository;
+    private final WebClient webClient;
 
     @Override
     public FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest featureItem) {
@@ -508,6 +522,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .parentFeatureId(feature.getParentFeature() != null ? feature.getParentFeature().getFeatureId() : null)
                 .build();
     }
+    private final FeatureItemChecklistRepository featureItemChecklistRepository;
+
 
     @Override
     @Transactional
@@ -574,6 +590,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .mainFeature(mainFeatureDto)
                 .subFeature(subFeatureDtos)
                 .build();
+
+        generateFeatureItemChecklist(projectId);
 
         return FeatureSaveResponse.builder()
                 .type(type)
@@ -668,5 +686,68 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                                 )
                                 .build())
                 .build();
+    }
+
+    @Override
+    public FeatureItem findByProjectIdAndTitle(Long projectId, String featureName) {
+        return featureItemRepository.findByProject_ProjectIdAndTitle(projectId, featureName)
+                .orElseThrow(() -> new IllegalArgumentException(featureName + "의 기능을 찾을 수 없습니다"));
+    }
+
+    @Override
+    public FeatureItem findById(Long featureId) {
+        return featureItemRepository.findById(featureId)
+                .orElseThrow(() -> new IllegalArgumentException("기능을 찾을 수 없습니다."));
+    }
+
+    @Override
+    @Transactional
+    public void generateFeatureItemChecklist(Long projectId) {
+        List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
+
+        List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
+                .map(item -> new FeatureChecklistFeatureDto(
+                        item.getFeatureId(),
+                        item.getTitle(),
+                        item.getDescription()))
+                .toList();
+
+        FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder().features(dtoList).build();
+
+        try {
+            FeatureChecklistResponseDto response = webClient
+                    .post()
+                    .uri("/api/generate-checklist")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(FeatureChecklistResponseDto.class)
+                    .block();
+
+            Map<String, List<String>> checklistMap = response.getChecklistMap();
+
+            if (checklistMap == null) {
+                log.warn("Checklist 응답이 비어있습니다.");
+                return;
+            }
+
+            // ✅ checklist 저장
+            checklistMap.forEach((featureIdStr, checklistItems) -> {
+                Long featureId = Long.parseLong(featureIdStr);
+                FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
+                List<FeatureItemChecklist> checklistList = checklistItems.stream()
+                        .map(item -> FeatureItemChecklist.builder()
+                                .featureItem(featureItem).item(item).done(false).build())
+                        .toList();
+
+                featureItemChecklistRepository.saveAll(checklistList);
+            });
+
+            log.info("Checklist 생성 및 저장 완료");
+
+        } catch (WebClientResponseException e) {
+            log.error("Checklist 생성 실패: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Checklist 생성 중 예외 발생", e);
+        }
     }
 }

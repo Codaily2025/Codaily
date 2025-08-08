@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getUserProjects, getLastWorkedProjectId, getProjectById } from '../apis/projectApi'
+import { getUserProjects, getLastWorkedProjectId, getKanbanTabFields } from '../apis/projectApi'
 
 // Query Keys
 export const PROJECT_QUERY_KEYS = {
@@ -8,7 +8,9 @@ export const PROJECT_QUERY_KEYS = {
     list: (filters) => [...PROJECT_QUERY_KEYS.lists(), { filters }],
     details: () => [...PROJECT_QUERY_KEYS.all, 'detail'],
     detail: (id) => [...PROJECT_QUERY_KEYS.details(), id],
-    lastWorked: () => [...PROJECT_QUERY_KEYS.all, 'lastWorked']
+    lastWorked: () => [...PROJECT_QUERY_KEYS.all, 'lastWorked'],
+    kanbanTabs: () => [...PROJECT_QUERY_KEYS.all, 'kanbanTabs'],
+    kanbanTab: (projectId) => [...PROJECT_QUERY_KEYS.kanbanTabs(), projectId]
 }
 
 // staleTime은 1시간으로 설정 (60분 * 60초 * 1000ms)
@@ -29,6 +31,21 @@ export const useUserProjects = () => {
     })
 }
 
+// 칸반 보드 탭용 필드 리스트 조회
+export const useKanbanTabFields = (projectId) => {
+    return useQuery({
+        queryKey: PROJECT_QUERY_KEYS.kanbanTab(projectId),
+        queryFn: () => getKanbanTabFields(projectId),
+        staleTime: STALE_TIME,
+        cacheTime: STALE_TIME * 2,
+        retry: 2,
+        refetchOnWindowFocus: false,
+        onError: (error) => {
+            console.error('useKanbanTabFields Error:', error)
+        }
+    })
+}
+
 // 마지막으로 작업한 프로젝트 ID 조회
 export const useLastWorkedProjectId = () => {
     return useQuery({
@@ -44,45 +61,20 @@ export const useLastWorkedProjectId = () => {
     })
 }
 
-// 특정 프로젝트 상세 정보 조회
-export const useProjectDetail = (projectId, options = {}) => {
-    return useQuery({
-        queryKey: PROJECT_QUERY_KEYS.detail(projectId),
-        queryFn: () => getProjectById(projectId),
-        staleTime: STALE_TIME,
-        cacheTime: STALE_TIME * 2,
-        retry: 2,
-        refetchOnWindowFocus: false,
-        enabled: !!projectId, // projectId가 있을 때만 실행
-        onError: (error) => {
-            console.error('useProjectDetail Error:', error)
-        },
-        ...options
-    })
-}
+// 특정 프로젝트 정보 조회
+// export const useProjectDetail = (projectId, options = {}) => {
+//     return useQuery({
+//         queryKey: PROJECT_QUERY_KEYS.detail(projectId),
+//         queryFn: () => getProjectById(projectId),
+//         staleTime: STALE_TIME,
+//         cacheTime: STALE_TIME * 2,
+//         retry: 2,
+//         refetchOnWindowFocus: false,
+//         enabled: !!projectId, // projectId가 있을 때만 실행
+//         onError: (error) => {
+//             console.error('useProjectDetail Error:', error)
+//         },
+//         ...options
+//     })
+// }
 
-// 마지막으로 작업한 프로젝트의 상세 정보를 가져오는 커스텀 훅
-export const useLastWorkedProject = () => {
-    // 1단계: 마지막 작업 프로젝트 ID 가져오기
-    const { 
-        data: lastWorkedProjectId, 
-        isLoading: isLoadingId, 
-        error: idError 
-    } = useLastWorkedProjectId()
-
-    // 2단계: 해당 프로젝트 상세 정보 가져오기
-    const { 
-        data: projectDetail, 
-        isLoading: isLoadingDetail, 
-        error: detailError 
-    } = useProjectDetail(lastWorkedProjectId, {
-        enabled: !!lastWorkedProjectId // ID가 있을 때만 실행
-    })
-
-    return {
-        data: projectDetail,
-        isLoading: isLoadingId || isLoadingDetail,
-        error: idError || detailError,
-        lastWorkedProjectId
-    }
-}

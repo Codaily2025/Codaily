@@ -6,17 +6,26 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface CodeReviewRepository extends JpaRepository<CodeReview, Long> {
 
-    List<CodeReview> findByProjectIdAndCreatedAtBetween(Long projectId, LocalDateTime start, LocalDateTime end);
+    List<CodeReview> findByProject_ProjectIdAndCreatedAtBetween(Long projectId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT cr FROM CodeReview cr WHERE cr.projectId = :projectId AND cr.createdAt BETWEEN :start AND :end AND cr.qualityScore IS NOT NULL")
-    List<CodeReview> findByProjectIdAndCreatedAtBetweenWithQualityScore(@Param("projectId") Long projectId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    // WithQualityScore 오류
+//    @Query("SELECT cr FROM CodeReview cr WHERE cr.projectId = :projectId AND cr.createdAt BETWEEN :start AND :end AND cr.qualityScore IS NOT NULL")
+//    List<CodeReview> findByProject_ProjectIdAndCreatedAtBetweenWithQualityScore(@Param("projectId") Long projectId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    @Query("SELECT AVG(cr.qualityScore) FROM CodeReview cr WHERE cr.projectId = :projectId AND cr.createdAt BETWEEN :start AND :end AND cr.qualityScore IS NOT NULL")
-    Double findAverageQualityScoreByProjectAndPeriod(@Param("projectId") Long projectId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    @Query("SELECT AVG(c.qualityScore) FROM CodeReview c WHERE c.project.id = :projectId AND c.createdAt BETWEEN :start AND :end")
+    Double findAverageQualityScoreByProjectAndPeriod(
+            @Param("projectId") Long projectId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 
-    @Query("SELECT cr FROM CodeReview cr WHERE cr.projectId = :projectId ORDER BY cr.createdAt DESC")
-    List<CodeReview> findByProjectIdOrderByCreatedAtDesc(Long projectId);
+    // 오류
+//    @Query("SELECT cr FROM CodeReview cr WHERE cr.projectId = :projectId ORDER BY cr.createdAt DESC")
+//    List<CodeReview> findByProject_ProjectIdOrderByCreatedAtDesc(Long projectId);
+
+    Optional<CodeReview> findByFeatureItem_FeatureId(Long featureId);
 }

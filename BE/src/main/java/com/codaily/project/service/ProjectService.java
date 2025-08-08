@@ -26,4 +26,7 @@ public interface ProjectService {
 
     void updateProjectAndSpec(Long projectId, Long specId,
                               String projectTitle, String projectDescription, String specTitle);
+
+    // 메서드 변경 후 삭제 예정
+    Project findById(Long projectId);
 }

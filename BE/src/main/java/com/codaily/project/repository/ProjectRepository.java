@@ -36,7 +36,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p WHERE p.user.userId = :userId AND p.status = 'IN_PROGRESS'")
     List<Project> findCurrentProjectsByUserId(@Param("userId") Long userId);
 
-    @Query("SELECT MAX(t.completedAt) FROM Task t WHERE t.projectId = :projectId AND t.status = 'COMPLETED'")
+    @Query("SELECT MAX(f.completedAt) FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.status = 'DONE'")
     LocalDateTime findLastTaskCompletionTime(@Param("projectId") Long projectId);
-    
+
+    // 메서드 수정 후 삭제 예정
+    Optional<Project> findById(Long projectId);
 }

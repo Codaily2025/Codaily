@@ -60,6 +60,11 @@ github:
   redirect-uri: http://localhost:8080/oauth/github/callback
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
+  api-url: https://api.github.com
+
+gpt:
+  api:
+    feature-inference-url: http://localhost:8000/api/feature-inference
 
 file:
   upload:
@@ -78,3 +83,6 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
   override-with-generic-response: false
+
+server:
+  port: 8081

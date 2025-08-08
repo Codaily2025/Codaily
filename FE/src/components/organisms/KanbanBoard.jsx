@@ -1,9 +1,33 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import KanbanCard from '@/components/molecules/KanbanCard'
+import KanbanTabs from '@/components/molecules/KanbanTabs'
 import useModalStore from '@/store/modalStore'
+import useProjectStore from '@/stores/projectStore'
+import { useKanbanTabFields } from '@/hooks/useProjects'
 
-const KanbanBoard = ({ currentProject }) => {
+const KanbanBoard = () => {
     const { openModal } = useModalStore()
+    const { currentProject } = useProjectStore()
+    
+    // 전역 상태에서 현재 프로젝트의 칸반 탭 필드 가져오기
+    const { 
+        data: kanbanTabFields, 
+        isLoading: isKanbanTabsLoading, 
+        error: kanbanTabsError 
+    } = useKanbanTabFields(currentProject?.id)
+
+    // 탭 상태 관리
+    const [activeTab, setActiveTab] = useState('')
+
+    // 첫 번째 탭을 기본으로 설정
+    React.useEffect(() => {
+        if (kanbanTabFields && kanbanTabFields.length > 0 && !activeTab) {
+            setActiveTab(kanbanTabFields[0])
+        }
+    }, [kanbanTabFields, activeTab])
+    
+    console.log('KanbanBoard - currentProject:', currentProject)
+    console.log('KanbanBoard - kanbanTabFields:', kanbanTabFields)
     
     const handleTaskClick = (cardData) => {
       console.log(`Task Clicked!`)
@@ -60,39 +84,58 @@ const KanbanBoard = ({ currentProject }) => {
 
   // 칸반 칼럼 타이틀 내 '+' 버튼 클릭
   const handleAddCard = (columnId) => {
-    console.log(`Add kanban card to ${columnId}`);
+    console.log(`Add kanban card to ${columnId}`)
+  }
+
+  // 탭 변경 핸들러
+  const handleTabChange = (tab) => {
+    setActiveTab(tab)
+    // TODO: 탭 변경 시 api 호출
+    console.log('Active tab changed to:', tab)
   }
 
   return (
     <div className="kanban-board">
-      {columns.map((column) => (
-        <div key={column.id} className="kanban-column">
-          <div className="kanban-column-header" style={{ backgroundColor: column.color }}>
-            <div className="kanban-column-info">
-              <span className="kanban-column-count">{column.cards.length}</span>
-              <span className="kanban-column-title">{column.title}</span>
-            </div>
-            <button 
-              className="kanban-add-btn" 
-              onClick={() => handleAddCard(column.id)}
-            >
-              +
-            </button>
-          </div>
-          <div className="kanban-column-content">
-            {column.cards.map((card) => (
-              <KanbanCard
-                key={card.id}
-                category={card.category}
-                title={card.title}
-                details={card.details}
-                dueDate={card.dueDate}
-                onClick={() => handleTaskClick(card)}
-              />
+        {/* 칸반 탭 */}
+        {kanbanTabFields && kanbanTabFields.length > 0 && (
+            <KanbanTabs 
+                tabs={kanbanTabFields}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+            />
+        )}
+
+        {/* 칸반 컬럼들 */}
+        <div className="kanban-columns">
+            {columns.map((column) => (
+            <div key={column.id} className="kanban-column">
+                <div className="kanban-column-header" style={{ backgroundColor: column.color }}>
+                  <div className="kanban-column-info">
+                    <span className="kanban-column-count">{column.cards.length}</span>
+                    <span className="kanban-column-title">{column.title}</span>
+                  </div>
+                  <button 
+                    className="kanban-add-btn" 
+                    onClick={() => handleAddCard(column.id)}
+                  >
+                    +
+                  </button>
+                </div>
+                <div className="kanban-column-content">
+                  {column.cards.map((card) => (
+                    <KanbanCard
+                      key={card.id}
+                      category={card.category}
+                      title={card.title}
+                      details={card.details}
+                      dueDate={card.dueDate}
+                      onClick={() => handleTaskClick(card)}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
-          </div>
         </div>
-      ))}
     </div>
   )
 

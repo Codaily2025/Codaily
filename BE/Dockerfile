@@ -1,14 +1,14 @@
+# 1. JDK 17 slim 버전 베이스 이미지
 FROM openjdk:17-jdk-slim
+
+# 2. 작업 디렉토리 설정
 WORKDIR /app
 
-# JAR 파일 하나만 복사할 경우 (가장 최신 SNAPSHOT만)
-COPY build/libs/codaily-0.0.1-SNAPSHOT.jar app.jar
+# 3. 빌드 결과물 복사 (가장 최신 jar 파일)
+COPY build/libs/*.jar app.jar
 
-# 여러 개를 전부 복사하고 싶으면 디렉토리 지정
-# COPY build/libs/*.jar /app/
+# 4. Spring Boot 실행
+ENTRYPOINT ["java", "-jar", "app.jar"]
 
-ENTRYPOINT ["sh", "-c", "java -jar *.jar"]
-
-
-# 애플리케이션 포트 (필요 시 변경)
+# 5. 외부에 열 포트 (Swagger UI 등 접근 가능)
 EXPOSE 8081

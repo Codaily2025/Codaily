@@ -2,102 +2,72 @@ import { defaultInstance, authInstance } from "./axios"
 
 const project_default_url = 'projects/'
 
-// 더미 데이터 - 서버 연동 전까지 사용
+// 더미 데이터 - 사용자 진행 중 프로젝트 목록
 const dummyProjectsList = [
     {
-        id: 1,
-        title: "TaskFlow 칸반보드 시스템",
-        lastWorkedAt: "2025-01-20T10:30:00Z",
-        status: "active"
+        "projectId": 1,
+        "title": "TaskFlow 칸반보드 시스템",
+        "startDate": "2025-01-01",
+        "endDate": "2025-03-15",
+        "lastWorkedDate": "2025-01-20",
+        "status": "IN_PROGRESS",
+        "progressRate": 65,
+        "techStacks": ["React", "Node.js", "MongoDB"]
     },
     {
-        id: 2,
-        title: "실시간 채팅 애플리케이션",
-        lastWorkedAt: "2025-01-19T15:20:00Z",
-        status: "active"
+        "projectId": 2,
+        "title": "E-commerce 쇼핑몰",
+        "startDate": "2024-12-01",
+        "endDate": "2025-04-30",
+        "lastWorkedDate": "2025-01-15",
+        "status": "IN_PROGRESS",
+        "progressRate": 40,
+        "techStacks": ["Vue.js", "Spring Boot", "MySQL"]
     },
     {
-        id: 3,
-        title: "E-commerce 쇼핑몰",
-        lastWorkedAt: "2025-01-12T09:45:00Z",
-        status: "active"
+        "projectId": 3,
+        "title": "모바일 금융 앱",
+        "startDate": "2024-11-15",
+        "endDate": "2025-05-30",
+        "lastWorkedDate": "2025-01-10",
+        "status": "IN_PROGRESS",
+        "progressRate": 25,
+        "techStacks": ["React Native", "Firebase"]
     },
     {
-        id: 4,
-        title: "블로그 플랫폼",
-        lastWorkedAt: "2025-01-10T14:30:00Z",
-        status: "active"
+        "projectId": 4,
+        "title": "AI 챗봇 서비스",
+        "startDate": "2024-10-01",
+        "endDate": "2025-02-28",
+        "lastWorkedDate": "2025-01-30",
+        "status": "IN_PROGRESS",
+        "progressRate": 80,
+        "techStacks": ["Python", "TensorFlow", "FastAPI"]
     }
 ]
 
-const dummyProjectDetail = {
-    id: 1,
-    title: "TaskFlow 칸반보드 시스템",
-    description: "현대적인 UI/UX를 가진 프로젝트 관리 도구",
-    status: "active",
-    createdAt: "2025-01-01T00:00:00Z",
-    lastWorkedAt: "2025-01-20T10:30:00Z",
-    features: [
-        {
-            id: 1,
-            name: "사용자 인증",
-            status: "completed",
-            tasks: [
-                {
-                    id: 1,
-                    category: "일반 로그인 구현",
-                    title: "JwtTokenProvider 클래스 구현",
-                    details: "토큰 생성, 파싱, 검증 메서드 구현",
-                    dueDate: "2025/01/30 17:19",
-                    status: "completed"
-                }
-            ]
-        },
-        {
-            id: 2,
-            name: "칸반보드 시스템",
-            status: "in_progress",
-            tasks: [
-                {
-                    id: 2,
-                    category: "칸반보드 구현",
-                    title: "드래그 앤 드롭 기능",
-                    details: "카드 간 이동 및 상태 변경 기능",
-                    dueDate: "2025/02/15 17:19",
-                    status: "in_progress"
-                },
-                {
-                    id: 3,
-                    category: "칸반보드 구현", 
-                    title: "실시간 동기화",
-                    details: "WebSocket을 통한 실시간 업데이트",
-                    dueDate: "2025/02/20 17:19",
-                    status: "todo"
-                }
-            ]
-        }
-    ]
-}
+// 더미 데이터 - 칸반 탭 필드 목록
+const dummyKanbanTabFields = [
+    "Backend",
+    "Frontend",
+    "Testing"
+]
+
+const dummyProjectDetail = {}
 
 // 데이터 전처리 함수 - 분리 예정
 const preprocessProjectsList = (data) => {
     if (!Array.isArray(data)) return []
-    
-    return data.map(project => ({
-        id: project.id,
-        title: project.title || 'Untitled Project',
-        lastWorkedAt: project.lastWorkedAt,
-        status: project.status || 'active'
-    }))
-}
 
-const preprocessProjectDetail = (data) => {
-    if (!data) return null
-    
-    return {
-        ...data,
-        features: data.features || []
-    }
+    // 필요한 전처리 수행 - 확인용 로직 구현
+    return data.map(project => ({
+        projectId: project.projectId || 'ProjectId does not exists',
+        title: project.title || 'Untitled Project',
+        lastWorkedDate: project.lastWorkedDate,
+        status: project.status || 'unable to check status',
+        progressRate: project.progressRate || 0,
+        techStacks: project.techStacks || []
+    }))
 }
 
 // api 함수들
@@ -107,7 +77,7 @@ export const getUserProjects = async () => {
         // 실제 서버 연동 시 이런 형태로~
         // const response = await authInstance.get(project_default_url + 'user')
         // return preprocessProjectsList(response.data)
-        
+
         // 확인용 더미 데이터
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -128,15 +98,15 @@ export const getLastWorkedProjectId = async () => {
         // 실제 서버 연동 시
         // const response = await authInstance.get(project_default_url + 'last-worked-id')
         // return response.data.lastWorkedProjectId
-        
+
         // 확인용 더미 데이터
         return new Promise((resolve) => {
             setTimeout(() => {
-                // 가장 최근 lastWorkedAt을 가진 프로젝트 ID 반환
+                // 가장 최근 lastWorkedDate을 가진 프로젝트 ID 반환
                 const sortedProjects = [...dummyProjectsList].sort(
-                    (a, b) => new Date(b.lastWorkedAt) - new Date(a.lastWorkedAt)
+                    (a, b) => new Date(b.lastWorkedDate) - new Date(a.lastWorkedDate)
                 )
-                resolve(sortedProjects[0].id)
+                resolve(sortedProjects[0].projectId)
             }, 300)
         })
 
@@ -146,27 +116,22 @@ export const getLastWorkedProjectId = async () => {
     }
 }
 
-// 특정 프로젝트 상세 정보 가져오기
-export const getProjectById = async (projectId) => {
+// 칸반 보드 탭 데이터
+export const getKanbanTabFields = async (projectId) => {
     try {
         // 실제 서버 연동 시
-        // const response = await authInstance.get(project_default_url + projectId)
-        // return preprocessProjectDetail(response.data)
-        
-        // 확인용 더미 데이터
+        // const response = await defaultInstance.get(``)
+        // const response = await authInstance.get(``)
+
+        // 더미 데이터로 확인
         return new Promise((resolve) => {
             setTimeout(() => {
-                const projectData = {
-                    ...dummyProjectDetail,
-                    id: parseInt(projectId)
-                }
-                const processedData = preprocessProjectDetail(projectData)
-                resolve(processedData)
-            }, 600)
+                resolve(dummyKanbanTabFields)
+            }, 500) // 네트워크 지연 시뮬레이션
         })
-
+        
     } catch (error) {
-        console.error('getProjectById Error:', error)
-        throw new Error(error.response?.data?.message || '프로젝트 정보를 불러오는데 실패했습니다.')
+        console.error('getKanbanTabFields Error: ', error)
+        throw new Error(error.response?.data?.message || 'Kanban Tab Fields를 불러오는데 실패했습니다.')
     }
 }

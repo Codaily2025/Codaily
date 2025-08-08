@@ -1,10 +1,10 @@
-// ProductivityController.java
 package com.codaily.project.controller;
 
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.project.dto.*;
 import com.codaily.project.service.ProductivityService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 
 @Slf4j
 @RestController
@@ -21,7 +22,6 @@ public class ProductivityController {
 
     private final ProductivityService productivityService;
 
-    //생산성 지표 계산
     @Operation(summary = "생산성 지표 계산")
     @PostMapping("/productivity/calculate")
     public ResponseEntity<ProductivityCalculateResponse> calculateProductivity(
@@ -40,7 +40,6 @@ public class ProductivityController {
         }
     }
 
-    //생산성 그래프 데이터 조회
     @Operation(summary = "생산성 그래프 데이터 조회", description = "단위(주/월) 기준")
     @GetMapping("/projects/{projectId}/analytics/productivity")
     public ResponseEntity<ProductivityChartResponse> getProductivityChart(
@@ -84,7 +83,6 @@ public class ProductivityController {
         }
     }
 
-    //생산성 그래프 일별 상세 조회
     @Operation(summary = "생산성 그래프 일별 조회")
     @GetMapping("/projects/{projectId}/analytics/productivity/{date}/details")
     public ResponseEntity<ProductivityDetailResponse> getProductivityDetail(
@@ -103,4 +101,7 @@ public class ProductivityController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
 }
+
+

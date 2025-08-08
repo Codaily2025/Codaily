@@ -15,13 +15,12 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**").allowedOrigins("*")
-                .allowedMethods("GET", "POST", "PUT", "DELETE")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*");
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // /files/** 요청을 실제 파일 디렉토리로 매핑
         registry.addResourceHandler("/files/**")
                 .addResourceLocations("file:" + uploadDir + "/")
                 .setCachePeriod(3600); // 1시간 캐시

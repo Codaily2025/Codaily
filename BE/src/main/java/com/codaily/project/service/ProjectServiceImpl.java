@@ -329,4 +329,11 @@ public class ProjectServiceImpl implements ProjectService {
         spec.setUpdatedAt(LocalDateTime.now());
     }
 
+
+    // 추후 삭제 예정
+    @Override
+    public Project findById(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트 없음"));
+    }
 }

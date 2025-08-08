@@ -1,29 +1,43 @@
-import React, { useState } from 'react';
+// src/pages/MyPage/ProjectsSection.jsx
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './ProjectsSection.module.css';
 import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
 import useModalStore from "../../store/modalStore";
+import { useProjectStore } from '../../stores/mypageProjectStore';
 
-const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
+const ProjectsSection = () => {
   const navigate = useNavigate();
+  const [activeFilter, setActiveFilter] = useState('전체'); // 필터 상태를 컴포넌트 내부에서 관리
   // 삭제 
-  const [localProjects, setLocalProjects] = useState(projects);
+  // const [localProjects, setLocalProjects] = useState(projects);
   // 설정 모달 관련 상태 관리
   const [selectedProject, setSelectedProject] = useState(null);
   // const [showModal, setShowModal] = useState(false);
   const { isOpen, modalType, closeModal, openModal } = useModalStore()
 
+  const { projects, deleteProject, updateProject } = useProjectStore();
+
   // 삭제 핸들러
   const handleDelete = (id) => {
-    setLocalProjects(prev => prev.filter(project => project.id !== id));
+    // setLocalProjects(prev => prev.filter(project => project.id !== id));
+    deleteProject(id);
   };
 
   // 설정 모달 관련 핸들러
   const handleSettings = (project) => {
     setSelectedProject(project);
-    // setShowModal(true);
-    openModal('PROJECT_EDIT')
+    // if (selectedProject) {
+      openModal('PROJECT_EDIT', project);
+    // }
   };
+
+  // 모달이 닫힐 때 selectedProject 초기화
+  // useEffect(() => {
+  //   if (!isOpen && selectedProject) {
+  //     setSelectedProject(null);
+  //   }
+  // }, [isOpen, selectedProject]);
 
   // 프로젝트 생성 핸들러
   const handleCreateProject = () => {
@@ -36,12 +50,25 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
   };
 
 
-  const filteredProjects = localProjects.filter((project) => {
+  // const filteredProjects = localProjects.filter((project) => {
+  const filteredProjects = projects.filter((project) => {
     if (activeFilter === '전체') return true;
     if (activeFilter === '진행 중') return !project.disabled;
     if (activeFilter === '완료') return project.disabled;
     return true;
   });
+
+  const handleModalClose = useCallback(() => {
+    closeModal();
+    setSelectedProject(null);
+  }, [closeModal]);
+
+  const handleModalSave = useCallback((updatedProject) => {
+    console.log('🧩 저장된 프로젝트:', updatedProject);
+    updateProject(updatedProject);
+    closeModal();
+    setSelectedProject(null);
+  }, [closeModal, updateProject]);
 
   return (
     <section className={styles.projectsSection}>
@@ -117,14 +144,14 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
               </div>
               {/* 기술 스택 */}
               <div className={styles.projectStack}>
-                {project.stack.map((tech, index) => (
+                {/* {project.stack.map((tech, index) => (
                   <span
                     key={index}
                     className={project.disabled ? styles.techTagDisabled : styles.techTagInProcess}
                   >
                     {tech}
                   </span>
-                ))}
+                ))} */}
               </div>
             </div>
           ))}
@@ -132,17 +159,10 @@ const ProjectsSection = ({ projects, activeFilter, setActiveFilter }) => {
       )}
       {isOpen && (modalType === 'PROJECT_EDIT') &&  (
         <ProjectEditModal
-          project={selectedProject}
-          // onClose={() => setShowModal(false)}
-          onClose={() => closeModal()}
-          onSave={(updatedProject) => {
-            console.log('🧩 저장된 프로젝트:', updatedProject);
-            setLocalProjects(prev =>
-              prev.map(p => p.id === updatedProject.id ? updatedProject : p)
-            );
-            // setShowModal(false);
-            closeModal();
-          }}
+          key={selectedProject?.id}
+          data={selectedProject}
+          onClose={handleModalClose}
+          onSave={handleModalSave}
         />
       )}
     </section>

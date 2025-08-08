@@ -1,12 +1,26 @@
-const TextInput = ({ value, onChange, placeholder, className = '' }) => {
+import React from 'react'
+
+const TextInput = ({ 
+    type = 'text', 
+    placeholder, 
+    fieldName,
+    className = '',
+    id,
+    style,
+    value = '',
+    onChange,
+    ...props 
+}) => {
     return (
-        <input 
-            type="text" 
+        <input
+            type={type}
+            placeholder={placeholder}
             value={value}
             onChange={onChange}
-            placeholder={placeholder}
-            // className={`text-input ${className}`.trim()}
             className={className}
+            id={id}
+            style={style}
+            {...props}
         />
     )
 }

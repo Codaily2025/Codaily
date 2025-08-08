@@ -61,15 +61,15 @@ public class FeatureItemController {
 //        featureItemService.updateFeatureItem(request);
 //        return ResponseEntity.ok("기능 정보가 수정되었습니다.");
 //    }
-
-    @DeleteMapping("/{featureId}")
-    @Operation(summary = "기능 삭제")
-    public ResponseEntity<Void> deleteFeature(
-            @PathVariable Long projectId,
-            @PathVariable Long featureId) {
-        featureItemService.deleteFeature(projectId, featureId);
-        return ResponseEntity.noContent().build();
-    }
+//
+//    @DeleteMapping("/{featureId}")
+//    @Operation(summary = "기능 삭제")
+//    public ResponseEntity<Void> deleteFeature(
+//            @PathVariable Long projectId,
+//            @PathVariable Long featureId) {
+//        featureItemService.deleteFeature(projectId, featureId);
+//        return ResponseEntity.noContent().build();
+//    }
 
     @GetMapping("/field-tabs")
     @Operation(summary = "대주제별 조회", description = "칸반 대주제 탭")

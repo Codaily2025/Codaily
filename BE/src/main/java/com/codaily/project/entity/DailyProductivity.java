@@ -28,8 +28,6 @@ public class DailyProductivity {
     @Column(nullable = false)
     private LocalDate date;
 
-    private int completedTasks;
-    private int commits;
     private double codeQuality;
     private double productivityScore;
 
@@ -40,4 +38,17 @@ public class DailyProductivity {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    @Column(nullable = true)
+    private Integer completedFeatures;
+
+    @Column(nullable = true)
+    private Integer totalCommits;
+
+    // 서비스에서 NULL 체크
+    public int getCompletedFeaturesOrZero() {
+        return completedFeatures != null ? completedFeatures : 0;
+    }
+
+
 }
