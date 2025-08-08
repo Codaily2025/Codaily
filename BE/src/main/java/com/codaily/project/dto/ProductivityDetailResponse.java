@@ -1,5 +1,6 @@
 package com.codaily.project.dto;
 
+import com.codaily.project.entity.FeatureItem;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +21,7 @@ public class ProductivityDetailResponse {
     @Builder
     public static class Data {
         private String date;
-        private List<CompletedTask> completedTasks;
+        private List<FeatureItem> completedFeatures;
         private List<Commit> commits;
         private ProductivityFactors productivityFactors;
     }
@@ -29,7 +30,7 @@ public class ProductivityDetailResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class CompletedTask {
+    public static class CompletedFeatures {
         private String id;
         private String title;
     }
@@ -48,8 +49,8 @@ public class ProductivityDetailResponse {
     @AllArgsConstructor
     @Builder
     public static class ProductivityFactors {
-        private double codeQuality;
-        private int completedTasks;
+      //  private double codeQuality;
+        private int completedFeatures;
         private double productivityScore;
     }
 }

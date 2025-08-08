@@ -11,69 +11,80 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TaskDetailResponse {
+public class FeatureDetailResponse {
     private boolean success;
-    private TaskDetailData data;
+    private FeatureDetailData data;
     private String message;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class TaskDetailData {
-        private Long taskId;
+    public static class FeatureDetailData {
+        private Long featureId;
         private String title;
         private String description;
+        private String field;
+        private String category;
         private String status;
+        private Integer priorityLevel;
+        private Double estimatedTime;
+        private Boolean isSelected;
+        private Boolean isCustom;
+        private Boolean isReduced;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime completedAt;
 
-        // 연관된 기능 정보
-        private FeatureInfo feature;
+        // 상위 기능 정보 (하위 기능인 경우)
+        private ParentFeatureInfo parentFeature;
 
-        // 같은 기능의 다른 작업들 (하위 작업들)
-        private List<SubTaskInfo> subTasks;
+        // 하위 기능들 (상위 기능인 경우)
+        private List<SubFeatureInfo> subFeatures;
 
-        // 작업 메트릭
-        private TaskMetrics metrics;
+        // 기능 메트릭
+        private FeatureMetrics metrics;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class FeatureInfo {
+    public static class ParentFeatureInfo {
+        private Long featureId;
+        private String title;
+        private String description;
+        private String field;
+        private String category;
+        private Integer priorityLevel;
+        private Double estimatedTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubFeatureInfo {
         private Long featureId;
         private String title;
         private String description;
         private String category;
-        private Integer priorityLevel;
-        private Integer estimatedTime;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Builder
-    public static class SubTaskInfo {
-        private Long taskId;
-        private String title;
-        private String description;
         private String status;
+        private Integer priorityLevel;
+        private Double estimatedTime;
         private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
         private LocalDateTime completedAt;
-        private boolean isMainTask; // 현재 조회중인 작업인지
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class TaskMetrics {
-        private Integer totalTasksInFeature;
-        private Integer completedTasksInFeature;
-        private Double featureProgressPercentage;
+    public static class FeatureMetrics {
+        private Integer totalSubFeatures;
+        private Integer completedSubFeatures;
+        private Double progressPercentage;
         private Integer recentCommitsCount;
         private LocalDateTime lastActivityAt;
     }

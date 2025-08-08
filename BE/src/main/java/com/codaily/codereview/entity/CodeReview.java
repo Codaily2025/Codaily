@@ -1,8 +1,10 @@
 package com.codaily.codereview.entity;
 
-import com.codaily.project.entity.Task;
+import com.codaily.project.entity.FeatureItem;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.scheduling.config.Task;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,8 +24,8 @@ public class CodeReview {
     private Long projectId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "task_id")
-    private Task task;
+    @JoinColumn(name = "feature_id")
+    private FeatureItem featureItem;
 
     @Column(columnDefinition = "TEXT")
     private String summary;

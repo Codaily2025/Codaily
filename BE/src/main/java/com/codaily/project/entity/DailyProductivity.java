@@ -28,9 +28,7 @@ public class DailyProductivity {
     @Column(nullable = false)
     private LocalDate date;
 
-    private int completedTasks;
-    private int commits;
-    private double codeQuality;
+    //private double codeQuality;
     private double productivityScore;
 
     @Column(updatable = false)
@@ -40,4 +38,7 @@ public class DailyProductivity {
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
+
+    private int completedFeatures; // 완료된 기능 수
+    private int totalCommits; // 총 커밋 수 (commits와 같을 수 있음)
 }

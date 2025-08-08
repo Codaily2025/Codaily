@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -150,5 +151,68 @@ public class GithubServiceImpl implements GithubService {
         }
 
         return streak;
+    }
+
+    @Override
+    public Mono<Integer> getCommitsByDate(String accessToken, String username, LocalDate date) {
+        String since = date.atStartOfDay().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+        String until = date.atTime(23, 59, 59).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+
+        return getUserRepositories(accessToken)
+                .flatMapMany(repos -> Flux.fromIterable(repos))
+                .cast(Map.class)
+                .flatMap(repo -> {
+                    String fullName = (String) repo.get("full_name");
+
+                    return webClient.get()
+                            .uri("https://api.github.com/repos/" + fullName + "/commits?author=" + username +
+                                    "&since=" + since + "&until=" + until)
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                            .retrieve()
+                            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                            .onErrorReturn(new ArrayList<>())
+                            .flatMapMany(Flux::fromIterable);
+                })
+                .collectList()
+                .map(List::size)
+                .doOnNext(count -> log.debug("커밋 수 조회 - 날짜: {}, 커밋 수: {}", date, count));
+    }
+
+    @Override
+    public Mono<Map<LocalDate, Integer>> getDailyCommitStats(String accessToken, String username, LocalDate startDate, LocalDate endDate) {
+        String since = startDate.atStartOfDay().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+        String until = endDate.atTime(23, 59, 59).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z";
+
+        return getUserCommits(accessToken, username, since)
+                .map(commits -> {
+                    Map<LocalDate, Integer> dailyStats = new HashMap<>();
+
+                    // 기간 내 모든 날짜를 0으로 초기화
+                    LocalDate current = startDate;
+                    while (!current.isAfter(endDate)) {
+                        dailyStats.put(current, 0);
+                        current = current.plusDays(1);
+                    }
+
+                    // 커밋들을 날짜별로 그룹핑
+                    commits.forEach(commit -> {
+                        try {
+                            Map<String, Object> commitInfo = (Map<String, Object>) commit.get("commit");
+                            Map<String, Object> author = (Map<String, Object>) commitInfo.get("author");
+                            String dateStr = (String) author.get("date");
+
+                            LocalDate commitDate = LocalDate.parse(dateStr.substring(0, 10));
+                            if (!commitDate.isBefore(startDate) && !commitDate.isAfter(endDate)) {
+                                dailyStats.put(commitDate, dailyStats.getOrDefault(commitDate, 0) + 1);
+                            }
+                        } catch (Exception e) {
+                            log.warn("커밋 날짜 파싱 실패: {}", e.getMessage());
+                        }
+                    });
+
+                    return dailyStats;
+                })
+                .doOnNext(stats -> log.debug("일별 커밋 통계 조회 완료 - 기간: {} ~ {}, 총 {}일",
+                        startDate, endDate, stats.size()));
     }
 }
