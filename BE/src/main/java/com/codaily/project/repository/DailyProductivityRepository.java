@@ -16,8 +16,9 @@ public interface DailyProductivityRepository extends JpaRepository<DailyProducti
     List<DailyProductivity> findByUserIdAndProjectIdAndDateBetween(
             Long userId, Long projectId, LocalDate startDate, LocalDate endDate);
 
-    @Query("SELECT AVG(dp.completedTasks) FROM DailyProductivity dp WHERE dp.userId = :userId AND dp.projectId = :projectId AND dp.date BETWEEN :startDate AND :endDate")
+    @Query("SELECT AVG(dp.completedFeatures) FROM DailyProductivity dp WHERE dp.userId = :userId AND dp.projectId = :projectId AND dp.date BETWEEN :startDate AND :endDate")
     Double findAverageTasksPerDay(@Param("userId") Long userId, @Param("projectId") Long projectId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
 
     @Query("SELECT AVG(dp.productivityScore) FROM DailyProductivity dp WHERE dp.userId = :userId AND dp.projectId = :projectId AND dp.date BETWEEN :startDate AND :endDate")
     Double findAverageProductivityScore(@Param("userId") Long userId, @Param("projectId") Long projectId, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);

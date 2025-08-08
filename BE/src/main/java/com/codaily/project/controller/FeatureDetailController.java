@@ -60,29 +60,29 @@ public class FeatureDetailController {
                 ResponseEntity.badRequest().body(response);
     }
 
-    //기능 상태만 수정 (간단한 상태 변경용)
-    @Operation(summary = "기능 상태 수정")
-    @PatchMapping("/{projectId}/features/{featureId}/status")
-    public ResponseEntity<FeatureDetailResponse> updateFeatureStatus(
-            @PathVariable Long projectId,
-            @PathVariable Long featureId,
-            @RequestParam String status,
-            @AuthenticationPrincipal PrincipalDetails userDetails) {
-
-        log.info("기능 상태 변경 요청 - projectId: {}, featureId: {}, status: {}, userId: {}",
-                projectId, featureId, status, userDetails.getUserId());
-
-        FeatureUpdateRequest request = FeatureUpdateRequest.builder()
-                .status(status)
-                .build();
-
-        FeatureDetailResponse response = featureDetailService.updateFeature(
-                projectId, featureId, request, userDetails.getUserId());
-
-        return response.isSuccess() ?
-                ResponseEntity.ok(response) :
-                ResponseEntity.badRequest().body(response);
-    }
+//    //기능 상태만 수정 (간단한 상태 변경용)
+//    @Operation(summary = "기능 상태 수정")
+//    @PatchMapping("/{projectId}/features/{featureId}/status")
+//    public ResponseEntity<FeatureDetailResponse> updateFeatureStatus(
+//            @PathVariable Long projectId,
+//            @PathVariable Long featureId,
+//            @RequestParam String status,
+//            @AuthenticationPrincipal PrincipalDetails userDetails) {
+//
+//        log.info("기능 상태 변경 요청 - projectId: {}, featureId: {}, status: {}, userId: {}",
+//                projectId, featureId, status, userDetails.getUserId());
+//
+//        FeatureUpdateRequest request = FeatureUpdateRequest.builder()
+//                .status(status)
+//                .build();
+//
+//        FeatureDetailResponse response = featureDetailService.updateFeature(
+//                projectId, featureId, request, userDetails.getUserId());
+//
+//        return response.isSuccess() ?
+//                ResponseEntity.ok(response) :
+//                ResponseEntity.badRequest().body(response);
+//    }
 
     //하위 기능 생성
     @Operation(summary = "하위 기능 생성")
