@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -53,6 +54,7 @@ public class FeatureItem {
     @JoinColumn(name = "project_id", nullable = false)
     @JsonIgnore
     private Project project;
+    private LocalDateTime completedAt;
 
     @JsonProperty("projectId")
     public Long getProjectId(){
@@ -75,4 +77,29 @@ public class FeatureItem {
 
     @Transient
     private Double remainingTime;
+
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+        // 상태가 DONE으로 변경될 때만 completedAt 설정
+        if ("DONE".equals(this.status) && this.completedAt == null) {
+            this.completedAt = LocalDateTime.now();
+        }
+    }
+
 }

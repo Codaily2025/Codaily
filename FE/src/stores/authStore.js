@@ -8,10 +8,14 @@ export const useAuthStore = create((set) => ({
     if (token) {
       localStorage.setItem('authToken', token);
       set({ token, isAuthenticated: true });
+      console.log('Token saved to store and localStorage');
+    } else {
+      console.warn('Attempted to set null or empty token');
     }
   },
   logout: () => {
     localStorage.removeItem('authToken');
     set({ token: null, isAuthenticated: false });
+    console.log('Logged out, token removed');
   },
 }));

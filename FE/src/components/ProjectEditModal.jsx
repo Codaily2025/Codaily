@@ -1,5 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+// FE/src/components/ProjectEditModal.jsx
+import React, { useState, useRef, useEffect, memo } from 'react';
 import './ProjectEditModal.css';
+import { useProjectStore } from '../stores/mypageProjectStore';
 
 // SVG 아이콘들
 const CloseIcon = () => (
@@ -34,8 +36,8 @@ const AddIcon = () => (
 
 const RepoIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g clip-path="url(#clip0_498_8103)">
-      <path d="M1.33301 7.99988L7.76116 11.214C7.84862 11.2577 7.89234 11.2795 7.93821 11.2882C7.97883 11.2958 8.02052 11.2958 8.06114 11.2882C8.10701 11.2795 8.15073 11.2577 8.23819 11.214L14.6663 7.99988M1.33301 11.3332L7.76116 14.5473C7.84862 14.591 7.89234 14.6129 7.93821 14.6215C7.97883 14.6291 8.02052 14.6291 8.06114 14.6215C8.10701 14.6129 8.15073 14.591 8.23819 14.5473L14.6663 11.3332M1.33301 4.66655L7.76116 1.45247C7.84862 1.40874 7.89234 1.38688 7.93821 1.37827C7.97883 1.37065 8.02052 1.37065 8.06114 1.37827C8.10701 1.38688 8.15073 1.40874 8.23819 1.45247L14.6663 4.66655L8.23819 7.88062C8.15073 7.92435 8.10701 7.94621 8.06114 7.95482C8.02052 7.96244 7.97883 7.96244 7.93821 7.95482C7.89234 7.94621 7.84862 7.92435 7.76116 7.88062L1.33301 4.66655Z" stroke="#8483AB" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
+    <g clipPath="url(#clip0_498_8103)">
+      <path d="M1.33301 7.99988L7.76116 11.214C7.84862 11.2577 7.89234 11.2795 7.93821 11.2882C7.97883 11.2958 8.02052 11.2958 8.06114 11.2882C8.10701 11.2795 8.15073 11.2577 8.23819 11.214L14.6663 7.99988M1.33301 11.3332L7.76116 14.5473C7.84862 14.591 7.89234 14.6129 7.93821 14.6215C7.97883 14.6291 8.02052 14.6291 8.06114 14.6215C8.10701 14.6129 8.15073 14.591 8.23819 14.5473L14.6663 11.3332M1.33301 4.66655L7.76116 1.45247C7.84862 1.40874 7.89234 1.38688 7.93821 1.37827C7.97883 1.37065 8.02052 1.37065 8.06114 1.37827C8.10701 1.38688 8.15073 1.40874 8.23819 1.45247L14.6663 4.66655L8.23819 7.88062C8.15073 7.92435 8.10701 7.94621 8.06114 7.95482C8.02052 7.96244 7.97883 7.96244 7.93821 7.95482C7.89234 7.94621 7.84862 7.92435 7.76116 7.88062L1.33301 4.66655Z" stroke="#8483AB" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
     </g>
     <defs>
       <clipPath id="clip0_498_8103">
@@ -45,29 +47,70 @@ const RepoIcon = () => (
   </svg>
 );
 
-const ProjectEditModal = ({ onClose, project, onSave }) => {
+const ProjectEditModal = ({ onClose, data, onSave }) => {
+  console.log('project:', data?.title)
+
+  // useProjectStore에서 프로젝트 정보 가져오기
+  const { projects } = useProjectStore();
+  
+  // data prop으로 전달된 프로젝트 ID를 사용하여 스토어에서 프로젝트 정보 찾기
+  const projectFromStore = data?.id ? projects.find(p => p.id === data.id) : null;
+  
+  // 스토어에서 가져온 정보가 있으면 사용하고, 없으면 data prop 사용
+  const projectData = projectFromStore || data;
+
+  // project가 없을 때 기본값 처리
+  if (!projectData) {
+    console.log('project is null')
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header-wrapper">
+            <div className="modal-header">
+              <div className="modal-header-text">
+                <div className="modal-title">프로젝트 설정</div>
+                <div className="modal-subtitle">프로젝트 정보를 불러올 수 없습니다.</div>
+              </div>
+            </div>
+            <div className="close-button-wrapper" onClick={onClose}>
+              <CloseIcon />
+            </div>
+          </div>
+          <div className="modal-body">
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              프로젝트 정보가 없습니다.
+            </div>
+          </div>
+          <div className="modal-footer">
+            <div className="button-group">
+              <button className="btn btn-secondary" onClick={onClose}>닫기</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // 기존 duration을 시작일과 종료일로 분리
   const parseDuration = (duration) => {
     if (!duration) return { startDate: '', endDate: '' };
     
-    // "2025.06.10 ~ 2025.09.30" 형식을 파싱
+    // "2025-08-01 ~ 2025-11-30" 형식을 파싱
     const parts = duration.split(' ~ ');
     if (parts.length === 2) {
-      const startDate = parts[0].replace(/\./g, '/');
-      const endDate = parts[1].replace(/\./g, '/');
-      return { startDate, endDate };
+      return { startDate: parts[0].replace(/-/g, '.'), endDate: parts[1].replace(/-/g, '.') };
     }
     return { startDate: '', endDate: '' };
   };
-
-  const { startDate: initialStartDate, endDate: initialEndDate } = parseDuration(project.duration);
+  console.log('project.duration:', projectData?.duration)  // project.duration: 2025-08-01 ~ 2025-11-30
+  const { startDate: initialStartDate, endDate: initialEndDate } = parseDuration(projectData?.duration);
 
   const [formData, setFormData] = useState({
-    projectName: project.title, // 프로젝트 이름
+    projectName: projectData?.title || '', // 프로젝트 이름
     startDate: initialStartDate, // 시작일
     endDate: initialEndDate, // 종료일
-    timeByDay: project.timeByDay || {}, // 요일별 투자 시간
-    repoUrl: project.repoUrl || '', // 저장소 URL
+    timeByDay: projectData?.timeByDay || {}, // 요일별 투자 시간
+    repoUrl: projectData?.repoUrl || '', // 저장소 URL
   });
 
   // 에러 상태 관리
@@ -88,7 +131,7 @@ const ProjectEditModal = ({ onClose, project, onSave }) => {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
-    }).replace(/\.\s*/g, '/').replace(/\/$/, '');
+    }).replace(/\.\s*/g, '.').replace(/\.$/, '');
 
     if (type === 'start') {
       setFormData(prev => ({ ...prev, startDate: formattedDate }));
@@ -171,23 +214,25 @@ const ProjectEditModal = ({ onClose, project, onSave }) => {
 
     // 시작일과 종료일을 하나의 문자열로 결합
     const duration = formData.startDate && formData.endDate 
-      ? `${formData.startDate.replace(/\//g, '.')} ~ ${formData.endDate.replace(/\//g, '.')}`
+      ? `${formData.startDate.replace(/\./g, '-')} ~ ${formData.endDate.replace(/\./g, '-')}`
       : '';
 
-    onSave({
-      ...project,
-      title: formData.projectName,
-      duration: duration,
-      timeByDay: timeByDay,
-      repoUrl: formData.repoUrl
-    });
+    if (typeof onSave === 'function') {
+      onSave({
+        ...(projectData || {}),
+        title: formData.projectName,
+        duration: duration,
+        timeByDay: timeByDay,
+        repoUrl: formData.repoUrl
+      });
+    }
   };
 
   const days = ['월', '화', '수', '목', '금', '토', '일'];
   
   // 각 요일별 투자 시간 정보
   const [timeByDay, setTimeByDay] = useState(() => {
-    return project.timeByDay || {
+    return projectData?.timeByDay || {
       월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0
     };
   });
@@ -311,7 +356,7 @@ const ProjectEditModal = ({ onClose, project, onSave }) => {
                         <Calendar 
                           onDateSelect={(date) => handleDateSelect(date, 'start')} 
                           onClose={() => setShowStartCalendar(false)} 
-                          selectedDate={formData.startDate ? new Date(formData.startDate.replace(/\//g, '-')) : null} 
+                          selectedDate={formData.startDate ? new Date(formData.startDate.replace(/\./g, '-')) : null} 
                         />
                       )}
                     </div>
@@ -334,7 +379,7 @@ const ProjectEditModal = ({ onClose, project, onSave }) => {
                         <Calendar 
                           onDateSelect={(date) => handleDateSelect(date, 'end')} 
                           onClose={() => setShowEndCalendar(false)} 
-                          selectedDate={formData.endDate ? new Date(formData.endDate.replace(/\//g, '-')) : null} 
+                          selectedDate={formData.endDate ? new Date(formData.endDate.replace(/\./g, '-')) : null} 
                         />
                       )}
                     </div>
@@ -416,7 +461,7 @@ const ProjectEditModal = ({ onClose, project, onSave }) => {
                       </div>
                       <div className="repo-text-content">
                         <div className={`repo-title ${selectedRepoOption === 0 ? '' : 'repo-title-dark'}`}>현재 레포지토리</div>
-                        <div className={`repo-url ${selectedRepoOption === 0 ? '' : 'repo-title-dark'}`}>{project.repoUrl}</div>
+                        <div className={`repo-url ${selectedRepoOption === 0 ? '' : 'repo-title-dark'}`}>{projectData?.repoUrl || ''}</div>
                       </div>
                     </div>
                     <div className={`radio-check-wrapper ${selectedRepoOption === 0 ? 'checked' : ''}`}>
@@ -468,4 +513,4 @@ const ProjectEditModal = ({ onClose, project, onSave }) => {
   );
 };
 
-export default ProjectEditModal;
+export default memo(ProjectEditModal);

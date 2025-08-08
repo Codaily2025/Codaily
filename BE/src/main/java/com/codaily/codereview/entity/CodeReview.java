@@ -1,8 +1,14 @@
 package com.codaily.codereview.entity;
 
-import com.codaily.project.entity.Task;
+import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.entity.Project;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.scheduling.config.Task;
+
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,22 +24,36 @@ public class CodeReview {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reviewId;
 
-    @Column(nullable = false)
-    private Long projectId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "feature_id")
+    private FeatureItem featureItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "task_id")
-    private Task task;
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
+
+    @Column(name = "quality_score")
+    private Double qualityScore;
 
     @Column(columnDefinition = "TEXT")
     private String summary;
 
-    private String complexity;         // 복잡도 분석
-    private String bugRisk;            // 버그 가능성
-    private String securityRisk;       // 보안 위험도
-    private String refactorSuggestion; // 리팩토링 제안
+    @Column(name = "convention")
+    private String convention;
 
-    private Double qualityScore;       // 코드 품질 점수 (0 ~ 100)
+    @Column(name = "refactor_suggestion")
+    private String refactorSuggestion;
 
+    @Column
+    private String complexity;
+
+    @Column(name = "bug_risk")
+    private String bugRisk;
+
+    @Column(name = "security_risk")
+    private String securityRisk;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }

@@ -162,7 +162,7 @@ public class ActiveProjectServiceImpl implements ActiveProjectService {
             }
 
             // 2. 최근 커밋 시간 확인 (지난 3개월 내)
-            List<CodeCommit> recentCommits = codeCommitRepository.findByProjectIdAndCommittedAtBetween(
+            List<CodeCommit> recentCommits = codeCommitRepository.findByProject_ProjectIdAndCommittedAtBetween(
                     projectId,
                     LocalDateTime.now().minusMonths(3),
                     LocalDateTime.now()

@@ -12,8 +12,10 @@ import ProjectCreateStep4 from './pages/ProjectCreate/ProjectCreateStep4';
 import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
+import OAuthCallback from './pages/OAuthCallback';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ModalManager from './components/organisms/ModalManager';
+import { useAuthStore } from './stores/authStore';
 
 // 보호된 라우트 컴포넌트 : 로그인 상태가 아니면 접근 불가
 const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => { 
@@ -35,9 +37,14 @@ const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => {
 };
 
 function AppContent() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // 기본값을 false로 변경
+  const { isAuthenticated, logout, token } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // 토큰이 있지만 isAuthenticated가 false인 경우를 대비한 로깅
+  useEffect(() => {
+    console.log('Auth state - token:', !!token, 'isAuthenticated:', isAuthenticated);
+  }, [token, isAuthenticated]);
   
   // 현재 경로에 따라 활성 메뉴 결정
   const getActiveMenu = () => {
@@ -82,12 +89,12 @@ function AppContent() {
   };
 
   const handleLogoutClick = () => {
-    setIsLoggedIn(false);
+    logout();
     navigate('/');
   };
 
   const handleLogin = () => {
-    setIsLoggedIn(true);
+    // OAuth 콜백에서 처리되므로 여기서는 아무것도 하지 않음
     navigate('/'); // 로그인 후 프로젝트 페이지로 이동
   };
 
@@ -106,7 +113,7 @@ function AppContent() {
   return (
     <div className="App">
       <NavBar 
-        isLoggedIn={isLoggedIn} 
+        isLoggedIn={isAuthenticated} 
         activeMenu={getActiveMenu()} 
         onMenuClick={handleMenuClick}
         onLogoClick={handleLogoClick}
@@ -118,12 +125,14 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="/oauth/callback" element={<OAuthCallback />} />
+
           
           {/* 보호된 라우트들 : 로그인 상태가 아니면 접근 불가 */}
           <Route 
             path="/schedule" 
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
                 <Schedule />
               </ProtectedRoute>
             } 
@@ -131,7 +140,7 @@ function AppContent() {
           <Route 
             path="/project" 
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
                 <Project />
               </ProtectedRoute>
             } 
@@ -139,23 +148,23 @@ function AppContent() {
           <Route 
             path="/project/:id" 
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
                 <Project />
               </ProtectedRoute>
             } 
           />
-          <Route 
+          {/* <Route 
             path="/signup" 
             element={
               <ProtectedRoute isLoggedIn={true} onRedirectToLogin={handleRedirectToLogin}>
                 <Signup />
               </ProtectedRoute>
             } 
-          />
+          /> */}
           <Route 
             path="/project/create"
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
                 <ProjectCreate />
               </ProtectedRoute>
             }
@@ -163,7 +172,7 @@ function AppContent() {
           <Route 
             path="/project/create/step2"
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
                 <ProjectCreateStep2 />
               </ProtectedRoute>
             }
@@ -180,7 +189,7 @@ function AppContent() {
           <Route 
             path="/history" 
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
                 <History />
               </ProtectedRoute>
             } 
@@ -188,7 +197,7 @@ function AppContent() {
           <Route 
             path="/mypage" 
             element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} onRedirectToLogin={handleRedirectToLogin}>
+              <ProtectedRoute isLoggedIn={isAuthenticated} onRedirectToLogin={handleRedirectToLogin}>
                 <MyPage />
               </ProtectedRoute>
             } 

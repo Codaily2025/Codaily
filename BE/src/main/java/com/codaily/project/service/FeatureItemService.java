@@ -4,6 +4,9 @@ import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
 
 import java.util.List;
+import com.codaily.project.dto.FeatureSaveRequest;
+import com.codaily.project.dto.FeatureSaveResponse;
+
 
 public interface FeatureItemService {
     FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest createDto);
@@ -35,4 +38,10 @@ public interface FeatureItemService {
     List<FeatureItem> getAllMainFeature(Long projectId);
 
     SubFeatureSaveResponse saveSubFeatureChunk(SubFeatureSaveRequest request, Long projectId, Long specId);
+
+    FeatureItem findByProjectIdAndTitle(Long projectId, String featureName);
+
+    FeatureItem findById(Long featureId);
+
+    void generateFeatureItemChecklist(Long projectId);
 }
