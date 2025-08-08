@@ -10,6 +10,8 @@ const InputGroup = ({
     className = '', 
     labelClassName = '',
     inputClassName = '',
+    value,
+    onChange,
     children 
 }) => {
     const inputId = `input-${fieldName}`
@@ -23,9 +25,11 @@ const InputGroup = ({
             )}
             <TextInput 
                 id={inputId}
-                fieldName={fieldName}
+                fieldName={value !== undefined ? null : fieldName}
                 placeholder={placeholder}
                 type={type}
+                value={value}
+                onChange={onChange}
                 className={inputClassName}
             />
             {children}
