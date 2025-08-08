@@ -14,6 +14,7 @@ import com.codaily.project.service.ProjectRepositoriesService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -38,7 +39,9 @@ public class WebhookServiceImpl implements WebhookService {
     private final FeatureItemRepository featureItemRepository;
     private final UserService userService;
     private final ProjectRepositoriesRepository projectRepositoriesRepository;
+
     private final WebClient webClient;
+
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepositoriesService projectRepositoriesService;
 
