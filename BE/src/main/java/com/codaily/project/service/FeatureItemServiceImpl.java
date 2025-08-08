@@ -50,6 +50,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final FeatureItemSchedulesRepository featureItemScheduleRepository;
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ScheduleRepository scheduleRepository;
+    private final WebClient webClient;
 
     @Override
     public FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest featureItem) {
@@ -520,8 +521,6 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .build();
     }
     private final FeatureItemChecklistRepository featureItemChecklistRepository;
-    private final WebClient gptWebClient;
-
 
 
     @Override
@@ -714,7 +713,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder().features(dtoList).build();
 
         try {
-            FeatureChecklistResponseDto response = gptWebClient
+            FeatureChecklistResponseDto response = webClient
                     .post()
                     .uri("/api/generate-checklist")
                     .bodyValue(request)

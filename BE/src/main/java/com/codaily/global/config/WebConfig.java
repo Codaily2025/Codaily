@@ -16,11 +16,4 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*");
     }
-
-    @Bean
-    public WebClient gptWebClient() {
-        return WebClient.builder()
-                .baseUrl("http://localhost:8000")
-                .build();
-    }
 }
