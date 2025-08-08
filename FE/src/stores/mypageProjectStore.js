@@ -241,7 +241,7 @@ export const updateProjectAPI = async ({ userId : tempUserId, projectId, project
         'Content-Type': 'application/json'
       }
     });
-    console.log('Project updated successfully:', response.data);
+    console.log('프로젝트 업데이트 성공', response.data);
     return response.data;
     
   } catch (error) {
