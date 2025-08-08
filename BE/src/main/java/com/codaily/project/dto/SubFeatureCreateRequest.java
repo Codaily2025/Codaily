@@ -9,8 +9,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TaskUpdateRequest {
+public class SubFeatureCreateRequest {
     private String title;
     private String description;
-    private String status; // PLANNED, IN_PROGRESS, COMPLETED
+    private String category;
+    private String status; // TODO, IN_PROGRESS, DONE (기본값: TODO)
+    private Integer priorityLevel;
+    private Double estimatedTime;
 }

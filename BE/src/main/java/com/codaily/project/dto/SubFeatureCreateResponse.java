@@ -10,21 +10,24 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SubTaskCreateResponse {
+public class SubFeatureCreateResponse {
     private boolean success;
-    private SubTaskData data;
+    private SubFeatureData data;
     private String message;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class SubTaskData {
-        private Long taskId;
+    public static class SubFeatureData {
+        private Long featureId;
         private String title;
         private String description;
         private String status;
-        private Long featureId;
         private LocalDateTime createdAt;
+        private String category;
+        private Integer priorityLevel;
+        private Double estimatedTime;
+        private Long parentFeatureId;
     }
 }

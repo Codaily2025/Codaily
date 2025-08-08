@@ -12,36 +12,36 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CalendarTaskResponse {
+public class CalendarFeatureResponse {
     private boolean success;
-    private CalendarTaskData data;
+    private CalendarFeatureData data;
     private String message;
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class CalendarTaskData {
+    public static class CalendarFeatureData {
         private LocalDate date;
-        private List<TaskInfo> tasks;
-//        private Summary summary;
+        private List<FeatureInfo> features;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class TaskInfo {
-        private Long taskId;
+    public static class FeatureInfo {
+        private Long featureId;
         private String title;
         private String description;
-        private String status;
-        private String featureTitle;
+        private String field;
         private String category;
+        private String status;
         private Integer priorityLevel;
+        private Double estimatedTime;
+        private String parentFeatureTitle; // 상위 기능 제목 (하위 기능인 경우)
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime completedAt;
     }
-
 }

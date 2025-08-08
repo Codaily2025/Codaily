@@ -1,15 +1,26 @@
-// 프로필 아바타 컴포넌트
 import React from 'react'
 import { Camera, User } from 'lucide-react';
 
-const ProfileAvatar = () => {
+const ProfileAvatar = ({ 
+    src, 
+    alt, 
+    editable = true, 
+    onEdit, 
+    className = '',
+    avatarClassName = '',
+    iconClassName = ''
+}) => {
     return (
-        <div className='profile-avatar-section'>
-            <div className='profile-avatar'>
-                <User color='#6C6B93' size={48}></User>
-                <div className='camera-icon'>
-                    <Camera color="#F3F2FA" size={16} />
-                </div>
+        <div className={className}>
+            <div className={avatarClassName} style={{
+                backgroundImage: src ? `url(${src})` : 'none',
+            }}>
+                {!src && <User color='#6C6B93' size={48} />}
+                {editable && (
+                    <div className={iconClassName} onClick={onEdit}>
+                        <Camera color="#F3F2FA" size={16} />
+                    </div>
+                )}
             </div>
         </div>
     )

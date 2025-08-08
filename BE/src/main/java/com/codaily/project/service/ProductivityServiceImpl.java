@@ -1,19 +1,23 @@
 package com.codaily.project.service;
 
-import com.codaily.codereview.entity.CodeCommit;
-import com.codaily.codereview.entity.CodeReview;
-import com.codaily.codereview.repository.CodeCommitRepository;
-import com.codaily.codereview.repository.CodeReviewRepository;
-import com.codaily.project.dto.*;
-import com.codaily.project.entity.*;
-import com.codaily.project.repository.*;
+import com.codaily.auth.service.UserService;
+import com.codaily.common.git.service.GithubService;
+import com.codaily.project.dto.ProductivityCalculateRequest;
+import com.codaily.project.dto.ProductivityCalculateResponse;
+import com.codaily.project.dto.ProductivityChartResponse;
+import com.codaily.project.dto.ProductivityDetailResponse;
+import com.codaily.project.entity.DailyProductivity;
+import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.repository.DailyProductivityRepository;
+import com.codaily.project.repository.FeatureItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -23,14 +27,10 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ProductivityServiceImpl implements ProductivityService {
 
-    private final TaskRepository taskRepository;
-    private final CodeCommitRepository commitRepository;
-    private final CodeReviewRepository reviewRepository;
-    private final ProductivityMetricRepository productivityMetricRepository;
+    private final FeatureItemRepository featureItemRepository;
     private final DailyProductivityRepository dailyProductivityRepository;
-    private final ChartDataRepository chartDataRepository;
-
-    private static final String PRODUCTIVITY_CHART_TYPE = "productivity";
+    private final GithubService githubService;
+    private final UserService userService;
 
     @Override
     @Transactional
@@ -38,60 +38,42 @@ public class ProductivityServiceImpl implements ProductivityService {
         Long userId = Long.valueOf(request.getUserId());
         Long projectId = Long.valueOf(request.getProjectId());
         LocalDate targetDate = LocalDate.parse(request.getPeriod().getDate());
-        LocalDateTime startOfDay = targetDate.atStartOfDay();
-        LocalDateTime endOfDay = targetDate.atTime(23, 59, 59);
 
         Map<String, ProductivityCalculateResponse.MetricScore> breakdown = new HashMap<>();
         double overallScore = 0.0;
 
-        // 작업 완료율 계산 (40% 가중치)
+        // 해당 날짜의 완료된 기능들 조회
+        List<FeatureItem> completedFeatures = featureItemRepository.findCompletedFeaturesByProjectAndDate(projectId, targetDate);
+
+        // GitHub API로 실제 커밋 수 조회
+        Integer totalCommits = getRealCommitCount(userId, targetDate);
+
+        // 기능 완료율 계산 (가중치 100% - 코드품질 제외)
         if (request.getMetrics().isIncludeTaskCompletion()) {
-            List<Task> completedTasks = taskRepository.findCompletedTasks( projectId,
-                    Task.Status.COMPLETED,
-                    startOfDay,
-                    endOfDay);
-            double taskScore = calculateTaskScore(completedTasks.size());
+            double taskScore = calculateTaskScore(completedFeatures.size());
             breakdown.put("taskCompletion", ProductivityCalculateResponse.MetricScore.builder()
-                    .score(taskScore).weight(0.4).build());
-            overallScore += taskScore * 0.4;
+                    .score(taskScore).weight(0.7).build());
+            overallScore += taskScore * 0.7;
         }
 
-        // 커밋 활동 계산 (30% 가중치)
+        // 커밋 활동 계산 (가중치 30%)
         if (request.getMetrics().isIncludeCommits()) {
-            List<CodeCommit> commits = commitRepository.findByCommittedAtBetween(startOfDay, endOfDay);
-            double commitScore = calculateCommitScore(commits.size());
+            double commitScore = calculateCommitScore(totalCommits);
             breakdown.put("commitFrequency", ProductivityCalculateResponse.MetricScore.builder()
                     .score(commitScore).weight(0.3).build());
             overallScore += commitScore * 0.3;
         }
 
-        // 코드 품질 계산 (20% 가중치)
-        if (request.getMetrics().isIncludeCodeQuality()) {
-            List<CodeReview> reviews = reviewRepository.findByProject_ProjectIdAndCreatedAtBetween(
-                    projectId, startOfDay, endOfDay);
-            double avgQuality = reviews.stream()
-                    .mapToDouble(r -> r.getQualityScore() != null ? r.getQualityScore() : 0)
-                    .average().orElse(80.0);
-            breakdown.put("codeQuality", ProductivityCalculateResponse.MetricScore.builder()
-                    .score(avgQuality).weight(0.2).build());
-            overallScore += avgQuality * 0.2;
-        }
-
-        // 벤치마크 조회
-        Double personalAvg = productivityMetricRepository.findPersonalAverageScore(userId);
-        Double projectAvg = productivityMetricRepository.findProjectAverageScore(projectId);
-
-        // 추세 계산 및 메트릭 저장
-        String trend = calculateTrend(userId, projectId, overallScore);
-        saveProductivityMetric(userId, projectId, targetDate, overallScore, breakdown, trend);
+        // DailyProductivity에 저장 (코드품질 제외)
+        saveDailyProductivity(userId, projectId, targetDate, completedFeatures.size(), totalCommits, overallScore);
 
         return ProductivityCalculateResponse.builder()
                 .overallScore(overallScore)
                 .breakdown(breakdown)
-                .trend(trend)
+                .trend("stable")
                 .benchmarkComparison(ProductivityCalculateResponse.BenchmarkComparison.builder()
-                        .personalAverage(personalAvg != null ? personalAvg : 0.0)
-                        .projectAverage(projectAvg != null ? projectAvg : 0.0)
+                        .personalAverage(0.0)
+                        .projectAverage(0.0)
                         .build())
                 .build();
     }
@@ -99,278 +81,338 @@ public class ProductivityServiceImpl implements ProductivityService {
     @Override
     @Transactional
     public ProductivityChartResponse getProductivityChart(Long userId, Long projectId, String period, String startDate, String endDate) {
-        LocalDate start = LocalDate.parse(startDate);
-        LocalDate end = LocalDate.parse(endDate);
+        try {
+            LocalDate start = LocalDate.parse(startDate);
+            LocalDate end = LocalDate.parse(endDate);
 
-        // 일별 생산성 데이터 조회 및 차트 데이터 생성
-        List<DailyProductivity> dailyData = dailyProductivityRepository
-                .findByUserIdAndProjectIdAndDateBetween(userId, projectId, start, end);
+            log.info("생산성 차트 조회 - projectId: {}, period: {}, startDate: {}, endDate: {}",
+                    projectId, period, startDate, endDate);
 
-        List<ProductivityChartResponse.ChartData> chartData = dailyData.stream()
-                .map(this::convertToChartData)
-                .collect(Collectors.toList());
+            // GitHub API로 기간별 커밋 통계 조회
+            Map<LocalDate, Integer> dailyCommitStats = getRealDailyCommitStats(userId, start, end);
 
-        // 빈 날짜 채우기
-        chartData = fillMissingDates(chartData, start, end);
+            // 기간별 DailyProductivity 데이터 조회 및 생성
+            Map<LocalDate, DailyProductivity> dailyDataMap = getOrCreateDailyProductivityMap(
+                    userId, projectId, start, end, dailyCommitStats);
 
-        // 통계 계산
-        Double avgTasks = dailyProductivityRepository.findAverageTasksPerDay(userId, projectId, start, end);
-        Double avgScore = dailyProductivityRepository.findAverageProductivityScore(userId, projectId, start, end);
-        String trend = calculateChartTrend(chartData);
-        double trendPercentage = calculateTrendPercentage(chartData);
+            List<DailyProductivity> dailyData = dailyDataMap.values().stream()
+                    .sorted(Comparator.comparing(DailyProductivity::getDate))
+                    .collect(Collectors.toList());
 
-        ProductivityChartResponse.Summary summary = ProductivityChartResponse.Summary.builder()
-                .averageTasksPerDay(avgTasks != null ? avgTasks : 0.0)
-                .averageProductivityScore(avgScore != null ? avgScore : 0.0)
-                .trend(trend)
-                .trendPercentage(trendPercentage)
-                .build();
+            List<ProductivityChartResponse.ChartData> chartData;
+            ProductivityChartResponse.Summary summary;
 
-        ProductivityChartResponse response = ProductivityChartResponse.builder()
-                .success(true)
-                .data(ProductivityChartResponse.Data.builder()
-                        .period(period)
-                        .chartData(chartData)
-                        .summary(summary)
-                        .build())
-                .build();
+            if ("monthly".equals(period)) {
+                chartData = generateMonthlyChartData(start, end, dailyData);
+                summary = generateSummary(dailyData, start.getYear() + "년 " + start.getMonthValue() + "월");
+            } else if ("weekly".equals(period)) {
+                chartData = generateWeeklyChartData(start, end, dailyData);
+                summary = generateSummary(dailyData, start.format(DateTimeFormatter.ofPattern("yyyy년 MM월 dd일")) +
+                        " - " + end.format(DateTimeFormatter.ofPattern("MM월 dd일")));
+            } else {
+                throw new IllegalArgumentException("지원하지 않는 기간입니다: " + period);
+            }
 
-        saveChartData(userId, projectId, period, response);
-        return response;
+            return ProductivityChartResponse.builder()
+                    .success(true)
+                    .data(ProductivityChartResponse.Data.builder()
+                            .period(summary.getTrend())
+                            .chartData(chartData)
+                            .summary(summary)
+                            .build())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("생산성 차트 조회 실패", e);
+            return ProductivityChartResponse.builder()
+                    .success(false)
+                    .build();
+        }
     }
 
     @Override
     public ProductivityDetailResponse getProductivityDetail(Long userId, Long projectId, String date) {
-        LocalDate targetDate = LocalDate.parse(date);
-        LocalDateTime startOfDay = targetDate.atStartOfDay();
-        LocalDateTime endOfDay = targetDate.atTime(23, 59, 59);
+        try {
+            LocalDate targetDate = LocalDate.parse(date);
 
-        // 완료된 작업 조회
-        List<Task> completedTasks = taskRepository.findCompletedTasks( projectId,
-                Task.Status.COMPLETED,
-                startOfDay,
-                endOfDay);
-        List<ProductivityDetailResponse.CompletedTask> taskDtos = completedTasks.stream()
-                .map(task -> ProductivityDetailResponse.CompletedTask.builder()
-                        .id("task_" + String.format("%03d", task.getTaskId()))
-                        .title(task.getTitle())
-                        .build())
-                .collect(Collectors.toList());
+            // 해당 날짜의 완료된 기능들
+            List<FeatureItem> completedFeatures = featureItemRepository.findCompletedFeaturesByProjectAndDate(projectId, targetDate);
 
-        // 커밋 조회
-        List<CodeCommit> commits = commitRepository.findByCommittedAtBetween(startOfDay, endOfDay);
-        List<ProductivityDetailResponse.Commit> commitDtos = commits.stream()
-                .map(commit -> ProductivityDetailResponse.Commit.builder()
-                        .hash(commit.getCommitHash())
-                        .message(commit.getMessage())
-                        .build())
-                .collect(Collectors.toList());
+            // GitHub API로 실제 커밋 정보 조회
+            Integer realCommitCount = getRealCommitCount(userId, targetDate);
 
-        // 생산성 요소 계산
-        Optional<DailyProductivity> dailyProductivity = dailyProductivityRepository
-                .findByUserIdAndProjectIdAndDate(userId, projectId, targetDate);
+            // 실제 커밋 정보를 기반으로 커밋 리스트 생성
+            List<ProductivityDetailResponse.Commit> commits = new ArrayList<>();
+            if (realCommitCount > 0) {
+                // 실제로는 GitHub API에서 커밋 상세 정보를 가져와야 하지만
+                // 현재는 커밋 수만 표시
+                for (int i = 0; i < realCommitCount; i++) {
+                    commits.add(ProductivityDetailResponse.Commit.builder()
+                            .hash("commit_" + (i + 1))
+                            .message("GitHub 커밋 #" + (i + 1))
+                            .build());
+                }
+            }
 
-        ProductivityDetailResponse.ProductivityFactors factors = ProductivityDetailResponse.ProductivityFactors.builder()
-                .codeQuality(dailyProductivity.map(DailyProductivity::getCodeQuality).orElse(0.0))
-                .completedTasks(completedTasks.size())
-                .productivityScore(dailyProductivity.map(DailyProductivity::getProductivityScore).orElse(0.0))
-                .build();
+            // 생산성 요소 (코드품질 제외)
+            Optional<DailyProductivity> dailyOpt = dailyProductivityRepository
+                    .findByUserIdAndProjectIdAndDate(userId, projectId, targetDate);
 
-        return ProductivityDetailResponse.builder()
-                .success(true)
-                .data(ProductivityDetailResponse.Data.builder()
-                        .date(date)
-                        .completedTasks(taskDtos)
-                        .commits(commitDtos)
-                        .productivityFactors(factors)
-                        .build())
-                .build();
+            DailyProductivity daily = dailyOpt.orElse(DailyProductivity.builder()
+                    .completedFeatures(completedFeatures.size())
+                    .totalCommits(realCommitCount)
+                    .productivityScore(calculateBasicScore(completedFeatures.size(), realCommitCount))
+                    .build());
+
+            ProductivityDetailResponse.ProductivityFactors factors =
+                    ProductivityDetailResponse.ProductivityFactors.builder()
+                            .completedFeatures(daily.getCompletedFeatures())
+                            .productivityScore(daily.getProductivityScore())
+                            // codeQuality 제거
+                            .build();
+
+            return ProductivityDetailResponse.builder()
+                    .success(true)
+                    .data(ProductivityDetailResponse.Data.builder()
+                            .date(date)
+                            .completedFeatures(completedFeatures)
+                            .commits(commits)
+                            .productivityFactors(factors)
+                            .build())
+                    .build();
+
+        } catch (Exception e) {
+            log.error("생산성 상세 정보 조회 실패", e);
+            return ProductivityDetailResponse.builder()
+                    .success(false)
+                    .build();
+        }
     }
 
-    // ===== Helper Methods =====
+    // === GitHub API 연동 Helper Methods ===
 
-    /**
-     * 작업 완료 점수 계산
-     * @param completedTasks 완료된 작업 수
-     * @return 작업 점수 (최대 100점)
-     */
-    private double calculateTaskScore(int completedTasks) {
-        return Math.min(completedTasks * 25.0, 100.0);
+    private Integer getRealCommitCount(Long userId, LocalDate date) {
+        try {
+            String accessToken = userService.getGithubAccessToken(userId);
+            String username = userService.getGithubUsername(userId);
+
+            if (accessToken == null || username == null) {
+                log.warn("GitHub 토큰 또는 사용자명 없음 - userId: {}", userId);
+                return 0;
+            }
+
+            Integer commitCount = githubService.getCommitsByDate(accessToken, username, date)
+                    .block(); // 동기 처리
+
+            log.debug("GitHub 커밋 수 조회 성공 - userId: {}, date: {}, commits: {}",
+                    userId, date, commitCount);
+
+            return commitCount != null ? commitCount : 0;
+
+        } catch (Exception e) {
+            log.warn("GitHub 커밋 수 조회 실패 - userId: {}, date: {}, error: {}",
+                    userId, date, e.getMessage());
+            return 0;
+        }
     }
 
-    /**
-     * 커밋 활동 점수 계산
-     * @param commits 커밋 수
-     * @return 커밋 점수 (최대 100점)
-     */
-    private double calculateCommitScore(int commits) {
-        return Math.min(commits * 12.5, 100.0);
+    private Map<LocalDate, Integer> getRealDailyCommitStats(Long userId, LocalDate startDate, LocalDate endDate) {
+        try {
+            String accessToken = userService.getGithubAccessToken(userId);
+            String username = userService.getGithubUsername(userId);
+
+            if (accessToken == null || username == null) {
+                log.warn("GitHub 토큰 또는 사용자명 없음 - userId: {}", userId);
+                return createEmptyDailyStats(startDate, endDate);
+            }
+
+            Map<LocalDate, Integer> stats = githubService.getDailyCommitStats(accessToken, username, startDate, endDate)
+                    .block(); // 동기 처리
+
+            log.debug("GitHub 일별 커밋 통계 조회 성공 - userId: {}, 기간: {} ~ {}",
+                    userId, startDate, endDate);
+
+            return stats != null ? stats : createEmptyDailyStats(startDate, endDate);
+
+        } catch (Exception e) {
+            log.warn("GitHub 일별 커밋 통계 조회 실패 - userId: {}, error: {}", userId, e.getMessage());
+            return createEmptyDailyStats(startDate, endDate);
+        }
     }
 
-    /**
-     * 개인 생산성 추세 계산
-     */
-    private String calculateTrend(Long userId, Long projectId, double currentScore) {
-        List<ProductivityMetric> recentMetrics = productivityMetricRepository
-                .findRecentMetrics(userId, projectId);
-
-        if (recentMetrics.isEmpty()) return "stable";
-
-        double recentAvg = recentMetrics.stream()
-                .mapToDouble(ProductivityMetric::getProductivityScore)
-                .average().orElse(currentScore);
-
-        if (currentScore > recentAvg + 5) return "improving";
-        if (currentScore < recentAvg - 5) return "declining";
-        return "stable";
+    private Map<LocalDate, Integer> createEmptyDailyStats(LocalDate startDate, LocalDate endDate) {
+        Map<LocalDate, Integer> emptyStats = new HashMap<>();
+        LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            emptyStats.put(current, 0);
+            current = current.plusDays(1);
+        }
+        return emptyStats;
     }
 
-    /**
-     * 차트 데이터 기반 추세 계산
-     */
-    private String calculateChartTrend(List<ProductivityChartResponse.ChartData> chartData) {
-        if (chartData.size() < 2) return "stable";
+    private Map<LocalDate, DailyProductivity> getOrCreateDailyProductivityMap(
+            Long userId, Long projectId, LocalDate startDate, LocalDate endDate,
+            Map<LocalDate, Integer> dailyCommitStats) {
 
-        double first = chartData.get(0).getProductivityScore();
-        double last = chartData.get(chartData.size() - 1).getProductivityScore();
+        // 기존 데이터 조회
+        List<DailyProductivity> existingData = dailyProductivityRepository
+                .findByUserIdAndProjectIdAndDateBetween(userId, projectId, startDate, endDate);
 
-        if (last > first + 5) return "increasing";
-        if (last < first - 5) return "decreasing";
-        return "stable";
+        Map<LocalDate, DailyProductivity> dataMap = existingData.stream()
+                .collect(Collectors.toMap(DailyProductivity::getDate, d -> d));
+
+        // 누락된 날짜의 데이터 생성
+        LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            if (!dataMap.containsKey(current)) {
+                // 해당 날짜의 완료된 기능 수 조회
+                List<FeatureItem> completedFeatures = featureItemRepository
+                        .findCompletedFeaturesByProjectAndDate(projectId, current);
+
+                Integer commits = dailyCommitStats.getOrDefault(current, 0);
+                double score = calculateBasicScore(completedFeatures.size(), commits);
+
+                DailyProductivity newData = DailyProductivity.builder()
+                        .userId(userId)
+                        .projectId(projectId)
+                        .date(current)
+                        .completedFeatures(completedFeatures.size())
+                        .totalCommits(commits)
+                        .productivityScore(score)
+                        // codeQuality 제거 또는 기본값 설정 안함
+                        .build();
+
+                dataMap.put(current, dailyProductivityRepository.save(newData));
+            }
+            current = current.plusDays(1);
+        }
+
+        return dataMap;
     }
 
-    /**
-     * 추세 변화율 계산
-     */
-    private double calculateTrendPercentage(List<ProductivityChartResponse.ChartData> chartData) {
-        if (chartData.size() < 2) return 0.0;
+    // === 기존 Helper Methods (수정됨) ===
 
-        double first = chartData.get(0).getProductivityScore();
-        double last = chartData.get(chartData.size() - 1).getProductivityScore();
+    private List<ProductivityChartResponse.ChartData> generateMonthlyChartData(
+            LocalDate start, LocalDate end, List<DailyProductivity> dailyData) {
 
-        if (first == 0) return 0.0;
-        return Math.abs(((last - first) / first) * 100);
-    }
-
-    /**
-     * Daily Productivity -> Chart Data 변환
-     */
-    private ProductivityChartResponse.ChartData convertToChartData(DailyProductivity daily) {
-        return ProductivityChartResponse.ChartData.builder()
-                .date(daily.getDate().toString())
-                .completedTasks(daily.getCompletedTasks())
-                .productivityScore(daily.getProductivityScore())
-                .commits(daily.getCommits())
-                .build();
-    }
-
-    /**
-     * 기간 내 빈 날짜를 0값으로 채우기
-     */
-    private List<ProductivityChartResponse.ChartData> fillMissingDates(
-            List<ProductivityChartResponse.ChartData> chartData, LocalDate start, LocalDate end) {
-
-        Map<String, ProductivityChartResponse.ChartData> dataMap = chartData.stream()
-                .collect(Collectors.toMap(
-                        ProductivityChartResponse.ChartData::getDate,
-                        data -> data,
-                        (existing, replacement) -> existing));
+        Map<LocalDate, DailyProductivity> dataMap = dailyData.stream()
+                .collect(Collectors.toMap(DailyProductivity::getDate, d -> d));
 
         List<ProductivityChartResponse.ChartData> result = new ArrayList<>();
         LocalDate current = start;
 
         while (!current.isAfter(end)) {
-            String dateStr = current.toString();
-            ProductivityChartResponse.ChartData data = dataMap.getOrDefault(dateStr,
-                    ProductivityChartResponse.ChartData.builder()
-                            .date(dateStr)
-                            .completedTasks(0)
-                            .productivityScore(0.0)
-                            .commits(0)
-                            .build());
-            result.add(data);
+            DailyProductivity data = dataMap.get(current);
+            int commits = data != null ? data.getTotalCommits() : 0;
+            double score = data != null ? data.getProductivityScore() : 0.0;
+
+            result.add(ProductivityChartResponse.ChartData.builder()
+                    .date(String.valueOf(current.getDayOfMonth()))
+                    .completedTasks(data != null ? data.getCompletedFeatures() : 0)
+                    .productivityScore(score)
+                    .commits(Math.min(commits * 10, 100)) // 커밋 수를 0-100으로 정규화 (10배 계수)
+                    .actualCommits(commits) // 실제 커밋 수
+                    .build());
+
             current = current.plusDays(1);
         }
 
         return result;
     }
 
-    /**
-     * 생산성 메트릭 및 일별 데이터 저장
-     */
+    private List<ProductivityChartResponse.ChartData> generateWeeklyChartData(
+            LocalDate start, LocalDate end, List<DailyProductivity> dailyData) {
+
+        Map<LocalDate, DailyProductivity> dataMap = dailyData.stream()
+                .collect(Collectors.toMap(DailyProductivity::getDate, d -> d));
+
+        List<ProductivityChartResponse.ChartData> result = new ArrayList<>();
+        LocalDate current = start;
+
+        while (!current.isAfter(end)) {
+            DailyProductivity data = dataMap.get(current);
+            int commits = data != null ? data.getTotalCommits() : 0;
+            double score = data != null ? data.getProductivityScore() : 0.0;
+
+            String dayName = current.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN);
+
+            result.add(ProductivityChartResponse.ChartData.builder()
+                    .date(dayName)
+                    .completedTasks(data != null ? data.getCompletedFeatures() : 0)
+                    .productivityScore(score)
+                    .commits(Math.min(commits * 10, 100)) // 커밋 수를 0-100으로 정규화 (10배 계수)
+                    .actualCommits(commits) // 실제 커밋 수
+                    .build());
+
+            current = current.plusDays(1);
+        }
+
+        return result;
+    }
+
+    private ProductivityChartResponse.Summary generateSummary(List<DailyProductivity> dailyData, String period) {
+        if (dailyData.isEmpty()) {
+            return ProductivityChartResponse.Summary.builder()
+                    .averageTasksPerDay(0.0)
+                    .averageProductivityScore(0.0)
+                    .trend(period)
+                    .trendPercentage(0.0)
+                    .totalCommits(0)
+                    .averageCommits(0.0)
+                    .maxCommits(0)
+                    .build();
+        }
+
+        double avgTasks = dailyData.stream().mapToInt(DailyProductivity::getCompletedFeatures).average().orElse(0.0);
+        double avgScore = dailyData.stream().mapToDouble(DailyProductivity::getProductivityScore).average().orElse(0.0);
+
+        int totalCommits = dailyData.stream().mapToInt(DailyProductivity::getTotalCommits).sum();
+        double avgCommits = dailyData.stream().mapToInt(DailyProductivity::getTotalCommits).average().orElse(0.0);
+        int maxCommits = dailyData.stream().mapToInt(DailyProductivity::getTotalCommits).max().orElse(0);
+
+        return ProductivityChartResponse.Summary.builder()
+                .averageTasksPerDay(Math.round(avgTasks * 100.0) / 100.0)
+                .averageProductivityScore(Math.round(avgScore * 100.0) / 100.0)
+                .trend(period)
+                .trendPercentage(0.0)
+                .totalCommits(totalCommits)
+                .averageCommits(Math.round(avgCommits * 100.0) / 100.0)
+                .maxCommits(maxCommits)
+                .build();
+    }
+
+    // 점수 계산 메서드들 (가중치 조정)
+    private double calculateTaskScore(int completedFeatures) {
+        // 완료된 기능 수에 따른 점수 (0-100)
+        return Math.min(completedFeatures * 25.0, 100.0);
+    }
+
+    private double calculateCommitScore(int commits) {
+        // 커밋 수에 따른 점수 (0-100)
+        return Math.min(commits * 15.0, 100.0); // 커밋 당 15점으로 조정
+    }
+
+    private double calculateBasicScore(int completedFeatures, int commits) {
+        // 코드품질 제외, 작업완료:커밋 = 7:3 비율
+        return (calculateTaskScore(completedFeatures) * 0.7) + (calculateCommitScore(commits) * 0.3);
+    }
+
     @Transactional
-    public void saveProductivityMetric(Long userId, Long projectId, LocalDate date,
-                                       double overallScore,
-                                       Map<String, ProductivityCalculateResponse.MetricScore> breakdown,
-                                       String trend) {
-
-        // 기존 ProductivityMetric 중복 방지
-        ProductivityMetric.ProductivityMetricBuilder builder = ProductivityMetric.builder()
-                .userId(userId)
-                .projectId(projectId)
-                .date(date)
-                .productivityScore(overallScore)
-                .trend(ProductivityMetric.TrendType.valueOf(trend.toUpperCase()));
-
-        if (breakdown.containsKey("taskCompletion")) {
-            ProductivityCalculateResponse.MetricScore taskMetric = breakdown.get("taskCompletion");
-            builder.taskCompletionScore(taskMetric.getScore())
-                    .taskWeight(taskMetric.getWeight());
-        }
-        if (breakdown.containsKey("commitFrequency")) {
-            ProductivityCalculateResponse.MetricScore commitMetric = breakdown.get("commitFrequency");
-            builder.commitFrequencyScore(commitMetric.getScore())
-                    .commitWeight(commitMetric.getWeight());
-        }
-        if (breakdown.containsKey("codeQuality")) {
-            ProductivityCalculateResponse.MetricScore qualityMetric = breakdown.get("codeQuality");
-            builder.codeQualityScore(qualityMetric.getScore())
-                    .codeQualityWeight(qualityMetric.getWeight());
-        }
-
-        productivityMetricRepository.save(builder.build());
-
-        // DailyProductivity Upsert (중복 방지)
+    public void saveDailyProductivity(Long userId, Long projectId, LocalDate date,
+                                       int completedFeatures, int totalCommits, double overallScore) {
         DailyProductivity daily = dailyProductivityRepository
                 .findByUserIdAndProjectIdAndDate(userId, projectId, date)
-                .orElseGet(() -> DailyProductivity.builder()
+                .orElse(DailyProductivity.builder()
                         .userId(userId)
                         .projectId(projectId)
                         .date(date)
                         .build());
 
-        daily.setCompletedTasks(breakdown.containsKey("taskCompletion") ?
-                (int)(breakdown.get("taskCompletion").getScore() / 25) : 0);
-        daily.setCommits(breakdown.containsKey("commitFrequency") ?
-                (int)(breakdown.get("commitFrequency").getScore() / 12.5) : 0);
-        daily.setCodeQuality(breakdown.containsKey("codeQuality") ?
-                breakdown.get("codeQuality").getScore() : 0.0);
+        daily.setCompletedFeatures(completedFeatures);
+        daily.setTotalCommits(totalCommits);
         daily.setProductivityScore(overallScore);
+        // codeQuality 필드 제거 또는 설정하지 않음
 
         dailyProductivityRepository.save(daily);
-    }
-
-    /**
-     * 차트 데이터를 JSONB로 저장 (선택적)
-     */
-    private void saveChartData(Long userId, Long projectId, String period, ProductivityChartResponse response) {
-        try {
-            Map<String, Object> dataJson = new HashMap<>();
-            dataJson.put("success", response.isSuccess());
-            dataJson.put("data", response.getData());
-
-            ChartData chartData = ChartData.builder()
-                    .userId(userId)
-                    .projectId(projectId)
-                    .type(PRODUCTIVITY_CHART_TYPE)
-                    .granularity(period)
-                    .dataJson(dataJson)
-                    .build();
-
-            chartDataRepository.save(chartData);
-            log.debug("차트 데이터 저장 완료 - userId: {}, projectId: {}, period: {}", userId, projectId, period);
-        } catch (Exception e) {
-            log.warn("차트 데이터 저장 실패 - userId: {}, projectId: {}, error: {}", userId, projectId, e.getMessage());
-        }
     }
 }

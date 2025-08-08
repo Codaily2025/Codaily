@@ -1,24 +1,20 @@
-// import React from 'react';
-// import AdditionalInfo from '../../components/organisms/AdditionalInfo';
-import './AdditionalInfo.css';
-
-// const SignUp = () => {
-//     return (
-//         <div>
-//             <AdditionalInfo />
-//         </div>
-//     )
-// }
-
-// export default SignUp
-
 import React from 'react'
-import AdditionalInfoTemplate from '@/components/layouts/AdditionalInfoTemplate'
+import SignupForm from '@/components/organisms/SignupForm'
+import './Signup.css'
 
-const AdditionalInfo = () => {
+const Signup = () => {
     return (
-        <AdditionalInfoTemplate />
+        <div style={{
+            width: '550px',
+            minHeight: '100vh'
+        }}>
+            <div style={{
+                padding: '30px 40px'
+            }}>
+                <SignupForm />
+            </div>
+        </div>
     )
 }
 
-export default AdditionalInfo
+export default Signup

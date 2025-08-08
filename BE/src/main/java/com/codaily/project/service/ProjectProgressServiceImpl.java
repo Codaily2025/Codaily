@@ -1,8 +1,7 @@
 package com.codaily.project.service;
 
 import com.codaily.project.dto.ProjectProgressResponse;
-import com.codaily.project.entity.Task;
-import com.codaily.project.repository.TaskRepository;
+import com.codaily.project.repository.FeatureItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,17 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProjectProgressServiceImpl implements ProjectProgressService {
 
-    private final TaskRepository taskRepository;
+    private final FeatureItemRepository featureItemRepository;
 
     @Override
     public ProjectProgressResponse getProjectProgress(Long projectId) {
         try {
             // 전체 작업 수 조회
-            Long totalTasks = taskRepository.countByProjectId(projectId);
+            Long totalTasks = featureItemRepository.countByProjectId(projectId);
 
             // 완료된 작업 수 조회
-            Long completedTasks = taskRepository.countByProjectIdAndStatus(
-                    projectId, Task.Status.COMPLETED);
+            Long completedTasks = featureItemRepository.countByProjectIdAndStatus(projectId, "DONE");
 
             // 진행률 계산 (소수점 한자리까지)
             Double percentage = calculateProgressPercentage(completedTasks, totalTasks);

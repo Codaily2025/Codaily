@@ -1,9 +1,12 @@
 package com.codaily.codereview.entity;
 
 import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.scheduling.config.Task;
+
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -11,9 +14,10 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "code_reviews")
 @Getter
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Setter
+@NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class CodeReview {
 
     @Id
@@ -21,12 +25,12 @@ public class CodeReview {
     private Long reviewId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
-    private Project project;
+    @JoinColumn(name = "feature_id")
+    private FeatureItem featureItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id", nullable = false)
-    private FeatureItem featureItem;
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
     @Column(name = "quality_score")
     private Double qualityScore;

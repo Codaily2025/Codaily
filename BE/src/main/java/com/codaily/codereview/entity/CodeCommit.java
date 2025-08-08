@@ -1,23 +1,26 @@
 package com.codaily.codereview.entity;
 
+import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.scheduling.config.Task;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "code_commits")
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class CodeCommit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commitId;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "feature_id")
+    private FeatureItem featureItem;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id")
     private Project project;
