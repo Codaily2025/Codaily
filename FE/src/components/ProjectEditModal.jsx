@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, memo } from 'react';
 import './ProjectEditModal.css';
 import { useProjectStore } from '../stores/mypageProjectStore';
+import { useUpdateProjectMutation } from '../queries/useProjectMutation';
 
 // SVG 아이콘들
 const CloseIcon = () => (
@@ -46,10 +47,11 @@ const RepoIcon = () => (
     </defs>
   </svg>
 );
-
-const ProjectEditModal = ({ onClose, data, onSave }) => {
+const ProjectEditModal = ({ onClose, data, onSave, userId : id}) => {
+// const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   console.log('project:', data?.title)
 
+  
   // useProjectStore에서 프로젝트 정보 가져오기
   const { projects } = useProjectStore();
   
@@ -58,6 +60,10 @@ const ProjectEditModal = ({ onClose, data, onSave }) => {
   
   // 스토어에서 가져온 정보가 있으면 사용하고, 없으면 data prop 사용
   const projectData = projectFromStore || data;
+
+  // 프로젝트 수정 뮤테이션
+  const { mutate, isPending } = useUpdateProjectMutation(projectData?.userId);
+  // const { mutate, isPending } = useUpdateProjectMutation(userId);
 
   // project가 없을 때 기본값 처리
   if (!projectData) {
@@ -109,7 +115,6 @@ const ProjectEditModal = ({ onClose, data, onSave }) => {
     projectName: projectData?.title || '', // 프로젝트 이름
     startDate: initialStartDate, // 시작일
     endDate: initialEndDate, // 종료일
-    timeByDay: projectData?.timeByDay || {}, // 요일별 투자 시간
     repoUrl: projectData?.repoUrl || '', // 저장소 URL
   });
 
@@ -204,29 +209,7 @@ const ProjectEditModal = ({ onClose, data, onSave }) => {
     );
   };
 
-  const handleSave = (e) => {
-    e.preventDefault();
 
-    if (formData.projectName.trim() === '') {
-      setErrors(prev => ({ ...prev, projectName: true }));
-      return;
-    }
-
-    // 시작일과 종료일을 하나의 문자열로 결합
-    const duration = formData.startDate && formData.endDate 
-      ? `${formData.startDate.replace(/\./g, '-')} ~ ${formData.endDate.replace(/\./g, '-')}`
-      : '';
-
-    if (typeof onSave === 'function') {
-      onSave({
-        ...(projectData || {}),
-        title: formData.projectName,
-        duration: duration,
-        timeByDay: timeByDay,
-        repoUrl: formData.repoUrl
-      });
-    }
-  };
 
   const days = ['월', '화', '수', '목', '금', '토', '일'];
   
@@ -294,6 +277,48 @@ const ProjectEditModal = ({ onClose, data, onSave }) => {
     return `${hours}시간 ${minutes > 0 ? minutes + '분' : ''}`;
   };
 
+  const handleSave = (e) => {
+    e.preventDefault();
+
+    if (formData.projectName.trim() === '') {
+      setErrors(prev => ({ ...prev, projectName: true }));
+      return;
+    }
+
+    // 시작일과 종료일을 하나의 문자열로 결합
+    // const duration = formData.startDate && formData.endDate 
+    //   ? `${formData.startDate.replace(/\./g, '-')} ~ ${formData.endDate.replace(/\./g, '-')}`
+    //   : '';
+
+    // if (typeof onSave === 'function') {
+    //   onSave({
+    //     ...(projectData || {}),
+    //     title: formData.projectName,
+    //     duration: duration,
+    //     timeByDay: timeByDay,
+    //     repoUrl: formData.repoUrl
+    //   });
+    // }
+
+    // mutate 함수를 호출하여 API 요청 실행
+    mutate({
+      // userId: userId,
+      userId: projectData.userId,
+      projectId: projectData.id,
+      projectData: {
+        title: formData.projectName,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        timeByDay: timeByDay,
+        // repoUrl은 API 명세에 없으므로 여기서는 제외함
+      },
+    }, {
+      // API 요청이 성공하면 모달 닫기
+      onSuccess: () => {
+        onClose();
+      }
+    });
+  };
   // Github 저장소 선택
   const [selectedRepoOption, setSelectedRepoOption] = useState(0); // 0: 현재, 1: 새로 만들기, 2: 기존 연결
 
