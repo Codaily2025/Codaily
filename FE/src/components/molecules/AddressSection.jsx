@@ -8,7 +8,9 @@ const AddressSection = ({
     rowClassName = '',
     groupClassName = '',
     labelClassName = '',
-    inputClassName = ''
+    inputClassName = '',
+    formData,
+    updateField
 }) => {
     return (
         <div className={className}>
@@ -19,6 +21,8 @@ const AddressSection = ({
                     label="Country"
                     fieldName="country"
                     placeholder="Country"
+                    value={formData.country}
+                    onChange={(e) => updateField('country', e.target.value)}
                     className={groupClassName}
                     labelClassName={labelClassName}
                     inputClassName={inputClassName}
@@ -27,6 +31,8 @@ const AddressSection = ({
                     label="City"
                     fieldName="city"
                     placeholder="City"
+                    value={formData.city}
+                    onChange={(e) => updateField('city', e.target.value)}
                     className={groupClassName}
                     labelClassName={labelClassName}
                     inputClassName={inputClassName}
@@ -38,6 +44,8 @@ const AddressSection = ({
                     label="Address"
                     fieldName="address"
                     placeholder="Address"
+                    value={formData.address}
+                    onChange={(e) => updateField('address', e.target.value)}
                     className={groupClassName}
                     labelClassName={labelClassName}
                     inputClassName={inputClassName}
@@ -46,6 +54,8 @@ const AddressSection = ({
                     label="Zip Code"
                     fieldName="zipCode"
                     placeholder="Zip Code"
+                    value={formData.zipCode}
+                    onChange={(e) => updateField('zipCode', e.target.value)}
                     className={groupClassName}
                     labelClassName={labelClassName}
                     inputClassName={inputClassName}

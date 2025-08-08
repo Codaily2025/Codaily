@@ -1,5 +1,4 @@
 import React from 'react'
-import useFormField from '@/hooks/useFormField'
 
 const TextInput = ({ 
     type = 'text', 
@@ -8,16 +7,16 @@ const TextInput = ({
     className = '',
     id,
     style,
+    value = '',
+    onChange,
     ...props 
 }) => {
-    const field = fieldName ? useFormField(fieldName) : null
-    
     return (
         <input
             type={type}
             placeholder={placeholder}
-            value={field?.value || ''}
-            onChange={field?.onChange}
+            value={value}
+            onChange={onChange}
             className={className}
             id={id}
             style={style}

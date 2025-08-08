@@ -3,10 +3,10 @@ import FieldLabel from '@/components/atoms/FieldLabel'
 import TextInput from '@/components/atoms/TextInput'
 import NicknameCheckButton from '@/components/atoms/NicknameCheckButton'
 
-const NicknameInputGroup = ({ 
+const GithubAccountInputGroup = ({ 
     fieldName, 
     placeholder, 
-    onNicknameCheck, 
+    onGithubAccountCheck, 
     className = '', 
     labelClassName = '',
     inputClassName = '',
@@ -18,7 +18,7 @@ const NicknameInputGroup = ({
     return (
         <div className={className}>
             <FieldLabel htmlFor={inputId} className={labelClassName}>
-                Nickname
+                Github Account
             </FieldLabel>
             <div style={{ 
                 display: 'flex', 
@@ -34,10 +34,10 @@ const NicknameInputGroup = ({
                     className={inputClassName}
                     style={{ flex: 1 }}
                 />
-                <NicknameCheckButton onClick={onNicknameCheck} />
+                <NicknameCheckButton onClick={onGithubAccountCheck} />
             </div>
         </div>
     )
 }
 
-export default NicknameInputGroup
+export default GithubAccountInputGroup
