@@ -135,3 +135,21 @@ export const getKanbanTabFields = async (projectId) => {
         throw new Error(error.response?.data?.message || 'Kanban Tab Fields를 불러오는데 실패했습니다.')
     }
 }
+
+// 칸반 보드 탭별 feature_items 데이터
+export const getFeatureItemsByKanbanTab = async (projectId, field) => {
+    try {
+        // api 요청 url
+        const url = `projects/${projectId}/features/field/${field}/by-status`
+        console.log('요청 url 확인: ', url)
+
+        // 실제 서버 연동 시 
+        // const response = await defaultInstance.get(``)
+        const response = await authInstance.get(url)
+        return response.data
+
+    } catch (error) {
+        console.error('getFeatureItemsByKanbanTab Error: ', error)
+        throw new Error(error.response?.data?.message || `${field} 하위 feature_items를 불러오는데 실패했습니다.`)
+    }
+}
