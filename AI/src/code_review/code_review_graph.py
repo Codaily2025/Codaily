@@ -17,16 +17,20 @@ builder.add_node("send_result_to_java", send_result_to_java)
 # 시작점 설정
 builder.set_entry_point("run_feature_inference")
 
-# 기능명 유추 결과가 없으면 종료
-def should_end(state: CodeReviewState):
-    return not state.feature_names or len(state.feature_names) == 0
+# 조건 함수: 다음 노드 이름을 직접 반환
+def should_continue(state: CodeReviewState) -> str:
+    if state.get("feature_names"):
+        return "run_parallel_feature_graphs"
+    else:
+        return END
 
+# 조건 분기 연결
 builder.add_conditional_edges(
     "run_feature_inference",
-    condition=should_end,
-    path_map={
-        True: END,
-        False: "run_parallel_feature_graphs"
+    should_continue,
+    {
+        "run_parallel_feature_graphs": "run_parallel_feature_graphs",
+        END: END
     }
 )
 

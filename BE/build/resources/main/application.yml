@@ -58,6 +58,7 @@ github:
 gpt:
   api:
     feature-inference-url: http://localhost:8000/api/feature-inference
+    generate-checklist-url: http://localhost:8000/api/generate-checklist
 
 springdoc:
   api-docs:

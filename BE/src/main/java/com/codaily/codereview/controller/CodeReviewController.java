@@ -10,6 +10,7 @@ import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.service.FeatureItemService;
 import com.codaily.project.service.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -88,6 +89,7 @@ public class CodeReviewController {
 
     // 기능 코드리뷰 요약
     @GetMapping("/{featureId}/summary")
+    @Operation(summary = "코드 리뷰", description = "각 코드리뷰 항목에 대한 한줄 요약")
     public ResponseEntity<CodeReviewSummaryResponseDto> getCodeReviewSummary(
             @PathVariable Long featureId
     ) {

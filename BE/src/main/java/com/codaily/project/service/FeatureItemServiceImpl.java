@@ -704,6 +704,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
 
         List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
+                .filter(item -> item.getParentFeature() != null)
                 .map(item -> new FeatureChecklistFeatureDto(
                         item.getFeatureId(),
                         item.getTitle(),
@@ -732,6 +733,60 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             checklistMap.forEach((featureIdStr, checklistItems) -> {
                 Long featureId = Long.parseLong(featureIdStr);
                 FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
+                List<FeatureItemChecklist> checklistList = checklistItems.stream()
+                        .map(item -> FeatureItemChecklist.builder()
+                                .featureItem(featureItem).item(item).done(false).build())
+                        .toList();
+
+                featureItemChecklistRepository.saveAll(checklistList);
+            });
+
+            log.info("Checklist 생성 및 저장 완료");
+
+        } catch (WebClientResponseException e) {
+            log.error("Checklist 생성 실패: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Checklist 생성 중 예외 발생", e);
+        }
+    }
+
+    @Override
+    public void generateExtraFeatureItemChecklist(Long featureId) {
+        FeatureItem featureItem = featureItemRepository.getFeatureItemByFeatureId(featureId);
+
+        // 주 기능이면 return
+        if (featureItem.getParentFeature() == null) {
+            log.warn("루트 기능은 추가 checklist 생성 대상이 아닙니다. featureId = {}", featureId);
+            return;
+        }
+        FeatureChecklistFeatureDto dto = FeatureChecklistFeatureDto.builder()
+                .featureId(featureId)
+                .title(featureItem.getTitle())
+                .description(featureItem.getDescription())
+                .build();
+
+        FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder()
+                .features(List.of(dto))
+                .build();
+
+        try {
+            FeatureChecklistResponseDto response = webClient
+                    .post()
+                    .uri("/api/generate-checklist")
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(FeatureChecklistResponseDto.class)
+                    .block();
+
+            Map<String, List<String>> checklistMap = response.getChecklistMap();
+
+            if (checklistMap == null) {
+                log.warn("Checklist 응답이 비어있습니다.");
+                return;
+            }
+
+            // checklist 저장
+            checklistMap.forEach((featureIdStr, checklistItems) -> {
                 List<FeatureItemChecklist> checklistList = checklistItems.stream()
                         .map(item -> FeatureItemChecklist.builder()
                                 .featureItem(featureItem).item(item).done(false).build())

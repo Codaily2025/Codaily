@@ -5,8 +5,7 @@ import asyncio
 from copy import deepcopy
 
 from ..state import CodeReviewState
-from ..prompts import feature_inference_prompt, checklist_evaluation_prompt, code_review_prompt, review_summary_prompt, commit_message_completion_prompt, commit_message_prompt
-from ..subgraph import create_feature_graph
+from ..prompts import feature_inference_prompt, checklist_evaluation_prompt, code_review_prompt, review_summary_prompt, commit_message_prompt
 
 # 기능명 추론
 async def run_feature_inference(state: CodeReviewState) -> CodeReviewState:
@@ -334,6 +333,8 @@ async def send_result_to_java(state: CodeReviewState) -> CodeReviewState:
 
 
 async def run_parallel_feature_graphs(state: CodeReviewState) -> CodeReviewState:
+    from ..subgraph import create_feature_graph
+
     feature_names = state.feature_names or []
 
     if len(feature_names) == 1:

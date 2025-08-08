@@ -44,4 +44,6 @@ public interface FeatureItemService {
     FeatureItem findById(Long featureId);
 
     void generateFeatureItemChecklist(Long projectId);
+
+    void generateExtraFeatureItemChecklist(Long featureId);
 }
