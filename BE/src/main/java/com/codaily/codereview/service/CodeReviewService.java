@@ -26,4 +26,10 @@ public interface CodeReviewService {
     CodeReviewScoreResponseDto getQualityScore(Long featureId);
 
     SeverityByCategoryResponseDto getSeverityByCategory(Long featureId);
-}
+
+    List<Map<String, Object>> getAllCodeReviews(Long projectId);
+
+    List<CodeReviewAllResponseDto> getCodeReviewsAllSummary(Long userId);
+    public List<CodeReviewAllResponseDto> getUserAllCodeReviews(Long userId);
+
+    }

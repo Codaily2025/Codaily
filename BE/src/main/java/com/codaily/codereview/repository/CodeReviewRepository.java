@@ -28,4 +28,11 @@ public interface CodeReviewRepository extends JpaRepository<CodeReview, Long> {
 //    List<CodeReview> findByProject_ProjectIdOrderByCreatedAtDesc(Long projectId);
 
     Optional<CodeReview> findByFeatureItem_FeatureId(Long featureId);
+
+    @Query("SELECT cr FROM CodeReview cr WHERE cr.project.user.userId = :userId AND cr.createdAt BETWEEN :start AND :end")
+    List<CodeReview> findByProject_User_UserIdAndCreatedAtBetween(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end
+    );
 }

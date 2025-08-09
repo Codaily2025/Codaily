@@ -1,6 +1,6 @@
 
 from fastapi import APIRouter
-from .schema import FeatureChecklistRequest, FeatureChecklistResponse
+from .checklist_schema import FeatureChecklistRequest, FeatureChecklistResponse
 from .feature_checklist_prompt import feature_checklist_prompt
 from langchain_openai import ChatOpenAI
 import json
@@ -15,7 +15,7 @@ async def generate_checklist(request: FeatureChecklistRequest):
     # 1. 기능 목록 포맷 문자열 생성
     formatted = ""
     for f in request.features:
-        formatted += f"- ID: {f.featureId}\n  제목: {f.title}\n  설명: {f.description}\n\n"
+        formatted += f"- ID: {f.featureId}\n  기능명: {f.title}\n\n"
 
     # 2. 프롬프트 구성 및 GPT 호출
     prompt = feature_checklist_prompt.format_messages(feature_list=formatted)

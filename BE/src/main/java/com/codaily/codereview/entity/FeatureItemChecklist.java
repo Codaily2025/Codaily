@@ -17,9 +17,9 @@ public class FeatureItemChecklist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long checklistId;
 
-    // 🔹 기능 연결 (ManyToOne)
+    // 기능 연결 (ManyToOne)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feature_id", nullable = false)
     private FeatureItem featureItem;

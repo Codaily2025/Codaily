@@ -28,7 +28,7 @@ class FeatureItemServiceImplTest {
     void setUp() {
         featureItemRepository = mock(FeatureItemRepository.class);
         projectRepository = mock(ProjectRepository.class);
-        featureItemService = new FeatureItemServiceImpl(projectRepository,null,featureItemRepository,null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
+        featureItemService = new FeatureItemServiceImpl(projectRepository,null,featureItemRepository,null, null, null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
     }
 
     @Test

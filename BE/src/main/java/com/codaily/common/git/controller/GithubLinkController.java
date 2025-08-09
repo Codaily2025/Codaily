@@ -4,6 +4,7 @@ import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.service.UserService;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
 import com.codaily.common.git.service.GithubService;
+import com.codaily.common.git.service.WebhookService;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -89,6 +90,8 @@ public class GithubLinkController {
             @Parameter(description = "연결할 프로젝트 ID") @RequestParam Long projectId
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
+        String repoOwner = userService.getGithubUsername(userDetails.getUserId());
+        githubService.registerWebhook(repoOwner, repoName, accessToken);
 
         return githubService.createRepository(accessToken, repoName)
                 .doOnNext(repoUrl ->
@@ -116,6 +119,7 @@ public class GithubLinkController {
             @Parameter(description = "연결할 프로젝트 ID") @RequestParam Long projectId
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
+        githubService.registerWebhook(owner, repoName, accessToken);
 
         return githubService.getRepositoryInfo(accessToken, owner, repoName)
                 .doOnNext(repo -> {

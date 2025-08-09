@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from .code_review_schema import CodeReviewState
+from .state import CodeReviewState
 from .code_review_graph import code_review_graph
 
 router = APIRouter()

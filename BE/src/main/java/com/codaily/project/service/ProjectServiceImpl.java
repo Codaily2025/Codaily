@@ -212,6 +212,7 @@ public class ProjectServiceImpl implements ProjectService {
         if (request.getDaysOfWeek() != null) {
             updateDaysOfWeek(project, request.getDaysOfWeek());
         }
+        // 임시로 rescheduleProject 호출을 비활성화 (테스트용)
         if (scheduleChanged || daysOfWeekChanged || dateChanged) {
             scheduleService.rescheduleProject(projectId);
         }
