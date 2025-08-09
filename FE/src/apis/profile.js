@@ -1,10 +1,15 @@
 // src/apis/profile.js
 // 유저 프로필 관련 API
 import { authInstance } from './axios';
+import { useAuthStore } from '../stores/authStore';
+
+// const { user } = useAuthStore();
+// const userId = user?.id;
+const userId = 1;
 
 // profile dummy data (fallback용)
 export const dummyProfile = {
-    userId: 1,               // 임시 userId
+    userId: userId,               // 임시 userId
     profileImage: null,       // 향후 URL로 교체
     nickname: 'TempNickname',
     email: 'code@example.com',
@@ -43,6 +48,18 @@ export async function updateNickname(userId, nickname) {
     }
 }
 
+// 기술스택 조회 API
+export async function fetchTechStack(userId) {
+    try {
+        const response = await authInstance.get(`/github/tech-stack`);
+        console.log('프로필 기술 스택 조회 응답:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('기술스택 조회 실패:', error);
+        throw error;
+    }
+}
+
 // 프로필 정보를 가져오는 함수
 // 실제 api 사용시 아래 주석 처리된 코드 사용하기
 // return axios.get('/api/profile').then(res => res.data);
@@ -54,12 +71,14 @@ export async function fetchProfile() {
         const nicknameData = await fetchNickname(userId);
         // console.log('fetchProfile nicknameData:', nicknameData);
         // {nickname: 'TempNickname111'}
+        const techStackData = await fetchTechStack(userId); // 객체
         return {
             userId: userId, // userId 추가
             profileImage: null,
             nickname: nicknameData.nickname || 'TempNickname', // API 응답에서 닉네임 추출
             email: 'code@example.com',
             githubAccount: 'hiabc',
+            techStack: techStackData.technologies,
         };
     } catch (error) {
         console.error('프로필 조회 실패, 더미 데이터 사용:', error);

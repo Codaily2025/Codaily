@@ -562,7 +562,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             FeatureItem subFeature = FeatureItem.builder()
                     .title(sub.getTitle())
                     .description(sub.getDescription())
-                    .field(chunk.getField())
+                    .field(savedMain.getField())
                     .project(project)
                     .specification(spec)
                     .priorityLevel(sub.getPriorityLevel())

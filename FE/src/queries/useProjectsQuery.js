@@ -1,8 +1,6 @@
 // src/queries/useProjectsQuery.js
 import { useQuery } from '@tanstack/react-query';
-import { fetchProjects, fetchProjectsByUserId } from '../stores/mypageProjectStore'; // 모의(fetch) 함수를 불러옵니다
-// fetchProjects: 모의(fetch) 함수
-// fetchProjectsByUserId: 백엔드 API에서 프로젝트 목록 조회하는 함수
+import { fetchProjectsByUserId } from '../apis/mypageProject'; // API 함수를 불러옵니다
 
 export const useProjectsQuery = (userId) => {
   return useQuery({

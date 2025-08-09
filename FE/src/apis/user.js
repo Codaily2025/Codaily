@@ -1,6 +1,6 @@
 // src/apis/user.js
 export const fetchUserProfile = async (token) => {
-  const response = await fetch('http://localhost:8080/api/me', {
+  const response = await fetch('http://localhost:8081/api/me', {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {

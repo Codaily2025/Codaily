@@ -12,7 +12,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
 
 @Slf4j
 @RestController
@@ -40,16 +39,16 @@ public class ProductivityController {
         }
     }
 
-    @Operation(summary = "생산성 그래프 데이터 조회", description = "단위(주/월) 기준")
+    @Operation(summary = "단일 프로젝트 생산성 그래프 데이터 조회", description = "특정 프로젝트의 단위(주/월) 기준 생산성 데이터")
     @GetMapping("/projects/{projectId}/analytics/productivity")
-    public ResponseEntity<ProductivityChartResponse> getProductivityChart(
+    public ResponseEntity<ProductivityChartResponse> getProjectProductivityChart(
             @PathVariable Long projectId,
             @RequestParam String period,
             @RequestParam String startDate,
             @RequestParam String endDate,
             @AuthenticationPrincipal PrincipalDetails userDetails) {
 
-        log.info("생산성 그래프 데이터 조회 - projectId: {}, period: {}, startDate: {}, endDate: {}",
+        log.info("단일 프로젝트 생산성 그래프 데이터 조회 - projectId: {}, period: {}, startDate: {}, endDate: {}",
                 projectId, period, startDate, endDate);
 
         try {
@@ -74,11 +73,53 @@ public class ProductivityController {
             }
 
             Long userId = userDetails.getUserId();
-            ProductivityChartResponse response = productivityService.getProductivityChart(
+            ProductivityChartResponse response = productivityService.getProjectProductivityChart(
                     userId, projectId, period, start.toString(), end.toString());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("생산성 그래프 데이터 조회 중 오류 발생", e);
+            log.error("단일 프로젝트 생산성 그래프 데이터 조회 중 오류 발생", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @Operation(summary = "전체 프로젝트 생산성 그래프 데이터 조회", description = "사용자의 모든 프로젝트 단위(주/월) 기준 생산성 데이터")
+    @GetMapping("/users/analytics/productivity")
+    public ResponseEntity<ProductivityChartResponse> getAllProjectsProductivityChart(
+            @RequestParam String period,
+            @RequestParam String startDate,
+            @RequestParam String endDate,
+            @AuthenticationPrincipal PrincipalDetails userDetails) {
+
+        log.info("전체 프로젝트 생산성 그래프 데이터 조회 - userId: {}, period: {}, startDate: {}, endDate: {}",
+                userDetails.getUserId(), period, startDate, endDate);
+
+        try {
+            // period 검증
+            if (!"weekly".equals(period) && !"monthly".equals(period)) {
+                log.warn("잘못된 period 파라미터: {}", period);
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 날짜 파싱 검증
+            LocalDate inputDate = LocalDate.parse(startDate);
+            LocalDate start, end;
+
+            if ("weekly".equals(period)) {
+                // 해당 날짜가 속한 주의 월요일~일요일
+                start = inputDate.with(java.time.DayOfWeek.MONDAY);
+                end = inputDate.with(java.time.DayOfWeek.SUNDAY);
+            } else { // monthly
+                // 해당 날짜가 속한 월의 1일~말일
+                start = inputDate.withDayOfMonth(1);
+                end = inputDate.withDayOfMonth(inputDate.lengthOfMonth());
+            }
+
+            Long userId = userDetails.getUserId();
+            ProductivityChartResponse response = productivityService.getAllProjectsProductivityChart(
+                    userId, period, start.toString(), end.toString());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("전체 프로젝트 생산성 그래프 데이터 조회 중 오류 발생", e);
             return ResponseEntity.internalServerError().build();
         }
     }
@@ -103,5 +144,3 @@ public class ProductivityController {
     }
 
 }
-
-

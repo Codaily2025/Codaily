@@ -1,6 +1,6 @@
 // src/stores/mypageProjectStore.js
 import { create } from 'zustand';
-import { authInstance, defaultInstance } from '../apis/axios';
+import { sortProjects } from '../apis/mypageProject';
 
 // 더미 데이터는 여기에서 정의되지만 React Query로 초기 조회(fetch)할 예정입니다.
 const initialProjects = [
@@ -25,71 +25,57 @@ const initialProjects = [
   {
     id: 3,
     title: '개인 포트폴리오 사이트',
-    duration: '2025/04/05 ~ 2025/05/20',
+    duration: '2025/02/05 ~ 2025/05/20',
     progress: 100,
     stack: ['HTML', 'CSS', 'JavaScript'],
     disabled: true,
     repoUrl: 'https://github.com/sample3.git'
+  },
+  {
+    id: 4,
+    title: 'React Native 모바일 앱',
+    duration: '2025/03/01 ~ 2025/05/31',
+    progress: 45,
+    stack: ['React Native', 'TypeScript'],
+    disabled: false,
+    repoUrl: 'https://github.com/sample4.git'
+  },
+  {
+    id: 5,
+    title: 'Angular 대시보드',
+    duration: '2025/02/05 ~ 2025/04/30',
+    progress: 60,
+    stack: ['Angular', 'TypeScript', 'Chart.js'],
+    disabled: false,
+    repoUrl: 'https://github.com/sample5.git'
   }
 ];
 
 export const useProjectStore = create((set) => ({
-  projects: [], // 초기 상태는 빈 배열
-  setProjects: (projects) => set({ projects }),
+  projects: [], // 프로젝트 목록 상태
+  
+  // 프로젝트 목록 설정 (정렬하여 저장)
+  setProjects: (projects) => set({ projects: sortProjects(projects) }),
+  
+  // 프로젝트 삭제 (로컬 상태에서만)
   deleteProject: (projectId) =>
     set((state) => ({
       projects: state.projects.filter((p) => p.id !== projectId),
     })),
-  updateProject: (updatedProject) =>
-    set((state) => ({
-      projects: state.projects.map((p) =>
-        p.id === updatedProject.id ? updatedProject : p
-      ),
-    })),
-  // 참고: 프로젝트 추가용 addProject 함수도 구현해야 함(우리 프로젝트에서는 현재 필요 없음음)
-  // addProject: (newProject) => set((state) => ({ projects: [...state.projects, newProject] })),
-}));
-
-// React Query가 사용할 모의(fetch) 함수
-// 네트워크 요청을 시뮬레이션합니다.
-const fetchProjects = async () => {
-  console.log('프로젝트를 조회합니다 (모의 API 호출)...');
-  await new Promise(resolve => setTimeout(resolve, 500)); // 네트워크 지연을 시뮬레이션합니다
-  return initialProjects;
-};
-
-export { fetchProjects };
-
-// 백엔드 API에서 프로젝트 목록 조회하는 함수
-export const fetchProjectsByUserId = async (userId) => {
-  // console.log(`Fetching projects for userId: ${userId} using authInstance...`);
-  console.log(`Fetching projects for userId: ${userId} using authInstance...`);
-  
-  try {
-    //  authInstance.get을 사용
-    //  defaultInstance.get을 사용
-    // const response = await defaultInstance.get(`/users/${userId}/`);
-    const response = await authInstance.get(`/users/${userId}`);
-    console.log('projects response:', response);
-    const projectsFromApi = response.data;
-
-    // 백엔드 데이터를 프론트엔드 형식으로 변환
-    const formattedProjects = projectsFromApi.map(project => ({
-      id: project.projectId,
-      title: project.title,
-      duration: `${project.startDate} ~ ${project.endDate}`,
-      progress: project.progressRate,
-      stack: project.techStacks,
-      disabled: project.status === '완료',
-      repoUrl: `https://github.com/sample${project.projectId}.git`
-    }));
-
-    return formattedProjects;
-  } catch (error) {
-    console.error('Error fetching projects from API:', error);
-    console.log('Using dummy data instead...');
     
-    // 에러 발생 시 더미 데이터 반환
-    return initialProjects;
-  }
-};
+  // 프로젝트 업데이트 (로컬 상태에서만, 정렬 유지)
+  updateProject: (updatedProject) =>
+    set((state) => {
+      const updatedProjects = state.projects.map((p) =>
+        p.id === updatedProject.id ? updatedProject : p
+      );
+      return { projects: sortProjects(updatedProjects) };
+    }),
+    
+  // 프로젝트 추가 (로컬 상태에서만, 정렬 유지)
+  addProject: (newProject) => 
+    set((state) => {
+      const newProjects = [...state.projects, newProject];
+      return { projects: sortProjects(newProjects) };
+    }),
+}));

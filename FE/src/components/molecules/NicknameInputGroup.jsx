@@ -9,7 +9,9 @@ const NicknameInputGroup = ({
     onNicknameCheck, 
     className = '', 
     labelClassName = '',
-    inputClassName = ''
+    inputClassName = '',
+    value,
+    onChange
 }) => {
     const inputId = `input-${fieldName}`
 
@@ -25,8 +27,10 @@ const NicknameInputGroup = ({
             }}>
                 <TextInput 
                     id={inputId}
-                    fieldName={fieldName}
+                    fieldName={value !== undefined ? null : fieldName}
                     placeholder={placeholder}
+                    value={value}
+                    onChange={onChange}
                     className={inputClassName}
                     style={{ flex: 1 }}
                 />

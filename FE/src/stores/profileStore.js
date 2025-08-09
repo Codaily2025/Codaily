@@ -1,72 +1,85 @@
 // src/stores/profileStore.js
+// 클라이언트 상태만 관리하는 스토어 (프로필 편집 폼 상태, 임시 데이터 등)
 import { create } from 'zustand'
-import { dummyProfile, fetchNickname as apiFetchNickname, updateNickname as apiUpdateNickname } from '../apis/profile' // 더미 데이터와 API 함수
 
 export const useProfileStore = create((set, get) => ({
-  profile: dummyProfile,
-  isLoading: false,
-  error: null,
+  // 프로필 편집 폼 데이터 (임시 상태)
+  editFormData: {
+    nickname: '',
+    email: '',
+    githubAccount: '',
+    profileImage: null,
+  },
   
-  // profile: {
-  //   profileImage: null,
-  //   nickname: '',
-  //   email: '',
-  //   githubAccount: '',
-  // },
+  // 프로필 편집 관련 UI 상태
+  previewImage: null,
+  formErrors: {},
+  isEmailVerifying: false,
+  isEmailVerified: false,
+  isGithubConnecting: false,
+  isGithubReconnected: false,
+  hasVerifiedEmailOnce: false,
   
-  // 전체 프로필 세팅
-  setProfile: (newProfile) => set({ profile: newProfile }),
+  // 폼 데이터 초기화 (서버 데이터로부터)
+  initializeFormData: (profileData) => set({
+    editFormData: {
+      nickname: profileData.nickname || '',
+      email: profileData.email || '',
+      githubAccount: profileData.githubAccount || '',
+      profileImage: profileData.profileImage || null,
+    },
+    previewImage: profileData.profileImage || null,
+    formErrors: {},
+    isEmailVerified: true,
+    isEmailVerifying: false,
+    isGithubReconnected: false,
+    isGithubConnecting: false,
+    hasVerifiedEmailOnce: false,
+  }),
   
-  // 필드 단위 업데이트
-  updateField: (key, value) =>
+  // 폼 필드 업데이트
+  updateFormField: (key, value) =>
     set((state) => ({
-      profile: { ...state.profile, [key]: value },
+      editFormData: { ...state.editFormData, [key]: value },
+    })),
+  // 프리뷰 이미지 업데이트
+  setPreviewImage: (image) => set({ previewImage: image }),
+  
+  // 폼 에러 설정
+  setFormErrors: (errors) => set({ formErrors: errors }),
+  
+  // 폼 에러 필드별 설정
+  setFormError: (field, error) =>
+    set((state) => ({
+      formErrors: { ...state.formErrors, [field]: error },
     })),
     
-  // 닉네임 조회 (API 호출)
-  fetchNickname: async (userId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const nicknameData = await apiFetchNickname(userId);
-      set((state) => ({
-        profile: { 
-          ...state.profile, 
-          nickname: nicknameData.nickname || 'TempNickname' 
-        },
-        isLoading: false
-      }));
-      return nicknameData;
-    } catch (error) {
-      set({ 
-        error: error.message || '닉네임 조회에 실패했습니다.',
-        isLoading: false 
-      });
-      throw error;
-    }
-  },
-
-  // 닉네임 수정 (API 호출)
-  updateNickname: async (userId, nickname) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await apiUpdateNickname(userId, nickname);
-      set((state) => ({
-        profile: { 
-          ...state.profile, 
-          nickname: nickname 
-        },
-        isLoading: false
-      }));
-      return response;
-    } catch (error) {
-      set({ 
-        error: error.message || '닉네임 수정에 실패했습니다.',
-        isLoading: false 
-      });
-      throw error;
-    }
-  },
+  // 폼 에러 초기화
+  clearFormErrors: () => set({ formErrors: {} }),
   
-  // 로딩 상태 초기화
-  clearLoading: () => set({ isLoading: false, error: null }),
+  // 이메일 인증 상태 관리
+  setEmailVerifying: (isVerifying) => set({ isEmailVerifying: isVerifying }),
+  setEmailVerified: (isVerified) => set({ isEmailVerified: isVerified }),
+  setHasVerifiedEmailOnce: (hasVerified) => set({ hasVerifiedEmailOnce: hasVerified }),
+  
+  // GitHub 연동 상태 관리
+  setGithubConnecting: (isConnecting) => set({ isGithubConnecting: isConnecting }),
+  setGithubReconnected: (isReconnected) => set({ isGithubReconnected: isReconnected }),
+  
+  // 폼 상태 초기화
+  resetFormState: () => set({
+    editFormData: {
+      nickname: '',
+      email: '',
+      githubAccount: '',
+      profileImage: null,
+    },
+    previewImage: null,
+    formErrors: {},
+    isEmailVerifying: false,
+    isEmailVerified: false,
+    isGithubConnecting: false,
+    isGithubReconnected: false,
+    hasVerifiedEmailOnce: false,
+  }),
 }))

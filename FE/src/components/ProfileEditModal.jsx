@@ -1,85 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfileStore } from '../stores/profileStore';
-import { updateProfile, updateNickname } from '../apis/profile'; // 서버 갱신
+import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation } from '../queries/useProfile';
+import { updateProfile } from '../apis/profile'; // 서버 갱신
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 
+// GitHub OAuth 설정
+const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
+const REDIRECT_URI = 'http://localhost:8081/oauth/github/callback';
+
 const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
+  // React Query로 프로필 데이터 조회
+  const { data: profileData } = useProfileQuery();
 
-  const { profile: storeProfile, setProfile, updateNickname: updateNicknameStore } = useProfileStore();
-  const [formData, setFormData] = useState(
-    {
-      nickname: storeProfile.nickname ?? "",
-      email: storeProfile.email ?? "",
-      githubAccount: storeProfile.githubAccount ?? "",
-      profileImage: storeProfile.profileImage ?? null,
-    }
-  );
-  const [previewImage, setPreviewImage] = useState(storeProfile.profileImage || null) // 이미지 미리보기
-  const [errors, setErrors] = useState({}) // 에러 메시지
-  const [isEmailVerifying, setIsEmailVerifying] = useState(false); // 이메일 인증 중
-  const [isEmailVerified, setIsEmailVerified] = useState(false); // 이메일 인증됨
-  const [isGithubConnecting, setIsGithubConnecting] = useState(false); // 깃허브 연동 중
-  const [isGithubReconnected, setIsGithubReconnected] = useState(false); // 깃허브 연동됨
-  const [hasVerifiedEmailOnce, setHasVerifiedEmailOnce] = useState(false); // 기존 이메일 인증 여부 체크
+  // Zustand 스토어에서 폼 상태만 가져오기
+  const {
+    editFormData,
+    previewImage,
+    formErrors,
+    isEmailVerifying,
+    isEmailVerified,
+    isGithubConnecting,
+    isGithubReconnected,
+    hasVerifiedEmailOnce,
+    initializeFormData,
+    updateFormField,
+    setPreviewImage,
+    setFormErrors,
+    setFormError,
+    clearFormErrors,
+    setEmailVerifying,
+    setEmailVerified,
+    setHasVerifiedEmailOnce,
+    setGithubConnecting,
+    setGithubReconnected,
+    resetFormState,
+  } = useProfileStore();
 
-  const queryClient = useQueryClient(); // 쿼리 클라이언트 인스턴스 생성
+  // React Query 뮤테이션 훅들
+  const updateNicknameMutation = useUpdateNicknameMutation();
+  const updateProfileMutation = useUpdateProfileMutation();
 
-  // 모달이 열릴 때마다 Zustand 프로필로 초기화
+  // 모달이 열릴 때마다 서버 프로필 데이터로 폼 초기화
   useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        nickname: storeProfile.nickname ?? "",
-        email: storeProfile.email ?? "",
-        githubAccount: storeProfile.githubAccount ?? "",
-        profileImage: storeProfile.profileImage ?? null,
-      });
-      setPreviewImage(storeProfile.profileImage || null);
-      setErrors({});
-      // setIsEmailVerified(false);
-      setIsEmailVerified(true); 
-      setIsEmailVerifying(false);
-      setIsGithubReconnected(false);
-      setIsGithubConnecting(false);
-      setHasVerifiedEmailOnce(false); // 이메일 인증 메세지_처음 들어왔을 때는 인증은 되어 있지만 메세지는 no
+    if (isOpen && profileData) {
+      initializeFormData(profileData);
     }
-  }, [isOpen, storeProfile]);
+  }, [isOpen, profileData, initializeFormData]);
 
-  // 프로필 업데이트 뮤테이션
-  const {mutate, isLoading, isError, error} = useMutation({
-    mutationFn: updateProfile, // 서버에 업데이트 요청할 함수
-    onSuccess: (updated) => { // 성공시 콜백
-      // React Query 캐시 업데이트
-      queryClient.setQueryData(['profile'], updated);
-      // Zustand 전역 상태 업데이터
-      setProfile(updated);
-      onClose();
-    }
-  })
+  // 뮤테이션 성공 후 콜백 설정
+  const handleMutationSuccess = () => {
+    resetFormState();
+    onClose();
+  };
 
-  // 닉네임 수정 뮤테이션
-  const {mutate: mutateNickname, isLoading: isNicknameLoading, isError: isNicknameError, error: nicknameError} = useMutation({
-    mutationFn: ({ userId, nickname }) => updateNicknameStore(userId, nickname),
-    onSuccess: (updated) => {
-      // React Query 캐시 업데이트
-      queryClient.setQueryData(['profile'], updated);
-      // Zustand 전역 상태 업데이트
-      setProfile(updated);
-      onClose();
-    },
-    onError: (error) => {
-      console.error('닉네임 수정 실패:', error);
-      setErrors(prev => ({ ...prev, nickname: '닉네임 수정에 실패했습니다.' }));
-    }
-  })
+  // 뮤테이션 에러 처리
+  const handleNicknameError = (error) => {
+    console.error('닉네임 수정 실패:', error);
+    setFormError('nickname', '닉네임 수정에 실패했습니다.');
+  };
   // 입력 필드 변경 핸들러
   const handleChange = (field) => (e) => {
     const value = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    updateFormField(field, value);
     validateField(field, value); // 입력 필드 유효성 검사
   };
 
@@ -90,11 +74,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
       const reader = new FileReader();
       reader.onload = (ev) => {
         setPreviewImage(ev.target.result);
-        setFormData(prev => ({
-          ...prev,
-          // profileImage: file // 아직 백엔드 연동 안 됨
-          profileImage: ev.target.result // 백엔드 연동 안 된 상태에서 base64를 formData에도 저장
-        }));
+        updateFormField('profileImage', ev.target.result);
       };
       reader.readAsDataURL(file); // 이미지 미리보기
     }
@@ -102,7 +82,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
 
   // 입력 필드 유효성 검사 -> 입력 필드 변경 시 호출
   const validateField = (field, value) => {
-    const newErrors = { ...errors };
+    const newErrors = { ...formErrors };
 
     // 닉네임 유효성 검사
     if (field === 'nickname') {
@@ -114,72 +94,83 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     // 이메일 유효성 검사
     if (field === 'email') {
       if (!value.trim()) newErrors.email = '필수 입력란입니다';
-      else if (value !== storeProfile.email) {
+      else if (value !== profileData?.email) {
         // 이메일이 현재 저장된 유저 이메일과 다를 때만 인증 요구
-        setIsEmailVerified(false);
+        setEmailVerified(false);
       }
       else {
         delete newErrors.email;
-        setIsEmailVerified(true); // 원본 이메일과 같으면 다시 인증할 필요 없음
+        setEmailVerified(true); // 원본 이메일과 같으면 다시 인증할 필요 없음
       }
     }
 
     // 에러 메시지 업데이트
-    setErrors(newErrors);
+    setFormErrors(newErrors);
   };
 
   // 이메일 인증 핸들러
   const handleEmailVerification = async () => {
-    if (!formData.email.trim()) {
-      setErrors(prev => ({ ...prev, email: '필수 입력란입니다' }));
+    if (!editFormData.email.trim()) {
+      setFormError('email', '필수 입력란입니다');
       return;
     }
 
-    setIsEmailVerifying(true); // 이메일 인증 중 표시
+    setEmailVerifying(true); // 이메일 인증 중 표시
 
     // 백엔드 API 호출 시뮬레이션
     setTimeout(() => {
-      setIsEmailVerified(true); // 이메일 인증 성공 시 표시
-      setIsEmailVerifying(false); // 이메일 인증 중 표시 종료
+      setEmailVerified(true); // 이메일 인증 성공 시 표시
+      setEmailVerifying(false); // 이메일 인증 중 표시 종료
       setHasVerifiedEmailOnce(true); // 실제 인증 버튼 클릭해 인증했으면 메세지 띄우기
     }, 2000);
   };
 
   // 깃허브 연동 핸들러
   const handleGithubConnect = async () => {
-    setIsGithubConnecting(true); // 깃허브 연동 중 표시
+    // localStorage에서 JWT 토큰 가져오기
+    const token = localStorage.getItem('authToken') || '';
+    console.log('유저의 jwt token: ', token);
 
-    // Simulate GitHub OAuth flow
-    setTimeout(() => {
-      setIsGithubReconnected(true); // 깃허브 연동 성공 시 표시
-      setIsGithubConnecting(false); // 깃허브 연동 중 표시 종료
-      // GitHub 계정 변경
-      setFormData(prev => ({
-        ...prev,
-        githubAccount: 'new-github-account' // 실제 OAuth 콜백에서 받아온 값으로 교체
-      }));
-    }, 2000);
+    // const params = new URLSearchParams({
+    //   client_id: GITHUB_CLIENT_ID,
+    //   redirect_uri: REDIRECT_URI,
+    //   scope: ['repo', 'user:email', 'read:org'].join(''),
+    //   state: token
+    // });
+    // GitHub OAuth URL 생성
+    // const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
+    const scopeRaw = 'repo user:email read:org';
+    const githubAuthUrl =
+      `https://github.com/login/oauth/authorize?` +
+      `client_id=${GITHUB_CLIENT_ID}` +
+      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +       // http%3A%2F%2F...
+      `&scope=${encodeURIComponent(scopeRaw)}` +
+      `&state=${token}`;
+    console.log('githubAuthUrl: ', githubAuthUrl);
+
+    // GitHub OAuth 페이지로 리다이렉트
+    window.location.href = githubAuthUrl;
   };
 
   // 모든 필드 유효성 검사
   const validateAllFields = () => {
     const newErrors = {};
 
-    if (!formData.nickname.trim()) {
+    if (!editFormData.nickname.trim()) {
       newErrors.nickname = '필수 입력란입니다';
-    } else if (formData.nickname.length > 15) {
-      newErrors.nickname = '닉네임은 10자 이내로 작성해주세요';
+    } else if (editFormData.nickname.length > 15) {
+      newErrors.nickname = '닉네임은 15자 이내로 작성해주세요';
     }
 
-    if (!formData.email.trim()) {
+    if (!editFormData.email.trim()) {
       newErrors.email = '필수 입력란입니다';
     }
 
-    if (!formData.githubAccount.trim()) {
+    if (!editFormData.githubAccount.trim()) {
       newErrors.githubAccount = 'GitHub 계정 연동이 필요합니다';
     }
 
-    setErrors(newErrors);
+    setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -194,29 +185,32 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
 
     // 이메일 인증 여부 확인
     if (!isEmailVerified) {
-      setErrors(prev => ({ ...prev, email: '이메일 인증이 필요합니다' }));
+      setFormError('email', '이메일 인증이 필요합니다');
       return; // 저장 안 하고 리턴
     }
 
     // 닉네임이 변경되었는지 확인
-    if (formData.nickname !== storeProfile.nickname) {
+    if (editFormData.nickname !== profileData?.nickname) {
       // 닉네임 수정 API 호출 (임시로 userId 1 사용)
-      mutateNickname({ userId: 1, nickname: formData.nickname });
+      updateNicknameMutation.mutate(
+        { userId: 1, nickname: editFormData.nickname },
+        {
+          onSuccess: handleMutationSuccess,
+          onError: handleNicknameError,
+        }
+      );
     } else {
       // 다른 필드만 변경된 경우 기존 로직 사용
-      mutate(formData);
+      updateProfileMutation.mutate(editFormData, {
+        onSuccess: handleMutationSuccess,
+      });
     }
   };
 
   // 취소 핸들러
   const handleCancel = () => {
-    // 초기 상태로 복원
-    setFormData(storeProfile)
-    setPreviewImage(storeProfile.profileImage || null) // 이미지 적용 / 초기화
-    setErrors({}) // 에러 메시지 초기화
-    setIsEmailVerified(false) // 이메일 인증 상태 초기화
-    setIsGithubReconnected(false) // 깃허브 연동 상태 초기화
-    onClose() // 모달 닫기
+    resetFormState(); // 폼 상태 초기화
+    onClose(); // 모달 닫기
   };
 
   if (!isOpen) return null; // 모달이 닫혀 있으면 렌더링 x
@@ -269,16 +263,16 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
               <input
                 type="text"
                 // value={nickname}
-                value={formData.nickname ?? ""}
+                value={editFormData.nickname ?? ""}
                 onChange={handleChange('nickname')}
-                className={`${styles.inputField} ${styles.nicknameInputField} ${errors.nickname ? styles.inputError : ''}`}
+                className={`${styles.inputField} ${styles.nicknameInputField} ${formErrors.nickname ? styles.inputError : ''}`}
                 placeholder="닉네임을 입력하세요"
               />
             </div>
-            {errors.nickname && (
+            {formErrors.nickname && (
               <div className={styles.errorMessage}>
                 <AlertCircle size={14} />
-                <p>{errors.nickname}</p>
+                <p>{formErrors.nickname}</p>
               </div>
             )}
           </div>
@@ -291,9 +285,9 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 <Mail size={18} className={styles.inputIcon} />
                 <input
                   type="email"
-                  value={formData.email ?? ""}
+                  value={editFormData.email ?? ""}
                   onChange={handleChange('email')}
-                  className={`${styles.inputField} ${styles.emailInputField} ${errors.email ? styles.inputError : ''}`}
+                  className={`${styles.inputField} ${styles.emailInputField} ${formErrors.email ? styles.inputError : ''}`}
                   placeholder="이메일을 입력하세요"
                 />
               </div>
@@ -308,16 +302,16 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 {/* {isEmailVerifying ? '인증 중...' : isEmailVerified ? '재인증' : '인증'} */}
               </button>
             </div>
-            {isEmailVerified && !errors.email && hasVerifiedEmailOnce && (
+            {isEmailVerified && !formErrors.email && hasVerifiedEmailOnce && (
               <div className={styles.successMessage}>
                 <Check size={16} />
                 이메일 인증에 성공했습니다
               </div>
             )}
-            {errors.email && (
+            {formErrors.email && (
               <div className={styles.errorMessage}>
                 <AlertCircle size={14} />
-                <p>{errors.email}</p>
+                <p>{formErrors.email}</p>
               </div>
             )}
           </div>
@@ -330,19 +324,19 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 <Github size={18} className={styles.inputIcon} />
                 <input
                   type="text"
-                  value={`@${formData.githubAccount ?? ""}`}
+                  value={`@${editFormData.githubAccount ?? ""}`}
                   readOnly
-                  className={`${styles.inputField} ${styles.githubInputField} ${styles.readOnlyInput} ${errors.githubAccount ? styles.inputError : ''}`}
+                  className={`${styles.inputField} ${styles.githubInputField} ${styles.readOnlyInput} ${formErrors.githubAccount ? styles.inputError : ''}`}
                   placeholder="GitHub 연동 후 계정명이 표시됩니다"
                 />
               </div>
               <button
+                type="button"
                 onClick={handleGithubConnect}
-                disabled={isGithubConnecting}
                 className={`${styles.actionButton} ${styles.githubButton}`}
               >
                 {/* <Github size={16} /> */}
-                {isGithubConnecting ? '연동 중...' : '변경'}
+                변경
               </button>
             </div>
             {isGithubReconnected && (
@@ -351,10 +345,10 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 GitHub 계정이 연동되었습니다
               </div>
             )}
-            {errors.githubAccount && (
+            {formErrors.githubAccount && (
               <div className={styles.errorMessage}>
                 <AlertCircle size={14} />
-                <p>{errors.githubAccount}</p>
+                <p>{formErrors.githubAccount}</p>
               </div>
             )}
           </div>
@@ -371,10 +365,11 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
           </button>
           <button
             type="submit"
-            disabled={isLoading || isNicknameLoading}
+            onClick={handleSave}
+            disabled={updateProfileMutation.isPending || updateNicknameMutation.isPending}
             className={`${styles.actionButton} ${styles.saveButton}`}
           >
-            {isLoading || isNicknameLoading ? '저장 중...' : '저장'}
+            {updateProfileMutation.isPending || updateNicknameMutation.isPending ? '저장 중...' : '저장'}
           </button>
         </div>
       </form>
