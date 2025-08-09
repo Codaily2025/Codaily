@@ -6,8 +6,8 @@ import com.codaily.management.dto.TodayScheduleResponse;
 import java.time.YearMonth;
 
 public interface CalendarService {
-    CalendarResponse getAllProjectsCalendar(Long userId, YearMonth yearMonth);
-    CalendarResponse getCalendar(Long projectId, YearMonth yearMonth);
-    TodayScheduleResponse getTodayScheduleForUser(Long userId);
-    TodayScheduleResponse getTodayScheduleForProject(Long projectId);
+    public CalendarResponse getAllProjectsCalendar(Long userId, YearMonth yearMonth);
+    public CalendarResponse getCalendar(Long projectId, YearMonth yearMonth);
+    public TodayScheduleResponse getTodayScheduleForUser(Long userId);
+    public TodayScheduleResponse getTodayScheduleForProject(Long projectId);
 }

@@ -20,7 +20,7 @@ public class FileStorageServiceImpl implements FileStorageService {
     @Value("${file.upload.dir:uploads}")
     private String uploadDir;
 
-    @Value("${file.upload.base-url:http://localhost:8080}")
+    @Value("${file.upload.base-url:http://localhost:8081}")
     private String baseUrl;
 
     @Override

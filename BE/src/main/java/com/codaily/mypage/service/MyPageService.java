@@ -16,8 +16,6 @@ public interface MyPageService {
 
     List<ProjectListResponse> searchProjectsByStatus(Long userId, Project.ProjectStatus status);
 
-    boolean isProjectOwner(Long projectId, Long userId);
-
     String uploadProfileImage(Long userId, MultipartFile file);
 
     void deleteProfileImage(Long userId);

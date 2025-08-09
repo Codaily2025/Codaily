@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class MyPageServiceImpl implements MyPageService {
 
     private final FeatureItemSchedulesRepository schedulesRepository;
@@ -46,6 +45,7 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     @Override
+    @Transactional
     public void deleteProject(Long projectId) {
         if (!projectRepository.existsByProjectId(projectId)) {
             throw new IllegalArgumentException("프로젝트를 찾을 수 없습니다.");
@@ -62,6 +62,7 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     @Override
+    @Transactional
     public ProjectStatusResponse completeProject(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트가 존재하지 않습니다."));
@@ -91,13 +92,7 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     @Override
-    public boolean isProjectOwner(Long projectId, Long userId) {
-        return projectRepository.findById(projectId)
-                .map(project -> project.getUserId().equals(userId))
-                .orElse(false);
-    }
-
-    @Override
+    @Transactional
     public String uploadProfileImage(Long userId, MultipartFile file) {
        if(file == null || file.isEmpty()) return null;
 

@@ -29,4 +29,6 @@ public interface ProjectService {
 
     // 메서드 변경 후 삭제 예정
     Project findById(Long projectId);
+
+    boolean isProjectOwner(Long userId, Long projectId);
 }

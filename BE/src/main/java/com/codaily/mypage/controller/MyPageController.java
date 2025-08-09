@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class MyPageController {
     ){
         Long userId = userDetails.getUserId();
 
-        if (!myPageService.isProjectOwner(projectId, userId)) {
+        if (!projectService.isProjectOwner(userId, projectId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -61,7 +62,7 @@ public class MyPageController {
     ){
         Long userId = userDetails.getUserId();
 
-        if (!myPageService.isProjectOwner(projectId, userId)) {
+        if (!projectService.isProjectOwner(userId, projectId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -109,11 +110,11 @@ public class MyPageController {
             @PathVariable Long projectId,
             @RequestBody ProjectUpdateRequest request,
             @AuthenticationPrincipal PrincipalDetails userDetails
-            ) {
+            ) throws AccessDeniedException {
         Long userId = userDetails.getUserId();
 
-        if (!myPageService.isProjectOwner(projectId, userId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!projectService.isProjectOwner(userId, projectId)) {
+            throw new AccessDeniedException("접근 권한이 없습니다.");
         }
 
         projectService.updateProject(projectId, request);
@@ -125,10 +126,6 @@ public class MyPageController {
     public ResponseEntity<ProfileImageUploadResponse> uploadProfileImage(
             @AuthenticationPrincipal PrincipalDetails principalDetails,
             @RequestParam("file") MultipartFile file) {
-
-        if (principalDetails == null) {
-            return ResponseEntity.status(401).build();
-        }
 
         String imageUrl = myPageService.uploadProfileImage(
                 principalDetails.getUser().getUserId(), file);
@@ -145,10 +142,6 @@ public class MyPageController {
     @Operation(summary = "프로필 이미지 삭제")
     public ResponseEntity<Map<String, String>> deleteProfileImage(
             @AuthenticationPrincipal PrincipalDetails principalDetails) {
-
-        if (principalDetails == null) {
-            return ResponseEntity.status(401).build();
-        }
 
         myPageService.deleteProfileImage(
                 principalDetails.getUser().getUserId());

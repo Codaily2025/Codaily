@@ -2,11 +2,8 @@ package com.codaily.mypage.dto;
 
 import lombok.*;
 
+@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
 public class ProfileImageUploadResponse {
     private String message;
     private String imageUrl;

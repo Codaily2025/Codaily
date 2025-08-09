@@ -31,17 +31,21 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
     List<FeatureItem> findByProjectIdAndField(Long projectId, String field);
 
-    @Query("SELECT DISTINCT s.featureItem FROM FeatureItemSchedule s " +
-            "WHERE s.featureItem.project.projectId = :projectId " +
-            "AND s.scheduleDate <= :endDate " +
-            "AND s.featureItem.status != 'DONE'")
+    @Query("SELECT DISTINCT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status != 'DONE' " +
+            "AND (SELECT MAX(s.scheduleDate) FROM FeatureItemSchedule s " +
+            "WHERE s.featureItem.featureId = f.featureId) <= :endDate")
     List<FeatureItem> findOverdueFeatures(Long projectId, LocalDate endDate);
 
-    @Query("SELECT DISTINCT s.featureItem FROM FeatureItemSchedule s " +
-            "WHERE s.featureItem.project.projectId = :projectId " +
-            "AND s.scheduleDate = :today " +
-            "AND s.featureItem.status = 'TODO'")
-    List<FeatureItem> findTodayFeatures(Long projectId, LocalDate today);
+    @Query("SELECT DISTINCT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status = 'TODO' " +
+            "AND (SELECT MIN(s.scheduleDate) FROM FeatureItemSchedule s " +
+            "WHERE s.featureItem.featureId = f.featureId) = :today")
+    List<FeatureItem> findTodayStartFeatures(Long projectId, LocalDate today);
+
+    List<FeatureItem> findByStatusAndProject_ProjectId(String status, Long projectId);
 
     List<FeatureItem> findAllBySpecification_SpecId(Long specId);
 
@@ -125,4 +129,14 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     // 완료된 기능들 조회
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.status = 'DONE' ORDER BY f.completedAt DESC")
     List<FeatureItem> findCompletedFeatures(@Param("projectId") Long projectId);
+
+    @Query("SELECT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status = 'TODO' " +
+            "AND f.estimatedTime > 0 " +
+            "AND f.parentFeature IS NOT NULL " +
+            "AND f.priorityLevel >= :fromPriority " +
+            "ORDER BY f.priorityLevel ASC")
+    List<FeatureItem> findSchedulableFeaturesByPriorityFrom(@Param("projectId") Long projectId, @Param("fromPriority") Integer fromPriority);
+
 }

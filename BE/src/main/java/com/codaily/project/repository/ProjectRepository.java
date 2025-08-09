@@ -1,6 +1,8 @@
 package com.codaily.project.repository;
 
 import com.codaily.project.entity.Project;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import java.util.List;
@@ -15,8 +17,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     Optional<Project> findByProjectId(Long projectId);
 
-    @Query("SELECT p FROM Project p WHERE p.status IN ('IN_PROGRESS')")
+    @Query("SELECT p FROM Project p WHERE p.status = 'IN_PROGRESS' ORDER BY p.projectId")
     List<Project> findActiveProjects();
+
+    @Query("SELECT COUNT(p) FROM Project p WHERE p.status = 'IN_PROGRESS'")
+    long countActiveProjects();
 
     List<Project> findByUser_UserId(Long userId);
 
@@ -41,4 +46,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     // 메서드 수정 후 삭제 예정
     Optional<Project> findById(Long projectId);
+
+    Boolean existsByProjectIdAndUser_UserId(Long projectId, Long userId);
 }

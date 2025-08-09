@@ -23,5 +23,4 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     void deleteByProject(Project project);
 
     List<Schedule> findByProject(Project project);
-
 }
