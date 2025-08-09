@@ -1,14 +1,41 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 // ChevronLeft : 왼쪽 화살표
 // ChevronRight : 오른쪽 화살표
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { fetchProductivityGraph } from '../apis/mypageProductivityGraph';
 
 import './MyPageProductivityGraph.css';
 
 const ProductivityChart = () => {
+  // 대한민국 기존 '오늘' 생성
+  // 마이페이지 들어갔을 때, 보여줄 처음 월/주 정보 기준
+  const getSeoulToday = () => {
+    const seoulNow = new Intl.DateTimeFormat('en-CA',
+      {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
+    const [y, m, d] = seoulNow.format(new Date()).split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+
+  // 월별/주별 모드 선택
   const [viewMode, setViewMode] = useState('monthly');
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 0, 1));
+  // 현재 선택된 월/주 정보 기준
+  const [currentDate, setCurrentDate] = useState(() => getSeoulToday());
+
+  // 주별 모드 시작일 계산
+  const getNowWeekStartMonday = (date) => {
+    const d = new Date(date);
+    const day = d.getDay(); // 0=일, 1=월, ...
+    const diff = (day + 6) % 7; // 월요일 기준 보정
+    d.setDate(d.getDate() - diff);
+    d.setHours(0, 0, 0, 0); // 비교 오차 방지 -> 오늘 0시 0분 0초로 설정
+    return d;
+  }
 
   const generateMonthlyData = (year, month) => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -19,29 +46,53 @@ const ProductivityChart = () => {
     }));
   };
 
+  // 날짜를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수 (타임존 이슈 방지)
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const generateWeeklyData = (startDate) => {
+    const monday = getNowWeekStartMonday(startDate);
     const weekDays = ['월', '화', '수', '목', '금', '토', '일'];
     return weekDays.map((day, i) => {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
       return {
         day,
         commits: Math.floor(Math.random() * 20) + 1,
-        date: date.toISOString().split('T')[0],
+        // date: date.toISOString().split('T')[0],
+        date: formatDate(date),
         fullDay: day
       };
     });
   };
 
+  const today = useMemo(() => getSeoulToday(), []);
+
+  // 오늘과 같은 달/같은 주인지 비교
+  const isSameMonth = (a, b) => {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+  };
+
+  const isSameWeek = (a, b) => {
+    return getNowWeekStartMonday(a).getTime() === getNowWeekStartMonday(b).getTime();
+  };
+
+  // 다음 버튼 비활성화 여부 -> 오늘이 속한 주/월 다음 주/월이면 비홀성화
+  const isNextDisabled = viewMode === 'monthly'
+    ? isSameMonth(currentDate, today)
+    : isSameWeek(currentDate, today);
+
+  // 이전 버튼 비활성화는 아직 사용자의 전체 프로젝트 커밋 기록을 가져오기 어려움으로 생략
+
   const chartData = useMemo(() => {
     if (viewMode === 'monthly') {
       return generateMonthlyData(currentDate.getFullYear(), currentDate.getMonth());
     } else {
-      const monday = new Date(currentDate);
-      const dayOfWeek = monday.getDay();
-      const diff = monday.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-      monday.setDate(diff);
-      return generateWeeklyData(monday);
+      return generateWeeklyData(getNowWeekStartMonday(currentDate));
     }
   }, [viewMode, currentDate]);
 
@@ -57,6 +108,12 @@ const ProductivityChart = () => {
 
   const goToNext = () => {
     setCurrentDate((prev) => {
+      // 한 번 더 방어 (오늘이 속한 주/월 다음 주/월이면 비활성화)
+      const blocked = viewMode === 'monthly'
+        ? isSameMonth(prev, today)
+        : isSameWeek(prev, today);
+      if (blocked) return prev;
+
       const newDate = new Date(prev);
       viewMode === 'monthly'
         ? newDate.setMonth(prev.getMonth() + 1)
@@ -70,13 +127,11 @@ const ProductivityChart = () => {
       const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
       return `${currentDate.getFullYear()}년 ${monthNames[currentDate.getMonth()]}`;
     } else {
-      const monday = new Date(currentDate);
-      const dayOfWeek = monday.getDay();
-      const diff = monday.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-      monday.setDate(diff);
+      const monday = getNowWeekStartMonday(currentDate);
       const sunday = new Date(monday);
       sunday.setDate(monday.getDate() + 6);
       return `${monday.getFullYear()}년 ${monday.getMonth() + 1}월 ${monday.getDate()}일 - ${sunday.getMonth() + 1}월 ${sunday.getDate()}일`;
+      // +1을 해주는 이유 : 월 표기 때문에 0월, 1월, ... 이렇게 표기되기 때문
     }
   };
 
@@ -95,6 +150,48 @@ const ProductivityChart = () => {
     }
     return null;
   };
+
+  // 현재 viewMode와 currentDate를 기반으로 startDate와 endDate를 계산하는 함수
+  const getDateRange = () => {
+    if (viewMode === 'monthly') {
+      // 월별 모드: 해당 월의 1일부터 말일까지
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0); // 해당 월의 마지막 날
+
+      return {
+        startDate: formatDate(startDate),
+        endDate: formatDate(endDate)
+      };
+    } else {
+      // 주별 모드: 해당 주의 월요일부터 일요일까지
+      const monday = getNowWeekStartMonday(currentDate);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      return {
+        startDate: formatDate(monday),
+        endDate: formatDate(sunday)
+      };
+    }
+  };
+
+  const fetchProductivityGraphData = async () => {
+    try {
+      const { startDate, endDate } = getDateRange();
+      console.log(`API 호출 - 모드: ${viewMode}, 시작일: ${startDate}, 종료일: ${endDate}`);
+
+      const response = await fetchProductivityGraph(viewMode, startDate, endDate);
+      console.log('생산성 그래프 데이터 조회 성공:', response);
+    } catch (error) {
+      console.error('생산성 그래프 데이터 조회 실패:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProductivityGraphData();
+  }, [viewMode, currentDate]);
 
   return (
     <section className="productivity-graph-section">
@@ -119,7 +216,11 @@ const ProductivityChart = () => {
             <ChevronLeft className="icon" />
           </button>
           <h3 className="graph-period-text">{getCurrentPeriodText()}</h3>
-          <button onClick={goToNext} className="productivity-graph-nav-button">
+          <button
+            onClick={goToNext}
+            className={`productivity-graph-nav-button ${isNextDisabled ? 'disabled' : ''}`}
+            disabled={isNextDisabled}
+          >
             <ChevronRight className="icon" />
           </button>
         </div>
