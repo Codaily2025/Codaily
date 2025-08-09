@@ -23,14 +23,6 @@ public class SwaggerConfig {
                         .title("Codaily API")
                         .description("Codaily 애플리케이션 API 문서")
                         .version("v1.0.0")
-                )
-                .components(new Components()
-                        .addSecuritySchemes("bearer-jwt",
-                                new SecurityScheme()
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")
-                                        .description("JWT 토큰을 입력하세요 (Bearer 제외)")))
-                .addSecurityItem(new SecurityRequirement().addList("bearer-jwt"));
+                );
     }
 }
