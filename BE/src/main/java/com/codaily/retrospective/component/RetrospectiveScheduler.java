@@ -21,9 +21,9 @@ public class RetrospectiveScheduler {
     private final RetrospectiveGenerateService retrospectiveGenerateService;
 
     /**
-     * 매일 밤 22시에 모든 프로젝트에 대해 일일 회고 생성을 비동기적으로 실행합니다.
+     * 매일 밤 00시에 모든 프로젝트에 대해 일일 회고 생성을 비동기적으로 실행합니다.
      */
-    @Scheduled(cron = "0 0 0 * * *") // 매일 22시 정각 실행
+    @Scheduled(cron = "0 0 0 * * *") // 매일 00시 정각 실행
     public void generateDailyRetrospectives() {
         log.info("일일 회고 스케줄러 시작");
 

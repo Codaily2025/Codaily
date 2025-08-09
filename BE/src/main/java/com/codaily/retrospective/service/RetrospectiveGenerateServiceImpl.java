@@ -1,14 +1,17 @@
 package com.codaily.retrospective.service;
 
 import com.codaily.project.entity.Project;
+import com.codaily.retrospective.dto.RetrospectiveGenerateRequest;
+import com.codaily.retrospective.dto.RetrospectiveGenerateResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDate;
+import java.util.concurrent.CompletableFuture;
 
 @Log4j2
 @Service
@@ -18,41 +21,53 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
     private final WebClient langchainWebClient;
     private final RetrospectiveService retrospectiveService;
 
-    @Async
     @Override
-    public void generateProjectDailyRetrospective(Project project) {
-        if (retrospectiveService.existsByProjectAndDate(project, LocalDate.now())) {
-            log.info("이미 오늘 회고가 존재합니다. 생성 생략 - projectId: {}", project.getProjectId());
-            return;
-        }
+    public CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project) {
+        var today = LocalDate.now();
 
-        // 2. 회고 재료 수집 (예: 오늘 완료된 Task, 커밋 등)
-//        List<Task> todayTasks = taskRepository.findCompletedTasksByProjectAndDate(project.getProjectId(), LocalDate.now());
-//        if (todayTasks.isEmpty()) {
-//            log.info("오늘 완료된 작업이 없습니다. 회고 생성을 생략합니다 - projectId: {}", project.getProjectId());
-//            return;
-//        }
+        return Mono.fromCallable(() -> {
+                    // --- 블로킹 구간을 별도 풀로 이동 ---
+                    if (retrospectiveService.existsByProjectAndDate(project, today)) {
+                        // 이미 존재 → 기존 DTO 반환 (null 허용 시 Optional)
+                        return retrospectiveService.getDailyRetrospective(project.getProjectId(), today);
+                    }
 
-        // 3. GPT 서버 요청 payload 구성
-        Object dailyProjectInfo = new Object();
-//                RetrospectiveRequestDto.builder()
-//                .projectId(project.getProjectId())
-//                .projectTitle(project.getTitle())
-//                .tasks(todayTasks)
-//                .build();
+                    Long userId = project.getUserId();
+                    RetrospectiveGenerateRequest payload =
+                            retrospectiveService.collectRetrospectiveData(project, userId, RetrospectiveTriggerType.AUTO);
 
-        // 4. WebClient로 GPT 서버에 비동기 요청
-        langchainWebClient.post()
-                .uri("/gpt/retrospective")
-                .bodyValue(dailyProjectInfo)
-                .retrieve()
-                .bodyToMono(String.class)
-                .publishOn(Schedulers.boundedElastic()) // JPA 트랜잭션용 스레드로 이동
-                .subscribe(response -> {
-                    // 5. 응답 기반 회고 저장
-                    retrospectiveService.saveRetrospective(project, response);
-                }, error -> {
-                    log.error("GPT 회고 생성 실패 - projectId: {}", project.getProjectId(), error);
-                });
+                    // 재료 없으면 null로 조기 종료
+                    if ((payload.getCompletedFeatures() == null || payload.getCompletedFeatures().isEmpty())
+                            && (payload.getProductivityMetrics() == null
+                            || (payload.getProductivityMetrics().getCompletedFeatures() == 0
+                            && payload.getProductivityMetrics().getTotalCommits() == 0))) {
+                        return CompletableFuture.completedFuture(null);
+                    }
+
+                    // 신호용: 이어서 WebClient를 타야 함 → payload를 래핑해서 넘김
+                    return payload;
+                })
+                .subscribeOn(Schedulers.boundedElastic()) // ← 블로킹을 요청/스케줄러 스레드에서 떼어냄
+                .flatMap(obj -> {
+                    if (obj == null) {
+                        return Mono.empty(); // 재료 없음 → 빈 완료
+                    }
+
+                    if (obj instanceof RetrospectiveGenerateResponse ready) {
+                        return Mono.just(ready); // 이미 존재 → 그 DTO 그대로 반환
+                    }
+                    // 새로 생성해야 함 → WebClient 호출
+                    RetrospectiveGenerateRequest payload = (RetrospectiveGenerateRequest) obj;
+                    return langchainWebClient.post()
+                            .uri("/gpt/retrospective")
+                            .bodyValue(payload)
+                            .retrieve()
+                            .bodyToMono(RetrospectiveGenerateResponse.class);
+                })
+                .publishOn(Schedulers.boundedElastic()) // 저장은 블로킹이므로 여기서
+                .flatMap(resp -> Mono.fromRunnable(() -> retrospectiveService.saveRetrospective(project, resp))
+                        .thenReturn(resp))
+                .toFuture();
     }
+
 }
