@@ -219,11 +219,16 @@
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  /* background-color: white; */
 }
 
 /* 삭제 버튼 hover 스타일, 빨간색 아이콘으로 대체 */
 .iconBtn.deleteBtn:hover {
   background-image: url('../../assets/delete_icon_hover.svg');
+}
+
+.iconBtn.deleteBtn:focus {
+  outline: none;
 }
 
 /* 설정 버튼 스타일 */
@@ -234,9 +239,14 @@
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  /* background-color: white; */
 }
 
 /* 설정 버튼 hover 스타일, 보라색 아이콘으로 대체 */
 .iconBtn.settingsBtn:hover {
   background-image: url('../../assets/setting_icon_hover.svg');
+}
+
+.iconBtn.settingsBtn:focus {
+  outline: none;
 }

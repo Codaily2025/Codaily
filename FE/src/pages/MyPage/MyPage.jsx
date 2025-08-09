@@ -1,3 +1,4 @@
+// src/pages/MyPage/MyPage.jsx
 import React, { useState, useEffect } from 'react';
 import './MyPage.css';
 import ProgressSection from './ProgressSection';
@@ -8,36 +9,21 @@ import githubIcon from '../../assets/github_icon.png';
 import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
 
 import useModalStore from '../../store/modalStore';
-// import { fetchProfile } from '../../apis/profile'; // 서버 호출
-// import { useQuery, useQueryClient } from '@tanstack/react-query'; // 쿼리 클라이언트 사용
-// import { useProfileQuery, useNicknameQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
-import { useProfileStore } from '../../stores/profileStore'; // 프로필 스토어 사용
 import { useProjectsQuery } from '../../queries/useProjectsQuery'; // 프로젝트 조회 훅
 import { useProjectStore } from '../../stores/mypageProjectStore'; // 프로젝트 스토어 사용
 
-// 히트맵 그래프를 위한 더미 데이터
-// level: 0 (활동 없음), 1 (적음), 2 (중간), 3 (많음)
-// const heatmapData = Array.from({ length: 365 }, (_, i) => {
-//   const level = Math.floor(Math.random() * 4);
-//   return { date: new Date(2025, 0, i + 1), level };
-// });
-
 const Mypage = () => {
-  // const [isModalOpen, setIsModalOpen] = useState(false);
   const { isOpen, modalType, openModal, closeModal } = useModalStore()
-  const setProfile = useProfileStore((state) => state.setProfile); // 프로필 저장
-  const profile = useProfileStore((state) => state.profile); // 프로필 가져오기
-  // const { data: fetchedProfile, isLoading, isError, error } = useProfileQuery(); // 프로필 조회 훅
-  // const { data: nicknameData, isLoading: nicknameLoading } = useNicknameQuery(1); // 닉네임 조회 (userId 1 사용)
   const { 
-    data: fetchedProfile, 
+    data: profile, 
     isLoading, isError, 
     error 
   } = useProfileQuery(); // 프로필 조회 훅
-  console.log('fetchedProfile:', fetchedProfile);
-  // {profileImage: null, nickname: 'google_t1g026xmgb4vsk', email: 'code@example.com', githubAccount: 'hiabc'}
-  const userId = fetchedProfile?.userId;
+  console.log('유저 프로필:', profile);
+
+  const userId = profile?.userId || 1;
+
   const {
     data: fetchedProjects,
     isLoading: isLoadingProjects,
@@ -53,25 +39,6 @@ const Mypage = () => {
 
   const [activeFilter, setActiveFilter] = useState('전체'); // 필터 기본값 : 전체
 
-  // 조회된 프로필 데이터를 Zustand 스토어에 저장
-  useEffect(() => {
-    if (fetchedProfile) {
-      setProfile(fetchedProfile);
-    }
-  }, [fetchedProfile, setProfile]);
-
-  // 닉네임 데이터가 로드되면 프로필 업데이트
-  // useEffect(() => {
-  //   if (nicknameData) {
-  //     const current = useProfileStore.getState().profile;
-  //     console.log('닉네임 데이터:', nicknameData);
-  //     setProfile({
-  //       ...current,
-  //       nickname: nicknameData.additionalProp1 || 'TempNickname'
-  //     });
-  //   }
-  // }, [nicknameData, setProfile]);
-
   // 조회된 프로젝트 데이터를 Zustand 스토어에 저장
   useEffect(() => {
     if (fetchedProjects) {
@@ -83,6 +50,8 @@ const Mypage = () => {
 
   if (isError) return <div>에러 발생: {error.message}</div>;
   if (isErrorProjects) return <div>에러 발생: {projectsError.message}</div>;
+
+  if (!profile) return <div>프로필 데이터가 없습니다.</div>;
 
   return (
     <div className="mypage-container">
@@ -105,11 +74,17 @@ const Mypage = () => {
           <div className="info-section">
             <label>사용 가능한 기술 스택</label>
             <div className="info-box tech-stack">
-              <span className="tech-tag">JavaScript</span>
+              { profile.techStack && profile.techStack.map((tech, index) => (
+                <span key={index} className="tech-tag">{tech}</span>
+              ))}
+              { profile.techStack && profile.techStack.length === 0 && (
+                <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
+              )}
+              {/* <span className="tech-tag">JavaScript</span>
               <span className="tech-tag">React</span>
               <span className="tech-tag">TypeScript</span>
               <span className="tech-tag">Next.js</span>
-              <span className="tech-tag">Node.js</span>
+              <span className="tech-tag">Node.js</span> */}
             </div>
           </div>
           <div className="info-section">
@@ -123,7 +98,8 @@ const Mypage = () => {
       </aside>
 
       <main className="main-column">
-        <ProgressSection />
+        {/* 나중에 백엔드에서 프로그래스 로직 구현 되면 주석 해제 */}
+        {/* <ProgressSection /> */}
         <MyPageProductivityGraph />
         <ProjectsSection
           // projects={fetchedProjects}

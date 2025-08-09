@@ -37,13 +37,6 @@ const ProjectsSection = () => {
     // }
   };
 
-  // 모달이 닫힐 때 selectedProject 초기화
-  // useEffect(() => {
-  //   if (!isOpen && selectedProject) {
-  //     setSelectedProject(null);
-  //   }
-  // }, [isOpen, selectedProject]);
-
   // 프로젝트 생성 핸들러
   const handleCreateProject = () => {
     navigate('/project/create');
@@ -53,7 +46,6 @@ const ProjectsSection = () => {
   const handleProjectBoard = (id) => {
     navigate(`/project/${id}`);
   };
-
 
   // const filteredProjects = localProjects.filter((project) => {
   const filteredProjects = projects.filter((project) => {
