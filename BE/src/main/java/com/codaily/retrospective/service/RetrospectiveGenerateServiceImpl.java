@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.concurrent.CompletableFuture;
 
 @Log4j2
@@ -23,51 +24,58 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
 
     @Override
     public CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project) {
-        var today = LocalDate.now();
+        final LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
 
         return Mono.fromCallable(() -> {
-                    // --- 블로킹 구간을 별도 풀로 이동 ---
+                    // 1) 이미 오늘 회고가 있으면 → DTO만 반환(저장 금지)
                     if (retrospectiveService.existsByProjectAndDate(project, today)) {
-                        // 이미 존재 → 기존 DTO 반환 (null 허용 시 Optional)
-                        return retrospectiveService.getDailyRetrospective(project.getProjectId(), today);
+                        log.info("Retrospective already exists. projectId={}, date={}", project.getProjectId(), today);
+                        return (Object) retrospectiveService.getDailyRetrospective(project.getProjectId(), today);
                     }
 
-                    Long userId = project.getUserId();
+                    // 2) 신규 생성 필요 → 재료 수집
+                    final Long userId = project.getUserId();
                     RetrospectiveGenerateRequest payload =
                             retrospectiveService.collectRetrospectiveData(project, userId, RetrospectiveTriggerType.AUTO);
 
-                    // 재료 없으면 null로 조기 종료
-                    if ((payload.getCompletedFeatures() == null || payload.getCompletedFeatures().isEmpty())
-                            && (payload.getProductivityMetrics() == null
+                    // 3) 재료가 전무하면 생성 스킵
+                    boolean noCompleted = payload.getCompletedFeatures() == null || payload.getCompletedFeatures().isEmpty();
+                    boolean noMetrics = payload.getProductivityMetrics() == null
                             || (payload.getProductivityMetrics().getCompletedFeatures() == 0
-                            && payload.getProductivityMetrics().getTotalCommits() == 0))) {
-                        return CompletableFuture.completedFuture(null);
+                            && payload.getProductivityMetrics().getTotalCommits() == 0);
+
+                    if (noCompleted && noMetrics) {
+                        log.info("No retrospective materials. Skip generation. projectId={}, date={}", project.getProjectId(), today);
+                        return null; // 아래 flatMap에서 Mono.empty() 처리
                     }
 
-                    // 신호용: 이어서 WebClient를 타야 함 → payload를 래핑해서 넘김
+                    // 4) 이어지는 단계에서 WebClient 호출
                     return payload;
                 })
-                .subscribeOn(Schedulers.boundedElastic()) // ← 블로킹을 요청/스케줄러 스레드에서 떼어냄
+                .subscribeOn(Schedulers.boundedElastic()) // 블로킹(IO/DB) 분리
                 .flatMap(obj -> {
                     if (obj == null) {
-                        return Mono.empty(); // 재료 없음 → 빈 완료
+                        return Mono.empty(); // 재료 없음 → 아무 것도 생성하지 않음
+                    }
+                    if (obj instanceof RetrospectiveGenerateResponse ready) {
+                        // 이미 존재했던 케이스 → 저장 금지, 그대로 반환
+                        return Mono.just(ready);
                     }
 
-                    if (obj instanceof RetrospectiveGenerateResponse ready) {
-                        return Mono.just(ready); // 이미 존재 → 그 DTO 그대로 반환
-                    }
-                    // 새로 생성해야 함 → WebClient 호출
+                    // 신규 생성: LLM 서버 호출
                     RetrospectiveGenerateRequest payload = (RetrospectiveGenerateRequest) obj;
                     return langchainWebClient.post()
-                            .uri("/gpt/retrospective")
+                            .uri("/api/retrospective/generate")
                             .bodyValue(payload)
                             .retrieve()
-                            .bodyToMono(RetrospectiveGenerateResponse.class);
+                            .bodyToMono(RetrospectiveGenerateResponse.class)
+                            // ★★★ 저장은 오직 "신규 생성 브랜치" 안에서만 수행
+                            .publishOn(Schedulers.boundedElastic())
+                            .flatMap(resp -> Mono.fromRunnable(() ->
+                                            retrospectiveService.saveRetrospective(
+                                                    project, resp, today, RetrospectiveTriggerType.AUTO))
+                                    .thenReturn(resp));
                 })
-                .publishOn(Schedulers.boundedElastic()) // 저장은 블로킹이므로 여기서
-                .flatMap(resp -> Mono.fromRunnable(() -> retrospectiveService.saveRetrospective(project, resp))
-                        .thenReturn(resp))
                 .toFuture();
     }
-
 }

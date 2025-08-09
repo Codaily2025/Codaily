@@ -19,6 +19,7 @@ from fastapi import Request
 import time
 import json
 
+
 @router.get("/generate")
 async def generate_spec(project_description: str, request: Request):
     print("[요청된 설명]", project_description)

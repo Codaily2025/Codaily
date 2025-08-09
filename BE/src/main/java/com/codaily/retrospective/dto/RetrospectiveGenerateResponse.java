@@ -1,5 +1,6 @@
 package com.codaily.retrospective.dto;
 
+import com.codaily.retrospective.service.RetrospectiveTriggerType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,7 +14,7 @@ public class RetrospectiveGenerateResponse {
     private LocalDate date;
     private Long projectId;
     private Long userId;
-    private String triggerType;
+    private RetrospectiveTriggerType triggerType;
 
     // GPT가 생성한 최종 회고 본문 (Markdown 권장: 바로 렌더/저장 용이)
     private String contentMarkdown;

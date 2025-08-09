@@ -13,7 +13,6 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.retrospective.dto.*;
 import com.codaily.retrospective.entity.Retrospective;
 import com.codaily.retrospective.repository.RetrospectiveRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -45,29 +44,57 @@ public class RetrospectiveServiceImpl implements RetrospectiveService {
     private final ObjectMapper objectMapper;
 
 
-    public void saveRetrospective(Project project, RetrospectiveGenerateResponse response) {
-        Retrospective entity = new Retrospective();
-        entity.setProject(project);
-        entity.setDate(response.getDate());
-        entity.setTriggerType(response.getTriggerType());
-        entity.setContent(response.getContentMarkdown());
+    // Service
+    @Transactional
+    public void saveRetrospective(Project project,
+                                  RetrospectiveGenerateResponse resp,
+                                  LocalDate date,
+                                  RetrospectiveTriggerType triggerType) {
 
-        // summary_json 직렬화
-        Map<String, Object> json = new LinkedHashMap<>();
-        json.put("summary", response.getSummary());
-        json.put("actionItems", response.getActionItems());
-        json.put("metrics", response.getProductivityMetrics());
-        json.put("completedFeatures", response.getCompletedFeatures());
-
-        try {
-            entity.setSummaryJson(objectMapper.writeValueAsString(json));
-        } catch (JsonProcessingException e) {
-            // 실패 시 최소한 content만 저장하고 로그
-            log.error("Failed to serialize summary_json", e);
-            entity.setSummaryJson("{}");
-        }
+        String summaryJson = safeSummaryJson(resp); // null 방지
+        Retrospective entity = Retrospective.builder()
+                .project(project)
+                .date(date)                         // ★ 필수
+                .content(resp.getContentMarkdown())
+                .summaryJson(summaryJson)           // ★ nullable=false이므로 반드시 값
+                .triggerType(triggerType)
+                .build();
 
         retrospectiveRepository.save(entity);
+    }
+
+    private String safeSummaryJson(RetrospectiveGenerateResponse resp) {
+        // 이미 JSON 문자열로 들어온 필드가 있으면 그대로 사용
+        // (필요하다면 RetrospectiveGenerateResponse에 summaryJson 필드 추가 가능)
+        // 현재 구조상 직접 직렬화하는 게 맞음
+        Map<String, Object> root = new LinkedHashMap<>();
+
+        // metrics → 여기선 productivityMetrics를 metrics로 매핑
+        if (resp.getProductivityMetrics() != null) {
+            root.put("metrics", resp.getProductivityMetrics());
+        }
+
+        // summary
+        if (resp.getSummary() != null) {
+            root.put("summary", resp.getSummary());
+        }
+
+        // actionItems
+        if (resp.getActionItems() != null && !resp.getActionItems().isEmpty()) {
+            root.put("actionItems", resp.getActionItems());
+        }
+
+        // completedFeatures
+        if (resp.getCompletedFeatures() != null && !resp.getCompletedFeatures().isEmpty()) {
+            root.put("completedFeatures", resp.getCompletedFeatures());
+        }
+
+        try {
+            return objectMapper.writeValueAsString(root);
+        } catch (Exception e) {
+            log.warn("safeSummaryJson 직렬화 실패", e);
+            return "{}";
+        }
     }
 
     @Override
@@ -168,11 +195,13 @@ public class RetrospectiveServiceImpl implements RetrospectiveService {
     }
 
     @Override
+    @Transactional
     public RetrospectiveGenerateResponse getDailyRetrospective(Long projectId, LocalDate date) {
         return toResponse(retrospectiveRepository.findByProject_ProjectIdAndDate(projectId, date));
     }
 
     @Override
+    @Transactional
     public RetrospectiveListResponse getAllDailyRetrospectives(Long projectId) {
         return RetrospectiveListResponse.builder()
                 .retrospectives(
@@ -186,15 +215,39 @@ public class RetrospectiveServiceImpl implements RetrospectiveService {
 
 
     public RetrospectiveGenerateResponse toResponse(Retrospective e){
+        var root = readTreeSafe(e.getSummaryJson());
+        var summaryNode = root != null ? root.path("summary") : null;
+
+        RetrospectiveSummary summary = null;
+        if (summaryNode != null && !summaryNode.isMissingNode() && summaryNode.isObject()) {
+            try {
+                summary = objectMapper.treeToValue(summaryNode, RetrospectiveSummary.class);
+            } catch (Exception ex) {
+                log.warn("summary node 매핑 실패", ex);
+            }
+        }
+
+        Project project = e.getProject();
+        long userId = e.getProject().getUserId();
+        RetrospectiveTriggerType type = e.getTriggerType();
+
+        RetrospectiveGenerateRequest data = collectRetrospectiveData(project, userId, type);
+
         return RetrospectiveGenerateResponse.builder()
-                .contentMarkdown(e.getContent())                   // 엔티티 content → DTO contentMarkdown
-                .summary(readJsonSafe(e.getSummaryJson(), RetrospectiveSummary.class)) // json 문자열 → Map/obj
-                .actionItems(null) // 엔티티에 없으면 null/빈 값
+                .contentMarkdown(e.getContent())
+                .date(e.getDate())
+                .projectId(project.getProjectId())
+                .userId(userId)
+                .triggerType(e.getTriggerType())
+                .productivityMetrics(data.getProductivityMetrics())
+                .completedFeatures(data.getCompletedFeatures())
+                .summary(summary)
                 .build();
     }
 
-    private <T> T readJsonSafe(String json, Class<T> type) {
-        try { return json == null ? null : objectMapper.readValue(json, type); }
+    private com.fasterxml.jackson.databind.JsonNode readTreeSafe(String json) {
+        if (json == null || json.isBlank()) return null;
+        try { return objectMapper.readTree(json); }
         catch (Exception ex) { log.warn("summaryJson 역직렬화 실패", ex); return null; }
     }
 
