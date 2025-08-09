@@ -10,7 +10,7 @@ public class WebClientConfig {
     @Bean
     public WebClient langchainWebClient() {
         return WebClient.builder()
-                .baseUrl("http://localhost:8000")  // FastAPI 서버 주소
+                .baseUrl("http://localhost:8081")  // FastAPI 서버 주소
                 .build();
     }
 }
