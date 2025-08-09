@@ -354,17 +354,16 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         for (FeatureItem feature : overdueFeatures) {
             if (!"DONE".equals(feature.getStatus())) {
-                double remainingTime = calculateRemainingTimeFromChecklist(feature.getFeatureId());
+                double remainingTime = feature.getEstimatedTime();
                 if (remainingTime == 0) {
                     feature.setStatus("DONE");
                 } else {
-                    feature.setEstimatedTime(remainingTime);
                     feature.setStatus("TODO");
                 }
                 featureItemRepository.save(feature);
             }
         }
-        // 여기서는 전체 재스케줄링 (지연 처리는 복잡하니까)
+
         List<FeatureItem> allSchedulable = getSchedulableFeatures(projectId);
         if (!allSchedulable.isEmpty()) {
             deleteExistingSchedules(allSchedulable);
