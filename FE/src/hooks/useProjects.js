@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getUserProjects, getLastWorkedProjectId, getKanbanTabFields } from '../apis/projectApi'
+import { getUserProjects, getLastWorkedProjectId, getKanbanTabFields, getFeatureItemsByKanbanTab } from '../apis/projectApi'
 
 // Query Keys
 export const PROJECT_QUERY_KEYS = {
@@ -10,7 +10,8 @@ export const PROJECT_QUERY_KEYS = {
     detail: (id) => [...PROJECT_QUERY_KEYS.details(), id],
     lastWorked: () => [...PROJECT_QUERY_KEYS.all, 'lastWorked'],
     kanbanTabs: () => [...PROJECT_QUERY_KEYS.all, 'kanbanTabs'],
-    kanbanTab: (projectId) => [...PROJECT_QUERY_KEYS.kanbanTabs(), projectId]
+    kanbanTab: (projectId) => [...PROJECT_QUERY_KEYS.kanbanTabs(), projectId],
+    byField: (projectId, field) => [...PROJECT_QUERY_KEYS.kanbanTab(projectId), field]
 }
 
 // staleTime은 1시간으로 설정 (60분 * 60초 * 1000ms)
@@ -60,6 +61,23 @@ export const useLastWorkedProjectId = () => {
         }
     })
 }
+
+// 칸반 탭 필드별 기능 리스트 조회
+export const useFeaturesByField = (projectId, field) => {
+    return useQuery({
+        queryKey: PROJECT_QUERY_KEYS.byField(projectId, field),
+        queryFn: () => getFeatureItemsByKanbanTab(projectId, field),
+        staleTime: STALE_TIME,
+        cacheTime: STALE_TIME * 2, // 2시간 캐시
+        retry: 2,
+        refetchOnWindowFocus: false,
+        enabled: !!projectId && !!field && field !== '', // projectId와 field가 모두 있고 빈 문자열이 아닐 때만 실행
+        onError: (error) => {
+            console.error('useFeaturesByField Error:', error)
+        }
+    })
+}
+
 
 // 특정 프로젝트 정보 조회
 // export const useProjectDetail = (projectId, options = {}) => {

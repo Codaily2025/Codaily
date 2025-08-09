@@ -1,11 +1,12 @@
 // src/pages/MyPage/ProjectsSection.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import styles from './ProjectsSection.module.css';
-import ProjectEditModal from '../../components/ProjectEditModal';
 import { useNavigate } from 'react-router-dom';
 import useModalStore from "../../store/modalStore";
 import { useProjectStore } from '../../stores/mypageProjectStore';
 import { useAuthStore } from '../../stores/authStore';
+import { useProjectsQuery } from '../../queries/useProjectsQuery';
+import { useDeleteProjectMutation } from '../../queries/useProjectMutation';
 
 const ProjectsSection = () => {
 
@@ -14,19 +15,28 @@ const ProjectsSection = () => {
   const userId = 1;
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('전체'); // 필터 상태를 컴포넌트 내부에서 관리
-  // 삭제 
-  // const [localProjects, setLocalProjects] = useState(projects);
   // 설정 모달 관련 상태 관리
   const [selectedProject, setSelectedProject] = useState(null);
-  // const [showModal, setShowModal] = useState(false);
   const { isOpen, modalType, closeModal, openModal } = useModalStore()
 
-  const { projects, deleteProject, updateProject } = useProjectStore();
+  const { projects, setProjects } = useProjectStore();
+  
+  // React Query를 사용하여 프로젝트 데이터 조회
+  const { data: projectsFromServer, isLoading, error } = useProjectsQuery(userId);
+  
+  // 프로젝트 삭제 뮤테이션
+  const deleteProjectMutation = useDeleteProjectMutation(userId);
+
+  // 서버에서 데이터를 가져왔을 때 로컬 스토어에 설정
+  useEffect(() => {
+    if (projectsFromServer) {
+      setProjects(projectsFromServer);
+    }
+  }, [projectsFromServer, setProjects]);
 
   // 삭제 핸들러
   const handleDelete = (id) => {
-    // setLocalProjects(prev => prev.filter(project => project.id !== id));
-    deleteProject(id);
+    deleteProjectMutation.mutate({ projectId: id });
   };
 
   // 설정 모달 관련 핸들러
@@ -37,13 +47,6 @@ const ProjectsSection = () => {
     // }
   };
 
-  // 모달이 닫힐 때 selectedProject 초기화
-  // useEffect(() => {
-  //   if (!isOpen && selectedProject) {
-  //     setSelectedProject(null);
-  //   }
-  // }, [isOpen, selectedProject]);
-
   // 프로젝트 생성 핸들러
   const handleCreateProject = () => {
     navigate('/project/create');
@@ -53,7 +56,6 @@ const ProjectsSection = () => {
   const handleProjectBoard = (id) => {
     navigate(`/project/${id}`);
   };
-
 
   // const filteredProjects = localProjects.filter((project) => {
   const filteredProjects = projects.filter((project) => {
@@ -92,7 +94,20 @@ const ProjectsSection = () => {
         </div>
       </div>
 
-      {filteredProjects.length === 0 ? (
+      {isLoading ? (
+        <div className={styles.noProjectsContainer}>
+          <div className={styles.noProjectsContent}>
+            <p className={styles.noProjectsTitle}>프로젝트를 불러오는 중...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className={styles.noProjectsContainer}>
+          <div className={styles.noProjectsContent}>
+            <p className={styles.noProjectsTitle}>프로젝트를 불러오는데 실패했습니다.</p>
+            <p className={styles.noProjectsSubtitle}>잠시 후 다시 시도해 주세요.</p>
+          </div>
+        </div>
+      ) : filteredProjects.length === 0 ? (
         <div className={styles.noProjectsContainer}>
           <div className={styles.noProjectsContent}>
             <p className={styles.noProjectsTitle}>생성한 프로젝트가 아직 없어요.</p>
@@ -161,15 +176,6 @@ const ProjectsSection = () => {
             </div>
           ))}
         </div>
-      )}
-      {isOpen && (modalType === 'PROJECT_EDIT') &&  (
-        <ProjectEditModal
-          key={selectedProject?.id}
-          data={selectedProject}
-          onClose={handleModalClose}
-          // onSave={handleModalSave}
-          userId={userId}
-        />
       )}
     </section>
   );

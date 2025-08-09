@@ -49,7 +49,7 @@ public class ProductivityDetailResponse {
     @AllArgsConstructor
     @Builder
     public static class ProductivityFactors {
-      //  private double codeQuality;
+        private double codeQuality;
         private int completedFeatures;
         private double productivityScore;
     }

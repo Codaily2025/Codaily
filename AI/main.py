@@ -31,7 +31,7 @@ async def print_routes():
         print(f"{methods:10s} {r.path}")
     print("==============")
 
-    
+
 # 라우터 등록
 app.include_router(specification_router, prefix="/specification")
 app.include_router(chat_router, prefix="/chat")
