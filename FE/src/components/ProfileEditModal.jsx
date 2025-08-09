@@ -6,10 +6,14 @@ import { updateProfile } from '../apis/profile'; // 서버 갱신
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 
+// GitHub OAuth 설정
+const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
+const REDIRECT_URI = 'http://localhost:8081/oauth/github/callback';
+
 const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   // React Query로 프로필 데이터 조회
   const { data: profileData } = useProfileQuery();
-  
+
   // Zustand 스토어에서 폼 상태만 가져오기
   const {
     editFormData,
@@ -123,15 +127,29 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
 
   // 깃허브 연동 핸들러
   const handleGithubConnect = async () => {
-    setGithubConnecting(true); // 깃허브 연동 중 표시
+    // localStorage에서 JWT 토큰 가져오기
+    const token = localStorage.getItem('authToken') || '';
+    console.log('유저의 jwt token: ', token);
 
-    // Simulate GitHub OAuth flow
-    setTimeout(() => {
-      setGithubReconnected(true); // 깃허브 연동 성공 시 표시
-      setGithubConnecting(false); // 깃허브 연동 중 표시 종료
-      // GitHub 계정 변경
-      updateFormField('githubAccount', 'new-github-account'); // 실제 OAuth 콜백에서 받아온 값으로 교체
-    }, 2000);
+    // const params = new URLSearchParams({
+    //   client_id: GITHUB_CLIENT_ID,
+    //   redirect_uri: REDIRECT_URI,
+    //   scope: ['repo', 'user:email', 'read:org'].join(''),
+    //   state: token
+    // });
+    // GitHub OAuth URL 생성
+    // const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
+    const scopeRaw = 'repo user:email read:org';
+    const githubAuthUrl =
+      `https://github.com/login/oauth/authorize?` +
+      `client_id=${GITHUB_CLIENT_ID}` +
+      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +       // http%3A%2F%2F...
+      `&scope=${encodeURIComponent(scopeRaw)}` +
+      `&state=${token}`;
+    console.log('githubAuthUrl: ', githubAuthUrl);
+
+    // GitHub OAuth 페이지로 리다이렉트
+    window.location.href = githubAuthUrl;
   };
 
   // 모든 필드 유효성 검사
@@ -313,12 +331,12 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 />
               </div>
               <button
+                type="button"
                 onClick={handleGithubConnect}
-                disabled={isGithubConnecting}
                 className={`${styles.actionButton} ${styles.githubButton}`}
               >
                 {/* <Github size={16} /> */}
-                {isGithubConnecting ? '연동 중...' : '변경'}
+                변경
               </button>
             </div>
             {isGithubReconnected && (
