@@ -10,8 +10,6 @@ import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
 
 import useModalStore from '../../store/modalStore';
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
-import { useProjectsQuery } from '../../queries/useProjectsQuery'; // 프로젝트 조회 훅
-import { useProjectStore } from '../../stores/mypageProjectStore'; // 프로젝트 스토어 사용
 
 const Mypage = () => {
   const { isOpen, modalType, openModal, closeModal } = useModalStore()
@@ -22,34 +20,9 @@ const Mypage = () => {
   } = useProfileQuery(); // 프로필 조회 훅
   console.log('유저 프로필:', profile);
 
-  const userId = profile?.userId || 1;
-
-  const {
-    data: fetchedProjects,
-    isLoading: isLoadingProjects,
-    isError: isErrorProjects,
-    error: projectsError
-  } = useProjectsQuery(userId);
-
-  console.log('userId:', userId); // undefined
-  console.log('fetchedProjects:', fetchedProjects);
-
-  // Zustand 스토어에 프로젝트 데이터 설정
-  const setProjects = useProjectStore((state) => state.setProjects);
-
-  const [activeFilter, setActiveFilter] = useState('전체'); // 필터 기본값 : 전체
-
-  // 조회된 프로젝트 데이터를 Zustand 스토어에 저장
-  useEffect(() => {
-    if (fetchedProjects) {
-      setProjects(fetchedProjects);
-    }
-  }, [fetchedProjects, setProjects]);
-
-  if (isLoading || isLoadingProjects) return <div>로딩 중...</div>;
+  if (isLoading) return <div>로딩 중...</div>;
 
   if (isError) return <div>에러 발생: {error.message}</div>;
-  if (isErrorProjects) return <div>에러 발생: {projectsError.message}</div>;
 
   if (!profile) return <div>프로필 데이터가 없습니다.</div>;
 
@@ -101,11 +74,7 @@ const Mypage = () => {
         {/* 나중에 백엔드에서 프로그래스 로직 구현 되면 주석 해제 */}
         {/* <ProgressSection /> */}
         <MyPageProductivityGraph />
-        <ProjectsSection
-          // projects={fetchedProjects}
-          // activeFilter={activeFilter}
-          // setActiveFilter={setActiveFilter}
-        />
+        <ProjectsSection />
         {/* 프로필 수정 모달 */}
         <ProfileEditModal
           nickname={profile.nickname}
