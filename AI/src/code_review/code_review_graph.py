@@ -18,16 +18,15 @@ builder.add_node("send_result_to_java", send_result_to_java)
 builder.set_entry_point("run_feature_inference")
 
 # 조건 함수: 다음 노드 이름을 직접 반환
-def should_continue(state: CodeReviewState) -> str:
-    if state.get("feature_names"):
-        return "run_parallel_feature_graphs"
-    else:
+def feature_inference_branch(state: CodeReviewState) -> str:
+    if not state.get("feature_names"):
+        print("\n🚫 기능명 추론 결과: 기능 없음 → 파이프라인 종료")
         return END
+    return "run_parallel_feature_graphs"
 
-# 조건 분기 연결
 builder.add_conditional_edges(
     "run_feature_inference",
-    should_continue,
+    feature_inference_branch,
     {
         "run_parallel_feature_graphs": "run_parallel_feature_graphs",
         END: END

@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,9 +32,11 @@ public class CodeReviewController {
     private final FeatureItemChecklistService featureItemChecklistService;
     private final WebhookService webhookService;
     private final ProjectService projectService;
+    private final CodeReviewResponseMapper codeReviewResponseMapper;
 
     // 체크리스트 전달
     @GetMapping("/project/{projectId}/feature/{featureName}/checklist")
+    @Operation(summary = "백엔드용")
     public List<ChecklistItemDto> getChecklistItems(@PathVariable Long projectId, @PathVariable String featureName) {
         FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
 
@@ -45,6 +48,7 @@ public class CodeReviewController {
     }
 
     @PostMapping("/project/{projectId}/commit/{commitHash}/files")
+    @Operation(summary = "백엔드용")
     public List<FullFileDto> getFullFilesByPaths(@PathVariable Long projectId, @PathVariable String commitHash,
                                                  @RequestBody FileFetchRequestDto fileFetchRequestDto,
                                                  @AuthenticationPrincipal PrincipalDetails userDetails){
@@ -67,6 +71,7 @@ public class CodeReviewController {
     }
 
     @PostMapping("/code-review/result")
+    @Operation(summary = "백엔드용")
     public ResponseEntity<?> receiveCodeReviewResult(@RequestBody CodeReviewResultRequest request) {
         if(request.getFeatureNames() != null && !request.getFeatureNames().isEmpty()) {
             codeReviewService.saveFeatureName(request.getProjectId(), request.getFeatureNames(), request.getCommitId());
@@ -85,11 +90,33 @@ public class CodeReviewController {
             log.info("기능 미구현, 체크리스트 코드 리뷰 생성");
         }
         return ResponseEntity.ok().build();
+
+
     }
+
+
+    @GetMapping("/{featureId}/detail")
+    @Operation(summary = "코드 리뷰 전체보기", description = "featureId 기준 코드 리뷰 전체 반환")
+    public ResponseEntity<Map<String, Object>> getCodeReviewDetail(@PathVariable Long featureId) {
+
+        // 1) 기존 서비스 호출
+        CodeReviewSummaryResponseDto summaryDto = codeReviewService.getCodeReviewSummary(featureId);
+        List<CodeReviewItemResponseDto> items = codeReviewService.getCodeReviewItems(featureId);
+
+        // 2) 중첩 구조 변환
+        Map<String, Object> detailResponse = codeReviewResponseMapper.toDetailResponse(
+                featureId,
+                summaryDto,  // 요약 DTO
+                items        // 항목 DTO
+        );
+
+        return ResponseEntity.ok(detailResponse);
+    }
+
 
     // 기능 코드리뷰 요약
     @GetMapping("/{featureId}/summary")
-    @Operation(summary = "코드 리뷰", description = "각 코드리뷰 항목에 대한 한줄 요약")
+    @Operation(summary = "코드 리뷰 한줄 요약", description = "featureId 기준 각 코드리뷰 항목(카테고리)에 대한 한줄 요약")
     public ResponseEntity<CodeReviewSummaryResponseDto> getCodeReviewSummary(
             @PathVariable Long featureId
     ) {
@@ -109,6 +136,7 @@ public class CodeReviewController {
      */
 
     @GetMapping("/{featureId}/items")
+    @Operation(summary = "코드 리뷰 항목별 조회", description = "featureId 기준 코드리뷰 항목(카테고리)별 조회용")
     public ResponseEntity<List<CodeReviewItemResponseDto>> getCodeReviewItems(@PathVariable Long featureId) {
         return ResponseEntity.ok(codeReviewService.getCodeReviewItems(featureId));
     }
@@ -140,6 +168,7 @@ public class CodeReviewController {
      */
 
     @GetMapping("{featureId}/checklist/status")
+    @Operation(summary = "체크리스트 구현 상태", description = "featureId 기준 체크리스트 구현 여부 확인용")
     public ResponseEntity<ChecklistStatusResponseDto> getChecklistStatus(@PathVariable Long featureId) {
         return ResponseEntity.ok(codeReviewService.getChecklistStatus(featureId));
     }
@@ -167,6 +196,7 @@ public class CodeReviewController {
      */
 
     @GetMapping("{featureId}/score")
+    @Operation(summary = "코드 리뷰 점수", description = "featureId 기준 코드 리뷰 점수 반환")
     public ResponseEntity<CodeReviewScoreResponseDto> getCodeReviewScore(@PathVariable Long featureId) {
         return ResponseEntity.ok(codeReviewService.getQualityScore(featureId));
     }
@@ -178,6 +208,7 @@ public class CodeReviewController {
      */
 
     @GetMapping("{featureId}/severity-by-category")
+    @Operation(summary = "중요도 개수", description = "featureId 기준 중요도별 개수 반환")
     public ResponseEntity<SeverityByCategoryResponseDto> getSeverityByCategory(@PathVariable Long featureId) {
         return ResponseEntity.ok(codeReviewService.getSeverityByCategory(featureId));
     }
@@ -202,6 +233,8 @@ public class CodeReviewController {
         }
 
      */
+
+
 }
 
 

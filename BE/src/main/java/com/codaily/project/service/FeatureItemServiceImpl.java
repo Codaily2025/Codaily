@@ -704,7 +704,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
 
         List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
-                .filter(item -> item.getParentFeature() != null)
+//                .filter(item -> item.getParentFeature() != null)
                 .map(item -> new FeatureChecklistFeatureDto(
                         item.getFeatureId(),
                         item.getTitle(),

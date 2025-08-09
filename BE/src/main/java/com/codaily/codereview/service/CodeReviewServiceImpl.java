@@ -157,10 +157,12 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                 .summary(review.getSummary())
                 .convention(review.getConvention())
                 .refactorSuggestion(review.getRefactorSuggestion())
+                .performance(review.getPerformance())
                 .complexity(review.getComplexity())
                 .bugRisk(review.getBugRisk())
                 .securityRisk(review.getSecurityRisk())
                 .qualityScore(review.getQualityScore())
+                .createdAt(review.getCreatedAt())
                 .build();
     }
 

@@ -65,7 +65,7 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
 
     checklist_items = response.json()
 
-    print(f"📥 checklist 수신 완료 ({len(checklist_items)}개): {checklist_items}")
+    print(f"checklist 수신 완료 ({len(checklist_items)}개): {checklist_items}")
 
     state["checklist"] = checklist_items
     return state
@@ -76,17 +76,17 @@ async def run_commit_message_completion_check(state: CodeReviewState) -> CodeRev
     if not message:
         return state  # 메시지 없으면 판단 불가
 
-    print(f"\n🧠 GPT에게 커밋 메시지 판단 요청: {message}")
+    print(f"\n GPT에게 커밋 메시지 판단 요청: {message}")
 
     prompt_input = {"commit_message": message}
-    result = await commit_message_completion_prompt.ainvoke(prompt_input)
+    result = await commit_message_prompt.ainvoke(prompt_input)
     result_text = result.content.strip()
 
     if result_text == "완료":
-        print("✅ GPT 판단: 구현 완료된 커밋")
+        print("GPT 판단: 구현 완료된 커밋")
         state["force_done_by_commit_message"] = True
     else:
-        print("❌ GPT 판단: 아직 구현 미완료")
+        print("GPT 판단: 아직 구현 미완료")
 
     return state
 
