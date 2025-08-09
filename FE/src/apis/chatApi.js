@@ -1,17 +1,11 @@
 // src/apis/chatApi.js
 import axios from 'axios';
-
-// axios 인스턴스 생성 (실제 호출 시)
-export const API_URL = axios.create({
-  /* vite 사용 */
-  baseURL: import.meta.env.VITE_CHAT_BACKEND_URL ||'http://localhost:4000',
-  /* create-react-app 사용 시 */
-  // baseURL: process.env.REACT_APP_CHAT_BACKEND_URL,
-})
+import { authInstance } from './axios';
 
 // 모드 확인: .env에 VITE_USE_MOCK=true로 설정하면 더미 데이터 사용하기
 // const useMock = import.meta.env.VITE_USE_MOCK === 'true';
-const useMock = true;
+const useMock1 = true;
+const useMock2 = false;
 
 // 더미 채팅 기록
 const dummyHistory = [
@@ -46,9 +40,9 @@ const dummyHistory = [
 
 // 채팅 기록 조회
 export const fetchChatHistory = async () => {
-    
+
   // 더미 데이터 사용 시
-  if (useMock) {
+  if (useMock1) {
     // 지연 추가
     await new Promise(r => setTimeout(r, 300));
     // console.log('fetchChatHistory 완료, 반환값:', dummyHistory);
@@ -56,7 +50,7 @@ export const fetchChatHistory = async () => {
   }
 
   // 실제 호출 시
-  const { data } = await API_URL.get('/chat/history');
+  // const { data } = await API_URL.get('/chat/history');
   // 예. [{ id, sender, text}, ...]
   return data;
 }
@@ -64,7 +58,7 @@ export const fetchChatHistory = async () => {
 // 사용자 메세지 전송 & 백엔드 챗봇 응답 받기
 export const postUserMessage = async (userText) => {
   // 더미 데이터 사용 시
-  if (useMock) {
+  if (useMock2) {
     // 지연 추가
     await new Promise(r => setTimeout(r, 300));
     return {
@@ -73,10 +67,50 @@ export const postUserMessage = async (userText) => {
       text: `에코: ${userText}`   // 임시 에코 응답
     };
   }
- 
-  
-  const { data } = await API_URL.post('/chat/message', { text: userText });
+
+  const response_projectSpecId = await authInstance.post('/projects', {
+    "startDate": "2025-08-10",
+    "endDate": "2025-09-20",
+    "availableDates": [
+      "2025-08-12",
+      "2025-08-15",
+      "2025-08-20"
+    ],
+    "workingHours": {
+      "MONDAY": 4,
+      "WEDNESDAY": 6,
+      "FRIDAY": 2
+    }
+  })
+
+  console.log('response_projectSpecId:', response_projectSpecId);
+  // const response = await authInstance.get('/api/chat/stream', {
+  //     userId: 1,
+  //     message: userText,
+  //     projectId: 1,
+  //     specId: 1
+  //   }
+  // );
+
+
+  const response = await authInstance.get('/chat/stream', {
+    params: {
+      userId: '1',
+      message: userText,
+      projectId: 1,
+      specId: 1
+    }
+  });
+  // 응답받은 data를 콘솔에 출력하는 방법:
+  // 아래와 같이 console.log를 사용하면 data 객체의 내용을 확인할 수 있음
+  console.log('응답받은 data:', response);
+  /*
+  Parameters : userId, message, projectId, specId
+  // GET 요청에서는 파라미터를 쿼리스트링(query string)으로 전달해야 함
+  // axios의 경우, 두 번째 인자에 { params: { ... } } 형태로 전달하면 됨
+  */
   // 백엔드가 반환한 bot 응답 데이터 반환
   // 예. { id, sender: 'bot', text }
-  return data;
+
+  return response.data;
 }
