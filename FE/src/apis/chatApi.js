@@ -68,23 +68,28 @@ export const postUserMessage = async (userText) => {
     };
   }
 
-  const response_projectSpecId = await authInstance.post('/projects', {
-    "startDate": "2025-08-10",
-    "endDate": "2025-09-20",
-    "availableDates": [
-      "2025-08-12",
-      "2025-08-15",
-      "2025-08-20"
-    ],
-    "workingHours": {
-      "MONDAY": 4,
-      "WEDNESDAY": 6,
-      "FRIDAY": 2
-    }
-  })
+  let projectSpecId = 15;
+  let projectId = 12;
+  try {
+    const response_projectSpecId = await authInstance.post('/projects', {
+      "startDate": "2025-08-10",
+      "endDate": "2025-09-20",
+      "availableDates": ["2025-08-12", "2025-08-15", "2025-08-20"],
+      "workingHours": {
+        "MONDAY": 4,
+        "WEDNESDAY": 6,
+        "FRIDAY": 2
+      }
+    })
+    console.log('일정 입력 후 받은 프로젝트, 명세서 아이디:', response_projectSpecId);
+    projectSpecId = response_projectSpecId.data.specId;
+    projectId = response_projectSpecId.data.projectId;
+  } catch (error) {
+    console.error('postUserMessage Error:', error)
+    throw new Error(error.response?.data?.message || '사용자 메세지 전송 중 오류가 발생했습니다.')
+  }
 
-  console.log('response_projectSpecId:', response_projectSpecId);
-  // const response = await authInstance.get('/api/chat/stream', {
+    // const response = await authInstance.get('/api/chat/stream', {
   //     userId: 1,
   //     message: userText,
   //     projectId: 1,
@@ -92,18 +97,23 @@ export const postUserMessage = async (userText) => {
   //   }
   // );
 
+  console.log('projectId:', projectId);
+  console.log('projectSpecId:', projectSpecId);
 
-  const response = await authInstance.get('/chat/stream', {
-    params: {
-      userId: '1',
-      message: userText,
-      projectId: 1,
-      specId: 1
-    }
-  });
-  // 응답받은 data를 콘솔에 출력하는 방법:
-  // 아래와 같이 console.log를 사용하면 data 객체의 내용을 확인할 수 있음
-  console.log('응답받은 data:', response);
+  // ProjectId와 ProjectSpecId가 null이 아닐 때 실행
+  // 채팅 메세지 전송 및 응답 받기
+  if (projectId && projectSpecId) {
+    const response = await authInstance.get('/chat/stream', {
+      params: {
+        userId: '1',
+        message: userText,
+        projectId: projectId,
+        specId: projectSpecId
+      }
+    });
+    console.log('채팅 메세지 전송 후 받은 응답:', response.data);
+  }
+
   /*
   Parameters : userId, message, projectId, specId
   // GET 요청에서는 파라미터를 쿼리스트링(query string)으로 전달해야 함

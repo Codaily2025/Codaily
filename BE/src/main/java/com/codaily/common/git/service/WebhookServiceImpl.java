@@ -127,7 +127,7 @@ public class WebhookServiceImpl implements WebhookService {
                                       CommitInfoDto commitInfoDto) {
 
         WebClient webClient = WebClient.builder()
-                .baseUrl("http://localhost:8000") // Python 서버 전용
+                .baseUrl("http://localhost:8081") // Python 서버 전용
                 .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
