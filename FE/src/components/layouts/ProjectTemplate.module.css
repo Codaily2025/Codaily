@@ -1,0 +1,19 @@
+/* Menu Button */
+.menuButton {
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    z-index: 30;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.menuButton:hover {
+    background-color: #f9fafb;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
