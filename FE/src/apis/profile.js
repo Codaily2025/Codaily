@@ -17,10 +17,10 @@ export const dummyProfile = {
 };
 
 // 닉네임 조회 API
-export async function fetchNickname(userId) {
+export async function fetchNickname() {
     try {
-        const response = await authInstance.get(`/users/${userId}/nickname`);
-        // console.log('fetchNickname response:', response.data);
+        const response = await authInstance.get(`nickname`);
+        console.log('api에서 가져온 닉네임 데이터:', response.data);
         return response.data;
     } catch (error) {
         console.error('닉네임 조회 실패:', error);
@@ -29,10 +29,10 @@ export async function fetchNickname(userId) {
 }
 
 // 닉네임 수정 API
-export async function updateNickname(userId, nickname) {
-    console.log('updateNickname userId:', userId, 'nickname:', nickname);
+export async function updateNickname(nickname) {
+    // console.log('nickname:', nickname);
     try {
-        const response = await authInstance.patch(`/users/${userId}/nickname`, {
+        const response = await authInstance.patch(`nickname`, {
             nickname: nickname,
         }, {
             headers: {
@@ -40,7 +40,7 @@ export async function updateNickname(userId, nickname) {
                 // 'Authorization': `Bearer ${token}`
             }
         });
-        console.log('updateNickname response:', response);
+        console.log('닉네임 업데이트 응답:', response);
         return { nickname: nickname };
     } catch (error) {
         console.error('닉네임 수정 실패:', error);
