@@ -104,7 +104,11 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
         for(String name : featureNames) {
             commit.addFeatureName(name);
+
+            FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, name);
+            commit.addFeatureItem(featureItem);
         }
+
     }
 
     @Override
@@ -270,6 +274,8 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                     Map<String, Integer> severityCount = getSeverityCount(featureId);
 
                     return CodeReviewAllResponseDto.builder()
+                            .projectId(projectId)
+                            .featureId(featureId)
                             .featureName(featureTitle)
                             .featureField(featureField)
                             .qualityScore(scoreDto != null ? scoreDto.getQualityScore() : null)
@@ -299,7 +305,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
     }
 
     @Override
-    public List<CodeReviewAllResponseDto> getUserAllCodeReviews(Long userId) {
+    public List<CodeReviewUserAllResponseDto> getUserAllCodeReviews(Long userId) {
         // 1) 유저 확인
         User user = userService.findById(userId);
         if (user == null) {
@@ -329,7 +335,18 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                     // severity 합산(카테고리 무시, severity만 집계)
                     Map<String, Integer> severityCount = getSeverityCount(featureId);
 
-                    return CodeReviewAllResponseDto.builder()
+                    // createdAt
+                    CodeReview codeReview = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
+                            .orElseThrow(() -> new IllegalArgumentException(featureId + "의 코드리뷰를 찾을 수 없습니다."));
+
+                    int commitCounts = codeCommitService.findByFeature_FeatureIdOrderByCommittedAtDesc(featureId).size();
+
+                    return CodeReviewUserAllResponseDto.builder()
+                            .projectId(feature.getProjectId())
+                            .projectName(feature.getProject().getTitle())
+                            .featureId(featureId)
+                            .commitCounts(commitCounts)
+                            .createdAt(codeReview.getCreatedAt())
                             .featureName(feature.getTitle())
                             .featureField(feature.getField())
                             .qualityScore(qualityScore)          // null 가능

@@ -8,7 +8,6 @@ import styles from './ProfileEditModal.module.css';
 
 // GitHub OAuth 설정
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
-const REDIRECT_URI = 'http://localhost:8081/oauth/github/callback';
 
 const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   // React Query로 프로필 데이터 조회
@@ -131,21 +130,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     const token = localStorage.getItem('authToken') || '';
     console.log('유저의 jwt token: ', token);
 
-    // const params = new URLSearchParams({
-    //   client_id: GITHUB_CLIENT_ID,
-    //   redirect_uri: REDIRECT_URI,
-    //   scope: ['repo', 'user:email', 'read:org'].join(''),
-    //   state: token
-    // });
-    // GitHub OAuth URL 생성
-    // const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
-    const scopeRaw = 'repo user:email read:org';
-    const githubAuthUrl =
-      `https://github.com/login/oauth/authorize?` +
-      `client_id=${GITHUB_CLIENT_ID}` +
-      `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +       // http%3A%2F%2F...
-      `&scope=${encodeURIComponent(scopeRaw)}` +
-      `&state=${token}`;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=http://localhost:8081/oauth/github/callback`;
     console.log('githubAuthUrl: ', githubAuthUrl);
 
     // GitHub OAuth 페이지로 리다이렉트

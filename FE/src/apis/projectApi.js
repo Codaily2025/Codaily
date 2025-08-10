@@ -61,12 +61,12 @@ const preprocessProjectsList = (data) => {
 
     // 필요한 전처리 수행 - 확인용 로직 구현
     return data.map(project => ({
-        projectId: project.projectId || 'ProjectId does not exists',
-        title: project.title || 'Untitled Project',
-        lastWorkedDate: project.lastWorkedDate,
+        projectId: project.id || 'ProjectId does not exists',
+        title: project.name || 'Untitled Project',
+        lastWorkedDate: project.lastActivity,
         status: project.status || 'unable to check status',
-        progressRate: project.progressRate || 0,
-        techStacks: project.techStacks || []
+        progressRate: project.progress || 0,
+        dueDate: project.dueDate || '9999-12-31'
     }))
 }
 
@@ -75,16 +75,17 @@ const preprocessProjectsList = (data) => {
 export const getUserProjects = async () => {
     try {
         // 실제 서버 연동 시 이런 형태로~
-        // const response = await authInstance.get(project_default_url + 'user')
-        // return preprocessProjectsList(response.data)
+        const response = await authInstance.get(`/users/projects/active`)
+        console.log('사용자가 진행 중인 프로젝트 목록: ', response.data.data.projects)
+        return preprocessProjectsList(response.data.data.projects)
 
-        // 확인용 더미 데이터
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const processedData = preprocessProjectsList(dummyProjectsList)
-                resolve(processedData)
-            }, 500) // 네트워크 지연 시뮬레이션
-        })
+        // // 확인용 더미 데이터
+        // return new Promise((resolve) => {
+        //     setTimeout(() => {
+        //         const processedData = preprocessProjectsList(dummyProjectsList)
+        //         resolve(processedData)
+        //     }, 500) // 네트워크 지연 시뮬레이션
+        // })
 
     } catch (error) {
         console.error('getUserProjects Error:', error)
@@ -121,14 +122,16 @@ export const getKanbanTabFields = async (projectId) => {
     try {
         // 실제 서버 연동 시
         // const response = await defaultInstance.get(``)
-        // const response = await authInstance.get(``)
+        const response = await authInstance.get(`/projects/${projectId}/features/field-tabs`)
+        console.log(response.data)
+        return response.data
 
-        // 더미 데이터로 확인
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                resolve(dummyKanbanTabFields)
-            }, 500) // 네트워크 지연 시뮬레이션
-        })
+        // // 더미 데이터로 확인
+        // return new Promise((resolve) => {
+        //     setTimeout(() => {
+        //         resolve(dummyKanbanTabFields)
+        //     }, 500) // 네트워크 지연 시뮬레이션
+        // })
         
     } catch (error) {
         console.error('getKanbanTabFields Error: ', error)
@@ -151,5 +154,19 @@ export const getFeatureItemsByKanbanTab = async (projectId, field) => {
     } catch (error) {
         console.error('getFeatureItemsByKanbanTab Error: ', error)
         throw new Error(error.response?.data?.message || `${field} 하위 feature_items를 불러오는데 실패했습니다.`)
+    }
+}
+
+// Feature Item 상태 변경
+export const updateFeatureItemStatus = async (projectId, featureId, newStatus) => {
+    try {
+        // api 요청 url
+        const url = `projects/${projectId}/features/${featureId}/status`
+        const response = await authInstance.patch(url, { newStatus: newStatus })
+        return response.data
+        
+    } catch (error) {
+        console.error('updateFeatureItemStatus Error:', error)
+        throw new Error(error.response?.data?.message || '상태 변경에 실패했습니다.')
     }
 }

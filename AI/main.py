@@ -38,6 +38,7 @@ app.include_router(specification_router, prefix="/specification")
 app.include_router(chat_router, prefix="/chat")
 app.include_router(code_review_router, prefix="/api/code-review")
 app.include_router(retrospective_router, prefix="/api/retrospective")
+app.include_router(checklist_router)
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
