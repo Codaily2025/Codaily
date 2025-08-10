@@ -61,9 +61,6 @@ export async function fetchTechStack(userId) {
 }
 
 // 프로필 정보를 가져오는 함수
-// 실제 api 사용시 아래 주석 처리된 코드 사용하기
-// return axios.get('/api/profile').then(res => res.data);
-
 export async function fetchProfile() {
     // 임시로 userId 1을 사용 (실제로는 로그인된 사용자의 ID를 사용해야 함)
     const userId = 1; // 실제로는 로그인된 사용자의 ID를 가져와야 함
@@ -86,6 +83,40 @@ export async function fetchProfile() {
             ...dummyProfile,
             userId: userId, // 더미 데이터에도 userId 추가
         };
+    }
+}
+
+// 프로필 이미지 업로드 API
+// api/upload-profile-image
+// request body: { file: string}
+export async function uploadProfileImage(file) { 
+    try {
+        const formData = new FormData(); // 파일 업로드 시 필요
+        formData.append('file', file);
+        const response = await authInstance.post(`upload-profile-image`, formData);
+        console.log('프로필 이미지 업로드 응답:', response.data);
+        return response.data;
+        // 예상 응답 형식
+        // {
+        //     "message": "프로필 이미지가 업로드되었습니다.",
+        //     "imageUrl": "string"
+        // }
+    } catch (error) {
+        console.error('프로필 이미지 업로드 실패:', error);
+        throw error;
+    }
+}
+
+// 프로필 이미지 삭제 API
+// /api/profile-image
+export async function deleteProfileImage() {
+    try {
+        const response = await authInstance.delete(`profile-image`);
+        console.log('프로필 이미지 삭제 응답:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('프로필 이미지 삭제 실패:', error);
+        throw error;
     }
 }
 

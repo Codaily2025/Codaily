@@ -1,7 +1,7 @@
 // src/queries/useProfile.js
 // React Query 훅 정의
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchProfile, updateProfile, fetchNickname, updateNickname, fetchTechStack } from '../apis/profile';
+import { fetchProfile, updateProfile, fetchNickname, updateNickname, fetchTechStack, uploadProfileImage } from '../apis/profile';
 
 // 프로필 조회용 커스텀 훅
 // 캐시 키 : ['profile']
@@ -58,6 +58,21 @@ export function useUpdateNicknameMutation() {
       }));
       // 닉네임 캐시 업데이트
       queryClient.setQueryData(['nickname'], { nickname: variables.nickname });
+    },
+  });
+}
+
+// 프로필 이미지 업로드용 커스텀 훅
+export function useUploadProfileImageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: uploadProfileImage,
+    onSuccess: (response) => {
+      // 프로필 캐시 업데이트
+      queryClient.setQueryData(['profile'], (oldData) => ({
+        ...oldData,
+        profileImage: response.imageUrl
+      }));
     },
   });
 }
