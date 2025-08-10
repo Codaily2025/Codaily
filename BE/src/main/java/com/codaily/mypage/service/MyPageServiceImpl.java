@@ -130,6 +130,25 @@ public class MyPageServiceImpl implements MyPageService {
         }
     }
 
+    // 작성자: yeongenn - GitHub 계정 업데이트 구현
+    @Override
+    @Transactional
+    public void updateGithubAccount(Long userId, String githubAccount) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // GitHub 계정명 중복 체크 (해당 사용자가 아닌 다른 사용자가 사용 중인지 확인)
+        if (userRepository.existsByGithubAccount(githubAccount)) {
+            User existingUser = userRepository.findByNickname(githubAccount).orElse(null);
+            if (existingUser != null && !existingUser.getUserId().equals(userId)) {
+                throw new IllegalArgumentException("이미 사용 중인 GitHub 계정입니다.");
+            }
+        }
+
+        user.setGithubAccount(githubAccount);
+        userRepository.save(user);
+    }
+
     private ProjectListResponse converToList(Project project){
         return ProjectListResponse.builder()
                 .projectId(project.getProjectId())

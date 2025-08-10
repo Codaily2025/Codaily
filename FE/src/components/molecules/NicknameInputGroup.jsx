@@ -11,7 +11,8 @@ const NicknameInputGroup = ({
     labelClassName = '',
     inputClassName = '',
     value,
-    onChange
+    onChange,
+    error
 }) => {
     const inputId = `input-${fieldName}`
 
@@ -36,6 +37,15 @@ const NicknameInputGroup = ({
                 />
                 <NicknameCheckButton onClick={onNicknameCheck} />
             </div>
+            {error && (
+                <div style={{
+                    color: '#ef4444',
+                    fontSize: '12px',
+                    marginTop: '4px'
+                }}>
+                    {error}
+                </div>
+            )}
         </div>
     )
 }
