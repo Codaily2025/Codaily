@@ -179,6 +179,9 @@ public class ScheduleServiceImpl implements ScheduleService {
         LocalDate projectEndDate = project.getEndDate();
         Map<String, Integer> weeklySchedule = getWeeklyScheduleMap(projectId);
 
+        List<FeatureItemSchedule> schedulesToSave = new ArrayList<>();
+        Map<LocalDate, Double> dateAllocationCache = buildRemainingAllocationCache(projectId, startDate, projectEndDate);
+
         PriorityQueue<FeatureItem> remainingFeatures = new PriorityQueue<>(
                 Comparator.comparing(FeatureItem::getPriorityLevel, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(FeatureItem::getEstimatedTime)
@@ -190,7 +193,8 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         while (!remainingFeatures.isEmpty()) {
             FeatureItem currentFeature = remainingFeatures.poll();
-            double remainingHours = scheduleWithinProject(currentFeature, startDate, weeklySchedule, projectId, projectEndDate);
+            double remainingHours = scheduleWithinProject(currentFeature, startDate, weeklySchedule, projectId, projectEndDate,
+                                                          schedulesToSave, dateAllocationCache);
 
             if (remainingHours != 0) {
                 currentFeature.setRemainingTime(remainingHours);
@@ -200,11 +204,20 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         if (!unscheduledFeatures.isEmpty()) {
             LocalDate extendedStartDate = projectEndDate.plusDays(1);
-            scheduleWithWeeklyPattern(unscheduledFeatures, extendedStartDate, weeklySchedule, projectId);
+            Map<LocalDate, Double> extendedCache = buildRemainingAllocationCache(projectId, extendedStartDate, null);
+            scheduleWithWeeklyPattern(unscheduledFeatures, extendedStartDate, weeklySchedule, projectId,
+                                      schedulesToSave, dateAllocationCache);
+        }
+
+        if(!schedulesToSave.isEmpty()){
+            featureItemSchedulesRepository.saveAll(schedulesToSave);
         }
     }
 
-    private double scheduleWithinProject(FeatureItem feature, LocalDate startDate, Map<String, Integer> weeklySchedule, Long projectId, LocalDate projectEndDate) {
+    private double scheduleWithinProject(FeatureItem feature, LocalDate startDate,
+                                         Map<String, Integer> weeklySchedule, Long projectId,
+                                         LocalDate projectEndDate, List<FeatureItemSchedule> schedulesToSave,
+                                         Map<LocalDate, Double> dateAllocationCache) {
         double remainingHours = feature.getEstimatedTime();
         LocalDate currentDate = startDate;
 
@@ -212,7 +225,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             double availableHours = getAvailableHours(projectId, currentDate, weeklySchedule);
 
             if (availableHours > 0) {
-                double allocatedHours = getAllocatedHours(projectId, currentDate);
+                double allocatedHours = dateAllocationCache.getOrDefault(currentDate, 0.0);
                 double freeHours = Math.max(0, availableHours - allocatedHours);
 
                 if (freeHours > 0) {
@@ -225,8 +238,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                             .withinProjectPeriod(true)
                             .build();
 
-                    featureItemSchedulesRepository.save(schedule);
+                    schedulesToSave.add(schedule);
                     remainingHours -= hoursToSchedule;
+
+                    dateAllocationCache.put(currentDate, allocatedHours + hoursToSchedule);
                 }
             }
             currentDate = currentDate.plusDays(1);
@@ -234,15 +249,22 @@ public class ScheduleServiceImpl implements ScheduleService {
         return remainingHours;
     }
 
-    private void scheduleWithWeeklyPattern(List<FeatureItem> features, LocalDate startDate, Map<String, Integer> weeklySchedule, Long projectId) {
+    private void scheduleWithWeeklyPattern(List<FeatureItem> features, LocalDate startDate,
+                                           Map<String, Integer> weeklySchedule, Long projectId,
+                                           List<FeatureItemSchedule> schedulesToSave,
+                                           Map<LocalDate, Double> dateAllocationCache) {
         LocalDate currentDate = startDate;
 
         for (FeatureItem feature : features) {
-            currentDate = scheduleFeatureWithWeeklyPattern(feature, currentDate, weeklySchedule, projectId);
+            currentDate = scheduleFeatureWithWeeklyPattern(feature, currentDate, weeklySchedule,
+                    projectId, schedulesToSave, dateAllocationCache);
         }
     }
 
-    private LocalDate scheduleFeatureWithWeeklyPattern(FeatureItem feature, LocalDate startDate, Map<String, Integer> weeklySchedule, Long projectId) {
+    private LocalDate scheduleFeatureWithWeeklyPattern(FeatureItem feature, LocalDate startDate,
+                                                       Map<String, Integer> weeklySchedule, Long projectId,
+                                                       List<FeatureItemSchedule> schedulesToSave,
+                                                       Map<LocalDate, Double> dateAllocationCache) {
         double remainingHours = feature.getRemainingTime();
         LocalDate currentDate = startDate;
         int maxDays = 365;
@@ -253,7 +275,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             double availableHours = weeklySchedule.getOrDefault(dayName, 0);
 
             if (availableHours > 0) {
-                double allocatedHours = getAllocatedHours(projectId, currentDate);
+                double allocatedHours = dateAllocationCache.getOrDefault(currentDate, 0.0);
                 double freeHours = Math.max(0, availableHours - allocatedHours);
 
                 if (freeHours > 0) {
@@ -266,8 +288,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                             .withinProjectPeriod(false)
                             .build();
 
-                    featureItemSchedulesRepository.save(schedule);
+                    schedulesToSave.add(schedule);
                     remainingHours -= hoursToSchedule;
+
+                    dateAllocationCache.put(currentDate, allocatedHours + hoursToSchedule);
 
                     if (remainingHours == 0) {
                         double totalUsed = allocatedHours + hoursToSchedule;
@@ -295,9 +319,25 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     private double getAllocatedHours(Long projectId, LocalDate date) {
-        List<FeatureItemSchedule> schedules = featureItemSchedulesRepository
-                .findByFeatureItem_Project_ProjectIdAndScheduleDate(projectId, date);
-        return schedules.stream().mapToDouble(FeatureItemSchedule::getAllocatedHours).sum();
+        Double allocated = featureItemSchedulesRepository.findAllocatedHoursByProjectAndDate(projectId, date);
+        return allocated != null ? allocated : 0.0;
+    }
+
+    private Map<LocalDate, Double> buildRemainingAllocationCache(Long projectId, LocalDate startDate, LocalDate endDate) {
+        Map<LocalDate, Double> cache = new HashMap<>();
+
+        List<Object[]> allocations = featureItemSchedulesRepository
+                .findAllAllocatedHoursByProjectAndDateRange(projectId, startDate,
+                        endDate != null ? endDate.plusYears(1) : LocalDate.now().plusYears(1));
+
+        for (Object[] allocation : allocations) {
+            LocalDate date = (LocalDate) allocation[0];
+            Double hours = (Double) allocation[1];
+            cache.put(date, hours != null ? hours : 0.0);
+        }
+
+        log.debug("남은 스케줄 캐시 구축 완료 (최적화) - 날짜 수: {}", cache.size());
+        return cache;
     }
 
     private Map<String, Integer> getWeeklyScheduleMap(Long projectId) {
@@ -310,7 +350,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         List<Long> featureIds = features.stream()
                 .map(FeatureItem::getFeatureId)
                 .collect(Collectors.toList());
-        featureItemSchedulesRepository.deleteByFeatureItemFeatureIdIn(featureIds);
+        featureItemSchedulesRepository.deleteByFeatureIdInBatch(featureIds);
         log.debug("기존 스케줄 삭제 완료 - 기능 수: {}", featureIds.size());
     }
 
@@ -323,55 +363,91 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .collect(Collectors.toList());
     }
 
-    private void updateInProgressEstimatedTime(Long projectId) {
+    @Override
+    public void updateInProgressEstimatedTime(Long projectId) {
         List<FeatureItem> inProgressFeatures = featureItemRepository
                 .findByStatusAndProject_ProjectId("IN_PROGRESS", projectId);
 
         for (FeatureItem feature : inProgressFeatures) {
             double remainingTime = calculateRemainingTimeFromChecklist(feature.getFeatureId());
-            if (remainingTime == 0) {
-                feature.setStatus("DONE");
-            } else {
-                feature.setEstimatedTime(remainingTime);
-            }
+            feature.setEstimatedTime(remainingTime);
             featureItemRepository.save(feature);
         }
     }
 
-    private void startTodayFeatures(Long projectId, LocalDate today) {
-        List<FeatureItem> todayFeatures = featureItemRepository.findTodayStartFeatures(projectId, today);
-        for (FeatureItem feature : todayFeatures) {
-            if ("TODO".equals(feature.getStatus())) {
-                feature.setStatus("IN_PROGRESS");
-                featureItemRepository.save(feature);
-            }
-        }
+    @Override
+    public void startTodayFeatures(Long projectId, LocalDate today) {
+        int updatedCount = featureItemRepository.updateTodayFeaturesToInProgress(projectId, today);
     }
 
-    private void handleOverdueFeatures(Long projectId) {
+    @Override
+    public void handleOverdueFeatures(Long projectId) {
         LocalDate yesterday = LocalDate.now().minusDays(1);
+
         List<FeatureItem> overdueFeatures = featureItemRepository.findOverdueFeatures(projectId, yesterday);
 
+        if (overdueFeatures.isEmpty()) {
+            log.debug("지연된 기능이 없습니다 - 프로젝트 ID: {}", projectId);
+            return;
+        }
+
+        List<Long> featuresToResetToTodo = new ArrayList<>();
+        List<Long> featuresToMarkAsDone = new ArrayList<>();
+
         for (FeatureItem feature : overdueFeatures) {
-            if (!"DONE".equals(feature.getStatus())) {
-                double remainingTime = feature.getEstimatedTime();
-                if (remainingTime == 0) {
-                    feature.setStatus("DONE");
-                } else {
-                    feature.setStatus("TODO");
-                }
-                featureItemRepository.save(feature);
+            if ("DONE".equals(feature.getStatus())) {
+                continue;
+            }
+
+            // 남은 시간 확인하여 분류
+            double remainingTime = feature.getEstimatedTime();
+            if (remainingTime <= 0) {
+                featuresToMarkAsDone.add(feature.getFeatureId());
+            } else {
+                featuresToResetToTodo.add(feature.getFeatureId());
             }
         }
 
-        List<FeatureItem> allSchedulable = getSchedulableFeatures(projectId);
-        if (!allSchedulable.isEmpty()) {
-            deleteExistingSchedules(allSchedulable);
-            Project project = projectRepository.findById(projectId).orElseThrow();
-            LocalDate startDate = (project.getStartDate() != null && project.getStartDate().isAfter(LocalDate.now()))
-                    ? project.getStartDate() : LocalDate.now();
-            scheduleFeatures(allSchedulable, startDate, projectId);
+        int todoCount = 0, doneCount = 0;
+
+        if (!featuresToResetToTodo.isEmpty()) {
+            todoCount = featureItemRepository.updateStatusBatch(featuresToResetToTodo, "TODO");
+            log.debug("지연된 기능들을 TODO로 변경 - 프로젝트: {}, 변경 수: {}", projectId, todoCount);
         }
+
+        if (!featuresToMarkAsDone.isEmpty()) {
+            doneCount = featureItemRepository.updateStatusBatch(featuresToMarkAsDone, "DONE");
+            log.debug("완료된 기능들을 DONE으로 변경 - 프로젝트: {}, 변경 수: {}", projectId, doneCount);
+        }
+
+        if (todoCount > 0) {
+            log.info("지연된 기능들로 인한 재스케줄링 시작 - 프로젝트: {}", projectId);
+
+            // TODO로 되돌린 기능들만 재스케줄링
+            List<FeatureItem> allSchedulable = getSchedulableFeatures(projectId);
+
+            if (!allSchedulable.isEmpty()) {
+                // 기존 스케줄 삭제
+                deleteExistingSchedules(allSchedulable);
+
+                // 시작일 계산
+                Project project = projectRepository.findById(projectId)
+                        .orElseThrow(() -> new EntityNotFoundException("프로젝트를 찾을 수 없습니다. ID: " + projectId));
+
+                LocalDate today = LocalDate.now();
+                LocalDate startDate = (project.getStartDate() != null && project.getStartDate().isAfter(today))
+                        ? project.getStartDate() : today;
+
+                // 재스케줄링 실행
+                scheduleFeatures(allSchedulable, startDate, projectId);
+
+                log.info("지연된 기능들로 인한 재스케줄링 완료 - 프로젝트: {}, 재스케줄링된 기능 수: {}",
+                        projectId, allSchedulable.size());
+            }
+        }
+
+        log.info("지연된 기능 처리 완료 - 프로젝트: {}, 총 지연 기능: {}, TODO 변경: {}, DONE 변경: {}",
+                projectId, overdueFeatures.size(), todoCount, doneCount);
     }
 
     private double calculateRemainingTimeFromChecklist(Long featureItemId) {

@@ -24,8 +24,11 @@ public class User {
     @Column(nullable = false, length = 20)
     private String socialProvider;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = true, length = 255)
     private String email;
+
+    @Column(length = 255)
+    private String socialId;
 
     @Column(nullable = false, length = 50)
     private String nickname;

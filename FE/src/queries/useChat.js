@@ -13,8 +13,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // useQueryClient의 역할 : 데이터 캐시 관리
 // 전역 캐시 인스턴스를 가져와 훅 내부에서 invalidateQueries(역할: 캐시 무효화) 같은 메서드 호출
 
-import { fetchChatHistory, postUserMessage } from '../apis/chatApi';
+import { fetchChatHistory, postUserMessage, streamChatResponse } from '../apis/chatApi';
 import { useChatStore } from '../stores/chatStore';
+import { useSpecificationStore } from '../stores/specificationStore';
 
 export const useChatHistoryQuery = () => {
   // console.log('훅 진입')
@@ -40,69 +41,98 @@ export const useChatHistoryQuery = () => {
 
 export const useSendUserMessage = () => {
   const queryClient = useQueryClient(); // 데이터 캐시 관리
-  const addMessage = useChatStore((state) => state.addMessage); // 메세지 추가
-  const removeMessage = useChatStore((state) => state.removeMessage); // 메세지 삭제
+  const { addMessage, removeMessage, appendLastMessageContent } = useChatStore((state) => state); // 메세지 추가
+  const { setProjectSummary, addFeatureField, addSubFeature, regenerateSpec, setFeatures } = useSpecificationStore((state) => state);
 
   return useMutation({
     // Mutation 함수는 텍스트나 파일 객체를 받을 수 있음
-    mutationFn: (message) => postUserMessage(message),
-    // API 호출 전에 실행 -> 사용자 메세지 먼저 추가
-    onMutate: async (message) => {
-      // 기존 쿼리를 취소하여 이전 데이터와 충돌하지 않도록 함
-      // 취소 후 새로운 데이터 추가
-      await queryClient.cancelQueries({ queryKey: ['chat', 'history'] });
+    mutationFn: (userText) => {
+      // projectId와 specId는 적절한 방법으로 가져와야 함. (예: Zustand, Context API 등)
+      // 여기서는 임시 값으로 설정함
+      const projectId = 12; 
+      const projectSpecId = 15;
 
-      const tempId = `user-${Date.now()}`
-      let newUserMessage;
+      return new Promise((resolve, reject) => {
+        let botMessageAdded = false;
 
-      if (typeof message === 'string') {
-        // 텍스트 메시지 객체 생성
-        newUserMessage = {
-          id: tempId,
-          sender: 'user',
-          type: 'text',
-          text: message,
-        };
-      } else if (message instanceof File) {
-        // 파일 메시지 객체 생성
-        newUserMessage = {
-          id: tempId,
-          sender: 'user',
-          type: 'file',
-          // UI에 표시될 텍스트 (파일명과 크기)
-          text: `파일: ${message.name} (${(message.size / 1024).toFixed(2)} KB)`,
-          file: {
-            name: message.name,
-            size: message.size,
-            type: message.type,
+        streamChatResponse({
+          userText,
+          projectId,
+          projectSpecId,
+          onOpen: () => {
+            // 스트림이 시작되면 빈 봇 메시지를 추가
+            addMessage({
+              id: `bot-${Date.now()}`,
+              sender: 'bot',
+              text: '',
+            });
+            botMessageAdded = true;
           },
-        };
-      }
-
-      // 생성된 새 메시지를 전역 상태에 추가하여 UI에 즉시 표시
-      if (newUserMessage) {
-        addMessage(newUserMessage);
-      }
-
-      // 오류 발생 시 롤백에 사용할 임시 ID를 컨텍스트에 저장
+          onMessage: (data) => {
+            console.log("SSE Data Received: ", data);
+            switch (data.type) {
+              case 'chat':
+                appendLastMessageContent(data.content);
+                break;
+              case 'project:summarization':
+                setProjectSummary(data.content);
+                break;
+              case 'spec':
+              case 'spec:regenerate':
+                 // spec, regenerate는 기존 명세서를 대체하므로, 첫 조각에서 초기화 후 추가
+                 // 백엔드 구현에 따라, 첫 조각인지 식별할 방법이 필요함
+                 // 여기서는 간단히 regenerateSpec 호출
+                 addFeatureField(data.content); // spec 데이터는 여러 조각으로 오므로 계속 추가
+                 break;
+              case 'spec:add:field':
+                addFeatureField(data.content);
+                break;
+              case 'spec:add:feature:main':
+                 addFeatureField(data.content); // 구조가 동일하므로 같은 액션 사용
+                 break;
+              case 'spec:add:feature:sub':
+                addSubFeature(data.content);
+                break;
+              default:
+                console.warn("Unknown SSE event type:", data.type);
+            }
+          },
+          onClose: () => {
+            console.log("SSE stream closed.");
+            resolve(); // Promise를 resolve하여 mutation을 성공 상태로 만듦
+          },
+          onError: (error) => {
+            console.error("SSE Error:", error);
+            reject(error); // Promise를 reject하여 mutation을 에러 상태로 만듦
+          },
+        });
+      });
+    },
+    // Optimistic update 로직은 그대로 유지
+    onMutate: async (message) => {
+      await queryClient.cancelQueries({ queryKey: ['chat', 'history'] });
+      const tempId = `user-${Date.now()}`;
+      const newUserMessage = {
+        id: tempId,
+        sender: 'user',
+        type: 'text',
+        text: message,
+      };
+      addMessage(newUserMessage);
       return { tempId };
     },
-    onError: (_err, message, context) => {
-      // onMutate에서 추가했던 임시 메시지를 전역 상태에서 제거
+    onError: (_err, _message, context) => {
       if (context?.tempId) {
         removeMessage(context.tempId);
       }
-      console.error('채팅 메시지 전송 중 오류가 발생했습니다.', error);
+      addMessage({
+        id: `bot-error-${Date.now()}`,
+        sender: 'bot',
+        text: '오류가 발생했습니다. 다시 시도해 주세요.',
+      });
     },
-    onSuccess: (botMsg) => {
-      // 백엔드 응답(봇 메세지) 채팅 기록에 추가
-      // addMessage(botMsg)
-      addMessage({ ...botMsg, type: 'text' });
-    },
-    // 성공 여부 상관 없이 항상 실행됨
     onSettled: () => {
-      // 캐시 무효화
-      queryClient.invalidateQueries(['chat', 'history'])
+      queryClient.invalidateQueries(['chat', 'history']);
     },
   });
-}
+};

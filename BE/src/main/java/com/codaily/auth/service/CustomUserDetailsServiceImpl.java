@@ -22,11 +22,18 @@ public class CustomUserDetailsServiceImpl implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // username은 DB에서의 식별자 (예: 이메일, 닉네임 등)
-        log.info("username: " + username);
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
-        log.info("user: "+user.getNickname());
+        User user;
+
+        if (username.startsWith("kakao:")) {
+            String[] parts = username.split(":", 2);
+            String socialId = parts[1];
+            user = userRepository.findBySocialIdAndSocialProvider(socialId, "kakao")
+                    .orElseThrow(() -> new UsernameNotFoundException("카카오 사용자를 찾을 수 없습니다: " + socialId));
+        } else {
+            user = userRepository.findByEmail(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username));
+        }
+
         return new PrincipalDetails(user);
     }
 }

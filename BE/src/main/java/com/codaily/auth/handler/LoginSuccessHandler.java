@@ -30,12 +30,11 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication) throws IOException {
         try {
             OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-            String email = oAuth2User.getAttribute("email");
-            log.info("OAuth2User attributes: " + oAuth2User.getAttributes());
+            String registrationId = extractRegistrationId(request);
+            String userIdentifier = getUserIdentifier(oAuth2User, registrationId);
 
             // 1. JWT 토큰 생성
-            String token = jwtTokenProvider.createToken(email);
-            log.info("Generated JWT token for user: " + email);
+            String token = jwtTokenProvider.createToken(userIdentifier);
 
             Cookie jwtCookie = new Cookie("jwt", token);
             jwtCookie.setHttpOnly(true);
@@ -67,6 +66,26 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         } catch (Exception e) {
             log.error("Error in LoginSuccessHandler", e);
             response.sendRedirect("http://localhost:5173/login?error=authentication_failed");
+        }
+    }
+
+    private String extractRegistrationId(HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        if (requestURI.contains("/kakao")) return "kakao";
+        if (requestURI.contains("/google")) return "google";
+        if (requestURI.contains("/naver")) return "naver";
+        return "unknown";
+    }
+
+    private String getUserIdentifier(OAuth2User oAuth2User, String registrationId) {
+        switch (registrationId) {
+            case "google", "naver" -> {
+                return oAuth2User.getAttribute("email");
+            }
+            case "kakao" -> {
+                return "kakao:" + oAuth2User.getAttribute("id").toString();
+            }
+            default -> throw new IllegalArgumentException("Unsupported provider: " + registrationId);
         }
     }
 }
