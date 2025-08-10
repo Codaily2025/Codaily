@@ -48,17 +48,17 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
             // 작성자: yeongenn - 최초 로그인 판별 로직 추가
             // 2. 사용자 정보 조회하여 최초 로그인인지 확인
-            User user = userRepository.findByEmail(email).orElse(null);
+            User user = userRepository.findByEmail(userIdentifier).orElse(null);
             String redirectUrl;
 
             if (user != null && user.isFirstLogin()) {
                 // 최초 로그인인 경우 추가 정보 입력 페이지로 리다이렉트
                 redirectUrl = "http://localhost:5173/oauth/callback?token=" + token + "&isFirstLogin=true";
-                log.info("해당 유저는 최초 로그인임~: " + email + ", redirecting to additional info page");
+                log.info("해당 유저는 최초 로그인임~: " + userIdentifier + ", redirecting to additional info page");
             } else {
                 // 기존 사용자는 홈페이지로 리다이렉트
                 redirectUrl = "http://localhost:5173/oauth/callback?token=" + token + "&isFirstLogin=false";
-                log.info("해당 유저는 이미 로그인한 적 있음~: " + email + ", redirecting to home");
+                log.info("해당 유저는 이미 로그인한 적 있음~: " + userIdentifier + ", redirecting to home");
             }
 
             log.info("Redirecting to: " + redirectUrl);
