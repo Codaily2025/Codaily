@@ -19,4 +19,7 @@ public interface MyPageService {
     String uploadProfileImage(Long userId, MultipartFile file);
 
     void deleteProfileImage(Long userId);
+
+    // 작성자: yeongenn - GitHub 계정 업데이트 메서드 추가
+    void updateGithubAccount(Long userId, String githubAccount);
 }

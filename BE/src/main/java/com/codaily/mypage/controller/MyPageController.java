@@ -151,4 +151,40 @@ public class MyPageController {
 
         return ResponseEntity.ok(response);
     }
+
+    // 작성자: yeongenn - 최초 로그인 시 추가 정보 입력 API
+    @PutMapping("/user/additional-info")
+    @Operation(summary = "사용자 추가 정보 업데이트",
+            description = "최초 로그인 후 닉네임, GitHub 계정, 프로필 이미지를 한 번에 업데이트")
+    public ResponseEntity<Map<String, String>> updateAdditionalInfo(
+            @AuthenticationPrincipal PrincipalDetails principalDetails,
+            @RequestParam("nickname") String nickname,
+            @RequestParam("githubAccount") String githubAccount,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        Long userId = principalDetails.getUser().getUserId();
+
+        try {
+            // 닉네임 업데이트
+            userService.updateUserNickname(userId, nickname);
+
+            // GitHub 계정 업데이트
+            myPageService.updateGithubAccount(userId, githubAccount);
+
+            // 프로필 이미지 업로드 (있는 경우에만)
+            if (profileImage != null && !profileImage.isEmpty()) {
+                myPageService.uploadProfileImage(userId, profileImage);
+            }
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "추가 정보가 성공적으로 업데이트되었습니다.");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "추가 정보 업데이트 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
 }

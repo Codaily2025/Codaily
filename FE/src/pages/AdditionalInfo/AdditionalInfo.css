@@ -1,0 +1,15 @@
+.additional-info-container {
+  width: 100%;
+  min-height: calc(100vh - 140px); /* NavBar와 main-content 패딩 고려 */
+  /* background-color: #fafafa; */
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0; /* main-content에서 이미 패딩 제공 */
+}
+
+.form-container {
+  width: 100%;
+  max-width: 550px; /* 더 넓은 공간 활용 */
+  padding: 20px;
+}
