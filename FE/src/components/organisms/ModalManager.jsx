@@ -4,6 +4,7 @@ import ProjectEditModal from "../ProjectEditModal"
 import EventDetailModal from './EventDetailModal'
 import NicknameCheckModal from './NicknameCheckModal'
 import TaskDetailModal from './TaskDetailModal'
+import StatusConfirmModal from './StatusConfirmModal'
 import { useAuthStore } from "../../stores/authStore"
 
 
@@ -14,6 +15,7 @@ const MODAL_COMPONENTS = {
     PROFILE_EDIT: ProfileEditModal,
     PROJECT_EDIT: ProjectEditModal,
     TASK_DETAIL: TaskDetailModal,
+    STATUS_CONFIRM: StatusConfirmModal,
     // CONFIRMATION: ConfirmationModal,
     // DELETION: DeleteModal,
     // ...
@@ -26,14 +28,23 @@ const ModalManager = () => {
     // const userId = user?.userId || 1
     const userId = 1 // 임시로 하드코딩
 
-    if (!isOpen || !modalType) return null
+    // 콘솔 디버깅
+    console.log('ModalManager 상태:', { isOpen, modalType, modalData })
+
+    if (!isOpen || !modalType) {
+        console.log('모달이 열리지 않았거나 type 확인 X')
+        return null
+    }
 
     const ModalComponent = MODAL_COMPONENTS[modalType]
+    console.log('Modal 컴포넌트:', ModalComponent)
 
     if (!ModalComponent) {
         console.log(`모달 없엉: ${modalType}`)
         return null
     }
+
+    console.log('렌더링되는 Modal 컴포넌트:', modalType)
 
     // ProjectEditModal에는 userId도 전달
     if (modalType === 'PROJECT_EDIT') {
