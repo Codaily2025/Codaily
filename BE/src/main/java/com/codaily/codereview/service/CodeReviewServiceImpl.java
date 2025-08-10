@@ -337,7 +337,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
                     // createdAt
                     CodeReview codeReview = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
-                            .orElseThrow(() -> new IllegalArgumentException(featureId + "의 코드리뷰를 찾을 수 없습니다."));
+                            .orElseThrow(null);
 
                     int commitCounts = codeCommitService.findByFeature_FeatureIdOrderByCommittedAtDesc(featureId).size();
 
@@ -346,11 +346,11 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                             .projectName(feature.getProject().getTitle())
                             .featureId(featureId)
                             .commitCounts(commitCounts)
-                            .createdAt(codeReview.getCreatedAt())
+                            .createdAt(codeReview != null ? codeReview.getCreatedAt() : null)
                             .featureName(feature.getTitle())
                             .featureField(feature.getField())
-                            .qualityScore(qualityScore)          // null 가능
-                            .severityCount(severityCount)        // 예: {"중간":2,"낮음":1}
+                            .qualityScore(qualityScore != null ? qualityScore : 0)
+                            .severityCount(severityCount)
                             .build();
                 })
                 .collect(java.util.stream.Collectors.toList());

@@ -138,7 +138,8 @@ public class CodeReviewController {
     @GetMapping("/{featureId}/items")
     @Operation(summary = "코드 리뷰 항목별 조회", description = "featureId 기준 코드리뷰 항목(카테고리)별 조회용")
     public ResponseEntity<List<CodeReviewItemResponseDto>> getCodeReviewItems(@PathVariable Long featureId) {
-        return ResponseEntity.ok(codeReviewService.getCodeReviewItems(featureId));
+        List<CodeReviewItemResponseDto> result = codeReviewService.getCodeReviewItems(featureId);
+        return (result == null || result.isEmpty()) ? ResponseEntity.noContent().build() : ResponseEntity.ok(result);
     }
 
     /*
@@ -170,7 +171,8 @@ public class CodeReviewController {
     @GetMapping("{featureId}/checklist/status")
     @Operation(summary = "체크리스트 구현 상태", description = "featureId 기준 체크리스트 구현 여부 확인용")
     public ResponseEntity<ChecklistStatusResponseDto> getChecklistStatus(@PathVariable Long featureId) {
-        return ResponseEntity.ok(codeReviewService.getChecklistStatus(featureId));
+        ChecklistStatusResponseDto dto = codeReviewService.getChecklistStatus(featureId);
+        return (dto == null) ? ResponseEntity.noContent().build() : ResponseEntity.ok(codeReviewService.getChecklistStatus(featureId));
     }
 
     /*
@@ -198,7 +200,8 @@ public class CodeReviewController {
     @GetMapping("{featureId}/score")
     @Operation(summary = "코드 리뷰 점수", description = "featureId 기준 코드 리뷰 점수 반환")
     public ResponseEntity<CodeReviewScoreResponseDto> getCodeReviewScore(@PathVariable Long featureId) {
-        return ResponseEntity.ok(codeReviewService.getQualityScore(featureId));
+        CodeReviewScoreResponseDto dto = codeReviewService.getQualityScore(featureId);
+        return (dto == null) ? ResponseEntity.noContent().build() : ResponseEntity.ok(codeReviewService.getQualityScore(featureId));
     }
 
     /*
