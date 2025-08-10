@@ -3,6 +3,7 @@ package com.codaily.project.repository;
 import com.codaily.project.entity.FeatureItem;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -132,4 +133,15 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT f FROM FeatureItem f WHERE f.featureId = :featureId")
     FeatureItem getFeatureItemByFeatureId(@Param("featureId") Long featureId);
 
+    // ===== 배치 상태 업데이트 ===
+    @Modifying
+    @Query("UPDATE FeatureItem f SET f.status = :status WHERE f.featureId IN :featureIds")
+    int updateStatusBatch(List<Long> featureIds, String status);
+
+    @Modifying
+    @Query("UPDATE FeatureItem f SET f.status = 'IN_PROGRESS' " +
+            "WHERE f.project.projectId = :projectId AND f.status = 'TODO' " +
+            "AND EXISTS (SELECT 1 FROM FeatureItemSchedule s " +
+            "           WHERE s.featureItem = f AND s.scheduleDate = :today)")
+    int updateTodayFeaturesToInProgress(@Param("projectId") Long projectId, @Param("today") LocalDate today);
 }

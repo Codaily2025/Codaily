@@ -17,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -70,7 +71,11 @@ public class GithubLinkController {
                                 .doOnNext(profile ->
                                         userService.linkGithub(userDetails.getUserId(), profile, accessToken)
                                 )
-                                .thenReturn(ResponseEntity.noContent().build())
+                                .thenReturn(
+                                        ResponseEntity.status(HttpStatus.FOUND)
+                                                .location(URI.create("http://localhost:5173/settings?github=connected"))
+                                                .build()
+                                )
                 );
     }
 

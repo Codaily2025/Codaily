@@ -53,6 +53,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final ScheduleRepository scheduleRepository;
     private final FeatureItemChecklistRepository checklistRepository;
     private final WebClient webClient;
+    private final AsyncScheduleService asyncScheduleService;
 
     @Override
     public FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest featureItem) {
@@ -97,7 +98,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         FeatureItem savedFeature = featureItemRepository.save(feature);
 
         if (featureItem.getEstimatedTime() != null && featureItem.getEstimatedTime() > 0) {
-            scheduleService.rescheduleProject(projectId);
+            asyncScheduleService.rescheduleFromFeatureCreateAsync(projectId, savedFeature);
         }
 
         log.info("기능 생성 완료 - 프로젝트 ID: {}, 기능 ID: {}", projectId, savedFeature.getFeatureId());
@@ -188,7 +189,9 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             feature.setIsReduced(update.getIsReduced());
         }
 
-        if (needsRescheduling) scheduleService.rescheduleFromFeatureUpdate(projectId, feature, oldPriorityLevel, oldEstimatedTime);
+        if (needsRescheduling) {
+            asyncScheduleService.rescheduleFromFeatureUpdateAsync(projectId, feature, oldPriorityLevel, oldEstimatedTime);
+        }
 
         log.info("기능 수정 완료 - 프로젝트 ID: {}, 기능 ID: {}", projectId, featureId);
         return convertToResponseDto(feature);
@@ -214,7 +217,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         feature.getChildFeatures().forEach(child -> child.setParentFeature(null));
 
         featureItemRepository.delete(feature);
-        scheduleService.rescheduleFromFeatureDelete(projectId, feature);
+        asyncScheduleService.rescheduleFromFeatureDeleteAsync(projectId, feature);
         log.info("기능 삭제 완료 - 프로젝트 ID: {}, 기능 ID: {}", projectId, featureId);
     }
 
