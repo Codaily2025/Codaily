@@ -1,0 +1,223 @@
+.kanbanBoard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.kanbanColumns {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    flex: 1;
+}
+
+.kanbanColumn {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.kanbanColumnHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.kanbanColumnInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.kanbanColumnCount {
+    display: flex;
+    width: 20px;
+    height: 20px;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    color: #404040;
+}
+
+.kanbanColumnTitle {
+    color: white;
+    font-family: Inter, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.kanbanAddBtn {
+    display: flex;
+    width: 24px;
+    height: 24px;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    color: #404040;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.kanbanAddBtn:hover {
+    background-color: #f5f5f5;
+    transform: scale(1.1);
+}
+
+.kanbanColumnContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.kanbanColumnContent::-webkit-scrollbar {
+    width: 4px;
+}
+
+.kanbanColumnContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kanbanColumnContent::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+}
+
+.kanbanColumnContent::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+.kanbanEmptyMessage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    color: #9ca3af;
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    text-align: center;
+    background-color: #f9fafb;
+    border-radius: 12px;
+    border: 2px dashed #e5e7eb;
+}
+
+.kanbanCard {
+    background: #FFF;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.kanbanCard:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.kanbanCardInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.kanbanCardCategory {
+    color: #8483AB;
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kanbanCardTitle {
+    color: #404040;
+    font-family: Inter, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.kanbanCardDetails {
+    color: #737373;
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.kanbanCardFooter {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.kanbanCardField {
+    color: #8483AB;
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.kanbanCardTime {
+    color: #9ca3af;
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.kanbanCardPriority {
+    color: #9ca3af;
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+/* 드래그 앤 드롭 스타일 */
+.kanbanCard.dragging {
+    opacity: 0.5;
+    transform: scale(1.05);
+    z-index: 1000;
+    box-shadow: 0 8px 25px 0 rgba(0, 0, 0, 0.15);
+}
+
+.dropZoneValid {
+    transition: all 0.2s ease;
+}
+
+.dropZoneActive {
+    background-color: #f0fdf4;
+    border: 2px dashed #22c55e;
+    border-radius: 12px;
+}
+
+.dropZoneActive .kanbanEmptyMessage {
+    background-color: transparent;
+    border: none;
+    color: #22c55e;
+    font-weight: 600;
+}
+
+.kanbanColumnContent.dropZoneActive {
+    padding: 8px;
+}

@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { getUserProjects, getLastWorkedProjectId, getKanbanTabFields, getFeatureItemsByKanbanTab } from '../apis/projectApi'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getUserProjects, getLastWorkedProjectId, getKanbanTabFields, getFeatureItemsByKanbanTab, updateFeatureItemStatus } from '../apis/projectApi'
 
 // Query Keys
 export const PROJECT_QUERY_KEYS = {
@@ -41,6 +41,7 @@ export const useKanbanTabFields = (projectId) => {
         cacheTime: STALE_TIME * 2,
         retry: 2,
         refetchOnWindowFocus: false,
+        enabled: !!projectId && projectId !== '', // projectId와 field가 모두 있고 빈 문자열이 아닐 때만 실행
         onError: (error) => {
             console.error('useKanbanTabFields Error:', error)
         }
@@ -78,6 +79,31 @@ export const useFeaturesByField = (projectId, field) => {
     })
 }
 
+// Feature Item 상태 변경 Mutation
+export const useUpdateFeatureItemStatus = () => {
+    const queryClient = useQueryClient()
+    
+    return useMutation({
+        mutationFn: ({ projectId, featureId, newStatus }) => 
+            updateFeatureItemStatus(projectId, featureId, newStatus),
+        onSuccess: (data, variables) => {
+            // 현재 필드의 캐시만 무효화
+            if (variables.currentField) {
+                queryClient.invalidateQueries({
+                    queryKey: PROJECT_QUERY_KEYS.byField(variables.projectId, variables.currentField)
+                })
+            } else {
+                // fallback: 모든 필드 데이터 무효화
+                queryClient.invalidateQueries({
+                    queryKey: PROJECT_QUERY_KEYS.byField(variables.projectId)
+                })
+            }
+        },
+        onError: (error) => {
+            console.error('useUpdateFeatureItemStatus Error:', error)
+        }
+    })
+}
 
 // 특정 프로젝트 정보 조회
 // export const useProjectDetail = (projectId, options = {}) => {
