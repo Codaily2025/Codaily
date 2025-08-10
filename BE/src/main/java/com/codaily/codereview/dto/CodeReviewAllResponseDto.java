@@ -8,6 +8,8 @@ import java.util.Map;
 @Getter
 @Builder
 public class CodeReviewAllResponseDto {
+    private Long projectId;
+    private Long featureId;
     private String featureName;
     private String featureField;
     private Double qualityScore;

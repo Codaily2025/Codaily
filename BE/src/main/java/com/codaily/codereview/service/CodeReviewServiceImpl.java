@@ -270,6 +270,8 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                     Map<String, Integer> severityCount = getSeverityCount(featureId);
 
                     return CodeReviewAllResponseDto.builder()
+                            .projectId(projectId)
+                            .featureId(featureId)
                             .featureName(featureTitle)
                             .featureField(featureField)
                             .qualityScore(scoreDto != null ? scoreDto.getQualityScore() : null)
