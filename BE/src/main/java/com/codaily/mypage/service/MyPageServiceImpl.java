@@ -126,6 +126,14 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     @Override
+    public String getGithubAccount(Long userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return user.getGithubAccount();
+    }
+
+    @Override
     @Transactional
     public void deleteProfileImage(Long userId) {
         User user = userRepository.findByUserId(userId)

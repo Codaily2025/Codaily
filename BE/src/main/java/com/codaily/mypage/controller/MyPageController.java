@@ -166,5 +166,18 @@ public class MyPageController {
 
         return ResponseEntity.ok(response);
     }
-    
+
+    @GetMapping("/github-account")
+    @Operation(summary = "등록된 깃허브 아이디 조회")
+    public ResponseEntity<GithubAccountResponse> getGithubAccount(
+            @AuthenticationPrincipal PrincipalDetails principalDetails
+    ){
+        myPageService.getGithubAccount(principalDetails.getUser().getUserId());
+
+        GithubAccountResponse response = GithubAccountResponse.builder()
+                .githubId(principalDetails.getUser().getGithubAccount())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

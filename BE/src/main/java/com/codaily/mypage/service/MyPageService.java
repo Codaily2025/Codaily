@@ -20,5 +20,7 @@ public interface MyPageService {
 
     void deleteProfileImage(Long userId);
 
-    public String getProfileImage(Long userId);
+    String getProfileImage(Long userId);
+
+    String getGithubAccount(Long userId);
 }
