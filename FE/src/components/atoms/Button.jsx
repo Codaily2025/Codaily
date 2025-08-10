@@ -1,4 +1,4 @@
-const Button = ({ children, onClick, type = 'primary', className = '', style = {} }) => {
+const Button = ({ children, onClick, type = 'primary', htmlType = 'button', disabled = false, className = '', style = {} }) => {
     // 기본 공통 스타일
     const baseStyle = {
         border: 'none',
@@ -38,9 +38,10 @@ const Button = ({ children, onClick, type = 'primary', className = '', style = {
 
 
     return (
-
         <button
+            type={htmlType}
             onClick={onClick}
+            disabled={disabled}
             className={className}
             style={combinedStyle}
         >

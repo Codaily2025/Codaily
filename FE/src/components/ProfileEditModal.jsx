@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfileStore } from '../stores/profileStore';
-import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation } from '../queries/useProfile';
+import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation, useUploadProfileImageMutation } from '../queries/useProfile';
 import { updateProfile } from '../apis/profile'; // 서버 갱신
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
@@ -40,7 +40,8 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   // React Query 뮤테이션 훅들
   const updateNicknameMutation = useUpdateNicknameMutation();
   const updateProfileMutation = useUpdateProfileMutation();
-
+  const uploadProfileImageMutation = useUploadProfileImageMutation();
+  
   // 모달이 열릴 때마다 서버 프로필 데이터로 폼 초기화
   useEffect(() => {
     if (isOpen && profileData) {
@@ -59,6 +60,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     console.error('닉네임 수정 실패:', error);
     setFormError('nickname', '닉네임 수정에 실패했습니다.');
   };
+
   // 입력 필드 변경 핸들러
   const handleChange = (field) => (e) => {
     const value = e.target.value;
@@ -70,12 +72,41 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // 파일 크기 검증 (5MB 제한)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('파일 크기는 5MB 이하여야 합니다.');
+        return;
+      }
+
+      // 파일 타입 검증
+      if (!file.type.startsWith('image/')) {
+        alert('이미지 파일만 업로드 가능합니다.');
+        return;
+      }
+
+      // 미리보기 설정
       const reader = new FileReader();
       reader.onload = (ev) => {
         setPreviewImage(ev.target.result);
         updateFormField('profileImage', ev.target.result);
       };
-      reader.readAsDataURL(file); // 이미지 미리보기
+      reader.readAsDataURL(file);
+
+      // 서버에 이미지 업로드
+      uploadProfileImageMutation.mutate(file, {
+        onSuccess: (response) => {
+          console.log('프로필 이미지 업로드 성공:', response);
+          // 성공 메시지 표시 (선택사항)
+          // alert('프로필 이미지가 업로드되었습니다.');
+        },
+        onError: (error) => {
+          console.error('프로필 이미지 업로드 실패:', error);
+          alert('프로필 이미지 업로드에 실패했습니다.');
+          // 미리보기 초기화
+          setPreviewImage(null);
+          updateFormField('profileImage', null);
+        }
+      });
     }
   };
 
@@ -224,7 +255,6 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 accept="image/*"
                 onChange={handleImageUpload}
                 className={styles.fileInputOverlay}
-              // className="hidden"
               />
               <div className={styles.profileImage}>
                 {previewImage ? (
@@ -237,7 +267,9 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 <Camera size={16} className={styles.cameraIcon} />
               </label>
             </div>
-            {/* <p className={styles.imageUploadText}>프로필 사진 변경</p> */}
+            {uploadProfileImageMutation.isPending && (
+              <p className={styles.uploadStatus}>이미지 업로드 중...</p>
+            )}
           </div>
 
           {/* 닉네임 */}
@@ -247,7 +279,6 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
               <User size={18} className={styles.inputIcon} />
               <input
                 type="text"
-                // value={nickname}
                 value={editFormData.nickname ?? ""}
                 onChange={handleChange('nickname')}
                 className={`${styles.inputField} ${styles.nicknameInputField} ${formErrors.nickname ? styles.inputError : ''}`}
@@ -278,13 +309,10 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
               </div>
               <button
                 onClick={handleEmailVerification}
-                // disabled={isEmailVerifying || isEmailVerified}
                 disabled={isEmailVerifying}
                 className={`${styles.actionButton} ${styles.emailButton}`}
-              // className={`${styles.actionButton} ${isEmailVerified ? styles.verifiedButton : ''}`}
               >
                 {isEmailVerifying ? '인증 중...' : isEmailVerified ? '인증' : '인증'}
-                {/* {isEmailVerifying ? '인증 중...' : isEmailVerified ? '재인증' : '인증'} */}
               </button>
             </div>
             {isEmailVerified && !formErrors.email && hasVerifiedEmailOnce && (
@@ -320,7 +348,6 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 onClick={handleGithubConnect}
                 className={`${styles.actionButton} ${styles.githubButton}`}
               >
-                {/* <Github size={16} /> */}
                 변경
               </button>
             </div>
@@ -336,6 +363,9 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 <p>{formErrors.githubAccount}</p>
               </div>
             )}
+          </div>
+          <div style={{ cursor: 'pointer', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginRight: '10px' }}>
+            <p style={{ color: '#737373', fontSize: '15px', fontWeight: '500' }}>회원 탈퇴</p>
           </div>
         </div>
 
@@ -361,4 +391,5 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     </div>
   );
 };
+
 export default ProfileEditModal;

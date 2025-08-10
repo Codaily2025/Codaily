@@ -1,4 +1,3 @@
-/* SignupForm.module.css */
 .container {
     width: 550px;
     min-height: 100vh;
@@ -15,6 +14,25 @@
     border-radius: 16px;
     padding: 30px;
     box-shadow: 2px 2px 2px rgba(0,0,0,0.1);
+    box-sizing: border-box; /* 전체 컨테이너도 box-sizing 적용 */
+}
+
+.headerSection {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.formTitle {
+    color: #404040;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.formSubtitle {
+    color: #6C6B93;
+    font-size: 14px;
+    margin-bottom: 0;
 }
 
 .profileAvatarSection {
@@ -84,6 +102,7 @@
     font-size: 14px;
     background: #F3F2FA;
     transition: all 0.2s;
+    box-sizing: border-box; /* 패딩과 보더를 너비에 포함 */
 }
 
 .formInput:focus {
@@ -104,12 +123,42 @@
     margin-bottom: 20px;
 }
 
+/*
 .formActions {
     display: flex;
-    /* justify-content: flex-end; */
+    justify-content: flex-end;
     justify-content: center;
     margin-top: 30px;
     padding-top: 20px;
+}
+*/
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.submitButton {
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #4338ca;
+}
+
+.submitButton:disabled {
+  background-color: #a5a5a5;
+  cursor: not-allowed;
 }
 
 .nicknameInputContainer {
