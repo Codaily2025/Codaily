@@ -9,4 +9,4 @@ COPY build/libs/*.jar app.jar
 EXPOSE 8081
 
 # 실행은 고정, 설정 주입은 런타임에서 환경변수로
-ENTRYPOINT ["java","-jar","/app/app.jar","--server.port=8081"]
+ENTRYPOINT ["java","-jar","/app.jar","--server.port=8081"]
