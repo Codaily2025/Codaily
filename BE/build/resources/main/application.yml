@@ -2,10 +2,6 @@ spring:
   application:
     name: Codaily
 
-  config:
-    import:
-      - classpath:application-secret.yml
-
   datasource:
     driver-class-name: org.postgresql.Driver
 
