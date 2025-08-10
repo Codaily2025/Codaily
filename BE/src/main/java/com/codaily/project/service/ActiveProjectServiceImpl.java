@@ -80,7 +80,8 @@ public class ActiveProjectServiceImpl implements ActiveProjectService {
 
         ActiveProjectsResponse.ProjectInfo.ProjectInfoBuilder builder =
                 ActiveProjectsResponse.ProjectInfo.builder()
-                        .id("proj_" + String.format("%03d", project.getProjectId()))
+//                        .id("proj_" + String.format("%03d", project.getProjectId()))
+                        .id(project.getProjectId())
                         .name(project.getTitle())
                         .status(mappedStatus)
                         .progress(progress)

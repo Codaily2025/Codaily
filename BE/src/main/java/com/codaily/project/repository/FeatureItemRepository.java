@@ -34,7 +34,8 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT DISTINCT f.field FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.field")
     List<String> findDistinctFieldsByProjectId(Long projectId);
 
-    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
+//    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
+    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field ORDER BY f.priorityLevel")
     List<FeatureItem> findByProjectIdAndField(Long projectId, String field);
 
 

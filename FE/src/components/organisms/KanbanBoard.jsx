@@ -1,13 +1,17 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useCallback, memo } from 'react'
+import { DndProvider, useDrop } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 import KanbanCard from '@/components/molecules/KanbanCard'
 import KanbanTabs from '@/components/molecules/KanbanTabs'
 import useModalStore from '@/store/modalStore'
 import useProjectStore from '@/stores/projectStore'
-import { useKanbanTabFields, useFeaturesByField } from '@/hooks/useProjects'
+import { useKanbanTabFields, useFeaturesByField, useUpdateFeatureItemStatus } from '@/hooks/useProjects'
+import styles from './KanbanBoard.module.css'
 
-const KanbanBoard = () => {
+const KanbanBoard = memo(() => {
   const { openModal } = useModalStore()
   const { currentProject } = useProjectStore()
+  const updateStatusMutation = useUpdateFeatureItemStatus()
 
   // currentProject에서 projectId 추출
   // TODO: id/projectId 확인해서 수정하기
@@ -36,122 +40,177 @@ const KanbanBoard = () => {
     }
   }, [kanbanTabFields, activeTab])
 
-  // 콘솔 디버깅
-  // console.log('KanbanBoard - currentProject:', currentProject)
-  console.log('KanbanBoard - projectId (extracted):', projectId)
-  console.log('KanbanBoard - activeTab:', activeTab)
-  console.log('KanbanBoard - kanbanTabFields:', kanbanTabFields)
-  console.log(`필드 ${activeTab} 하위 기능들: `, featuresByField)
+  // 콘솔 디버깅 (필요시 주석 해제)
+  // console.log('KanbanBoard - projectId (extracted):', projectId)
+  // console.log('KanbanBoard - activeTab:', activeTab)
+  // console.log('KanbanBoard - kanbanTabFields:', kanbanTabFields)
+  // console.log(`필드 ${activeTab} 하위 기능들: `, featuresByField)
 
-  const handleTaskClick = (cardData) => {
+  const handleTaskClick = useCallback((cardData) => {
     console.log(`Task Clicked!`)
     openModal('TASK_DETAIL', { event: cardData })
-  }
+  }, [openModal])
 
-  // 프로젝트 데이터에서 칸반 데이터 추출
+  // 필드별 기능 데이터에서 칸반 데이터 추출
   const kanbanData = useMemo(() => {
-    if (!currentProject?.features) {
+    if (!featuresByField) {
       return { todo: [], inProgress: [], completed: [] }
     }
 
-    const todo = []
-    const inProgress = []
-    const completed = []
-
-    currentProject.features.forEach(feature => {
-      if (feature.tasks) {
-        feature.tasks.forEach(task => {
-          const taskData = {
-            id: task.id,
-            category: task.category,
-            title: task.title,
-            details: task.details,
-            dueDate: task.dueDate
-          }
-
-          switch (task.status) {
-            case 'todo':
-              todo.push(taskData)
-              break
-            case 'in_progress':
-              inProgress.push(taskData)
-              break
-            case 'completed':
-              completed.push(taskData)
-              break
-            default:
-              todo.push(taskData)
-          }
-        })
-      }
-    })
+    const todo = featuresByField.TODO || []
+    const inProgress = featuresByField.IN_PROGRESS || []
+    const completed = featuresByField.DONE || []
 
     return { todo, inProgress, completed }
-  }, [currentProject])
+  }, [featuresByField])
 
   // 칸반 보드 내 칼럼
-  const columns = [
+  const columns = useMemo(() => [
     { id: 'todo', title: 'To do', color: '#8B7EC8', cards: kanbanData.todo },
     { id: 'inProgress', title: 'In Progress', color: '#CCCBE4', cards: kanbanData.inProgress },
     { id: 'completed', title: 'Completed', color: '#8483AB', cards: kanbanData.completed }
-  ]
+  ], [kanbanData])
 
   // 칸반 칼럼 타이틀 내 '+' 버튼 클릭
-  const handleAddCard = (columnId) => {
+  const handleAddCard = useCallback((columnId) => {
     console.log(`Add kanban card to ${columnId}`)
-  }
+  }, [])
 
   // 탭 변경 핸들러
-  const handleTabChange = (tab) => {
+  const handleTabChange = useCallback((tab) => {
     setActiveTab(tab)
     console.log('Active tab changed to:', tab)
-  }
+  }, [])
+
+  // 유효한 드롭 여부 확인
+  const isValidDrop = useCallback((fromStatus, toStatus) => {
+    const validTransitions = {
+      'TODO': ['IN_PROGRESS', 'DONE'],
+      'IN_PROGRESS': ['DONE']
+    }
+    return validTransitions[fromStatus]?.includes(toStatus) || false
+  }, [])
+
+  // 드롭 핸들러
+  const handleDrop = useCallback((item, targetStatus) => {
+    const { featureId, status: fromStatus, title } = item
+    
+    if (fromStatus === targetStatus || !isValidDrop(fromStatus, targetStatus)) {
+      return
+    }
+
+    const confirmHandler = () => {
+      updateStatusMutation.mutate({
+        projectId,
+        featureId,
+        newStatus: targetStatus,
+        currentField: activeTab
+      })
+    }
+    
+    // 확인 모달 열기
+    openModal('STATUS_CONFIRM', {
+      fromStatus,
+      toStatus: targetStatus,
+      featureTitle: title,
+      onConfirm: confirmHandler
+    })
+  }, [isValidDrop, projectId, activeTab, updateStatusMutation, openModal])
+
+  // 드롭 존 컴포넌트
+  const DropZone = useCallback(({ children, status, onDrop }) => {
+    const [{ isOver, canDrop }, drop] = useDrop({
+      accept: 'KANBAN_CARD',
+      canDrop: (item) => isValidDrop(item.status, status),
+      drop: (item) => onDrop(item, status),
+      collect: (monitor) => ({
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      }),
+    })
+
+    const dropZoneClass = `${styles.kanbanColumnContent} ${
+      isOver && canDrop ? styles.dropZoneActive : ''
+    } ${canDrop ? styles.dropZoneValid : ''}`
+
+    return (
+      <div ref={drop} className={dropZoneClass}>
+        {children}
+      </div>
+    )
+  }, [isValidDrop])
 
   return (
-    <div className="kanban-board">
-      {/* 칸반 탭 */}
-      {kanbanTabFields && kanbanTabFields.length > 0 && (
-        <KanbanTabs
-          tabs={kanbanTabFields}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-        />
-      )}
+    <DndProvider backend={HTML5Backend}>
+      <div className={styles.kanbanBoard}>
+        {/* 칸반 탭 */}
+        {kanbanTabFields && kanbanTabFields.length > 0 && (
+          <KanbanTabs
+            tabs={kanbanTabFields}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        )}
 
-      {/* 칸반 컬럼들 */}
-      <div className="kanban-columns">
-        {columns.map((column) => (
-          <div key={column.id} className="kanban-column">
-            <div className="kanban-column-header" style={{ backgroundColor: column.color }}>
-              <div className="kanban-column-info">
-                <span className="kanban-column-count">{column.cards.length}</span>
-                <span className="kanban-column-title">{column.title}</span>
+        {/* 칸반 컬럼들 */}
+        <div className={styles.kanbanColumns}>
+          {columns.map((column) => (
+            <div key={column.id} className={styles.kanbanColumn}>
+              <div className={styles.kanbanColumnHeader} style={{ backgroundColor: column.color }}>
+                <div className={styles.kanbanColumnInfo}>
+                  <span className={styles.kanbanColumnCount}>{column.cards.length}</span>
+                  <span className={styles.kanbanColumnTitle}>{column.title}</span>
+                </div>
+                <button
+                  className={styles.kanbanAddBtn}
+                  onClick={() => handleAddCard(column.id)}
+                >
+                  +
+                </button>
               </div>
-              <button
-                className="kanban-add-btn"
-                onClick={() => handleAddCard(column.id)}
+              <DropZone 
+                status={column.id === 'todo' ? 'TODO' : column.id === 'inProgress' ? 'IN_PROGRESS' : 'DONE'}
+                onDrop={handleDrop}
               >
-                +
-              </button>
+                {column.cards.length > 0 ? (
+                  column.cards.map((card) => (
+                    <KanbanCard
+                      key={card.featureId}
+                      featureId={card.featureId}
+                      category={card.category}
+                      title={card.title}
+                      description={card.description}
+                      field={card.field}
+                      estimatedTime={card.estimatedTime}
+                      priorityLevel={card.priorityLevel}
+                      status={card.status}
+                      cardClassName={styles.kanbanCard}
+                      infoClassName={styles.kanbanCardInfo}
+                      categoryClassName={styles.kanbanCardCategory}
+                      titleClassName={styles.kanbanCardTitle}
+                      detailsClassName={styles.kanbanCardDetails}
+                      footerClassName={styles.kanbanCardFooter}
+                      fieldClassName={styles.kanbanCardField}
+                      timeClassName={styles.kanbanCardTime}
+                      priorityClassName={styles.kanbanCardPriority}
+                      onClick={() => handleTaskClick(card)}
+                    />
+                  ))
+                ) : (
+                  <div className={styles.kanbanEmptyMessage}>
+                    {column.id === 'todo' && '해야할 작업이 없습니다'}
+                    {column.id === 'inProgress' && '진행 중인 작업이 없습니다'}
+                    {column.id === 'completed' && '완료한 작업이 없습니다'}
+                  </div>
+                )}
+              </DropZone>
             </div>
-            <div className="kanban-column-content">
-              {column.cards.map((card) => (
-                <KanbanCard
-                  key={card.id}
-                  category={card.category}
-                  title={card.title}
-                  details={card.details}
-                  dueDate={card.dueDate}
-                  onClick={() => handleTaskClick(card)}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </DndProvider>
   )
 
-}
+})
 
 export default KanbanBoard
