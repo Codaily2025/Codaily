@@ -1,0 +1,134 @@
+/* ProjectItem Base Styles */
+.projectItem {
+  margin-bottom: 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.projectItemActive {
+  background-color: #f0f4ff;
+  border: 1px solid #3b82f6;
+}
+
+/* Project Header */
+.projectHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.projectHeader:hover {
+  background-color: #f8fafc;
+}
+
+.projectHeaderActive {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  background-color: #f0f4ff;
+}
+
+/* Project Info */
+.projectInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+/* Project Icon */
+.projectIcon {
+  color: #64748b;
+  transition: color 0.2s ease;
+}
+
+.projectIconActive {
+  color: #3b82f6;
+}
+
+/* Project Name */
+.projectName {
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.projectNameActive {
+  font-weight: 600;
+  color: #3b82f6;
+  font-size: 14px;
+}
+
+/* Toggle Button */
+.projectToggleBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #64748b;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.projectToggleBtn:hover {
+  background-color: #f1f5f9;
+  color: #374151;
+}
+
+.projectToggleBtnActive {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  color: #3b82f6;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.projectToggleBtnActive:hover {
+  background-color: #dbeafe;
+}
+
+/* Submenu */
+.projectSubmenu {
+  padding: 0 12px 8px 12px;
+  border-left: 2px solid #e5e7eb;
+  margin-left: 20px;
+}
+
+.submenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  font-size: 13px;
+}
+
+.submenuItem:hover {
+  background-color: #f8fafc;
+}
+
+.submenuIcon {
+  color: #64748b;
+}
+
+.submenuLabel {
+  color: #6b7280;
+  text-transform: capitalize;
+}

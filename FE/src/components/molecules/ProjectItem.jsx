@@ -1,30 +1,70 @@
 import React from 'react'
-import { ChevronUp, ChevronDown, FolderOpen, Calendar, BarChart3, Settings } from 'lucide-react'
+import { ChevronUp, ChevronDown, FolderOpen, Calendar, BarChart3, CodeXml, Settings } from 'lucide-react'
+import styles from './ProjectItem.module.css'
 
-const ProjectItem = ({ project, isExpanded, onToggle }) => {
+const ProjectItem = ({ 
+  project, 
+  state = {}, // 상태 기반 방식: 복잡한 className props 대신 단순한 state 객체로 스타일 관리
+  onToggle, 
+  onClick,
+  className = ''
+}) => {
+  const { isActive = false, isExpanded = false } = state
+  
   const subMenuItems = [
     { icon: Calendar, label: 'history' },
-    { icon: BarChart3, label: 'insight' },
+    { icon: CodeXml, label: 'code reviews' },
     { icon: Settings, label: 'settings' }
-  ];
+  ]
+
+  // 상태에 따른 스타일 결정
+  const getItemClasses = () => {
+    const baseClass = styles.projectItem
+    const activeClass = isActive ? styles.projectItemActive : ''
+    const customClass = className
+    return [baseClass, activeClass, customClass].filter(Boolean).join(' ')
+  }
+
+  const getHeaderClasses = () => {
+    return isActive ? styles.projectHeaderActive : styles.projectHeader
+  }
+
+  const getIconClasses = () => {
+    return isActive ? styles.projectIconActive : styles.projectIcon
+  }
+
+  const getNameClasses = () => {
+    return isActive ? styles.projectNameActive : styles.projectName
+  }
+
+  const getToggleBtnClasses = () => {
+    return isActive ? styles.projectToggleBtnActive : styles.projectToggleBtn
+  }
 
   return (
-    // className 구체화
-    <div className="project-sidebar-item">
-      <div className="project-sidebar-header" onClick={onToggle}>
-        <div className="project-sidebar-info">
-          <FolderOpen size={20} className="project-icon" />
-          <span className="project-sidebar-name">{project.name}</span>
+    <div className={getItemClasses()}>
+      <div className={getHeaderClasses()}>
+        <div className={styles.projectInfo} onClick={onClick}>
+          <FolderOpen size={20} className={getIconClasses()} />
+          <span className={getNameClasses()}>{project.name}</span>
         </div>
-        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <button 
+          className={getToggleBtnClasses()}
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggle()
+          }}
+        >
+          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
       </div>
       
       {isExpanded && (
-        <div className="project-sidebar-submenu">
+        <div className={styles.projectSubmenu}>
           {subMenuItems.map((item) => (
-            <div key={item.label} className="submenu-item">
-              <item.icon size={16} className="submenu-icon" />
-              <span className="submenu-label">{item.label}</span>
+            <div key={item.label} className={styles.submenuItem}>
+              <item.icon size={16} className={styles.submenuIcon} />
+              <span className={styles.submenuLabel}>{item.label}</span>
             </div>
           ))}
         </div>
