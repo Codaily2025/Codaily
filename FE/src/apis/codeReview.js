@@ -37,6 +37,30 @@ export async function fetchCodeReviewList() {
     }
 }
 
+// 실제로 API로 받은 데이터 예시
+// [
+//   {
+//     projectId: 1,
+//     featureId: 2,
+//     featureField: 'Authentication',
+//     featureName: '사용자 회원가입 기능',
+//     qualityScore: 85,
+//     severityCount: {
+//       high: 8,
+//       medium: 4
+//     }
+//   },
+//   {
+//     projectId: 1,
+//     featureId: 3,
+//     featureField: 'Product',
+//     featureName: '상품 카탈로그',
+//     qualityScore: 85,
+//     severityCount: {
+//     } // 비어있는 상태로도 옴
+//   }
+// ]
+
 // 프로젝트 옵션 생성 함수
 export function generateProjectOptions(codeReviewData) {
     if (!Array.isArray(codeReviewData) || codeReviewData.length === 0) {
@@ -92,26 +116,15 @@ export function generateProjectOptions(codeReviewData) {
     return result;
 }
 
-// 실제로 API로 받은 데이터 예시
-// [
-//   {
-//     projectId: 1,
-//     featureId: 2,
-//     featureField: 'Authentication',
-//     featureName: '사용자 회원가입 기능',
-//     qualityScore: 85,
-//     severityCount: {
-//       high: 8,
-//       medium: 4
-//     }
-//   },
-//   {
-//     projectId: 1,
-//     featureId: 3,
-//     featureField: 'Product',
-//     featureName: '상품 카탈로그',
-//     qualityScore: 85,
-//     severityCount: {
-//     } // 비어있는 상태로도 옴
-//   }
-// ]
+// 특정 리뷰의 상세 정보를 가져오는 함수
+export async function fetchCodeReviewDetail(reviewId) {
+    try {
+        const response = await authInstance.get(`/code-review/${reviewId}/detail`);
+        console.log('가져온 코드 리뷰 상세 정보:', response.data);
+        return response.data;
+    }
+    catch (error) {
+        console.error('코드 리뷰 상세 정보 조회 실패:', error);
+        throw error;
+    }
+}
