@@ -1,6 +1,7 @@
 // FE/src/queries/reviewQueries.js
 // 코드 리뷰 데이터 조회 쿼리
 import { useQuery } from '@tanstack/react-query';
+import { fetchCodeReviewList } from '../apis/codeReview';
 
 // --- 목업 데이터 (나중에는 API에서 받아올 예정) ---
 const mockReviews = [
@@ -66,6 +67,26 @@ const mockReviews = [
     scoreColor: 'green',
   },
 ];
+
+// 실제로 API로 받은 데이터 예시
+// [
+//   {
+//     featureField: 'Authentication',
+//     featureName: '사용자 회원가입 기능',
+//     qualityScore: 85,
+//     severityCount: {
+//       high: 8,
+//       medium: 4
+//     }
+//   },
+//   {
+//     featureField: 'Product',
+//     featureName: '상품 카탈로그',
+//     qualityScore: 85,
+//     severityCount: {
+//     } // 비어있는 상태로도 옴
+//   }
+// ]
 
 const mockProjectOptions = [
   {
@@ -328,12 +349,6 @@ const mockReviewDetail = [
 
 // --- 목업 API 호출 함수 ---
 
-// 모든 리뷰를 가져오는 함수 (API 호출 시뮬레이션)
-const fetchReviews = () => {
-  console.log('리뷰 데이터를 가져오는 중...');
-  return new Promise(resolve => setTimeout(() => resolve(mockReviews), 500));
-};
-
 // 모든 프로젝트 옵션을 가져오는 함수 (API 호출 시뮬레이션)
 const fetchProjectOptions = () => {
   console.log('프로젝트 옵션을 가져오는 중...');
@@ -355,6 +370,10 @@ const fetchReviewDetail = (reviewId) => {
 
 // 모든 코드 리뷰 데이터를 가져오는 커스텀 훅
 export const useReviews = () => {
+  const fetchReviews = async () => {
+    const response = await fetchCodeReviewList();
+    return response;
+  }
   return useQuery({
     queryKey: ['reviews'],        // 이 쿼리를 구분하는 고유 키
     queryFn: fetchReviews,        // 데이터를 가져오는 함수
