@@ -1,7 +1,7 @@
 // FE/src/queries/reviewQueries.js
 // 코드 리뷰 데이터 조회 쿼리
 import { useQuery } from '@tanstack/react-query';
-import { fetchCodeReviewList, generateProjectOptions } from '../apis/codeReview';
+import { fetchCodeReviewList, generateProjectOptions, fetchCodeReviewDetail } from '../apis/codeReview';
 
 // --- 목업 데이터 (나중에는 API에서 받아올 예정) ---
 const mockReviews = [
@@ -325,11 +325,46 @@ const mockReviewDetail = [
   }
 ]
 
-// --- 목업 API 호출 함수 ---
+// 실제 api에서 가져오는 리뷰 상세 정보 예시
+// {
+//   featureId: 1,
+//   featureCategory: 'Authentication',
+//   reviewName: '사용자 회원가입 기능',
+//   reviewDate: "'025-08-09T21:00:08.763892',
+//   reviewScore: 85,
+//   codeReview: {
+//     convention: {
+//       summary: '네이밍 일부 불일치',
+//       issues: [
+//         {
+//           level: 'high',
+//           description: '하드코딩된 클라이언트 시크릿',
+//           file: 'OAuthService.java',
+//           line: '55'
+//         }
+//       ]
+//     },
+//     performance: {
+//       summary: '요약',
+//       issues: [
+//         {
+//           level: 'medium',
+//           description: '비동기 처리 필요',
+//           file: 'UserService.java',
+//           line: '100'
+//         }
+//       ]
+//     },
+//     security: {},
+//     complexity: {},
+//     bugRisk: {},
+//     refactoring: {}
+//   }
+// }
 
 // 모든 프로젝트 옵션을 가져오는 함수 (API 호출 시뮬레이션)
 const fetchProjectOptions = async () => {
-  console.log('프로젝트 옵션을 가져오는 중...');
+  // console.log('프로젝트 옵션을 가져오는 중...');
   try {
     // 실제 코드 리뷰 데이터를 가져와서 프로젝트 옵션 생성
     const codeReviewData = await fetchCodeReviewList();
@@ -349,14 +384,21 @@ const fetchProjectOptions = async () => {
 };
 
 // 특정 리뷰의 상세 정보를 가져오는 함수
-const fetchReviewDetail = (reviewId) => {
-  console.log('리뷰 상세 정보를 가져오는 중...');
-  return new Promise(resolve => {
-    setTimeout(() => {
-      const detail = mockReviewDetail.find(review => review.reviewId === reviewId);
-      resolve(detail);
-    }, 300);
-  });
+const fetchReviewDetail = async (reviewId) => {
+  // console.log('리뷰 상세 정보를 가져오는 중...');
+  try {
+    const reviewDetail = await fetchCodeReviewDetail(reviewId);
+    return reviewDetail;
+  } catch (error) {
+    console.error('리뷰 상세 정보 조회 실패:', error);
+    throw error;
+  }
+  // return new Promise(resolve => {
+  //   setTimeout(() => {
+  //     const detail = mockReviewDetail.find(review => review.reviewId === reviewId);
+  //     resolve(detail);
+  //   }, 300);
+  // });
 };
 
 // React Query 커스텀 훅
