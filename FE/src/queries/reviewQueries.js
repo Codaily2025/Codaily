@@ -1,7 +1,7 @@
 // FE/src/queries/reviewQueries.js
 // 코드 리뷰 데이터 조회 쿼리
 import { useQuery } from '@tanstack/react-query';
-import { fetchCodeReviewList } from '../apis/codeReview';
+import { fetchCodeReviewList, generateProjectOptions } from '../apis/codeReview';
 
 // --- 목업 데이터 (나중에는 API에서 받아올 예정) ---
 const mockReviews = [
@@ -68,26 +68,6 @@ const mockReviews = [
   },
 ];
 
-// 실제로 API로 받은 데이터 예시
-// [
-//   {
-//     featureField: 'Authentication',
-//     featureName: '사용자 회원가입 기능',
-//     qualityScore: 85,
-//     severityCount: {
-//       high: 8,
-//       medium: 4
-//     }
-//   },
-//   {
-//     featureField: 'Product',
-//     featureName: '상품 카탈로그',
-//     qualityScore: 85,
-//     severityCount: {
-//     } // 비어있는 상태로도 옴
-//   }
-// ]
-
 const mockProjectOptions = [
   {
     id: null,
@@ -104,7 +84,7 @@ const mockProjectOptions = [
     name: '싸피 출석 알림 서비스',
     features: ['전체', '회원 관리', '배포'],
   },
-  { 
+  {
     id: 3,
     name: '음악 스트리밍 구독 서비스',
     features: ['전체'],
@@ -275,8 +255,6 @@ const mockReviewDetail = [
       refactoring: {},
     }
   },
-
-  // AWS 서버 구현
   {
     reviewId: 104,
     projectId: 2,
@@ -350,9 +328,24 @@ const mockReviewDetail = [
 // --- 목업 API 호출 함수 ---
 
 // 모든 프로젝트 옵션을 가져오는 함수 (API 호출 시뮬레이션)
-const fetchProjectOptions = () => {
+const fetchProjectOptions = async () => {
   console.log('프로젝트 옵션을 가져오는 중...');
-  return new Promise(resolve => setTimeout(() => resolve(mockProjectOptions), 500));
+  try {
+    // 실제 코드 리뷰 데이터를 가져와서 프로젝트 옵션 생성
+    const codeReviewData = await fetchCodeReviewList();
+    const projectOptions = generateProjectOptions(codeReviewData);
+    return projectOptions;
+  } catch (error) {
+    console.error('프로젝트 옵션 생성 실패:', error);
+    // 에러 발생 시 기본 옵션 반환
+    return [
+      {
+        id: null,
+        name: '모든 프로젝트',
+        features: ['전체']
+      }
+    ];
+  }
 };
 
 // 특정 리뷰의 상세 정보를 가져오는 함수

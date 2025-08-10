@@ -10,19 +10,108 @@ export async function fetchCodeReviewList() {
     try {
         const response = await authInstance.get(`/code-review/user/${userId}`);
         console.log('가져온 코드 리뷰 목록:', response.data);
-        // 원하는 결과 형식 : tags: [{text: '중간 1', type: 'medium'}, {text: '낮음 4', type: 'low'}]
-        const tags = (response.data.severityCount) ? response.data.severityCount.map(item => ({
-            text: item.severity + ' ' + item.count, // 예: 높음 8
-            type: item.severity,
-        })) : [];
-        return {
-            category: response.data.featureField,
-            title: response.data.featureName,
-            score: response.data.qualityScore,
-            tags: tags,
-        };
+        
+        // API 응답이 배열인지 확인하고 처리
+        const dataArray = Array.isArray(response.data) ? response.data : [response.data];
+        
+        // 각 항목을 원하는 형식으로 변환
+        return dataArray.map(item => {
+            const tags = (item.severityCount) ? Object.entries(item.severityCount).map(([severity, count]) => ({
+                text: (severity==='high' ? '높음' : severity==='medium' ? '중간' : '낮음') + ' ' + count, // 예: high 8
+                type: severity,
+            })) : [];
+            
+            return {
+                projectId: item.projectId,
+                id: item.featureId,
+                category: item.featureField,
+                title: item.featureName,
+                score: item.qualityScore,
+                tags: tags,
+                scoreColor: item.qualityScore >= 80 ? 'green' : item.qualityScore >= 60 ? 'orange' : 'red',
+            };
+        });
     } catch (error) {
         console.error('코드 리뷰 목록 조회 실패:', error);
         throw error;
     }
 }
+
+// 프로젝트 옵션 생성 함수
+export function generateProjectOptions(codeReviewData) {
+    if (!Array.isArray(codeReviewData) || codeReviewData.length === 0) {
+        return [
+            {
+                id: null,
+                name: '모든 프로젝트',
+                features: ['전체']
+            }
+        ];
+    }
+
+    // 프로젝트별로 데이터 그룹화
+    const projectMap = new Map();
+    
+    codeReviewData.forEach(item => {
+        const projectId = item.projectId;
+        const featureName = item.category;
+        
+        if (!projectMap.has(projectId)) {
+            projectMap.set(projectId, {
+                id: projectId,
+                name: `프로젝트${projectId}`,
+                features: ['전체']
+            });
+        }
+        
+        // 중복 제거하면서 기능 추가
+        const project = projectMap.get(projectId);
+        if (!project.features.includes(featureName)) {
+            project.features.push(featureName);
+        }
+    });
+
+    // 모든 프로젝트의 기능을 수집
+    const allFeatures = ['전체'];
+    codeReviewData.forEach(item => {
+        if (!allFeatures.includes(item.category)) {
+            allFeatures.push(item.category);
+        }
+    });
+
+    // 결과 배열 생성
+    const result = [
+        {
+            id: null,
+            name: '모든 프로젝트',
+            features: allFeatures
+        },
+        ...Array.from(projectMap.values())
+    ];
+
+    return result;
+}
+
+// 실제로 API로 받은 데이터 예시
+// [
+//   {
+//     projectId: 1,
+//     featureId: 2,
+//     featureField: 'Authentication',
+//     featureName: '사용자 회원가입 기능',
+//     qualityScore: 85,
+//     severityCount: {
+//       high: 8,
+//       medium: 4
+//     }
+//   },
+//   {
+//     projectId: 1,
+//     featureId: 3,
+//     featureField: 'Product',
+//     featureName: '상품 카탈로그',
+//     qualityScore: 85,
+//     severityCount: {
+//     } // 비어있는 상태로도 옴
+//   }
+// ]
