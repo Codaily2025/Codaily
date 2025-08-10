@@ -1,9 +1,12 @@
-import React, { useState, useCallback } from 'react';
+// FE/src/components/RequirementsSpecification/RequirementsSpecification.jsx
+import React, { useState, useCallback, useEffect } from 'react';
 import styles from './RequirementsSpecification.module.css';
 import TechTag from './TechTag';
 import Checkbox from './Checkbox';
 import TimeIndicator from './TimeIndicator';
 import PriorityBadge from './PriorityBadge';
+import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
+
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -259,9 +262,10 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
 
 
 const RequirementsSpecification = () => {
+  const { projectOverview, mainFeatures, techStack } = useSpecificationStore();
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
-  const [features, setFeatures] = useState(initialRequirementsData[0].mainFeatures);
+  // const [features, setFeatures] = useState(initialRequirementsData[0].mainFeatures);
 
   // 열림/닫힘 상태를 토글하는 함수
   const handleToggleOpen = useCallback((taskId) => {
@@ -352,14 +356,14 @@ const RequirementsSpecification = () => {
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel}>프로젝트명: </span>
-                <span className={styles.itemValue}>{requirements[0].projectOverview.projectName}</span>
+                <span className={styles.itemValue}>{projectOverview.projectName}</span>
               </div>
             </div>
             <div className={styles.overviewItem}>
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel}>목적:</span>
-                <span className={styles.itemValue}> {requirements[0].projectOverview.projectPurpose}</span>
+                <span className={styles.itemValue}> {projectOverview.projectPurpose}</span>
               </div>
             </div>
             <div className={styles.descriptionContainer}>
@@ -368,7 +372,7 @@ const RequirementsSpecification = () => {
                 <div className={styles.itemLabel}>설명</div>
               </div>
               <div className={styles.descriptionText}>
-                {requirements[0].projectOverview.projectDescription}
+                {projectOverview.projectDescription}
               </div>
             </div>
           </div>
@@ -385,7 +389,7 @@ const RequirementsSpecification = () => {
             </div>
           </div>
           <div className={styles.techTags}>
-            {tags.map((tag, index) => (
+            {techStack.map((tag, index) => (
               <TechTag key={index} label={tag} />
             ))}
           </div>
@@ -397,7 +401,7 @@ const RequirementsSpecification = () => {
             <div className={styles.mainFeaturesTitle}>주요 기능</div>
           </div>
           <div className={styles.mainFeaturesList}>
-            {features.map(feature => (
+            {mainFeatures.map(feature => (
               <TaskItem
                 key={feature.id}
                 task={feature}
