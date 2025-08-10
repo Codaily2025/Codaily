@@ -49,7 +49,7 @@ public class FeatureItemChecklist {
         this.item = item;
         this.description = description;
     }
-    
+
     // 파일 경로 추가
     public void updateFilePaths(List<String> newPaths) {
         for (String path : newPaths) {

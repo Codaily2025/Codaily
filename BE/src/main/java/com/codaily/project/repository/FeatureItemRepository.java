@@ -34,8 +34,25 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT DISTINCT f.field FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.field")
     List<String> findDistinctFieldsByProjectId(Long projectId);
 
-    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field ORDER BY f.priorityLevel")
+    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
     List<FeatureItem> findByProjectIdAndField(Long projectId, String field);
+
+
+    @Query("SELECT DISTINCT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status != 'DONE' " +
+            "AND (SELECT MAX(s.scheduleDate) FROM FeatureItemSchedule s " +
+            "WHERE s.featureItem.featureId = f.featureId) <= :endDate")
+    List<FeatureItem> findOverdueFeatures(Long projectId, LocalDate endDate);
+
+    @Query("SELECT DISTINCT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status = 'TODO' " +
+            "AND (SELECT MIN(s.scheduleDate) FROM FeatureItemSchedule s " +
+            "WHERE s.featureItem.featureId = f.featureId) = :today")
+    List<FeatureItem> findTodayStartFeatures(Long projectId, LocalDate today);
+
+    List<FeatureItem> findByStatusAndProject_ProjectId(String status, Long projectId);
 
     // ===== 계층 구조 관련 =====
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL")
@@ -43,19 +60,6 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     @Query("SELECT f FROM FeatureItem f WHERE f.parentFeature.featureId = :parentFeatureId ORDER BY f.createdAt ASC")
     List<FeatureItem> findSubFeaturesByParentId(@Param("parentFeatureId") Long parentFeatureId);
-
-    // ===== 스케줄링 관련 =====
-    @Query("SELECT DISTINCT s.featureItem FROM FeatureItemSchedule s " +
-            "WHERE s.featureItem.project.projectId = :projectId " +
-            "AND s.scheduleDate <= :endDate " +
-            "AND s.featureItem.status != 'DONE'")
-    List<FeatureItem> findOverdueFeatures(@Param("projectId") Long projectId, @Param("endDate") LocalDate endDate);
-
-    @Query("SELECT DISTINCT s.featureItem FROM FeatureItemSchedule s " +
-            "WHERE s.featureItem.project.projectId = :projectId " +
-            "AND s.scheduleDate = :today " +
-            "AND s.featureItem.status = 'TODO'")
-    List<FeatureItem> findTodayFeatures(@Param("projectId") Long projectId, @Param("today") LocalDate today);
 
     // ===== 상태별 조회 =====
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.status = 'IN_PROGRESS' ORDER BY f.updatedAt DESC")
@@ -103,6 +107,15 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT COUNT(f) FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.status = :status")
     Long countByProjectIdAndStatus(@Param("projectId") Long projectId, @Param("status") String status);
 
+    @Query("SELECT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status = 'TODO' " +
+            "AND f.estimatedTime > 0 " +
+            "AND f.parentFeature IS NOT NULL " +
+            "AND f.priorityLevel >= :fromPriority " +
+            "ORDER BY f.priorityLevel ASC")
+    List<FeatureItem> findSchedulableFeaturesByPriorityFrom(@Param("projectId") Long projectId, @Param("fromPriority") Integer fromPriority);
+
     @Query("SELECT COUNT(f) FROM FeatureItem f WHERE f.parentFeature.featureId = :parentFeatureId AND f.status = 'DONE'")
     Long countCompletedSubFeatures(@Param("parentFeatureId") Long parentFeatureId);
 
@@ -116,7 +129,7 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId ORDER BY f.updatedAt DESC")
     List<FeatureItem> findRecentlyUpdatedFeatures(@Param("projectId") Long projectId, Pageable pageable);
 
-
     @Query("SELECT f FROM FeatureItem f WHERE f.featureId = :featureId")
     FeatureItem getFeatureItemByFeatureId(@Param("featureId") Long featureId);
+
 }

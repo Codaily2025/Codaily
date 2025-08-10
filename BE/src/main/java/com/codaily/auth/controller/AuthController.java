@@ -20,7 +20,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<Map<String, Object>> getCurrentUser(@AuthenticationPrincipal PrincipalDetails principalDetails) {
         Map<String, Object> response = new HashMap<>();
-        
+
         if (principalDetails != null) {
             response.put("authenticated", true);
             // response.put("userId", principalDetails.getUserId());
@@ -30,7 +30,7 @@ public class AuthController {
         } else {
             response.put("authenticated", false);
         }
-        
+
         return ResponseEntity.ok(response);
     }
 

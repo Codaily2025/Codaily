@@ -28,14 +28,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ProjectServiceImpl implements ProjectService {
 
-    private final FeatureItemServiceImpl featureItemService;
+    private final FeatureItemService featureItemService;
     private final ProjectRepository projectRepository;
     private final ScheduleRepository scheduleRepository;
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ProjectRepositoriesRepository repository;
     private final SpecificationRepository specificationRepository;
     private final FeatureItemRepository featureItemRepository;
-
+    private final ScheduleService scheduleService;
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();
@@ -214,7 +214,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
         // 임시로 rescheduleProject 호출을 비활성화 (테스트용)
         if (scheduleChanged || daysOfWeekChanged || dateChanged) {
-            featureItemService.rescheduleProject(projectId);
+            scheduleService.rescheduleProject(projectId);
         }
     }
 
@@ -235,6 +235,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     private void updateSchedules(Project project, List<LocalDate> scheduledDates) {
         scheduleRepository.deleteByProject(project);
+        scheduleRepository.flush();
 
         // 새로운 스케줄 생성
         List<Schedule> newSchedules = scheduledDates.stream()
@@ -336,5 +337,10 @@ public class ProjectServiceImpl implements ProjectService {
     public Project findById(Long projectId) {
         return projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트 없음"));
+    }
+
+    @Override
+    public boolean isProjectOwner(Long userId, Long projectId) {
+        return projectRepository.existsByProjectIdAndUser_UserId(projectId, userId);
     }
 }

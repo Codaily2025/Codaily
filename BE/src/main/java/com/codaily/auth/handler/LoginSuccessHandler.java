@@ -33,6 +33,12 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             String token = jwtTokenProvider.createToken(email);
             log.info("Generated JWT token for user: " + email);
 
+            Cookie jwtCookie = new Cookie("jwt", token);
+            jwtCookie.setHttpOnly(true);
+            jwtCookie.setPath("/");
+            jwtCookie.setMaxAge(24 * 60 * 60); // 24시간
+            response.addCookie(jwtCookie);
+
             // 2. 프론트엔드로 리다이렉트 (토큰을 URL 파라미터로 전달)
             String redirectUrl = "http://localhost:5173/oauth/callback?token=" + token;
             log.info("Redirecting to: " + redirectUrl);

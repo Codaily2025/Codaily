@@ -21,4 +21,8 @@ public interface FeatureItemSchedulesRepository extends JpaRepository<FeatureIte
 
     void deleteByFeatureItemFeatureIdIn(List<Long> featureIds);
 
+    @Query("SELECT MAX(fis.scheduleDate) FROM FeatureItemSchedule fis " +
+                  "WHERE fis.featureItem.project.projectId = :projectId " +
+                  "AND fis.featureItem.priorityLevel < :priorityLevel")
+    LocalDate findLastScheduleDateByProjectIdAndPriorityLess(Long projectId, Integer priorityLevel);
 }

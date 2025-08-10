@@ -75,9 +75,8 @@ public class FeatureItem {
     @JsonIgnore
     private List<FeatureItem> childFeatures = new ArrayList<>();
 
-    @Transient
+    @Column(name = "remaining_time")
     private Double remainingTime;
-
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
