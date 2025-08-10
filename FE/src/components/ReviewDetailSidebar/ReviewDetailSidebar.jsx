@@ -8,7 +8,8 @@ import { useReviewDetail } from '../../queries/reviewQueries';
 import { useReviewStore } from '../../stores/reviewStore';
 
 // 리뷰 상세 사이드바
-const ReviewDetailSidebar = () => {
+const ReviewDetailSidebar = ({ review, onClose }) => {
+  console.log('코드리뷰 목록 페이지에서 넘겨준 리뷰 데이터', review); // detail 정보와 프로젝트 이름 정보는 넘겨 받아서 사용
   // Zustand 스토어에서 선택된 리뷰 ID 가져오기
   const { selectedReviewId, closeSidebar } = useReviewStore();
 
@@ -77,9 +78,10 @@ const ReviewDetailSidebar = () => {
     >
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          <div className={styles.category}>{reviewDetail.featureCategory}</div>
+          <div className={styles.category}>{review.projectName} &gt; {reviewDetail.featureCategory}</div>
           <h2 className={styles.title}>{reviewDetail.reviewName}</h2>
-          <div className={styles.meta}>{reviewDetail.reviewDate} · {reviewDetail.filesChanged}개 파일 · {reviewDetail.reviewScore}점</div>
+          {/* <div className={styles.meta}>{reviewDetail.reviewDate} · {reviewDetail.filesChanged}개 파일 · {reviewDetail.reviewScore}점</div> */}
+          <div className={styles.meta}>{review.details} · {reviewDetail.reviewScore}점</div>
         </div>
         <div className={styles.headerActions}>
           <button
