@@ -48,9 +48,7 @@ const RepoIcon = () => (
   </svg>
 );
 const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
-  console.log('project:', data?.title)
-  console.log('userId in ProjectEditModal:', userId)
-
+  // console.log('project:', data?.title)
   
   // useProjectStore에서 프로젝트 정보 가져오기
   const { projects } = useProjectStore();
@@ -61,8 +59,8 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // 스토어에서 가져온 정보가 있으면 사용하고, 없으면 data prop 사용
   const projectData = projectFromStore || data;
 
-  // 프로젝트 수정 뮤테이션 - props로 전달받은 userId 사용
-  const { mutate, isPending } = useUpdateProjectMutation(userId);
+  // 프로젝트 수정 뮤테이션
+  const { mutate, isPending } = useUpdateProjectMutation();
 
   // project가 없을 때 기본값 처리
   if (!projectData) {

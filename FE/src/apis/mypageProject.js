@@ -147,12 +147,11 @@ const dummyProjects = [
 
 /**
  * 사용자의 프로젝트 목록을 조회하는 API
- * @param {number} userId - 사용자 ID
  * @returns {Promise<Array>} - 프로젝트 목록
  */
-export const fetchProjectsByUserId = async (userId) => {
+export const fetchProjectsByUserId = async () => {
   try {
-    const response = await authInstance.get(`/users/${userId}`);
+    const response = await authInstance.get(`projects`);
     const projectsFromApi = response.data;
 
     // 백엔드 데이터를 프론트엔드 형식으로 변환
@@ -179,13 +178,12 @@ export const fetchProjectsByUserId = async (userId) => {
 /**
  * 프로젝트 정보를 수정하는 API
  * @param {object} params - 필요한 파라미터 객체
- * @param {number} params.userId - 사용자 ID
  * @param {number} params.projectId - 프로젝트 ID
  * @param {object} params.projectData - 프론트엔드 폼 데이터
  * @returns {Promise<object>} - 수정된 프로젝트 데이터
  */
-export const updateProjectAPI = async ({ userId, projectId, projectData }) => {
-  console.log('Updating project via API...', { userId, projectId, projectData });
+export const updateProjectAPI = async ({ projectId, projectData }) => {
+  // console.log('Updating project via API...', { projectId, projectData });
 
   // timeByDay 객체를 안전하게 처리
   const safeTimeByDay = {};
@@ -217,7 +215,7 @@ export const updateProjectAPI = async ({ userId, projectId, projectData }) => {
   };
   
   try {
-    const response = await authInstance.patch(`/users/${userId}/${projectId}`, transformedData, {
+    const response = await authInstance.patch(`projects/${projectId}`, transformedData, {
       headers: {
         'Content-Type': 'application/json'
       }
@@ -233,15 +231,14 @@ export const updateProjectAPI = async ({ userId, projectId, projectData }) => {
 
 /**
  * 프로젝트를 삭제하는 API
- * @param {number} userId - 사용자 ID
  * @param {number} projectId - 프로젝트 ID
  * @returns {Promise<void>}
  */
 
-/* http://localhost:8081/{userId}/projects/{projectId} */
-export const deleteProjectAPI = async (userId, projectId) => {
+/* http://localhost:8081/projects/{projectId} */
+export const deleteProjectAPI = async (projectId) => {
   try {
-    const response = await authInstance.delete(`/users/${userId}/projects/${projectId}`);
+    const response = await authInstance.delete(`projects/${projectId}`);
     console.log('프로젝트 삭제 성공', response.data);
     return response.data;
   } catch (error) {
