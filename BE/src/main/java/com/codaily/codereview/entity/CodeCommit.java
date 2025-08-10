@@ -43,4 +43,9 @@ public class CodeCommit {
     public void addFeatureName(String featureName) {
         this.featureNames.add(featureName);
     }
+
+    public void addFeatureItem(FeatureItem featureItem) {
+        this.featureItem = featureItem;
+    }
 }
+

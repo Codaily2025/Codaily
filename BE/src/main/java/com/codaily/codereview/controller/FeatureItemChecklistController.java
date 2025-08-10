@@ -30,6 +30,7 @@ public class FeatureItemChecklistController {
     @Operation(summary = "체크리스트 생성", description = "projectId 입력 / 사용자가 프로젝트 생성하기 버튼을 클릭했을 때 실행되어야 합니다")
     public ResponseEntity<?> generateChecklist(@PathVariable Long projectId) {
         Project project = projectService.findById(projectId);
+
         if(project.getFeatureItems() != null && project.getSpecification() != null) {
             featureItemService.generateFeatureItemChecklist(projectId);
         }

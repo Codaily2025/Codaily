@@ -419,52 +419,111 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     public void generateFeatureItemChecklist(Long projectId) {
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
 
+        Map<Long, List<String>> checklistMap = new HashMap<>();
+
+        // 1) parentFeature == null → 바로 checklist 생성
+        featureItems.stream()
+                .filter(item -> item.getParentFeature() == null)
+                .forEach(item -> checklistMap.put(item.getFeatureId(), List.of(item.getTitle())));
+
+        // 2) parentFeature != null → GPT 요청
         List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
-//                .filter(item -> item.getParentFeature() != null)
+                .filter(item -> item.getParentFeature() != null)
                 .map(item -> new FeatureChecklistFeatureDto(
                         item.getFeatureId(),
                         item.getTitle(),
                         item.getDescription()))
                 .toList();
 
-        FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder().features(dtoList).build();
+        if (!dtoList.isEmpty()) {
+            FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder()
+                    .features(dtoList)
+                    .build();
 
-        try {
-            FeatureChecklistResponseDto response = webClient
-                    .post()
-                    .uri("/api/generate-checklist")
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(FeatureChecklistResponseDto.class)
-                    .block();
+            try {
+                FeatureChecklistResponseDto response = webClient
+                        .post()
+                        .uri("/api/generate-checklist")
+                        .bodyValue(request)
+                        .retrieve()
+                        .bodyToMono(FeatureChecklistResponseDto.class)
+                        .block();
 
-            Map<String, List<String>> checklistMap = response.getChecklistMap();
-
-            if (checklistMap == null) {
-                log.warn("Checklist 응답이 비어있습니다.");
-                return;
+                if (response != null && response.getChecklistMap() != null) {
+                    response.getChecklistMap().forEach((featureIdStr, items) -> {
+                        checklistMap.put(Long.parseLong(featureIdStr), items);
+                    });
+                }
+            } catch (Exception e) {
+                log.error("Checklist 생성 실패", e);
             }
 
-            // ✅ checklist 저장
-            checklistMap.forEach((featureIdStr, checklistItems) -> {
-                Long featureId = Long.parseLong(featureIdStr);
-                FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
-                List<FeatureItemChecklist> checklistList = checklistItems.stream()
-                        .map(item -> FeatureItemChecklist.builder()
-                                .featureItem(featureItem).item(item).done(false).build())
-                        .toList();
-
-                featureItemChecklistRepository.saveAll(checklistList);
-            });
-
-            log.info("Checklist 생성 및 저장 완료");
-
-        } catch (WebClientResponseException e) {
-            log.error("Checklist 생성 실패: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-        } catch (Exception e) {
-            log.error("Checklist 생성 중 예외 발생", e);
         }
+
+        // 3) checklistMap 저장
+        checklistMap.forEach((featureId, items) -> {
+            FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
+            items.forEach(content -> {
+                FeatureItemChecklist checklist = FeatureItemChecklist.builder()
+                        .featureItem(featureItem)
+                        .item(content)
+                        .done(false)
+                        .build();
+                featureItemChecklistRepository.save(checklist);
+            });
+        });
+
     }
+
+// checklistMap 에 parentFeature null인 애들 + GPT 응답 결과 다 합쳐짐
+
+
+//        List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
+//                .filter(item -> item.getParentFeature() != null)
+//                .map(item -> new FeatureChecklistFeatureDto(
+//                        item.getFeatureId(),
+//                        item.getTitle(),
+//                        item.getDescription()))
+//                .toList();
+//
+//        FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder().features(dtoList).build();
+//
+//        try {
+//            FeatureChecklistResponseDto response = webClient
+//                    .post()
+//                    .uri("/api/generate-checklist")
+//                    .bodyValue(request)
+//                    .retrieve()
+//                    .bodyToMono(FeatureChecklistResponseDto.class)
+//                    .block();
+//
+//            Map<String, List<String>> checklistMap = response.getChecklistMap();
+//
+//            if (checklistMap == null) {
+//                log.warn("Checklist 응답이 비어있습니다.");
+//                return;
+//            }
+//
+//            // ✅ checklist 저장
+//            checklistMap.forEach((featureIdStr, checklistItems) -> {
+//                Long featureId = Long.parseLong(featureIdStr);
+//                FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
+//                List<FeatureItemChecklist> checklistList = checklistItems.stream()
+//                        .map(item -> FeatureItemChecklist.builder()
+//                                .featureItem(featureItem).item(item).done(false).build())
+//                        .toList();
+//
+//                featureItemChecklistRepository.saveAll(checklistList);
+//            });
+//
+//            log.info("Checklist 생성 및 저장 완료");
+//
+//        } catch (WebClientResponseException e) {
+//            log.error("Checklist 생성 실패: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+//        } catch (Exception e) {
+//            log.error("Checklist 생성 중 예외 발생", e);
+//        }
+
 
     @Override
     public void generateExtraFeatureItemChecklist(Long featureId) {
