@@ -19,4 +19,6 @@ public interface MyPageService {
     String uploadProfileImage(Long userId, MultipartFile file);
 
     void deleteProfileImage(Long userId);
+
+    public String getProfileImage(Long userId);
 }

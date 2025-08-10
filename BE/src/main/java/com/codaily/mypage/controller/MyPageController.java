@@ -138,6 +138,21 @@ public class MyPageController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/profile-image")
+    @Operation(summary = "프로필 사진 조회", description = "현재 로그인한 사용자의 프로필 사진 URL을 조회합니다.")
+    public ResponseEntity<ProfileImageResponse> getProfileImage(
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+
+        String imageUrl = myPageService.getProfileImage(
+                principalDetails.getUser().getUserId());
+
+        ProfileImageResponse response = ProfileImageResponse.builder()
+                .imageUrl(imageUrl)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/profile-image")
     @Operation(summary = "프로필 이미지 삭제")
     public ResponseEntity<Map<String, String>> deleteProfileImage(
@@ -151,4 +166,5 @@ public class MyPageController {
 
         return ResponseEntity.ok(response);
     }
+    
 }

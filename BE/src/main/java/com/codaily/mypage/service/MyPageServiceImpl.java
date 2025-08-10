@@ -118,6 +118,14 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     @Override
+    public String getProfileImage(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return user.getProfileImage();
+    }
+
+    @Override
     @Transactional
     public void deleteProfileImage(Long userId) {
         User user = userRepository.findByUserId(userId)
