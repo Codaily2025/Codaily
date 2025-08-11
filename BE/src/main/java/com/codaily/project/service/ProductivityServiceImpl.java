@@ -55,7 +55,7 @@ public class ProductivityServiceImpl implements ProductivityService {
         }
     }
 
-    // NEW: Daily Productivity 데이터로부터 응답 생성
+    // Daily Productivity 데이터로부터 응답 생성
     private ProductivityCalculateResponse buildResponseFromDaily(
             DailyProductivity daily, ProductivityCalculateRequest.Metrics metrics) {
 
@@ -82,14 +82,34 @@ public class ProductivityServiceImpl implements ProductivityService {
             overallScore += daily.getCodeQuality() * 0.2;
         }
 
+        // 🔥 NEW: benchmarkComparison 개선
+        ProductivityCalculateResponse.BenchmarkComparison benchmarkComparison =
+                calculateBenchmarkComparison(daily.getUserId(), daily.getProjectId(), daily.getDate());
+
         return ProductivityCalculateResponse.builder()
                 .overallScore(overallScore)
                 .breakdown(breakdown)
                 .trend("stable")
-                .benchmarkComparison(ProductivityCalculateResponse.BenchmarkComparison.builder()
-                        .personalAverage(0.0)
-                        .projectAverage(0.0)
-                        .build())
+                .benchmarkComparison(benchmarkComparison)
+                .build();
+    }
+
+    // 🔥 NEW: 벤치마크 계산 메서드 추가
+    private ProductivityCalculateResponse.BenchmarkComparison calculateBenchmarkComparison(
+            Long userId, Long projectId, LocalDate currentDate) {
+
+        // 개인 평균 (최근 30일)
+        LocalDate thirtyDaysAgo = currentDate.minusDays(30);
+        Double personalAverage = dailyProductivityRepository
+                .findAverageProductivityScoreByUserAndDateRange(userId, thirtyDaysAgo, currentDate);
+
+        // 프로젝트 평균 (전체 기간)
+        Double projectAverage = dailyProductivityRepository
+                .findAverageProductivityScoreByProject(projectId);
+
+        return ProductivityCalculateResponse.BenchmarkComparison.builder()
+                .personalAverage(personalAverage != null ? Math.round(personalAverage * 100.0) / 100.0 : 0.0)
+                .projectAverage(projectAverage != null ? Math.round(projectAverage * 100.0) / 100.0 : 0.0)
                 .build();
     }
 
@@ -138,14 +158,15 @@ public class ProductivityServiceImpl implements ProductivityService {
         // DailyProductivity에 저장
         saveDailyProductivity(userId, projectId, targetDate, completedFeatures.size(), totalCommits, codeQualityScore, overallScore);
 
+        // 🔥 NEW: 실시간 계산에서도 벤치마크 계산
+        ProductivityCalculateResponse.BenchmarkComparison benchmarkComparison =
+                calculateBenchmarkComparison(userId, projectId, targetDate);
+
         return ProductivityCalculateResponse.builder()
                 .overallScore(overallScore)
                 .breakdown(breakdown)
                 .trend("stable")
-                .benchmarkComparison(ProductivityCalculateResponse.BenchmarkComparison.builder()
-                        .personalAverage(0.0)
-                        .projectAverage(0.0)
-                        .build())
+                .benchmarkComparison(benchmarkComparison)
                 .build();
     }
 
