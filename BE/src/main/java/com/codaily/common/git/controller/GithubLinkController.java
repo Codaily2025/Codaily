@@ -91,7 +91,7 @@ public class GithubLinkController {
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
         String repoOwner = userService.getGithubUsername(userDetails.getUserId());
-        githubService.registerWebhook(repoOwner, repoName, accessToken);
+//        githubService.registerWebhook(repoOwner, repoName, accessToken);
 
         return githubService.createRepository(accessToken, repoName)
                 .doOnNext(repoUrl ->
@@ -119,7 +119,7 @@ public class GithubLinkController {
             @Parameter(description = "연결할 프로젝트 ID") @RequestParam Long projectId
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
-        githubService.registerWebhook(owner, repoName, accessToken);
+//        githubService.registerWebhook(owner, repoName, accessToken);
 
         return githubService.getRepositoryInfo(accessToken, owner, repoName)
                 .doOnNext(repo -> {

@@ -74,67 +74,67 @@ public class GithubServiceImpl implements GithubService {
                 .doOnNext(languages -> log.debug("Languages for {}/{}: {}", owner, repoName, languages));
     }
 
-    @Override
-    public void registerWebhook(String owner, String repo, String accessToken) {
-        String apiUrl = "https://api.github.com/repos/" + owner + "/" + repo + "/hooks";
-        // 도메인 추후 수정 필요
-        String targetUrl = "http://i13a601.p.ssafy.io/api/webhook";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Accept", "application/vnd.github+json");
-
-        RestTemplate restTemplate = new RestTemplate();
-
-        try {
-            // 기존 Webhook 목록 조회
-            HttpEntity<Void> getRequest = new HttpEntity<>(headers);
-            ResponseEntity<List> response = restTemplate.exchange(
-                    apiUrl, HttpMethod.GET, getRequest, List.class
-            );
-
-            List<Map<String, Object>> hooks = response.getBody();
-
-            // 2. Codaily Webhook이 이미 등록돼 있는지 확인
-            boolean alreadyRegistered = hooks.stream()
-                    .map(hook -> (Map<String, Object>) hook.get("config"))
-                    .filter(Objects::nonNull)
-                    .anyMatch(config -> targetUrl.equals(config.get("url")));
-
-            if (alreadyRegistered) {
-                log.info("이미 Codaily Webhook이 등록되어 있음: {}", repo);
-                return;
-            }
-
-            // 등록된 webhook에 없으면 새로 등록
-            Map<String, Object> config = Map.of(
-                    "url", targetUrl,
-                    "content_type", "json"
-            );
-
-            Map<String, Object> body = Map.of(
-                    "name", "web",
-                    "active", true,
-                    "events", List.of("push"),
-                    "config", config
-            );
-
-            HttpEntity<Map<String, Object>> postRequest = new HttpEntity<>(body, headers);
-            ResponseEntity<String> postResponse = restTemplate.postForEntity(apiUrl, postRequest, String.class);
-
-            if (postResponse.getStatusCode().is2xxSuccessful()) {
-                log.info("Webhook 새로 등록 성공: {}", targetUrl);
-            } else {
-                log.warn("Webhook 등록 실패: {}", postResponse.getBody());
-            }
-
-        } catch (HttpClientErrorException e) {
-            log.error("GitHub Webhook 등록 에러: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-        } catch (Exception e) {
-            log.error("기타 예외 발생: {}", e.getMessage(), e);
-        }
-    }
+//    @Override
+//    public void registerWebhook(String owner, String repo, String accessToken) {
+//        String apiUrl = "https://api.github.com/repos/" + owner + "/" + repo + "/hooks";
+//        // 도메인 추후 수정 필요
+//        String targetUrl = "http://i13a601.p.ssafy.io/api/webhook";
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setBearerAuth(accessToken);
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.set("Accept", "application/vnd.github+json");
+//
+//        RestTemplate restTemplate = new RestTemplate();
+//
+//        try {
+//            // 기존 Webhook 목록 조회
+//            HttpEntity<Void> getRequest = new HttpEntity<>(headers);
+//            ResponseEntity<List> response = restTemplate.exchange(
+//                    apiUrl, HttpMethod.GET, getRequest, List.class
+//            );
+//
+//            List<Map<String, Object>> hooks = response.getBody();
+//
+//            // 2. Codaily Webhook이 이미 등록돼 있는지 확인
+//            boolean alreadyRegistered = hooks.stream()
+//                    .map(hook -> (Map<String, Object>) hook.get("config"))
+//                    .filter(Objects::nonNull)
+//                    .anyMatch(config -> targetUrl.equals(config.get("url")));
+//
+//            if (alreadyRegistered) {
+//                log.info("이미 Codaily Webhook이 등록되어 있음: {}", repo);
+//                return;
+//            }
+//
+//            // 등록된 webhook에 없으면 새로 등록
+//            Map<String, Object> config = Map.of(
+//                    "url", targetUrl,
+//                    "content_type", "json"
+//            );
+//
+//            Map<String, Object> body = Map.of(
+//                    "name", "web",
+//                    "active", true,
+//                    "events", List.of("push"),
+//                    "config", config
+//            );
+//
+//            HttpEntity<Map<String, Object>> postRequest = new HttpEntity<>(body, headers);
+//            ResponseEntity<String> postResponse = restTemplate.postForEntity(apiUrl, postRequest, String.class);
+//
+//            if (postResponse.getStatusCode().is2xxSuccessful()) {
+//                log.info("Webhook 새로 등록 성공: {}", targetUrl);
+//            } else {
+//                log.warn("Webhook 등록 실패: {}", postResponse.getBody());
+//            }
+//
+//        } catch (HttpClientErrorException e) {
+//            log.error("GitHub Webhook 등록 에러: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+//        } catch (Exception e) {
+//            log.error("기타 예외 발생: {}", e.getMessage(), e);
+//        }
+//    }
 
 
 
