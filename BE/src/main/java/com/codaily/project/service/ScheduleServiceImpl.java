@@ -376,11 +376,13 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
+    @Transactional
     public void startTodayFeatures(Long projectId, LocalDate today) {
         int updatedCount = featureItemRepository.updateTodayFeaturesToInProgress(projectId, today);
     }
 
     @Override
+    @Transactional
     public void handleOverdueFeatures(Long projectId) {
         LocalDate yesterday = LocalDate.now().minusDays(1);
 

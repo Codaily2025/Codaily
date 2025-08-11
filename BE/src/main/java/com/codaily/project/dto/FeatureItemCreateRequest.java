@@ -15,6 +15,5 @@ public class FeatureItemCreateRequest {
     private Double estimatedTime;
     private Boolean isCustom;
     private Long projectId;
-    private Long specificationId;
     private Long parentFeatureId;
 }

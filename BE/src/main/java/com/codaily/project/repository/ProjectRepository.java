@@ -53,7 +53,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT DISTINCT p.projectId FROM Project p " +
             "JOIN FeatureItem f ON f.project = p " +
             "JOIN FeatureItemSchedule s ON s.featureItem = f " +
-            "WHERE p.status = 'ACTIVE' " +
+            "WHERE p.status = 'IN_PROGRESS' " +
             "AND f.status IN ('TODO', 'IN_PROGRESS') " +
             "AND s.scheduleDate <= :yesterday " +
             "AND s.withinProjectPeriod = true")
@@ -62,14 +62,14 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT DISTINCT p.projectId FROM Project p " +
             "JOIN FeatureItem f ON f.project = p " +
             "JOIN FeatureItemSchedule s ON s.featureItem = f " +
-            "WHERE p.status = 'ACTIVE' " +
+            "WHERE p.status = 'IN_PROGRESS' " +
             "AND f.status = 'TODO' " +
             "AND s.scheduleDate = :today")
     List<Long> findProjectsWithTodayFeatures(@Param("today") LocalDate today);
 
     @Query("SELECT DISTINCT p.projectId FROM Project p " +
             "JOIN FeatureItem f ON f.project = p " +
-            "WHERE p.status = 'ACTIVE' " +
+            "WHERE p.status = 'IN_PROGRESS' " +
             "AND f.status = 'IN_PROGRESS'")
     List<Long> findProjectsWithInProgressFeatures();
 }

@@ -40,4 +40,6 @@ public interface FeatureItemService {
     void generateFeatureItemChecklist(Long projectId);
 
     void generateExtraFeatureItemChecklist(Long featureId);
+
+    ParentFeatureListResponse getParentFeatures(Long projectId);
 }

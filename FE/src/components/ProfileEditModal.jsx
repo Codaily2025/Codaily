@@ -2,17 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfileStore } from '../stores/profileStore';
 import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation, useUploadProfileImageMutation } from '../queries/useProfile';
-import { updateProfile } from '../apis/profile'; // 서버 갱신
+import { updateProfile, getProfileImage } from '../apis/profile'; // 서버 갱신
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
+import { useGetProfileImageQuery } from '../queries/useProfile';
 
 // GitHub OAuth 설정
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 
 const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
+  const queryClient = useQueryClient();
+  const [imgBust, setImgBust] = useState(0);
   // React Query로 프로필 데이터 조회
   const { data: profileData } = useProfileQuery();
-
+  const { data: profileImage } = useGetProfileImageQuery();
   // Zustand 스토어에서 폼 상태만 가져오기
   const {
     editFormData,
@@ -41,7 +44,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const updateNicknameMutation = useUpdateNicknameMutation();
   const updateProfileMutation = useUpdateProfileMutation();
   const uploadProfileImageMutation = useUploadProfileImageMutation();
-  
+
   // 모달이 열릴 때마다 서버 프로필 데이터로 폼 초기화
   useEffect(() => {
     if (isOpen && profileData) {
@@ -84,20 +87,40 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
         return;
       }
 
-      // 미리보기 설정
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setPreviewImage(ev.target.result);
-        updateFormField('profileImage', ev.target.result);
-      };
-      reader.readAsDataURL(file);
+      // // 미리보기 설정
+      // const reader = new FileReader();
+      // reader.onload = (ev) => {
+      //   setPreviewImage(ev.target.result);
+      //   updateFormField('profileImage', ev.target.result);
+      // };
+      // reader.readAsDataURL(file);
+
+      // 즉시 화면 반영: Object URL 프리뷰
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewImage(objectUrl);
+      updateFormField('profileImage', objectUrl);
 
       // 서버에 이미지 업로드
       uploadProfileImageMutation.mutate(file, {
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
           console.log('프로필 이미지 업로드 성공:', response);
-          // 성공 메시지 표시 (선택사항)
+          // 성공 메시지 표시
           // alert('프로필 이미지가 업로드되었습니다.');
+          if (response?.imageUrl) {
+            queryClient.setQueryData(['profileImage'], { imageUrl: response.imageUrl });
+          }
+
+          // 실제 데이터 재조회
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['profileImage'] }),
+            queryClient.invalidateQueries({ queryKey: ['profile'] }), // 프로필 API에 이미지 포함되면 같이 무효화
+          ]);
+
+          // 브라우저 캐시 우회 파라미터 갱신
+          setImgBust(Date.now());
+
+          // 메모리 누수 방지 (새 이미지로 전환된 다음 해제)
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
         },
         onError: (error) => {
           console.error('프로필 이미지 업로드 실패:', error);
@@ -257,8 +280,8 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 className={styles.fileInputOverlay}
               />
               <div className={styles.profileImage}>
-                {previewImage ? (
-                  <img src={previewImage} alt="프로필" className={styles.profileImagePreview} />
+                {profileImage?.imageUrl ? (
+                  <img src={profileImage.imageUrl} alt="프로필" className={styles.profileImagePreview} />
                 ) : (
                   <User size={32} className={styles.profileImageIcon} />
                 )}

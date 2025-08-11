@@ -60,6 +60,6 @@ public interface BatchProcessLogRepository extends JpaRepository<BatchProcessLog
             "  SELECT b.projectId FROM BatchProcessLog b " +
             "  WHERE b.processDate = :date" +
             ") " +
-            "AND p.status = 'ACTIVE'")
+            "AND p.status = 'IN_PROGRESS'")
     List<Long> findUnprocessedActiveProjects(@Param("date") LocalDate date);
 }
