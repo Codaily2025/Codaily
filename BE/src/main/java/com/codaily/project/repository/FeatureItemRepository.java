@@ -134,6 +134,7 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT f FROM FeatureItem f WHERE f.featureId = :featureId")
     FeatureItem getFeatureItemByFeatureId(@Param("featureId") Long featureId);
 
+<<<<<<< Updated upstream
     // ===== 배치 상태 업데이트 ===
     @Modifying
     @Query("UPDATE FeatureItem f SET f.status = :status WHERE f.featureId IN :featureIds")
@@ -145,4 +146,18 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
             "AND EXISTS (SELECT 1 FROM FeatureItemSchedule s " +
             "           WHERE s.featureItem = f AND s.scheduleDate = :today)")
     int updateTodayFeaturesToInProgress(@Param("projectId") Long projectId, @Param("today") LocalDate today);
+=======
+
+    // 추천 작업 후보 조회 (Pageable 사용)
+    @Query("SELECT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status = 'TODO' " +
+            "AND f.priorityLevel IS NOT NULL " +
+            "ORDER BY f.priorityLevel DESC, f.estimatedTime ASC, f.createdAt ASC")
+    List<FeatureItem> findCandidateTasksForRecommendation(
+            @Param("projectId") Long projectId,
+            Pageable pageable
+    );
+
+>>>>>>> Stashed changes
 }
