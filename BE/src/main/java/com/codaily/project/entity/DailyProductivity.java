@@ -6,8 +6,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "daily_productivity",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "projectId", "date"}))
+@Table(
+        name = "daily_productivity",
+uniqueConstraints = @UniqueConstraint(
+        name = "uk_daily_productivity_user_project_date",
+        columnNames = {"user_id", "project_id", "date"}
+))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -36,13 +40,15 @@ public class DailyProductivity {
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (completedFeatures == null) completedFeatures = 0;
+        if (totalCommits == null) totalCommits = 0;
     }
 
-    @Column(nullable = true)
+    @Column(name = "completed_tasks", nullable = false)
     private Integer completedFeatures;
 
-    @Column(nullable = true)
+    @Column(name = "commits", nullable = false)
     private Integer totalCommits;
 
     // 서비스에서 NULL 체크

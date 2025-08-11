@@ -14,7 +14,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
@@ -93,3 +93,7 @@ springdoc:
 
 server:
   port: 8081
+
+logging:
+  level:
+    org.springframework.boot.context.config: DEBUG
