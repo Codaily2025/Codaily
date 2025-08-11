@@ -7,7 +7,7 @@ import ProfileEditModal from '../../components/ProfileEditModal';
 import editIcon from '../../assets/edit_icon.png';
 import githubIcon from '../../assets/github_icon.png';
 import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
-
+import { useGetProfileImageQuery } from '../../queries/useProfile';
 import useModalStore from '../../store/modalStore';
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 
@@ -19,7 +19,8 @@ const Mypage = () => {
     error 
   } = useProfileQuery(); // 프로필 조회 훅
   console.log('유저 프로필:', profile);
-
+  const { data: profileImage } = useGetProfileImageQuery();
+  // console.log('유저 프로필 이미지:', profileImage);
   if (isLoading) return <div>로딩 중...</div>;
 
   if (isError) return <div>에러 발생: {error.message}</div>;
@@ -31,8 +32,8 @@ const Mypage = () => {
       <aside className="sidebar">
         <div className="profile-card">
           <div className="profile-image-placeholder">
-            {profile.profileImage && (
-              <img src={profile.profileImage} alt="profile" />
+            {profileImage && (
+              <img src={profileImage.imageUrl} alt="profile" />
             )}
           </div>
           {/* <a onClick={() => setIsModalOpen(true)} className="edit-profile-link"> */}
