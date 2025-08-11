@@ -188,7 +188,7 @@ public class MyPageController {
     public ResponseEntity<Map<String, String>> updateAdditionalInfo(
             @AuthenticationPrincipal PrincipalDetails principalDetails,
             @RequestParam("nickname") String nickname,
-            @RequestParam("githubAccount") String githubAccount,
+//            @RequestParam("githubAccount") String githubAccount,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
 
         Long userId = principalDetails.getUser().getUserId();
@@ -198,7 +198,7 @@ public class MyPageController {
             userService.updateUserNickname(userId, nickname);
 
             // GitHub 계정 업데이트
-            myPageService.updateGithubAccount(userId, githubAccount);
+//            myPageService.updateGithubAccount(userId, githubAccount);
 
             // 프로필 이미지 업로드 (있는 경우에만)
             if (profileImage != null && !profileImage.isEmpty()) {

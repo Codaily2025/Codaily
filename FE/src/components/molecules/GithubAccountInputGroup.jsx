@@ -12,7 +12,8 @@ const GithubAccountInputGroup = ({
     inputClassName = '',
     value,
     onChange,
-    error
+    error,
+    isConnected = false
 }) => {
     const inputId = `input-${fieldName}`
 
@@ -35,7 +36,17 @@ const GithubAccountInputGroup = ({
                     className={inputClassName}
                     style={{ flex: 1 }}
                 />
-                <NicknameCheckButton onClick={onGithubAccountCheck} />
+                <NicknameCheckButton 
+                    onClick={onGithubAccountCheck}
+                    disabled={isConnected}
+                    style={{
+                        backgroundColor: isConnected ? '#10b981' : '#5A597D',
+                        cursor: isConnected ? 'not-allowed' : 'pointer',
+                        opacity: isConnected ? 0.7 : 1
+                    }}
+                >
+                    {isConnected ? '연동됨' : '연동'}
+                </NicknameCheckButton>
             </div>
             {error && (
                 <div style={{

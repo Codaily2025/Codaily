@@ -1,23 +1,34 @@
-const NicknameCheckButton = ({ onClick, className = '' }) => {
+const NicknameCheckButton = ({ 
+  onClick, 
+  className = '', 
+  disabled = false, 
+  style = {},
+  children = '연동'
+}) => {
+  const baseStyle = {
+    backgroundColor: '#5A597D',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '12px',
+    padding: '12px 16px',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    fontSize: '14px',
+    height: '44px',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
+    opacity: disabled ? 0.6 : 1,
+    ...style // 외부에서 전달받은 스타일로 오버라이드
+  }
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={className}
-      style={{
-        backgroundColor: '#5A597D',
-        color: '#fff',
-        border: 'none',
-        borderRadius: '12px',
-        padding: '12px 16px', // input과 동일한 padding
-        cursor: 'pointer',
-        fontSize: '14px', // input과 동일한 폰트 사이즈
-        height: '44px', // input 높이에 맞춤 (padding 12px * 2 + font line height)
-        whiteSpace: 'nowrap',
-        flexShrink: 0 // flex shrink 방지
-      }}
+      style={baseStyle}
     >
-      중복체크
+      {children}
     </button>
   )
 }
