@@ -52,4 +52,5 @@ const axiosAuthInstance = (url, options) => {
 // TODO: 요청, 응답 인터셉터 구현 예정
 
 export const defaultInstance = axiosInstance(BASE_URL)
+export const githubInstance = axiosAuthInstance('http://localhost:8081/oauth/github/');
 export const authInstance = axiosAuthInstance(BASE_URL)
