@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 from src.config.osConfig import *
-from src.specification.specification_router import router as specification_router
+
+# from src.specification.specification_router import router as specification_router
 from src.specification.chat_router import router as chat_router
 from src.code_review.code_review_router import router as code_review_router
 from src.code_review.checklist_router import router as checklist_router
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.on_event("startup")
 async def print_routes():
     print("=== ROUTES ===")
@@ -34,7 +36,7 @@ async def print_routes():
 
 
 # 라우터 등록
-app.include_router(specification_router, prefix="/specification")
+# app.include_router(specification_router, prefix="/specification")
 app.include_router(chat_router, prefix="/chat")
 app.include_router(code_review_router, prefix="/api/code-review")
 app.include_router(retrospective_router, prefix="/api/retrospective")
@@ -47,19 +49,21 @@ import json, logging
 
 log = logging.getLogger("uvicorn.error")
 
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     body = (await request.body()).decode("utf-8", errors="ignore")
-    log.error("422 on %s\npayload=%s\nerrors=\n%s",
-              request.url.path,
-              body,
-              json.dumps(exc.errors(), ensure_ascii=False, indent=2))
+    log.error(
+        "422 on %s\npayload=%s\nerrors=\n%s",
+        request.url.path,
+        body,
+        json.dumps(exc.errors(), ensure_ascii=False, indent=2),
+    )
     return JSONResponse(status_code=422, content={"detail": exc.errors()})
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
 
 
 # # GMS API 엔드포인트 (gpt-4.1-mini)
