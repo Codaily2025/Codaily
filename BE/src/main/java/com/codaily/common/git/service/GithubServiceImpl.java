@@ -2,11 +2,9 @@ package com.codaily.common.git.service;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -78,34 +76,67 @@ public class GithubServiceImpl implements GithubService {
 
     @Override
     public void registerWebhook(String owner, String repo, String accessToken) {
-        String url = "https://api.github.com/repos/" + owner + "/" + repo + "/hooks";
+        String apiUrl = "https://api.github.com/repos/" + owner + "/" + repo + "/hooks";
+        // 도메인 추후 수정 필요
+        String targetUrl = "http://i13a601.p.ssafy.io/api/webhook";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Accept", "application/vnd.github+json");
 
-        Map<String, Object> config = Map.of(
-                "url", "https://codaily.ai/api/webhook",
-                "content_type", "json"
-        );
-
-        Map<String, Object> body = Map.of(
-                "name", "web",
-                "active", true,
-                "events", List.of("push"),
-                "config", config
-        );
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
-        if (response.getStatusCode().is2xxSuccessful()) {
-            log.info("Webhook 등록 성공: {}", repo);
-        } else {
-            log.warn("Webhook 등록 실패: {} - {}", repo, response.getBody());
+        try {
+            // 기존 Webhook 목록 조회
+            HttpEntity<Void> getRequest = new HttpEntity<>(headers);
+            ResponseEntity<List> response = restTemplate.exchange(
+                    apiUrl, HttpMethod.GET, getRequest, List.class
+            );
+
+            List<Map<String, Object>> hooks = response.getBody();
+
+            // 2. Codaily Webhook이 이미 등록돼 있는지 확인
+            boolean alreadyRegistered = hooks.stream()
+                    .map(hook -> (Map<String, Object>) hook.get("config"))
+                    .filter(Objects::nonNull)
+                    .anyMatch(config -> targetUrl.equals(config.get("url")));
+
+            if (alreadyRegistered) {
+                log.info("이미 Codaily Webhook이 등록되어 있음: {}", repo);
+                return;
+            }
+
+            // 등록된 webhook에 없으면 새로 등록
+            Map<String, Object> config = Map.of(
+                    "url", targetUrl,
+                    "content_type", "json"
+            );
+
+            Map<String, Object> body = Map.of(
+                    "name", "web",
+                    "active", true,
+                    "events", List.of("push"),
+                    "config", config
+            );
+
+            HttpEntity<Map<String, Object>> postRequest = new HttpEntity<>(body, headers);
+            ResponseEntity<String> postResponse = restTemplate.postForEntity(apiUrl, postRequest, String.class);
+
+            if (postResponse.getStatusCode().is2xxSuccessful()) {
+                log.info("Webhook 새로 등록 성공: {}", targetUrl);
+            } else {
+                log.warn("Webhook 등록 실패: {}", postResponse.getBody());
+            }
+
+        } catch (HttpClientErrorException e) {
+            log.error("GitHub Webhook 등록 에러: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("기타 예외 발생: {}", e.getMessage(), e);
         }
     }
+
+
 
 
     public Mono<Set<String>> getAllTechStack(String accessToken, String username) {

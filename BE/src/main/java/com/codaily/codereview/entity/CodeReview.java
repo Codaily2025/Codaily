@@ -41,6 +41,9 @@ public class CodeReview {
     @Column(name = "convention")
     private String convention;
 
+    @Column(name = "performance")
+    private String performance;
+
     @Column(name = "refactor_suggestion")
     private String refactorSuggestion;
 

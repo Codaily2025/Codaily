@@ -5,8 +5,7 @@ import asyncio
 from copy import deepcopy
 
 from ..state import CodeReviewState
-from ..prompts import feature_inference_prompt, checklist_evaluation_prompt, code_review_prompt, review_summary_prompt, commit_message_completion_prompt, commit_message_prompt
-from ..subgraph import create_feature_graph
+from ..prompts import feature_inference_prompt, checklist_evaluation_prompt, code_review_prompt, review_summary_prompt, commit_message_prompt
 
 # 기능명 추론
 async def run_feature_inference(state: CodeReviewState) -> CodeReviewState:
@@ -66,7 +65,7 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
 
     checklist_items = response.json()
 
-    print(f"📥 checklist 수신 완료 ({len(checklist_items)}개): {checklist_items}")
+    print(f"checklist 수신 완료 ({len(checklist_items)}개): {checklist_items}")
 
     state["checklist"] = checklist_items
     return state
@@ -77,17 +76,17 @@ async def run_commit_message_completion_check(state: CodeReviewState) -> CodeRev
     if not message:
         return state  # 메시지 없으면 판단 불가
 
-    print(f"\n🧠 GPT에게 커밋 메시지 판단 요청: {message}")
+    print(f"\n GPT에게 커밋 메시지 판단 요청: {message}")
 
     prompt_input = {"commit_message": message}
-    result = await commit_message_completion_prompt.ainvoke(prompt_input)
+    result = await commit_message_prompt.ainvoke(prompt_input)
     result_text = result.content.strip()
 
     if result_text == "완료":
-        print("✅ GPT 판단: 구현 완료된 커밋")
+        print("GPT 판단: 구현 완료된 커밋")
         state["force_done_by_commit_message"] = True
     else:
-        print("❌ GPT 판단: 아직 구현 미완료")
+        print("GPT 판단: 아직 구현 미완료")
 
     return state
 
@@ -334,6 +333,8 @@ async def send_result_to_java(state: CodeReviewState) -> CodeReviewState:
 
 
 async def run_parallel_feature_graphs(state: CodeReviewState) -> CodeReviewState:
+    from ..subgraph import create_feature_graph
+
     feature_names = state.feature_names or []
 
     if len(feature_names) == 1:

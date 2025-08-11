@@ -4,6 +4,7 @@ import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.UserRepository;
 import com.codaily.auth.service.provider.GoogleOAuth;
+import com.codaily.auth.service.provider.KakaoOAuth;
 import com.codaily.auth.service.provider.NaverOAuth;
 import com.codaily.auth.service.provider.SocialOAuth;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,7 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
                 Map<String, Object> response = (Map<String, Object>) attributes.get("response");
                 socialUser = new NaverOAuth(response);
             }
+            case "kakao" -> socialUser = new KakaoOAuth(attributes);
             default -> throw new IllegalArgumentException("Unsupported provider: " + registrationId);
         }
 
@@ -51,7 +53,12 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         String email = socialUser.getEmail();
         String name = socialUser.getName();
         log.info("email: "+email);
-        Optional<User> existingUser = userRepository.findByEmail(email);
+        Optional<User> existingUser;
+        if ("kakao".equals(provider)) {
+            existingUser = userRepository.findBySocialIdAndSocialProvider(providerId, provider);
+        } else {
+            existingUser = userRepository.findByEmail(email);
+        }
 
         User user;
 
@@ -72,6 +79,7 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
                     .nickname(nickname)
                     .role(User.Role.USER)
                     .socialProvider(provider)
+                    .socialId(providerId)
                     .githubAccount(provider.equals("github") ? socialUser.getProviderId() : null)
                     .githubProfileUrl(provider.equals("github") ? (String) attributes.get("avatar_url") : null)
                     .githubAccessToken(provider.equals("github") ? request.getAccessToken().getTokenValue() : null)

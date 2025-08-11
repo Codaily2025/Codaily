@@ -4,6 +4,7 @@ import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.service.UserService;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
 import com.codaily.common.git.service.GithubService;
+import com.codaily.common.git.service.WebhookService;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -69,7 +71,11 @@ public class GithubLinkController {
                                 .doOnNext(profile ->
                                         userService.linkGithub(userDetails.getUserId(), profile, accessToken)
                                 )
-                                .thenReturn(ResponseEntity.noContent().build())
+                                .thenReturn(
+                                        ResponseEntity.status(HttpStatus.FOUND)
+                                                .location(URI.create("http://localhost:5173/settings?github=connected"))
+                                                .build()
+                                )
                 );
     }
 
@@ -89,6 +95,8 @@ public class GithubLinkController {
             @Parameter(description = "연결할 프로젝트 ID") @RequestParam Long projectId
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
+        String repoOwner = userService.getGithubUsername(userDetails.getUserId());
+        githubService.registerWebhook(repoOwner, repoName, accessToken);
 
         return githubService.createRepository(accessToken, repoName)
                 .doOnNext(repoUrl ->
@@ -116,6 +124,7 @@ public class GithubLinkController {
             @Parameter(description = "연결할 프로젝트 ID") @RequestParam Long projectId
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
+        githubService.registerWebhook(owner, repoName, accessToken);
 
         return githubService.getRepositoryInfo(accessToken, owner, repoName)
                 .doOnNext(repo -> {

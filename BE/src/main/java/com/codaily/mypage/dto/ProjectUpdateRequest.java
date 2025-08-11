@@ -6,8 +6,10 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProjectUpdateRequest {
     private String title;
     private LocalDate startDate;

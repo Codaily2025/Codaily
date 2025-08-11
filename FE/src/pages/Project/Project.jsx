@@ -2,11 +2,9 @@ import { React, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import './Project.css'
 import './TaskCard.css'
-import './KanbanBoard.css'
-import './Sidebar.css'
-import ProjectTemplate from '../../components/layouts/ProjectTemplate'
-import { useUserProjects } from '../../hooks/useProjects'
-import useProjectStore from '../../stores/projectStore'
+import ProjectTemplate from '@/components/layouts/ProjectTemplate'
+import { useUserProjects } from '@/hooks/useProjects'
+import useProjectStore from '@/stores/projectStore'
 
 const Project = () => {
   const { id } = useParams()
@@ -105,9 +103,9 @@ const Project = () => {
             </span>
           )}
         </div>
-        <button className="create-project-button" onClick={handleCreateProject}>
+        {/* <button className="create-project-button" onClick={handleCreateProject}>
           + 새 프로젝트 만들기
-        </button>
+        </button> */}
       </div>
       <ProjectTemplate 
         currentProject={currentProject} 

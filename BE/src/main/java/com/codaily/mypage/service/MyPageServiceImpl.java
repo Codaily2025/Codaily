@@ -1,5 +1,9 @@
 package com.codaily.mypage.service;
 
+import com.codaily.auth.entity.User;
+import com.codaily.auth.repository.UserRepository;
+import com.codaily.common.file.service.FileStorageService;
+import com.codaily.common.file.service.FileStorageServiceImpl;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.mypage.dto.ProjectListResponse;
@@ -9,22 +13,26 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
-public class MyPageProjectServiceImpl implements MyPageProjectService{
+public class MyPageServiceImpl implements MyPageService {
 
     private final FeatureItemSchedulesRepository schedulesRepository;
     private final FeatureItemRepository featureItemRepository;
     private final ProjectRepository projectRepository;
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ScheduleRepository scheduleRepository;
+    private final UserRepository userRepository;
+    private final FileStorageService fileStorageService;
 
 
     @Override
@@ -37,6 +45,7 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
     }
 
     @Override
+    @Transactional
     public void deleteProject(Long projectId) {
         if (!projectRepository.existsByProjectId(projectId)) {
             throw new IllegalArgumentException("프로젝트를 찾을 수 없습니다.");
@@ -53,6 +62,7 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
     }
 
     @Override
+    @Transactional
     public ProjectStatusResponse completeProject(Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트가 존재하지 않습니다."));
@@ -73,12 +83,86 @@ public class MyPageProjectServiceImpl implements MyPageProjectService{
     }
 
     @Override
-    public List<ProjectListResponse> searchProjectsByStatus(Long userId, String status) {
+    public List<ProjectListResponse> searchProjectsByStatus(Long userId, Project.ProjectStatus status) {
         List<Project> projects = projectRepository.findByStatusAndUser_UserIdOrderByCreatedAtDesc(status, userId);
 
         return projects.stream()
                 .map(this::converToList)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public String uploadProfileImage(Long userId, MultipartFile file) {
+       if(file == null || file.isEmpty()) return null;
+
+       User user = userRepository.findByUserId(userId)
+               .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        try {
+            // 기존 프로필 이미지 삭제
+            if (user.getProfileImage() != null) {
+                fileStorageService.deleteFile(user.getProfileImage());
+            }
+
+            // 새 이미지 업로드
+            String imageUrl = fileStorageService.uploadFile(file, "profiles");
+            user.setProfileImage(imageUrl);
+            userRepository.save(user);
+
+            return imageUrl;
+
+        } catch (IOException e) {
+            throw new RuntimeException("파일 업로드 중 오류가 발생했습니다.", e);
+        }
+    }
+
+    @Override
+    public String getProfileImage(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return user.getProfileImage();
+    }
+
+    @Override
+    public String getGithubAccount(Long userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        return user.getGithubAccount();
+    }
+
+    @Override
+    @Transactional
+    public void deleteProfileImage(Long userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        if (user.getProfileImage() != null) {
+            fileStorageService.deleteFile(user.getProfileImage());
+            user.setProfileImage(null);
+            userRepository.save(user);
+        }
+    }
+
+    // 작성자: yeongenn - GitHub 계정 업데이트 구현
+    @Override
+    @Transactional
+    public void updateGithubAccount(Long userId, String githubAccount) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // GitHub 계정명 중복 체크 (해당 사용자가 아닌 다른 사용자가 사용 중인지 확인)
+        if (userRepository.existsByGithubAccount(githubAccount)) {
+            User existingUser = userRepository.findByNickname(githubAccount).orElse(null);
+            if (existingUser != null && !existingUser.getUserId().equals(userId)) {
+                throw new IllegalArgumentException("이미 사용 중인 GitHub 계정입니다.");
+            }
+        }
+
+        user.setGithubAccount(githubAccount);
+        userRepository.save(user);
     }
 
     private ProjectListResponse converToList(Project project){

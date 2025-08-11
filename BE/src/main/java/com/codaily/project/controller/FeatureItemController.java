@@ -2,8 +2,10 @@ package com.codaily.project.controller;
 
 import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.service.AsyncScheduleService;
 import com.codaily.project.service.FeatureFieldService;
 import com.codaily.project.service.FeatureItemService;
+import com.codaily.project.service.ScheduleService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,11 +22,12 @@ public class FeatureItemController {
 
     private final FeatureItemService featureItemService;
     private final FeatureFieldService featureFieldService;
+    private final ScheduleService scheduleService;
 
     @PostMapping("/schedule")
     @Operation(summary = "초기 일정 생성", description = "요구사항 명세서 생성 후 첫 일정 생성")
     public ResponseEntity<String> scheduleProject(@PathVariable Long projectId) {
-        featureItemService.scheduleProjectInitially(projectId);
+        scheduleService.scheduleProjectInitially(projectId);
         return ResponseEntity.ok("프로젝트 스케줄링이 완료되었습니다.");
     }
 
@@ -62,14 +65,14 @@ public class FeatureItemController {
 //        return ResponseEntity.ok("기능 정보가 수정되었습니다.");
 //    }
 //
-//    @DeleteMapping("/{featureId}")
-//    @Operation(summary = "기능 삭제")
-//    public ResponseEntity<Void> deleteFeature(
-//            @PathVariable Long projectId,
-//            @PathVariable Long featureId) {
-//        featureItemService.deleteFeature(projectId, featureId);
-//        return ResponseEntity.noContent().build();
-//    }
+    @DeleteMapping("/{featureId}")
+    @Operation(summary = "기능 삭제")
+    public ResponseEntity<Void> deleteFeature(
+            @PathVariable Long projectId,
+            @PathVariable Long featureId) {
+        featureItemService.deleteFeature(projectId, featureId);
+        return ResponseEntity.noContent().build();
+    }
 
     @GetMapping("/field-tabs")
     @Operation(summary = "대주제별 조회", description = "칸반 대주제 탭")

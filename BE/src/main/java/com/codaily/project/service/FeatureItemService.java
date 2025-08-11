@@ -19,12 +19,6 @@ public interface FeatureItemService {
 
     void deleteFeature(Long projectId, Long featureId);
 
-    void rescheduleProject(Long projectId);
-
-    void scheduleProjectInitially(Long projectId);
-
-    void updateDailyStatus();
-
     FeatureSaveResponse saveSpecChunk(FeatureSaveRequest chunk, Long projectId, Long specId, String type);
 
 //    void updateFeatureItem(FeatureSaveItem request);
@@ -44,4 +38,6 @@ public interface FeatureItemService {
     FeatureItem findById(Long featureId);
 
     void generateFeatureItemChecklist(Long projectId);
+
+    void generateExtraFeatureItemChecklist(Long featureId);
 }

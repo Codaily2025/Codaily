@@ -142,20 +142,20 @@ public class FeatureDetailController {
                 ResponseEntity.badRequest().body(response);
     }
 
-    //기능 삭제 (하위 기능도 함께 삭제)
-    @Operation(summary = "기능 삭제", description = "기능과 모든 하위 기능들을 삭제합니다")
-    @DeleteMapping("/{projectId}/features/{featureId}")
-    public ResponseEntity<Void> deleteFeature(
-            @PathVariable Long projectId,
-            @PathVariable Long featureId,
-            @AuthenticationPrincipal PrincipalDetails userDetails) {
-
-        log.info("기능 삭제 요청 - projectId: {}, featureId: {}, userId: {}",
-                projectId, featureId, userDetails.getUserId());
-
-        featureDetailService.deleteFeature(projectId, featureId, userDetails.getUserId());
-        return ResponseEntity.ok().build();
-    }
+//    //기능 삭제 (하위 기능도 함께 삭제)
+//    @Operation(summary = "기능 삭제", description = "기능과 모든 하위 기능들을 삭제합니다")
+//    @DeleteMapping("/{projectId}/features/{featureId}")
+//    public ResponseEntity<Void> deleteFeature(
+//            @PathVariable Long projectId,
+//            @PathVariable Long featureId,
+//            @AuthenticationPrincipal PrincipalDetails userDetails) {
+//
+//        log.info("기능 삭제 요청 - projectId: {}, featureId: {}, userId: {}",
+//                projectId, featureId, userDetails.getUserId());
+//
+//        featureDetailService.deleteFeature(projectId, featureId, userDetails.getUserId());
+//        return ResponseEntity.ok().build();
+//    }
 
 
 }

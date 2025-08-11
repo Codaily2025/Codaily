@@ -10,7 +10,7 @@ export const getUserSchedule = async ({ year, month }) => {
         const userId = 3                                                                    // TODO: 로그인한 유저 id로 대체 예정
         const yearMonth = `${year}-${month.padStart(2, '0')}`
         console.log(`yearMonth: `, yearMonth)
-        const response = await authInstance.get(`/users/${userId}/calendar`, { params: { yearMonth } })        // JWT 구현 후
+        const response = await authInstance.get(`/calendar`, { params: { yearMonth } })        // JWT 구현 후
         // const response = await defaultInstance.get(`/users/${userId}/calendar`, { params: { yearMonth } })      // JWT 구현 전
         return response.data
 

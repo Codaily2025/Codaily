@@ -11,6 +11,7 @@ public class CodeReviewSummaryResponseDto {
     private String summary;
     private Double qualityScore;
     private String convention;
+    private String performance;
     private String refactorSuggestion;
     private String complexity;
     private String bugRisk;

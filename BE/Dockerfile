@@ -1,14 +1,12 @@
-# 1. JDK 17 slim 버전 베이스 이미지
 FROM openjdk:17-jdk-slim
 
-# 2. 작업 디렉토리 설정
 WORKDIR /app
 
-# 3. 빌드 결과물 복사 (가장 최신 jar 파일)
-COPY build/libs/*.jar app.jar
+# Jenkins에서 넘기는 정확한 JAR 경로를 받는다
+ARG JAR_FILE
+COPY ${JAR_FILE} app.jar
 
-# 4. Spring Boot 실행
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
-# 5. 외부에 열 포트 (Swagger UI 등 접근 가능)
 EXPOSE 8081
+
+# JAR의 전체 경로를 정확히 지정
+ENTRYPOINT ["java","-jar","/app/app.jar","--server.port=8081"]

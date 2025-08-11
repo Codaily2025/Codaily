@@ -32,8 +32,9 @@ public class CodeReviewItem {
     private String message;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id", nullable = false)
+    @JoinColumn(name = "checklist_id", nullable = false)
     private FeatureItemChecklist featureItemChecklist;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feature_id")

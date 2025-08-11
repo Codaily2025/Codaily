@@ -8,6 +8,8 @@ import javax.swing.text.html.Option;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findBySocialIdAndSocialProvider(String socialId, String socialProvider);
+
     boolean existsByGithubAccount(String githubAccount);
 
     Optional<User> findByNickname(String nickname);
@@ -18,4 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u.nickname FROM User u WHERE u.id = :userId")
     Optional<String> findNicknameByUserId(Long userId);
+
+    Optional<User> findByUserId(Long userId);
 }

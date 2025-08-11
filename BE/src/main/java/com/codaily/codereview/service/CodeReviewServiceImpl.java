@@ -1,5 +1,8 @@
 package com.codaily.codereview.service;
 
+import com.codaily.auth.entity.User;
+import com.codaily.auth.service.UserService;
+import com.codaily.codereview.controller.CodeReviewResponseMapper;
 import com.codaily.codereview.dto.*;
 import com.codaily.codereview.entity.CodeCommit;
 import com.codaily.codereview.entity.CodeReview;
@@ -9,6 +12,7 @@ import com.codaily.codereview.repository.CodeReviewItemRepository;
 import com.codaily.codereview.repository.CodeReviewRepository;
 import com.codaily.codereview.repository.FeatureItemChecklistRepository;
 import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.entity.Project;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.service.FeatureItemService;
@@ -16,6 +20,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +39,8 @@ public class CodeReviewServiceImpl implements CodeReviewService {
     private final FeatureItemService featureItemService;
     private final CodeCommitService codeCommitService;
     private final CodeReviewItemService codeReviewItemService;
+    private final CodeReviewResponseMapper codeReviewResponseMapper;
+    private final UserService userService;
 
 
     @Override
@@ -97,7 +104,11 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
         for(String name : featureNames) {
             commit.addFeatureName(name);
+
+            FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, name);
+            commit.addFeatureItem(featureItem);
         }
+
     }
 
     @Override
@@ -157,10 +168,12 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                 .summary(review.getSummary())
                 .convention(review.getConvention())
                 .refactorSuggestion(review.getRefactorSuggestion())
+                .performance(review.getPerformance())
                 .complexity(review.getComplexity())
                 .bugRisk(review.getBugRisk())
                 .securityRisk(review.getSecurityRisk())
                 .qualityScore(review.getQualityScore())
+                .createdAt(review.getCreatedAt())
                 .build();
     }
 
@@ -217,5 +230,140 @@ public class CodeReviewServiceImpl implements CodeReviewService {
         return SeverityByCategoryResponseDto.builder().categorySeverityCount(categorySeverityMap).build();
     }
 
+    @Override
+    public List<Map<String, Object>> getAllCodeReviews(Long projectId) {
+        // 프로젝트 조회
+        Project project = projectRepository.getProjectByProjectId(projectId);
+
+        return featureItemRepository.findByProject_ProjectId(projectId)
+                .stream()
+                .map(feature -> {
+                    CodeReviewSummaryResponseDto summaryDto = getCodeReviewSummary(feature.getFeatureId());
+                    List<CodeReviewItemResponseDto> items = getCodeReviewItems(feature.getFeatureId());
+
+                    return codeReviewResponseMapper.toDetailResponse(
+                            feature.getFeatureId(),
+                            summaryDto,
+                            items
+                    );
+                })
+                .toList();
+    }
+
+    @Override
+    public List<CodeReviewAllResponseDto> getCodeReviewsAllSummary(Long projectId) {
+        // 프로젝트 존재 확인 (선택)
+        Project project = projectRepository.getProjectByProjectId(projectId);
+        if (project == null) {
+            throw new IllegalArgumentException("프로젝트가 존재하지 않습니다: " + projectId);
+        }
+
+        // 기능 목록 조회
+        List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
+
+        return featureItems.stream()
+                .map(feature -> {
+                    Long featureId = feature.getFeatureId();
+                    String featureTitle = feature.getTitle();
+                    String featureField = feature.getField();
+
+                    // 점수
+                    CodeReviewScoreResponseDto scoreDto = getQualityScore(featureId);
+
+                    // severity 합산(카테고리 무시하고 severity 기준으로만 카운트)
+                    Map<String, Integer> severityCount = getSeverityCount(featureId);
+
+                    return CodeReviewAllResponseDto.builder()
+                            .projectId(projectId)
+                            .featureId(featureId)
+                            .featureName(featureTitle)
+                            .featureField(featureField)
+                            .qualityScore(scoreDto != null ? scoreDto.getQualityScore() : null)
+                            .severityCount(severityCount)
+                            .build();
+                })
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+
+    /**
+     * featureId에 속한 모든 CodeReviewItem의 severity를 합산해서
+     * Map<severity, count> 형태로 반환
+     * 예) {"낮음": 1, "중간": 2, "높음": 0}
+     */
+    private Map<String, Integer> getSeverityCount(Long featureId) {
+        // 이름이 byId로 되어 있으면 혼동됨. 가능하면 byFeatureId로 바꾸는 걸 추천.
+        List<CodeReviewItem> items = codeReviewItemService.getCodeReviewItemById(featureId);
+
+        Map<String, Integer> severityCount = new HashMap<>();
+        for (CodeReviewItem item : items) {
+            String severity = item.getSeverity();
+            if (severity == null) continue;
+            severityCount.merge(severity, 1, Integer::sum);
+        }
+        return severityCount;
+    }
+
+    @Override
+    public List<CodeReviewUserAllResponseDto> getUserAllCodeReviews(Long userId) {
+        // 1) 유저 확인
+        User user = userService.findById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("유저가 존재하지 않습니다: " + userId);
+        }
+
+        // 2) 유저의 모든 프로젝트 조회
+        //   - 레포지토리에 아래 메서드가 있으면 사용: findByUser_UserId(Long userId)
+        //   - 없으면 user.getProjects() 사용
+        List<Project> projects = projectRepository.findByUser_UserId(userId);
+        if (projects == null || projects.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        // 3) 모든 프로젝트의 기능들 모아서 요약 생성
+        return projects.stream()
+                .flatMap(project -> {
+                    List<FeatureItem> features = featureItemRepository.findByProject_ProjectId(project.getProjectId());
+                    return features.stream();
+                })
+                .map(feature -> {
+                    Long featureId = feature.getFeatureId();
+
+                    // 점수 (리뷰 없을 수도 있으니 NPE/예외 방지)
+                    Double qualityScore = getQualityScoreSafe(featureId);
+
+                    // severity 합산(카테고리 무시, severity만 집계)
+                    Map<String, Integer> severityCount = getSeverityCount(featureId);
+
+                    // createdAt
+                    CodeReview codeReview = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
+                            .orElseThrow(() -> new IllegalArgumentException(featureId + "의 코드리뷰를 찾을 수 없습니다."));
+
+                    int commitCounts = codeCommitService.findByFeature_FeatureIdOrderByCommittedAtDesc(featureId).size();
+
+                    return CodeReviewUserAllResponseDto.builder()
+                            .projectId(feature.getProjectId())
+                            .projectName(feature.getProject().getTitle())
+                            .featureId(featureId)
+                            .commitCounts(commitCounts)
+                            .createdAt(codeReview.getCreatedAt())
+                            .featureName(feature.getTitle())
+                            .featureField(feature.getField())
+                            .qualityScore(qualityScore)          // null 가능
+                            .severityCount(severityCount)        // 예: {"중간":2,"낮음":1}
+                            .build();
+                })
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    /** 리뷰가 없으면 null 점수로 처리 */
+    private Double getQualityScoreSafe(Long featureId) {
+        try {
+            CodeReviewScoreResponseDto dto = getQualityScore(featureId);
+            return (dto != null) ? dto.getQualityScore() : null;
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
 }
 

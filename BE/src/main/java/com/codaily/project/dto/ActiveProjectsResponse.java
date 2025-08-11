@@ -29,7 +29,8 @@ public class ActiveProjectsResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProjectInfo {
-        private String id;
+        // private String id;
+        private Long id;
         private String name;
         private String status;
         private Integer progress;
