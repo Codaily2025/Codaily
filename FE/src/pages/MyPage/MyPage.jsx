@@ -10,6 +10,7 @@ import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
 import { useGetProfileImageQuery } from '../../queries/useProfile';
 import useModalStore from '../../store/modalStore';
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
+import { useGithubIdQuery } from '../../queries/useGitHub';
 
 const Mypage = () => {
   const { isOpen, modalType, openModal, closeModal } = useModalStore()
@@ -18,9 +19,20 @@ const Mypage = () => {
     isLoading, isError, 
     error 
   } = useProfileQuery(); // 프로필 조회 훅
-  console.log('유저 프로필:', profile);
+  
+  const { data: githubId } = useGithubIdQuery();
+  /* profile 객체에 githubId 추가 */
+  // const githubIdStr = githubId?.githubId || '정보 없음';
+  // profile.githubId = githubIdStr;
+  // console.log('깃허브 아이디:', githubId);
+  
   const { data: profileImage } = useGetProfileImageQuery();
+  // const profileImageStr = profileImage?.imageUrl || null;
+  // profile.profileImage = profileImageStr;
   // console.log('유저 프로필 이미지:', profileImage);
+
+  console.log('유저 프로필:', profile);
+  
   if (isLoading) return <div>로딩 중...</div>;
 
   if (isError) return <div>에러 발생: {error.message}</div>;
@@ -65,7 +77,7 @@ const Mypage = () => {
             <label>GitHub 연동</label>
             <div className="info-box github-link">
               <img src={githubIcon} alt="github icon" />
-              <span>@{profile.githubAccount}</span>
+              <span>@{githubId.githubId}</span>
             </div>
           </div>
         </div>

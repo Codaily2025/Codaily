@@ -1,6 +1,6 @@
 // FE/src/components/ProjectEditModal.jsx
 import React, { useState, useRef, useEffect, memo } from 'react';
-import './ProjectEditModal.css';
+import styles from './ProjectEditModal.module.css';
 import { useProjectStore } from '../stores/mypageProjectStore';
 import { useUpdateProjectMutation } from '../queries/useProjectMutation';
 
@@ -66,27 +66,27 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   if (!projectData) {
     console.log('project is null')
     return (
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header-wrapper">
-            <div className="modal-header">
-              <div className="modal-header-text">
-                <div className="modal-title">프로젝트 설정</div>
-                <div className="modal-subtitle">프로젝트 정보를 불러올 수 없습니다.</div>
+      <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalHeaderWrapper}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderText}>
+                <div className={styles.modalTitle}>프로젝트 설정</div>
+                <div className={styles.modalSubtitle}>프로젝트 정보를 불러올 수 없습니다.</div>
               </div>
             </div>
-            <div className="close-button-wrapper" onClick={onClose}>
+            <div className={styles.closeButtonWrapper} onClick={onClose}>
               <CloseIcon />
             </div>
           </div>
-          <div className="modal-body">
+          <div className={styles.modalBody}>
             <div style={{ textAlign: 'center', padding: '20px' }}>
               프로젝트 정보가 없습니다.
             </div>
           </div>
-          <div className="modal-footer">
-            <div className="button-group">
-              <button className="btn btn-secondary" onClick={onClose}>닫기</button>
+          <div className={styles.modalFooter}>
+            <div className={styles.buttonGroup}>
+              <button className={styles.btnSecondary} onClick={onClose}>닫기</button>
             </div>
           </div>
         </div>
@@ -178,23 +178,23 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     };
 
     return (
-      <div className="calendar-overlay" onClick={onClose}>
-        <div className="calendar-container" onClick={(e) => e.stopPropagation()}>
-          <div className="calendar-header">
+      <div className={styles.calendarOverlay} onClick={onClose}>
+        <div className={styles.calendarContainer} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.calendarHeader}>
             <button onClick={prevMonth}>&lt;</button>
             <span>{currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월</span>
             <button onClick={nextMonth}>&gt;</button>
           </div>
-          <div className="calendar-weekdays">
+          <div className={styles.calendarWeekdays}>
             {weekDays.map(day => (
-              <div key={day} className="calendar-weekday">{day}</div>
+              <div key={day} className={styles.calendarWeekday}>{day}</div>
             ))}
           </div>
-          <div className="calendar-days">
+          <div className={styles.calendarDays}>
             {days.map((day, index) => (
               <div
                 key={index}
-                className={`calendar-day ${!day ? 'empty' : ''} ${selectedDate && day && day.toDateString() === selectedDate.toDateString() ? 'selected' : ''}`}
+                className={`${styles.calendarDay} ${!day ? styles.empty : ''} ${selectedDate && day && day.toDateString() === selectedDate.toDateString() ? styles.selected : ''}`}
                 onClick={() => day && onDateSelect(day)}
               >
                 {day ? day.getDate() : ''}
@@ -321,53 +321,53 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   return (
     <>
       {/* 중앙 정렬용 래퍼 */}
-      <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-header-wrapper">
-            <div className="modal-header">
-              <div className="modal-header-text">
-                <div className="modal-title">프로젝트 설정</div>
-                <div className="modal-subtitle">프로젝트에 대한 기본 정보를 수정할 수 있어요.</div>
+      <div className={styles.modalOverlay} onClick={onClose}>
+        <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.modalHeaderWrapper}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalHeaderText}>
+                <div className={styles.modalTitle}>프로젝트 설정</div>
+                <div className={styles.modalSubtitle}>프로젝트에 대한 기본 정보를 수정할 수 있어요.</div>
               </div>
             </div>
-            <div className="close-button-wrapper" onClick={onClose}>
+            <div className={styles.closeButtonWrapper} onClick={onClose}>
               <CloseIcon />
             </div>
-            <div className="modal-header-spacer" />
+            <div className={styles.modalHeaderSpacer} />
           </div>
 
-          <div className="modal-body">
-            <div className="form-container">
-              <div className="form-section">
-                <div className="label-container">
-                  <label className="form-label">프로젝트명 *</label>
+          <div className={styles.modalBody}>
+            <div className={styles.formContainer}>
+              <div className={styles.formSection}>
+                <div className={styles.labelContainer}>
+                  <label className={styles.formLabel}>프로젝트명 *</label>
                   {errors.projectName && (
-                    <div className="error-text">필수 입력란입니다.</div>
+                    <div className={styles.errorText}>필수 입력란입니다.</div>
                   )}
                 </div>
-                <div className={`input-wrapper ${errors.projectName ? 'error' : ''}`}>
+                <div className={`${styles.inputWrapper} ${errors.projectName ? styles.error : ''}`}>
                   <input 
                     type="text" 
                     id="projectName" 
                     name="projectName" 
-                    className="input-text" 
+                    className={styles.inputText} 
                     value={formData.projectName} 
                     onChange={handleChange} 
                   />
                 </div>
               </div>
 
-              <div className="form-section">
-                <label className="form-label">기간*</label>
-                <div className="date-range-wrapper">
-                  <div className="input-wrapper date-input">
-                    <div className="input-with-icon">
+              <div className={styles.formSection}>
+                <label className={styles.formLabel}>기간*</label>
+                <div className={styles.dateRangeWrapper}>
+                  <div className={`${styles.inputWrapper} ${styles.dateInput}`}>
+                    <div className={styles.inputWithIcon}>
                       <CalendarIcon />
                       <input 
                         type="text" 
                         id="startDate" 
                         name="startDate" 
-                        className="input-text" 
+                        className={styles.inputText} 
                         value={formData.startDate} 
                         onChange={handleChange} 
                         onClick={() => setShowStartCalendar(true)}
@@ -382,15 +382,15 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       )}
                     </div>
                   </div>
-                  <div className="date-range-separator">~</div>
-                  <div className="input-wrapper date-input">
-                    <div className="input-with-icon">
+                  <div className={styles.dateRangeSeparator}>~</div>
+                  <div className={`${styles.inputWrapper} ${styles.dateInput}`}>
+                    <div className={styles.inputWithIcon}>
                       <CalendarIcon />
                       <input 
                         type="text" 
                         id="endDate" 
                         name="endDate" 
-                        className="input-text" 
+                        className={styles.inputText} 
                         value={formData.endDate} 
                         onChange={handleChange} 
                         onClick={() => setShowEndCalendar(true)}
@@ -408,17 +408,17 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                 </div>
               </div>
               
-              <div className="form-section investment-section">
-                <label className="form-label">요일별 투자 시간*</label>
-                <div className="day-selector">
+              <div className={`${styles.formSection} ${styles.investmentSection}`}>
+                <label className={styles.formLabel}>요일별 투자 시간*</label>
+                <div className={styles.daySelector}>
                   {days.map((day) => {
-                    let className = 'day-chip';
+                    let className = styles.dayChip;
                     if (day === activeDay) {
-                      className += ' active';
+                      className += ` ${styles.active}`;
                     } else if (timeByDay[day] > 0) {
-                      className += ' inactive';
+                      className += ` ${styles.inactive}`;
                     } else {
-                      className += ' disabled';
+                      className += ` ${styles.disabled}`;
                     }
 
                     return (
@@ -433,15 +433,15 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                   })}
 
                 </div>
-                <div className="slider-wrapper">
-                  <div className="slider-container" ref={sliderRef}>
-                      <div className="slider-track">
+                <div className={styles.sliderWrapper}>
+                  <div className={styles.sliderContainer} ref={sliderRef}>
+                      <div className={styles.sliderTrack}>
                           <div 
-                            className="slider-progress" 
+                            className={styles.sliderProgress} 
                             style={{width: `${percent}%`}}
                           ></div>
                           <div 
-                            className="slider-thumb" 
+                            className={styles.sliderThumb} 
                             // style={{left: `calc(${percent}% - 15px)`}}
                             style={{left: `calc(${percent}% - 11px)`}}
                             onMouseDown={handleMouseDown}>
@@ -466,54 +466,54 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       </div>
                   </div>
                 </div>
-                <div className="slider-text-wrapper">
-                  <div className="slider-text">{formatTime(step)}</div>
+                <div className={styles.sliderTextWrapper}>
+                  <div className={styles.sliderText}>{formatTime(step)}</div>
                   {/* <div className="slider-text-subtext">총 투자 시간</div> */}
                 </div>
               </div>
 
-              <div className="form-section">
-                <label className="form-label">Github 연결*</label>
-                <div className="repo-options">
-                  <div className={`repo-option-card ${selectedRepoOption === 0 ? 'active' : ''}`} onClick={() => setSelectedRepoOption(0)}>
-                    <div className="repo-option-content">
-                      <div className="repo-icon-wrapper folder-icon">
+              <div className={styles.formSection}>
+                <label className={styles.formLabel}>Github 연결*</label>
+                <div className={styles.repoOptions}>
+                  <div className={`${styles.repoOptionCard} ${selectedRepoOption === 0 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(0)}>
+                    <div className={styles.repoOptionContent}>
+                      <div className={`${styles.repoIconWrapper} ${styles.folderIcon}`}>
                         <FolderIcon />
                       </div>
-                      <div className="repo-text-content">
-                        <div className={`repo-title ${selectedRepoOption === 0 ? '' : 'repo-title-dark'}`}>현재 레포지토리</div>
-                        <div className={`repo-url ${selectedRepoOption === 0 ? '' : 'repo-title-dark'}`}>{projectData?.repoUrl || ''}</div>
+                      <div className={styles.repoTextContent}>
+                        <div className={`${styles.repoTitle} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>현재 레포지토리</div>
+                        <div className={`${styles.repoUrl} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>{projectData?.repoUrl || ''}</div>
                       </div>
                     </div>
-                    <div className={`radio-check-wrapper ${selectedRepoOption === 0 ? 'checked' : ''}`}>
+                    <div className={`${styles.radioCheckWrapper} ${selectedRepoOption === 0 ? styles.checked : ''}`}>
                       {selectedRepoOption === 0 && <CheckIcon />}
                     </div>
                   </div>
                   
-                  <div className={`repo-option-card ${selectedRepoOption === 1 ? 'active' : ''}`} onClick={() => setSelectedRepoOption(1)}>
-                    <div className="repo-option-content">
-                      <div className="repo-icon-wrapper add-icon">
+                  <div className={`${styles.repoOptionCard} ${selectedRepoOption === 1 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(1)}>
+                    <div className={styles.repoOptionContent}>
+                      <div className={`${styles.repoIconWrapper} ${styles.addIcon}`}>
                         <AddIcon />
                       </div>
-                      <div className="repo-text-content">
-                        <div className={`repo-title ${selectedRepoOption === 1 ? '' : 'repo-title-dark'}`}>새로운 레포지토리 만들기</div>
+                      <div className={styles.repoTextContent}>
+                        <div className={`${styles.repoTitle} ${selectedRepoOption === 1 ? '' : styles.repoTitleDark}`}>새로운 레포지토리 만들기</div>
                       </div>
                     </div>
-                    <div className={`radio-check-wrapper ${selectedRepoOption === 1 ? 'checked' : ''}`}>
+                    <div className={`${styles.radioCheckWrapper} ${selectedRepoOption === 1 ? styles.checked : ''}`}>
                       {selectedRepoOption === 1 && <CheckIcon />}
                     </div>
                   </div>
 
-                  <div className={`repo-option-card ${selectedRepoOption === 2 ? 'active' : ''}`} onClick={() => setSelectedRepoOption(2)}>
-                    <div className="repo-option-content">
-                      <div className="repo-icon-wrapper repo-icon">
+                  <div className={`${styles.repoOptionCard} ${selectedRepoOption === 2 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(2)}>
+                    <div className={styles.repoOptionContent}>
+                      <div className={`${styles.repoIconWrapper} ${styles.repoIcon}`}>
                         <RepoIcon />
                       </div>
-                      <div className="repo-text-content">
-                        <div className={`repo-title ${selectedRepoOption === 2 ? '' : 'repo-title-dark'}`}>기존 레포지토리 연결하기</div>
+                      <div className={styles.repoTextContent}>
+                        <div className={`${styles.repoTitle} ${selectedRepoOption === 2 ? '' : styles.repoTitleDark}`}>기존 레포지토리 연결하기</div>
                       </div>
                     </div>
-                    <div className={`radio-check-wrapper ${selectedRepoOption === 2 ? 'checked' : ''}`}>
+                    <div className={`${styles.radioCheckWrapper} ${selectedRepoOption === 2 ? styles.checked : ''}`}>
                       {selectedRepoOption === 2 && <CheckIcon />}
                     </div>
                   </div>
@@ -522,10 +522,10 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
             </div>
           </div>
 
-          <div className="modal-footer">
-            <div className="button-group">
-              <button className="btn btn-secondary" onClick={onClose}>취소</button>
-              <button className="btn btn-primary" onClick={handleSave}>확인</button>
+          <div className={styles.modalFooter}>
+            <div className={styles.buttonGroup}>
+              <button className={`${styles.btn} ${styles.btnSecondary}`} onClick={onClose}>취소</button>
+              <button className={`${styles.btn} ${styles.btnPrimary}`} onClick={handleSave}>확인</button>
             </div>
           </div>
         </div>
