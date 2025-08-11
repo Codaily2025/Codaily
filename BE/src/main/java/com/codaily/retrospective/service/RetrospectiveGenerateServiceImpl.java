@@ -69,7 +69,6 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
                             .bodyValue(payload)
                             .retrieve()
                             .bodyToMono(RetrospectiveGenerateResponse.class)
-                            // ★★★ 저장은 오직 "신규 생성 브랜치" 안에서만 수행
                             .publishOn(Schedulers.boundedElastic())
                             .flatMap(resp -> Mono.fromRunnable(() ->
                                             retrospectiveService.saveRetrospective(
