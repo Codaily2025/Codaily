@@ -106,6 +106,22 @@ export async function uploadProfileImage(file) {
         throw error;
     }
 }
+// 프로필 이미지 조회 API
+// /api/profile-image
+export async function getProfileImage() { 
+    try {
+        const response = await authInstance.get(`profile-image`);
+        // console.log('프로필 이미지 조회 응답:', response.data);
+        return response.data;
+        // 예상 응답 형식
+        // {
+        //     "imageUrl": "string"
+        // }
+    } catch (error) {
+        console.error('프로필 이미지 조회 실패:', error);
+        throw error;
+    }
+}
 
 // 프로필 이미지 삭제 API
 // /api/profile-image
