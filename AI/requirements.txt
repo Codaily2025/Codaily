@@ -6,3 +6,4 @@ openai
 langchain-openai
 uvicorn
 fastapi
+langgraph

@@ -589,7 +589,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .subFeature(subFeatureDtos)
                 .build();
 
-        generateFeatureItemChecklist(projectId);
+//        generateFeatureItemChecklist(projectId);
 
         return FeatureSaveResponse.builder()
                 .type(type)
