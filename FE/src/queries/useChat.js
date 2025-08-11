@@ -13,7 +13,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 // useQueryClient의 역할 : 데이터 캐시 관리
 // 전역 캐시 인스턴스를 가져와 훅 내부에서 invalidateQueries(역할: 캐시 무효화) 같은 메서드 호출
 
-import { fetchChatHistory, postUserMessage, streamChatResponse } from '../apis/chatApi';
+import { fetchChatHistory, postUserMessage, streamChatResponse } from '../apis/chatApi.js';
 import { useChatStore } from '../stores/chatStore';
 import { useSpecificationStore } from '../stores/specificationStore';
 
@@ -39,18 +39,29 @@ export const useChatHistoryQuery = () => {
   return queryResult;
 }
 
-export const useSendUserMessage = () => {
+export const useSendUserMessage = (projectId, specId) => {
   const queryClient = useQueryClient(); // 데이터 캐시 관리
   const { addMessage, removeMessage, appendLastMessageContent } = useChatStore((state) => state); // 메세지 추가
-  const { setProjectSummary, addFeatureField, addSubFeature, regenerateSpec, setFeatures } = useSpecificationStore((state) => state);
+  const { 
+    setProjectSummary, 
+    addFeatureField, 
+    addSubFeature, 
+    regenerateSpec, 
+    setFeatures,
+    addRawSpecData,
+    setTechStack,
+    setProjectOverview,
+    showSidebar,
+    processSpecData
+  } = useSpecificationStore((state) => state);
 
   return useMutation({
     // Mutation 함수는 텍스트나 파일 객체를 받을 수 있음
     mutationFn: (userText) => {
-      // projectId와 specId는 적절한 방법으로 가져와야 함. (예: Zustand, Context API 등)
-      // 여기서는 임시 값으로 설정함
-      const projectId = 12; 
-      const projectSpecId = 15;
+      // projectId와 specId가 전달되지 않았으면 에러
+      if (!projectId || !specId) {
+        throw new Error('projectId와 specId가 필요합니다.');
+      }
 
       return new Promise((resolve, reject) => {
         let botMessageAdded = false;
@@ -58,7 +69,7 @@ export const useSendUserMessage = () => {
         streamChatResponse({
           userText,
           projectId,
-          projectSpecId,
+          projectSpecId: specId,
           onOpen: () => {
             // 스트림이 시작되면 빈 봇 메시지를 추가
             addMessage({
@@ -69,7 +80,7 @@ export const useSendUserMessage = () => {
             botMessageAdded = true;
           },
           onMessage: (data) => {
-            console.log("SSE Data Received: ", data);
+            // console.log("SSE Data Received: ", data);
             switch (data.type) {
               case 'chat':
                 appendLastMessageContent(data.content);
@@ -82,16 +93,17 @@ export const useSendUserMessage = () => {
                  // spec, regenerate는 기존 명세서를 대체하므로, 첫 조각에서 초기화 후 추가
                  // 백엔드 구현에 따라, 첫 조각인지 식별할 방법이 필요함
                  // 여기서는 간단히 regenerateSpec 호출
-                 addFeatureField(data.content); // spec 데이터는 여러 조각으로 오므로 계속 추가
+                 processSpecData(data.content); // 새로운 데이터 처리 함수 사용
+                 showSidebar(); // 요구사항 명세서 사이드바 표시
                  break;
               case 'spec:add:field':
-                addFeatureField(data.content);
+                processSpecData(data.content); // 새로운 데이터 처리 함수 사용
                 break;
               case 'spec:add:feature:main':
-                 addFeatureField(data.content); // 구조가 동일하므로 같은 액션 사용
+                 processSpecData(data.content); // 새로운 데이터 처리 함수 사용
                  break;
               case 'spec:add:feature:sub':
-                addSubFeature(data.content);
+                processSpecData(data.content); // 새로운 데이터 처리 함수 사용
                 break;
               default:
                 console.warn("Unknown SSE event type:", data.type);
@@ -130,9 +142,6 @@ export const useSendUserMessage = () => {
         sender: 'bot',
         text: '오류가 발생했습니다. 다시 시도해 주세요.',
       });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(['chat', 'history']);
     },
   });
 };

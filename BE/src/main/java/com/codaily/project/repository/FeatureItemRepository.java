@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -145,6 +146,7 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     int updateStatusBatch(List<Long> featureIds, String status);
 
     @Modifying
+    @Transactional
     @Query("UPDATE FeatureItem f SET f.status = 'IN_PROGRESS' " +
             "WHERE f.project.projectId = :projectId AND f.status = 'TODO' " +
             "AND EXISTS (SELECT 1 FROM FeatureItemSchedule s " +
@@ -162,4 +164,5 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
             Pageable pageable
     );
 
+    List<FeatureItem> findByParentFeature_FeatureIdIsNullOrderByCreatedAtAsc();
 }

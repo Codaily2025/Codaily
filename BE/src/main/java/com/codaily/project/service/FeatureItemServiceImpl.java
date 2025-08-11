@@ -80,19 +80,19 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .project(project)
                 .build();
 
-        // 스펙 설정
-        if (featureItem.getSpecificationId() != null) {
-            Specification specification = specificationRepository.findById(featureItem.getSpecificationId())
-                    .orElseThrow(() -> new SpecificationNotFoundException(featureItem.getSpecificationId()));
-            feature.setSpecification(specification);
-        }
-
         // 부모 기능 설정
         if (featureItem.getParentFeatureId() != null) {
             FeatureItem parentFeature = featureItemRepository.findByProject_ProjectIdAndFeatureId(
                             projectId, featureItem.getParentFeatureId())
                     .orElseThrow(() -> new FeatureNotFoundException(featureItem.getParentFeatureId()));
+
             feature.setParentFeature(parentFeature);
+            feature.setField(parentFeature.getField());
+
+            log.info("부모 기능 선택됨 - 부모 ID: {}, 부모 field: {}",
+                    parentFeature.getFeatureId(), parentFeature.getField());
+        } else {
+            feature.setField(featureItem.getField());
         }
 
         FeatureItem savedFeature = featureItemRepository.save(feature);
@@ -149,22 +149,6 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         Double oldEstimatedTime = feature.getEstimatedTime();
         boolean needsRescheduling = false;
 
-        if (update.getTitle() != null) {
-            if (update.getTitle().trim().isEmpty()) {
-                throw new IllegalArgumentException("기능 제목은 비어있을 수 없습니다.");
-            }
-            feature.setTitle(update.getTitle().trim());
-        }
-
-        if (update.getDescription() != null) {
-            feature.setDescription(update.getDescription());
-        }
-        if (update.getField() != null) {
-            feature.setField(update.getField());
-        }
-        if (update.getCategory() != null) {
-            feature.setCategory(update.getCategory());
-        }
         if (update.getStatus() != null) {
             feature.setStatus(update.getStatus());
         }
@@ -184,9 +168,6 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             if (!java.util.Objects.equals(oldTime, update.getEstimatedTime())) {
                 needsRescheduling = true;
             }
-        }
-        if (update.getIsReduced() != null) {
-            feature.setIsReduced(update.getIsReduced());
         }
 
         if (needsRescheduling) {
@@ -580,5 +561,24 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         } catch (Exception e) {
             log.error("Checklist 생성 중 예외 발생", e);
         }
+    }
+
+    @Override
+    public ParentFeatureListResponse getParentFeatures(Long projectId) {
+        List<FeatureItem> parentFeatures = featureItemRepository.findByParentFeature_FeatureIdIsNullOrderByCreatedAtAsc();
+
+        List<ParentFeatureResponse> responseList = parentFeatures.stream()
+                .map(feature -> {
+                    return ParentFeatureResponse.builder()
+                            .id(feature.getFeatureId())
+                            .title(feature.getTitle())
+                            .field(feature.getField())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        return ParentFeatureListResponse.builder()
+                .parentFeatures(responseList)
+                .build();
     }
 }

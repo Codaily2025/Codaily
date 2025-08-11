@@ -8,14 +8,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeatureItemUpdateRequest {
-    private String title;
-    private String description;
-    private String field;
-    private String category;
     private String status;
     private Integer priorityLevel;
     private Double estimatedTime;
-    private Boolean isSelected;
-    private Boolean isReduced;
-    private Long parentFeatureId;
 }
