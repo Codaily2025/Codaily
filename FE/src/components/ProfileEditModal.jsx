@@ -7,12 +7,16 @@ import { updateProfile, getProfileImage } from '../apis/profile'; // 서버 갱�
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 import { useGetProfileImageQuery } from '../queries/useProfile';
-import { authInstance } from '../apis/axios';
+import { useDeleteUserMutation } from '../queries/useUser';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
 
 // GitHub OAuth 설정
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 
 const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
+  const navigate = useNavigate();
+  const { logout } = useAuthStore();
   const queryClient = useQueryClient();
   const [imgBust, setImgBust] = useState(0);
   // React Query로 프로필 데이터 조회
@@ -48,6 +52,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const updateProfileMutation = useUpdateProfileMutation();
   const uploadProfileImageMutation = useUploadProfileImageMutation();
   const disconnectGithubMutation = useDisconnectGithubMutation();
+  const deleteUserMutation = useDeleteUserMutation();
 
   // 모달이 열릴 때마다 서버 프로필 데이터로 폼 초기화
   useEffect(() => {
@@ -261,6 +266,33 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     onClose(); // 모달 닫기
   };
 
+  // 회원 탈퇴 핸들러
+  const handleDeleteUser = async () => {
+    if (window.confirm('정말 회원 탈퇴하시겠습니까?')) {
+      try {
+        // 깃허브 연동 해제 (현재 연동되어 있는 경우에만)
+        if (githubId?.githubId) {
+          await disconnectGithubMutation.mutateAsync();
+        }
+
+        // 회원 탈퇴 API 호출
+        await deleteUserMutation.mutateAsync();
+
+        // 로그아웃 -> 로컬 스토리지, zustand 스토어 상태 초기화
+        logout();
+
+        // 쿼리 데이터 초기화 (React Query)
+        queryClient.clear();
+
+        // 홈페이지로 이동
+        navigate('/');
+      } catch (error) {
+        console.error('회원 탈퇴 실패:', error);
+        alert('회원 탈퇴에 실패했습니다.');
+      }
+    }
+  };
+
   if (!isOpen) return null; // 모달이 닫혀 있으면 렌더링 x
 
   return (
@@ -401,7 +433,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
             )}
           </div>
           <div style={{ cursor: 'pointer', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginRight: '10px' }}>
-            <p style={{ color: '#737373', fontSize: '15px', fontWeight: '500', marginTop: '0px', marginBottom: '0px' }}>회원 탈퇴</p>
+            <p onClick={handleDeleteUser} style={{ color: '#737373', fontSize: '15px', fontWeight: '500', marginTop: '0px', marginBottom: '0px' }}>회원 탈퇴</p>
           </div>
         </div>
 

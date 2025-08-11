@@ -11,32 +11,21 @@ export const useAuthStore = create((set) => ({
     if (token) {
       localStorage.setItem('authToken', token);
       set({ token, isAuthenticated: true });
-      console.log('Token saved to store and localStorage');
+      console.log('토큰이 스토어와 로컬 스토리지에 저장됨');
     } else {
-      console.warn('Attempted to set null or empty token');
+      console.warn('토큰을 설정하지 못하고, null 또는 빈 값을 설정하려고 함');
     }
   },
   
-  // setUser: (user) => {
-  //   if (user) {
-  //     localStorage.setItem('user', JSON.stringify(user));
-  //     set({ user });
-  //     console.log('User saved to store and localStorage');
-  //   } else {
-  //     console.warn('Attempted to set null or empty user');
-  //   }
-  // },
-  
-  // getUser: () => {
-  //   return get().user;
-  // },
-  
   logout: () => {
     localStorage.removeItem('authToken');
+    // localStorage.removeItem('profile');
+    // localStorage.removeItem('githubId');
+    // localStorage.removeItem('techStack');
+    // localStorage.removeItem('profileImage');
+
+    // zustand 스토어 상태 초기화
     set({ token: null, isAuthenticated: false });
-    console.log('Logged out, token removed');
-    // localStorage.removeItem('user');
-    // set({ token: null, isAuthenticated: false, user: null });
-    // console.log('Logged out, token and user removed');
+    console.log('로그아웃, 토큰 삭제');
   },
 }));

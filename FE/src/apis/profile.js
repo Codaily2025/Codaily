@@ -2,12 +2,14 @@
 // 유저 프로필 관련 API
 import { authInstance } from './axios';
 import { useAuthStore } from '../stores/authStore';
+// import { useUserQuery } from '../queries/useUser';
+import { fetchGithubId } from './gitHub';
 
-// const { user } = useAuthStore();
+// const { data: user } = useUserQuery(); // 현재 api/auth/me에서는 userId를 반환하지 않음
 // const userId = user?.id;
 const userId = 1;
 
-// profile dummy data (fallback용)
+// 프로필 더미데이터 (fallback용)
 export const dummyProfile = {
     userId: userId,               // 임시 userId
     profileImage: null,       // 향후 URL로 교체
@@ -49,7 +51,7 @@ export async function updateNickname(nickname) {
 }
 
 // 기술스택 조회 API
-export async function fetchTechStack(userId) {
+export async function fetchTechStack() {
     try {
         const response = await authInstance.get(`/github/tech-stack`);
         console.log('프로필 기술 스택 조회 응답:', response.data);
@@ -57,32 +59,6 @@ export async function fetchTechStack(userId) {
     } catch (error) {
         console.error('기술스택 조회 실패:', error);
         throw error;
-    }
-}
-
-// 프로필 정보를 가져오는 함수
-export async function fetchProfile() {
-    // 임시로 userId 1을 사용 (실제로는 로그인된 사용자의 ID를 사용해야 함)
-    const userId = 1; // 실제로는 로그인된 사용자의 ID를 가져와야 함
-    try {
-        const nicknameData = await fetchNickname(userId);
-        // console.log('fetchProfile nicknameData:', nicknameData);
-        // {nickname: 'TempNickname111'}
-        const techStackData = await fetchTechStack(userId); // 객체
-        return {
-            userId: userId, // userId 추가
-            profileImage: null,
-            nickname: nicknameData.nickname || 'TempNickname', // API 응답에서 닉네임 추출
-            email: 'code@example.com',
-            githubAccount: 'hiabc',
-            techStack: techStackData.technologies,
-        };
-    } catch (error) {
-        console.error('프로필 조회 실패, 더미 데이터 사용:', error);
-        return {
-            ...dummyProfile,
-            userId: userId, // 더미 데이터에도 userId 추가
-        };
     }
 }
 
@@ -123,6 +99,35 @@ export async function getProfileImage() {
     }
 }
 
+
+// 프로필 정보를 가져오는 함수
+export async function fetchProfile() {
+    // 임시로 userId 1을 사용 (실제로는 로그인된 사용자의 ID를 사용해야 함)
+    const userId = 1; // 실제로는 로그인된 사용자의 ID를 가져와야 함
+    try {
+        const nicknameData = await fetchNickname();
+        const githubId = await fetchGithubId();
+        const profileImage = await getProfileImage();
+        // console.log('fetchProfile nicknameData:', nicknameData);
+        // {nickname: 'TempNickname111'}
+        const techStackData = await fetchTechStack(); // 객체
+        return {
+            userId: userId, // userId 추가
+            profileImage: profileImage?.imageUrl || null,
+            nickname: nicknameData.nickname || 'TempNickname', // API 응답에서 닉네임 추출
+            email: 'code@example.com',
+            githubAccount: githubId?.githubId || '연동 안됨',
+            techStack: techStackData.technologies,
+        };
+    } catch (error) {
+        console.error('프로필 조회 실패, 더미 데이터 사용:', error);
+        return {
+            ...dummyProfile,
+            userId: userId, // 더미 데이터에도 userId 추가
+        };
+    }
+}
+
 // 프로필 이미지 삭제 API
 // /api/profile-image
 export async function deleteProfileImage() {
@@ -137,8 +142,6 @@ export async function deleteProfileImage() {
 }
 
 // 프로필 정보를 서버에 업데이트하는 함수
-// 실제 api 사용시 아래 주석 처리된 코드 사용하기
-//   return axios.put('/api/profile', newProfile).then(res => res.data);
 export async function updateProfile(newProfile) {
     return Promise.resolve(newProfile);
 }
