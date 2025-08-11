@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,14 +17,20 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     // ===== 기본 조회 메서드들 =====
     Optional<FeatureItem> findByProject_ProjectIdAndFeatureId(Long projectId, Long featureId);
+
     Optional<FeatureItem> findByProject_ProjectIdAndTitle(Long projectId, String featureTitle);
+
     List<FeatureItem> findByProject_ProjectId(Long projectId);
+
     Optional<FeatureItem> findByFeatureId(Long featureId);
+
     List<FeatureItem> findByParentFeature(FeatureItem parentFeature);
 
     // ===== 명세서 관련 =====
     void deleteBySpecification_SpecId(Long specId);
+
     List<FeatureItem> findBySpecification_SpecId(Long specId);
+
     List<FeatureItem> findAllBySpecification_SpecId(Long specId);
 
     @Query("SELECT SUM(f.estimatedTime) FROM FeatureItem f WHERE f.specification.specId = :specId AND f.parentFeature IS NULL")
@@ -35,7 +40,7 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT DISTINCT f.field FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.field")
     List<String> findDistinctFieldsByProjectId(Long projectId);
 
-//    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
+    //    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field ORDER BY f.priorityLevel")
     List<FeatureItem> findByProjectIdAndField(Long projectId, String field);
 
@@ -134,7 +139,6 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT f FROM FeatureItem f WHERE f.featureId = :featureId")
     FeatureItem getFeatureItemByFeatureId(@Param("featureId") Long featureId);
 
-<<<<<<< Updated upstream
     // ===== 배치 상태 업데이트 ===
     @Modifying
     @Query("UPDATE FeatureItem f SET f.status = :status WHERE f.featureId IN :featureIds")
@@ -146,7 +150,6 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
             "AND EXISTS (SELECT 1 FROM FeatureItemSchedule s " +
             "           WHERE s.featureItem = f AND s.scheduleDate = :today)")
     int updateTodayFeaturesToInProgress(@Param("projectId") Long projectId, @Param("today") LocalDate today);
-=======
 
     // 추천 작업 후보 조회 (Pageable 사용)
     @Query("SELECT f FROM FeatureItem f " +
@@ -159,5 +162,4 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
             Pageable pageable
     );
 
->>>>>>> Stashed changes
 }

@@ -45,7 +45,8 @@ public class Retrospective {
     @JdbcTypeCode(SqlTypes.JSON)
     private String summaryJson; // Map<String, Object>로 변환 가능
 
-    @Column(length = 20)
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
     private RetrospectiveTriggerType triggerType; // "AUTO" | "MANUAL"
 
     @Column(columnDefinition = "TEXT")
