@@ -1,16 +1,17 @@
 /* 모달 오버레이 */
-.modal-overlay {
+.modalOverlay {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.4); /* 어두운 배경 */
+  background: rgba(0, 0, 0, 0.4);
+  /* 어두운 배경 */
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 /* 모달 컨테이너 */
-.modal-container {
+.modalContainer {
   width: 463px;
   height: 680px;
   position: relative;
@@ -23,7 +24,7 @@
 }
 
 /* 모달 헤더 */
-.modal-header-wrapper {
+.modalHeaderWrapper {
   width: 100%;
   position: absolute;
   top: 0;
@@ -34,9 +35,9 @@
   align-items: center;
 }
 
-.modal-header {
+.modalHeader {
   align-self: stretch;
-  padding: 24px 24px 0 24px; 
+  padding: 24px 24px 0 24px;
   /*상단 패딩 24px, 좌우 패딩 24px, 하단 패딩 0px*/
   background: white;
   display: flex;
@@ -46,14 +47,14 @@
   gap: 16px;
 }
 
-.modal-header-text {
+.modalHeaderText {
   align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.modal-title {
+.modalTitle {
   align-self: stretch;
   color: #6C6B93;
   font-size: 18px;
@@ -61,7 +62,7 @@
   line-height: 28px;
 }
 
-.modal-subtitle {
+.modalSubtitle {
   align-self: stretch;
   color: #525252;
   font-size: 14px;
@@ -69,7 +70,7 @@
   line-height: 20px;
 }
 
-.close-button-wrapper {
+.closeButtonWrapper {
   padding: 10px;
   position: absolute;
   left: 403px;
@@ -82,13 +83,13 @@
   cursor: pointer;
 }
 
-.modal-header-spacer {
+.modalHeaderSpacer {
   align-self: stretch;
   height: 5px;
 }
 
 /* 모달 본문 */
-.modal-body {
+.modalBody {
   width: 100%;
   padding: 0 24px;
   position: absolute;
@@ -101,33 +102,33 @@
   box-sizing: border-box;
 }
 
-.form-container {
+.formContainer {
   width: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.form-section {
+.formSection {
   align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.label-container {
+.labelContainer {
   position: relative;
   height: 20px;
 }
 
-.form-label {
+.formLabel {
   color: #404040;
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
 }
 
-.error-text {
+.errorText {
   position: absolute;
   top: -2px;
   right: 0;
@@ -136,11 +137,11 @@
   line-height: 20px;
 }
 
-.input-wrapper.error {
+.inputWrapper.error {
   outline: 1px #FF6467 solid;
 }
 
-.input-wrapper {
+.inputWrapper {
   align-self: stretch;
   padding: 8px 11px;
   background: white;
@@ -154,20 +155,21 @@
   gap: 8px;
 }
 
-.input-text {
+.inputText {
   flex: 1 1 0;
   color: #737373;
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
   border: none;
+  cursor: pointer;
 }
 
-.input-text:focus {
+.inputText:focus {
   outline: none;
 }
 
-.input-with-icon {
+.inputWithIcon {
   flex: 1 1 0;
   display: flex;
   justify-content: flex-start;
@@ -175,7 +177,7 @@
   gap: 7px;
 }
 
-.date-range-wrapper {
+.dateRangeWrapper {
   align-self: stretch;
   display: inline-flex;
   justify-content: flex-start;
@@ -183,16 +185,18 @@
   gap: 5px;
 }
 
-.date-input {
+.dateInput {
   width: 175px;
   cursor: pointer;
 }
 
-#startDate, #endDate {
+#startDate,
+#endDate,
+.dateInput {
   cursor: pointer;
 }
 
-.date-range-separator {
+.dateRangeSeparator {
   height: 44px;
   display: flex;
   flex-direction: column;
@@ -203,12 +207,12 @@
 }
 
 /* 요일별 투자 시간 */
-.investment-section {
-    align-items: flex-start;
-    gap: 8px;
+.investmentSection {
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.day-selector {
+.daySelector {
   align-self: stretch;
   padding: 0 55px;
   display: inline-flex;
@@ -218,7 +222,7 @@
   flex-wrap: wrap;
 }
 
-.day-chip {
+.dayChip {
   width: 30px;
   height: 30px;
   padding: 14px 10px 14px 10px;
@@ -234,14 +238,14 @@
   cursor: pointer;
 }
 
-.day-chip.inactive {
+.dayChip.inactive {
   background: white;
   outline: 2px #B4B3DC solid;
   outline-offset: -2px;
   color: #6C6B93;
 }
 
-.day-chip.active {
+.dayChip.active {
   background: linear-gradient(135deg, #B4B3DC 0%, #6C6B93 100%);
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.15);
   color: white;
@@ -249,66 +253,67 @@
   padding-right: 6px;
 }
 
-.day-chip.disabled {
+.dayChip.disabled {
   background: white;
   outline: 2px #E5E5E5 solid;
   outline-offset: -2px;
   color: #D4D4D4;
 }
 
-.day-chip:hover:not(.active) {
+.dayChip:hover:not(.active) {
   /* background: #FCEEEE; */
   outline: 2px solid #CCCBE4;
   /* color: #E8BBBA; */
   transition: all 0.2s ease;
 }
 
-.slider-wrapper {
+.sliderWrapper {
   align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.slider-container {
-    width: 300px;
-    height: 7px;
-    position: relative;
-    background: #F5F5F5;
-    border-radius: 4px;
-    margin-top: 8px;
-    margin-left: auto;
-    margin-right: auto;
+.sliderContainer {
+  width: 300px;
+  height: 7px;
+  position: relative;
+  background: #F5F5F5;
+  border-radius: 4px;
+  margin-top: 8px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.slider-track {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    border-radius: 4px;
+.sliderTrack {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 4px;
 }
 
-.slider-progress {
-    height: 7px;
-    left: 0;
-    top: 0;
-    position: absolute;
-    background: #6C6B93;
-    border-radius: 4px;
+.sliderProgress {
+  height: 7px;
+  left: 0;
+  top: 0;
+  position: absolute;
+  background: #6C6B93;
+  border-radius: 4px;
 }
 
-.slider-thumb {
-    top: -6px;
-    position: absolute;
-    cursor: pointer;
+.sliderThumb {
+  top: -6px;
+  position: absolute;
+  cursor: pointer;
 }
-.slider-text-wrapper { 
-  width: 100%;     
+
+.sliderTextWrapper {
+  width: 100%;
   display: flex;
   justify-content: flex-end;
 }
 
-.slider-text {
+.sliderText {
   color: #737373;
   margin-right: 55px;
   margin-top: 3px;
@@ -319,14 +324,14 @@
 
 
 /* Github 연결 */
-.repo-options {
+.repoOptions {
   align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 7px;
 }
 
-.repo-option-card {
+.repoOptionCard {
   align-self: stretch;
   padding: 12px 16px;
   border-radius: 12px;
@@ -337,26 +342,26 @@
   cursor: pointer;
 }
 
-.repo-option-card.active {
+.repoOptionCard.active {
   background: rgba(228, 227, 243, 0.20);
   outline: 2px #9C9BC3 solid;
   outline-offset: -2px;
 }
 
-.repo-option-card:not(.active) {
+.repoOptionCard:not(.active) {
   background: white;
   outline: 1px #E9EAEB solid;
   outline-offset: -1px;
 }
 
-.repo-option-card:not(.active):hover {
+.repoOptionCard:not(.active):hover {
   /* outline: 2px solid #D690A6; */
   outline-offset: -2px;
   background: rgba(228, 227, 243, 0.20);
   transition: outline 0.1s ease, background 0.1s ease;
 }
 
-.repo-option-content {
+.repoOptionContent {
   flex: 1 1 0;
   display: flex;
   justify-content: center;
@@ -364,7 +369,7 @@
   gap: 16px;
 }
 
-.repo-icon-wrapper {
+.repoIconWrapper {
   width: 32px;
   height: 32px;
   position: relative;
@@ -378,20 +383,20 @@
   align-items: center;
 }
 
-.repo-text-content {
+.repoTextContent {
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
 }
 
-.repo-title {
+.repoTitle {
   color: #6C6B93;
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
 }
 
-.repo-url {
+.repoUrl {
   align-self: stretch;
   color: #6C6B93;
   font-size: 14px;
@@ -399,35 +404,35 @@
   line-height: 20px;
 }
 
-.repo-title-dark {
-    color: #414651;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 20px;
+.repoTitleDark {
+  color: #414651;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
 }
 
-.radio-check-wrapper {
+.radioCheckWrapper {
   width: 16px;
   height: 16px;
   position: relative;
   border-radius: 50%;
 }
 
-.radio-check-wrapper:not(.checked) {
-    background: white;
-    border: 1px solid #D5D7DA;
+.radioCheckWrapper:not(.checked) {
+  background: white;
+  border: 1px solid #D5D7DA;
 }
 
-.radio-check-wrapper.checked {
+.radioCheckWrapper.checked {
   background: #6C6B93;
   border: 1px solid #6C6B93;
   display: flex;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
 }
 
 /* 모달 푸터 */
-.modal-footer {
+.modalFooter {
   width: 100%;
   position: absolute;
   top: 588px;
@@ -435,7 +440,7 @@
   padding-top: 30px;
 }
 
-.button-group {
+.buttonGroup {
   padding: 0 24px 24px 24px;
   display: inline-flex;
   justify-content: flex-start;
@@ -460,26 +465,30 @@
   cursor: pointer;
 }
 
-.btn-primary {
+.btnPrimary {
   background: #6C6B93;
   color: white;
   outline: 1px #8483AB solid;
   outline-offset: -1px;
 }
-.btn-primary:hover {
-  background: #5A597D; 
+
+.btnPrimary:hover {
+  background: #5A597D;
 }
-.btn-secondary {       
-  background: white; 
+
+.btnSecondary {
+  background: white;
   color: #737373;
   outline: 1px #D5D7DA solid;
   outline-offset: -1px;
 }
-.btn-secondary:hover {
+
+.btnSecondary:hover {
   background: #E8E8E8;
 }
+
 /* 캘린더 스타일 */
-.calendar-overlay {
+.calendarOverlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
@@ -489,7 +498,7 @@
   align-items: center;
 }
 
-.calendar-container {
+.calendarContainer {
   background: white;
   border-radius: 12px;
   padding: 20px;
@@ -497,14 +506,14 @@
   min-width: 280px;
 }
 
-.calendar-header {
+.calendarHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
 
-.calendar-header button {
+.calendarHeader button {
   background: none;
   border: none;
   font-size: 18px;
@@ -514,24 +523,24 @@
   color: #525252;
 }
 
-.calendar-header button:hover {
+.calendarHeader button:hover {
   background: #F8F8F8;
 }
 
-.calendar-header span {
+.calendarHeader span {
   font-size: 16px;
   font-weight: 600;
   color: #525252;
 }
 
-.calendar-weekdays {
+.calendarWeekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
   margin-bottom: 8px;
 }
 
-.calendar-weekday {
+.calendarWeekday {
   text-align: center;
   font-size: 12px;
   font-weight: 500;
@@ -539,13 +548,13 @@
   padding: 8px 4px;
 }
 
-.calendar-days {
+.calendarDays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 4px;
 }
 
-.calendar-day {
+.calendarDay {
   aspect-ratio: 1;
   display: flex;
   justify-content: center;
@@ -556,15 +565,16 @@
   transition: all 0.2s ease;
   color: #525252;
 }
-.calendar-day:hover:not(.empty) {
+
+.calendarDay:hover:not(.empty) {
   background: #F8F8F8;
 }
 
-.calendar-day.selected {
+.calendarDay.selected {
   background: #D690A6;
   color: white;
 }
 
-.calendar-day.empty {
+.calendarDay.empty {
   cursor: default;
 }
