@@ -59,20 +59,20 @@ export const fetchChatHistory = async () => {
  * 서버 상태 간단 확인 (선택)
  * - HEAD를 지원하지 않으면 실패 로그만 남고 동작엔 영향 없음
  */
-async function checkServerStatus() {
-  try {
-    const userId = '1';
-    const res = await fetch(
-      `http://localhost:8081/api/chat/stream?userId=${userId}&message=test&projectId=1&specId=1`,
-      { method: 'HEAD' }
-    );
-    console.log('서버 상태 확인:', res.status, res.headers.get('content-type'));
-    return res.ok;
-  } catch (err) {
-    console.error('서버 연결 실패:', err);
-    return false;
-  }
-}
+// async function checkServerStatus() {
+//   try {
+//     const userId = '1';
+//     const res = await fetch(
+//       `http://localhost:8081/api/chat/stream?userId=${userId}&message=test&projectId=1&specId=1`,
+//       { method: 'HEAD' }
+//     );
+//     console.log('서버 상태 확인:', res.status, res.headers.get('content-type'));
+//     return res.ok;
+//   } catch (err) {
+//     console.error('서버 연결 실패:', err);
+//     return false;
+//   }
+// }
 
 /**
  * 팀원 테스트 코드와 동일한 SSE 처리 방식
@@ -89,6 +89,7 @@ export const streamChatResponse = ({
   onError,
   onClose,
 }) => {
+  let specNotificationSent = false; // 요구사항 명세서 알림이 한 번만 전송되도록 플래그
   const eventSourceUrl =
     `http://localhost:8081/api/chat/stream` +
     `?userId=1` +
@@ -98,21 +99,19 @@ export const streamChatResponse = ({
 
   console.log('SSE 연결 URL:', eventSourceUrl);
 
-  // 서버 상태 확인은 비동기 로그용 (SSE는 곧바로 연결)
-  checkServerStatus().then((ok) => {
-    if (!ok) {
-      console.error('백엔드 서버가 실행되지 않고 있습니다. 포트 8081에서 서버를 실행해주세요.');
-    }
-  });
+  // checkServerStatus().then((ok) => {
+  //   if (!ok) {
+  //     console.error('백엔드 서버가 실행되지 않고 있습니다. 포트 8081에서 서버를 실행해주세요.');
+  //   }
+  // });
+
+  let fullContent = "";
+  let ended = false; // 의도적 종료 플래그
 
   const es = new EventSource(eventSourceUrl);
 
-  // 추가: 수신 여부/수동 종료 플래그
-  let receivedAny = false;
-  let closedManually = false;
-
   es.onopen = () => {
-    console.log('SSE 연결결');
+    console.log('SSE 연결');
     onOpen?.();
   };
 
@@ -124,57 +123,59 @@ export const streamChatResponse = ({
       return;
     }
 
+    // for (const jsonString of jsonStrings) {
+    // if (jsonString.trim() === '') continue;
+
     try {
-      const { type, content } = JSON.parse(event.data);
-
-      // 한 번이라도 수신함 플래그 설정
-      receivedAny = true;
-
-      // 팀원 테스트 로직과 동일한 타입 처리
-      if (type === 'chat') {
-        onMessage?.({ type, content });
+      // const { type, content } = JSON.parse(jsonString);
+      const msg = JSON.parse(event.data);
+      console.log('!!!!!!!!', msg.type, msg)
+      // event.data
+      // type이 chat일 때,
+      // 
+      if (msg?.type && msg.type === 'chat') {
+        // 일반 대화 데이터
+        onMessage?.({ type: msg?.type, content: msg?.content });
       } else if (
-        type === 'spec' ||
-        type === 'spec:regenerate' ||
-        type === 'project:summarization' ||
-        type === 'spec:add:feature:sub' ||
-        type === 'spec:add:feature:main' ||
-        type === 'spec:add:field'
+        msg?.type === 'spec' ||
+        msg?.type === 'spec:regenerate' ||
+        msg?.type === 'project:summarization' ||
+        msg?.type === 'spec:add:feature:sub' ||
+        msg?.type === 'spec:add:feature:main' ||
+        msg?.type === 'spec:add:field'
       ) {
-        onMessage?.({ type, content: JSON.stringify(content, null, 4) + '\n\n' });
+        // console.log({type: msg?.type, content: msg?.content})
+        // 요구사항 명세서 관련 작업이므로 "요구사항 명세서를 확인해주세요" 메시지 한 번만 출력
+        if (!specNotificationSent) {
+          onMessage?.({ type: 'chat', content: '요구사항 명세서를 확인해주세요' });
+          specNotificationSent = true;
+        }
+        // 실제 데이터는 원본 타입과 함께 전달
+        onMessage?.({ type: msg?.type, content: msg?.content });
       } else {
-        onMessage?.({ type, content: `[${type}]: ${JSON.stringify(content)}\n\n` });
+        console.log({type: 'error', content: msg?.content})
+        onMessage?.({ type: 'error', content: msg?.content });
       }
+
     } catch (e) {
-      receivedAny = true;
       console.error('파싱 실패:', event.data);
       onMessage?.({ type: 'error', content: event.data }); // 원문 전달
     }
+    // }
   };
 
   es.onerror = (error) => {
-    if (closedManually) return;
-
     // 에러 전달
-    onError?.(error);
-
+    // onError?.(error);
+    es.close();
     // 반드시 닫아서 자동 재연결 루프 끊기
-    try { es.close(); } catch { }
-    onClose?.();
+    // try { es.close(); } catch { }
+    // onClose?.();
   };
-
-  // if (es.readyState === 2) {
-  // const msg = '백엔드 서버에 연결할 수 없습니다. 서버가 실행되고 있는지 확인해주세요. (포트: 8081)';
-  // onError?.(new Error(msg));
-  // } else {
-  // onError?.(error);
-  // }
-  // es.close();
 
   // 호출 측에서 수동 종료할 수 있도록 반환
   return {
     close: () => {
-      closedManually = true;
       es.close();
       onClose?.();
     },
@@ -182,22 +183,10 @@ export const streamChatResponse = ({
   };
 };
 
-/**
- * 사용자 메시지 전송(프로젝트/명세서 생성 -> SSE 연결)
- * - 일정 정보 POST로 프로젝트/명세서 생성 로직을 그대로 사용
- * - 생성된 projectId/specId로 streamChatResponse를 호출해 SSE EventSource를 반환
- *
- * 사용법:
- * const es = await postUserMessage('안녕', {
- *   onOpen: () => {},
- *   onMessage: ({ type, content }) => {},
- *   onError: (err) => {},
- *   onClose: () => {},
- * });
- * // 필요 시 es.close();
- */
 export const postUserMessage = async (
   userText,
+  projectId,
+  projectSpecId,
   { onMessage, onOpen, onError, onClose } = {}
 ) => {
   if (useMock2) {
@@ -209,34 +198,12 @@ export const postUserMessage = async (
     return { close: () => { } }; // mock 핸들
   }
 
-  // 1) 일정 -> 프로젝트/명세서 생성 (기존 로직 유지)
-  let projectId = null;
-  let projectSpecId = null;
-
-  try {
-    const res = await authInstance.post('/projects', {
-      startDate: '2025-08-10',
-      endDate: '2025-09-20',
-      availableDates: ['2025-08-12', '2025-08-15', '2025-08-20'],
-      workingHours: {
-        MONDAY: 4,
-        WEDNESDAY: 6,
-        FRIDAY: 2,
-      },
-    });
-    console.log('일정 입력 후 받은 프로젝트, 명세서 아이디:', res);
-    projectSpecId = res.data?.specId;
-    projectId = res.data?.projectId;
-  } catch (error) {
-    console.error('postUserMessage Error:', error);
-    throw new Error(error?.response?.data?.message || '사용자 메세지 전송 중 오류가 발생했습니다.');
-  }
-
+  // projectId와 specId가 전달되지 않았으면 에러
   if (!projectId || !projectSpecId) {
-    throw new Error('projectId/specId 생성에 실패했습니다.');
+    throw new Error('projectId와 projectSpecId가 필요합니다.');
   }
 
-  // 2) 생성된 ID로 SSE 연결 시작
+  // SSE 연결 시작
   const es = streamChatResponse({
     userText,
     projectId,

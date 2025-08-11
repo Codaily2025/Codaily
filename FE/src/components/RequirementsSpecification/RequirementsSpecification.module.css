@@ -23,7 +23,7 @@
 
 .container {
   width: 611px;
-  min-height: 900px;
+  min-height: 760px;
   left: 33px;
   top: 33px;
   position: absolute;
@@ -206,7 +206,8 @@
 
 .descriptionContainer {
   align-self: stretch;
-  height: 194px;
+  /* height: 194px; */
+  height: 170px;
   position: relative;
 }
 
