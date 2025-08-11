@@ -9,7 +9,7 @@ import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.repository.DailyProductivityRepository;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.codereview.repository.CodeCommitRepository;
-import com.codaily.codereview.repository.CodeReviewRepository; // 추가
+import com.codaily.codereview.repository.CodeReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,11 +31,90 @@ public class ProductivityServiceImpl implements ProductivityService {
     private final FeatureItemRepository featureItemRepository;
     private final DailyProductivityRepository dailyProductivityRepository;
     private final CodeCommitRepository codeCommitRepository;
-    private final CodeReviewRepository codeReviewRepository; // 추가
+    private final CodeReviewRepository codeReviewRepository;
 
     @Override
     @Transactional
     public ProductivityCalculateResponse calculateProductivity(ProductivityCalculateRequest request) {
+        Long userId = Long.valueOf(request.getUserId());
+        Long projectId = Long.valueOf(request.getProjectId());
+        LocalDate targetDate = LocalDate.parse(request.getPeriod().getDate());
+
+        // Daily Productivity에서 먼저 조회
+        Optional<DailyProductivity> existingDaily = dailyProductivityRepository
+                .findByUserIdAndProjectIdAndDate(userId, projectId, targetDate);
+
+        if (existingDaily.isPresent()) {
+            // 이미 계산된 데이터가 있으면 그것을 사용
+            log.info("기존 Daily Productivity 데이터 사용 - 날짜: {}", targetDate);
+            return buildResponseFromDaily(existingDaily.get(), request.getMetrics());
+        } else {
+            // 기존 실시간 계산 로직 사용
+            log.info("실시간 계산 후 Daily Productivity 저장 - 날짜: {}", targetDate);
+            return calculateProductivityRealtime(request);
+        }
+    }
+
+    // Daily Productivity 데이터로부터 응답 생성
+    private ProductivityCalculateResponse buildResponseFromDaily(
+            DailyProductivity daily, ProductivityCalculateRequest.Metrics metrics) {
+
+        Map<String, ProductivityCalculateResponse.MetricScore> breakdown = new HashMap<>();
+        double overallScore = 0.0;
+
+        if (metrics.isIncludeTaskCompletion()) {
+            double taskScore = calculateTaskScore(daily.getCompletedFeatures());
+            breakdown.put("taskCompletion", ProductivityCalculateResponse.MetricScore.builder()
+                    .score(taskScore).weight(0.5).build());
+            overallScore += taskScore * 0.5;
+        }
+
+        if (metrics.isIncludeCommits()) {
+            double commitScore = calculateCommitScore(daily.getTotalCommits());
+            breakdown.put("commitFrequency", ProductivityCalculateResponse.MetricScore.builder()
+                    .score(commitScore).weight(0.3).build());
+            overallScore += commitScore * 0.3;
+        }
+
+        if (metrics.isIncludeCodeQuality()) {
+            breakdown.put("codeQuality", ProductivityCalculateResponse.MetricScore.builder()
+                    .score(daily.getCodeQuality()).weight(0.2).build());
+            overallScore += daily.getCodeQuality() * 0.2;
+        }
+
+        // 🔥 NEW: benchmarkComparison 개선
+        ProductivityCalculateResponse.BenchmarkComparison benchmarkComparison =
+                calculateBenchmarkComparison(daily.getUserId(), daily.getProjectId(), daily.getDate());
+
+        return ProductivityCalculateResponse.builder()
+                .overallScore(overallScore)
+                .breakdown(breakdown)
+                .trend("stable")
+                .benchmarkComparison(benchmarkComparison)
+                .build();
+    }
+
+    // 🔥 NEW: 벤치마크 계산 메서드 추가
+    private ProductivityCalculateResponse.BenchmarkComparison calculateBenchmarkComparison(
+            Long userId, Long projectId, LocalDate currentDate) {
+
+        // 개인 평균 (최근 30일)
+        LocalDate thirtyDaysAgo = currentDate.minusDays(30);
+        Double personalAverage = dailyProductivityRepository
+                .findAverageProductivityScoreByUserAndDateRange(userId, thirtyDaysAgo, currentDate);
+
+        // 프로젝트 평균 (전체 기간)
+        Double projectAverage = dailyProductivityRepository
+                .findAverageProductivityScoreByProject(projectId);
+
+        return ProductivityCalculateResponse.BenchmarkComparison.builder()
+                .personalAverage(personalAverage != null ? Math.round(personalAverage * 100.0) / 100.0 : 0.0)
+                .projectAverage(projectAverage != null ? Math.round(projectAverage * 100.0) / 100.0 : 0.0)
+                .build();
+    }
+
+    // 기존 실시간 계산 로직 (메서드로 분리)
+    private ProductivityCalculateResponse calculateProductivityRealtime(ProductivityCalculateRequest request) {
         Long userId = Long.valueOf(request.getUserId());
         Long projectId = Long.valueOf(request.getProjectId());
         LocalDate targetDate = LocalDate.parse(request.getPeriod().getDate());
@@ -79,14 +158,15 @@ public class ProductivityServiceImpl implements ProductivityService {
         // DailyProductivity에 저장
         saveDailyProductivity(userId, projectId, targetDate, completedFeatures.size(), totalCommits, codeQualityScore, overallScore);
 
+        // 🔥 NEW: 실시간 계산에서도 벤치마크 계산
+        ProductivityCalculateResponse.BenchmarkComparison benchmarkComparison =
+                calculateBenchmarkComparison(userId, projectId, targetDate);
+
         return ProductivityCalculateResponse.builder()
                 .overallScore(overallScore)
                 .breakdown(breakdown)
                 .trend("stable")
-                .benchmarkComparison(ProductivityCalculateResponse.BenchmarkComparison.builder()
-                        .personalAverage(0.0)
-                        .projectAverage(0.0)
-                        .build())
+                .benchmarkComparison(benchmarkComparison)
                 .build();
     }
 
@@ -226,7 +306,7 @@ public class ProductivityServiceImpl implements ProductivityService {
                     ProductivityDetailResponse.ProductivityFactors.builder()
                             .completedFeatures(daily.getCompletedFeatures())
                             .productivityScore(daily.getProductivityScore())
-                            .codeQuality(daily.getCodeQuality()) // 코드품질 포함
+                            .codeQuality(daily.getCodeQuality())
                             .build();
 
             return ProductivityDetailResponse.builder()
@@ -247,50 +327,7 @@ public class ProductivityServiceImpl implements ProductivityService {
         }
     }
 
-    // === 코드품질 관련 새로운 Helper Methods ===
-
-    private Double getCodeQualityScoreFromDB(Long projectId, LocalDate date) {
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
-
-        return codeReviewRepository.findAverageQualityScoreByProjectAndPeriod(projectId, startOfDay, endOfDay);
-    }
-
-    private Map<LocalDate, Double> getAllProjectsQualityStatsFromDB(Long userId, LocalDate startDate, LocalDate endDate) {
-        Map<LocalDate, Double> stats = new HashMap<>();
-
-        // 기간 내 모든 날짜를 0으로 초기화
-        LocalDate current = startDate;
-        while (!current.isAfter(endDate)) {
-            stats.put(current, 0.0);
-            current = current.plusDays(1);
-        }
-
-        // 사용자의 모든 프로젝트에서 해당 기간의 코드품질 점수들을 평균화
-        current = startDate;
-        while (!current.isAfter(endDate)) {
-            LocalDateTime startOfDay = current.atStartOfDay();
-            LocalDateTime endOfDay = current.atTime(23, 59, 59);
-
-
-            // 해당 날짜의 사용자의 모든 프로젝트 코드리뷰 조회
-            var reviews = codeReviewRepository.findByProject_User_UserIdAndCreatedAtBetween(userId, startOfDay, endOfDay);
-            if (!reviews.isEmpty()) {
-                double avgQuality = reviews.stream()
-                        .filter(review -> review.getProject().getUser().getUserId().equals(userId))
-                        .mapToDouble(review -> review.getQualityScore() != null ? review.getQualityScore() : 0.0)
-                        .average()
-                        .orElse(0.0);
-                stats.put(current, avgQuality);
-            }
-
-            current = current.plusDays(1);
-        }
-
-        return stats;
-    }
-
-    // === 기존 Helper Methods (수정됨) ===
+    // === Helper Methods ===
 
     private Integer getCommitCountFromDB(Long projectId, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
@@ -300,6 +337,13 @@ public class ProductivityServiceImpl implements ProductivityService {
                 projectId, startOfDay, endOfDay);
 
         return count != null ? count.intValue() : 0;
+    }
+
+    private Double getCodeQualityScoreFromDB(Long projectId, LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+
+        return codeReviewRepository.findAverageQualityScoreByProjectAndPeriod(projectId, startOfDay, endOfDay);
     }
 
     private Map<LocalDate, Integer> getDailyCommitStatsFromDB(Long projectId, LocalDate startDate, LocalDate endDate) {
@@ -374,6 +418,38 @@ public class ProductivityServiceImpl implements ProductivityService {
         return stats;
     }
 
+    private Map<LocalDate, Double> getAllProjectsQualityStatsFromDB(Long userId, LocalDate startDate, LocalDate endDate) {
+        Map<LocalDate, Double> stats = new HashMap<>();
+
+        // 기간 내 모든 날짜를 0으로 초기화
+        LocalDate current = startDate;
+        while (!current.isAfter(endDate)) {
+            stats.put(current, 0.0);
+            current = current.plusDays(1);
+        }
+
+        // 사용자의 모든 프로젝트에서 해당 기간의 코드품질 점수들을 평균화
+        current = startDate;
+        while (!current.isAfter(endDate)) {
+            LocalDateTime startOfDay = current.atStartOfDay();
+            LocalDateTime endOfDay = current.atTime(23, 59, 59);
+
+            var reviews = codeReviewRepository.findByProject_User_UserIdAndCreatedAtBetween(userId, startOfDay, endOfDay);
+            if (!reviews.isEmpty()) {
+                double avgQuality = reviews.stream()
+                        .filter(review -> review.getProject().getUser().getUserId().equals(userId))
+                        .mapToDouble(review -> review.getQualityScore() != null ? review.getQualityScore() : 0.0)
+                        .average()
+                        .orElse(0.0);
+                stats.put(current, avgQuality);
+            }
+
+            current = current.plusDays(1);
+        }
+
+        return stats;
+    }
+
     private List<ProductivityDetailResponse.Commit> getCommitDetailsFromDB(Long projectId, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
@@ -429,7 +505,7 @@ public class ProductivityServiceImpl implements ProductivityService {
         return dataMap;
     }
 
-    // === Chart Data Generation Methods (수정됨) ===
+    // === Chart Data Generation Methods ===
 
     private List<ProductivityChartResponse.ChartData> generateMonthlyChartData(
             LocalDate start, LocalDate end, List<DailyProductivity> dailyData) {
@@ -448,7 +524,7 @@ public class ProductivityServiceImpl implements ProductivityService {
             result.add(ProductivityChartResponse.ChartData.builder()
                     .date(String.valueOf(current.getDayOfMonth()))
                     .completedTasks(data != null ? data.getCompletedFeatures() : 0)
-                    .productivityScore(score)
+                    .productivityScore(Math.round(score * 10.0) / 10.0)
                     .commits(Math.min(commits * 10, 100))
                     .actualCommits(commits)
                     .build());
@@ -473,12 +549,10 @@ public class ProductivityServiceImpl implements ProductivityService {
             int commits = data != null ? data.getTotalCommits() : 0;
             double score = data != null ? data.getProductivityScore() : 0.0;
 
-            String dayName = current.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN);
-
             result.add(ProductivityChartResponse.ChartData.builder()
-                    .date(dayName)
+                    .date(current.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN))
                     .completedTasks(data != null ? data.getCompletedFeatures() : 0)
-                    .productivityScore(score)
+                    .productivityScore(Math.round(score * 10.0) / 10.0)
                     .commits(Math.min(commits * 10, 100))
                     .actualCommits(commits)
                     .build());
@@ -505,7 +579,7 @@ public class ProductivityServiceImpl implements ProductivityService {
             result.add(ProductivityChartResponse.ChartData.builder()
                     .date(String.valueOf(current.getDayOfMonth()))
                     .completedTasks(tasks)
-                    .productivityScore(score)
+                    .productivityScore(Math.round(score * 10.0) / 10.0)
                     .commits(Math.min(commits * 10, 100))
                     .actualCommits(commits)
                     .build());
@@ -529,12 +603,10 @@ public class ProductivityServiceImpl implements ProductivityService {
             double quality = qualityStats.getOrDefault(current, 0.0);
             double score = calculateBasicScore(tasks, commits, quality);
 
-            String dayName = current.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN);
-
             result.add(ProductivityChartResponse.ChartData.builder()
-                    .date(dayName)
+                    .date(current.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.KOREAN))
                     .completedTasks(tasks)
-                    .productivityScore(score)
+                    .productivityScore(Math.round(score * 10.0) / 10.0)
                     .commits(Math.min(commits * 10, 100))
                     .actualCommits(commits)
                     .build());
@@ -544,6 +616,8 @@ public class ProductivityServiceImpl implements ProductivityService {
 
         return result;
     }
+
+    // === Summary Generation Methods ===
 
     private ProductivityChartResponse.Summary generateSummary(List<DailyProductivity> dailyData, String period) {
         if (dailyData.isEmpty()) {
@@ -601,7 +675,7 @@ public class ProductivityServiceImpl implements ProductivityService {
                 .build();
     }
 
-    // === Score Calculation Methods (수정됨) ===
+    // === Score Calculation Methods ===
 
     private double calculateTaskScore(int completedFeatures) {
         return Math.min(completedFeatures * 25.0, 100.0);
@@ -636,5 +710,26 @@ public class ProductivityServiceImpl implements ProductivityService {
         daily.setProductivityScore(overallScore);
 
         dailyProductivityRepository.save(daily);
+    }
+
+    // 외부에서 호출할 수 있는 생산성 업데이트 메서드
+    @Transactional
+    public void updateProductivityForDate(Long userId, Long projectId, LocalDate date) {
+        log.info("생산성 업데이트 - userId: {}, projectId: {}, date: {}", userId, projectId, date);
+
+        // 해당 날짜의 데이터를 실시간으로 다시 계산
+        ProductivityCalculateRequest request = ProductivityCalculateRequest.builder()
+                .userId(userId.toString())
+                .projectId(projectId.toString())
+                .period(ProductivityCalculateRequest.Period.builder().date(date.toString()).build())
+                .metrics(ProductivityCalculateRequest.Metrics.builder()
+                        .includeCommits(true)
+                        .includeTaskCompletion(true)
+                        .includeCodeQuality(true)
+                        .build())
+                .build();
+
+        // 실시간 계산으로 강제 업데이트 (기존 데이터 무시)
+        calculateProductivityRealtime(request);
     }
 }
