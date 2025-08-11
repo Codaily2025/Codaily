@@ -30,7 +30,6 @@ public interface FeatureItemSchedulesRepository extends JpaRepository<FeatureIte
     LocalDate findLastScheduleDateByProjectIdAndPriorityLess(Long projectId, Integer priorityLevel);
 
     @Modifying
-    @Transactional
     @Query("DELETE FROM FeatureItemSchedule s WHERE s.featureItem.featureId IN :featureIds")
     void deleteByFeatureIdInBatch(@Param("featureIds") List<Long> featureIds);
 

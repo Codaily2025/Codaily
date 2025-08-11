@@ -142,7 +142,6 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     // ===== 배치 상태 업데이트 ===
     @Modifying
-    @Transactional
     @Query("UPDATE FeatureItem f SET f.status = :status WHERE f.featureId IN :featureIds")
     int updateStatusBatch(List<Long> featureIds, String status);
 
