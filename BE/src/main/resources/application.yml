@@ -93,3 +93,7 @@ springdoc:
 
 server:
   port: 8081
+
+logging:
+  level:
+    org.springframework.boot.context.config: DEBUG
