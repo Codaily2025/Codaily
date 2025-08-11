@@ -7,7 +7,8 @@ import styles from './GithubConnection.module.css'
 
 const GithubConnection = () => {
     const [selectedOption, setSelectedOption] = useState(null)      // 전역 관리 필요 X
-    const [repositoryUrl, setRepositoryUrl] = useState('')          // 마찬가지
+    const [existedRepositoryUrl, setExistedRepositoryUrl] = useState('')          // 마찬가지
+    const [newRepositoryUrl, setNewRepositoryUrl] = useState('')          // 마찬가지
 
     const handleSelect = (option) => {
         setSelectedOption(option)
@@ -15,15 +16,19 @@ const GithubConnection = () => {
 
     const handleCreate = () => {
         if (selectedOption === 'existing') {
-            if (repositoryUrl.trim()) {
-                console.log(repositoryUrl);
+            if (existedRepositoryUrl.trim()) {
+                console.log(existedRepositoryUrl)
             } else {
-                alert('레포지토리 URL을 입력해주세요.');
+                alert('레포지토리 URL을 입력해주세요.')
             }
         } else if (selectedOption === 'new') {
-            console.log('api 요청');
+            if (newRepositoryUrl.trim()) {
+                console.log(newRepositoryUrl)
+            } else {
+                alert('레포지토리 URL을 입력해주세요.')
+            }
         } else {
-            alert('레포지토리 옵션을 선택해주세요.');
+            alert('레포지토리 옵션을 선택해주세요.')
         }
     }
 
@@ -44,8 +49,8 @@ const GithubConnection = () => {
                     {selectedOption === 'existing' && (
                         <RepositoryUrlInput 
                             show={true}
-                            value={repositoryUrl}
-                            onChange={(e) => setRepositoryUrl(e.target.value)}
+                            value={existedRepositoryUrl}
+                            onChange={(e) => setExistedRepositoryUrl(e.target.value)}
                             className={styles.repoUrlContainer}
                             inputClassName={styles.repoUrlInput}
                         />
@@ -57,6 +62,18 @@ const GithubConnection = () => {
                         onClick={() => handleSelect('new')}
                         className={`${styles.repoCard} ${selectedOption === 'new' ? styles.selected : ''}`}
                     />
+
+                    {/* 조건부 렌더링: 'new' 선택 시에만 렌더링 */}
+                    {selectedOption === 'new' && (
+                        <RepositoryUrlInput 
+                            show={true}
+                            value={newRepositoryUrl}
+                            onChange={(e) => setNewRepositoryUrl(e.target.value)}
+                            className={styles.repoUrlContainer}
+                            inputClassName={styles.repoUrlInput}
+                        />
+                    )}
+
                 </div>
 
                 <div className={styles.actionButtons}>
