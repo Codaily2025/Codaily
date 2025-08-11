@@ -262,10 +262,69 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
 
 
 const RequirementsSpecification = () => {
-  const { projectOverview, mainFeatures, techStack } = useSpecificationStore();
+  const { projectOverview, mainFeatures, techStack, rawData, processSpecData } = useSpecificationStore();
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
   // const [features, setFeatures] = useState(initialRequirementsData[0].mainFeatures);
+  const [features, setFeatures] = useState();
+
+  // rawData가 있으면 콘솔에 출력하여 구조 확인
+  useEffect(() => {
+    if (rawData) {
+      console.log('RequirementsSpecification - Raw data received:', rawData);
+      // 테스트용: rawData가 있으면 processSpecData 호출
+      if (rawData.field && rawData.mainFeature && rawData.subFeature) {
+        processSpecData(rawData);
+      }
+    }
+  }, [rawData, processSpecData]);
+
+  // mainFeatures가 업데이트되면 로컬 state도 업데이트
+  useEffect(() => {
+    if (mainFeatures && mainFeatures.length > 0) {
+      setFeatures(mainFeatures);
+    }
+  }, [mainFeatures]);
+
+  // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수
+  useEffect(() => {
+    window.testSpecData = () => {
+      const testData = {
+        projectId: 27,
+        specId: 30,
+        field: "배포 환경: AWS, Vercel, Netlify 등 클라우드 서비스",
+        mainFeature: {
+          id: 964,
+          title: "결제 시스템 연동",
+          description: "사용자가 안전하게 상품 결제할 수 있음",
+          estimatedTime: 5,
+          priorityLevel: null
+        },
+        subFeature: [
+          {
+            id: 965,
+            title: "결제 시스템 연동",
+            description: "사용자가 안전하게 상품을 결제할 수 있도록 PG사 API 또는 결제 플랫폼 연동 구현",
+            estimatedTime: 3,
+            priorityLevel: 2
+          },
+          {
+            id: 966,
+            title: "배포 환경 구축",
+            description: "개발 완료된 플랫폼을 AWS, Vercel, 또는 Netlify와 같은 클라우드 서비스에 배포하여 안정적 운영 환경 마련",
+            estimatedTime: 2,
+            priorityLevel: 4
+          }
+        ]
+      };
+      processSpecData(testData);
+      console.log('테스트 데이터 처리 완료:', testData);
+    };
+    
+    return () => {
+      delete window.testSpecData;
+    };
+  }, [processSpecData]);
 
   // 열림/닫힘 상태를 토글하는 함수
   const handleToggleOpen = useCallback((taskId) => {
@@ -359,14 +418,22 @@ const RequirementsSpecification = () => {
                 <span className={styles.itemValue}>{projectOverview.projectName}</span>
               </div>
             </div>
-            <div className={styles.overviewItem}>
+            {/* 목적 */}
+            {/* <div className={styles.overviewItem}>
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel}>목적:</span>
                 <span className={styles.itemValue}> {projectOverview.projectPurpose}</span>
               </div>
+            </div> */}
+            <div className={styles.overviewItem} style={{borderBottom: 'none'}}>
+              <div className={styles.bullet}>•</div>
+              <div className={styles.itemContent}>
+                <span className={styles.itemLabel} style={{marginBottom: '10px'}}>설명 </span>
+                <span className={styles.itemValue}>{projectOverview.projectDescription}</span>
+              </div>
             </div>
-            <div className={styles.descriptionContainer}>
+            {/* <div className={styles.descriptionContainer}>
               <div className={styles.descriptionHeader}>
                 <div className={styles.bullet}>•</div>
                 <div className={styles.itemLabel}>설명</div>
@@ -374,7 +441,7 @@ const RequirementsSpecification = () => {
               <div className={styles.descriptionText}>
                 {projectOverview.projectDescription}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -401,7 +468,7 @@ const RequirementsSpecification = () => {
             <div className={styles.mainFeaturesTitle}>주요 기능</div>
           </div>
           <div className={styles.mainFeaturesList}>
-            {mainFeatures.map(feature => (
+            {features?.map(feature => (
               <TaskItem
                 key={feature.id}
                 task={feature}
@@ -424,6 +491,28 @@ const RequirementsSpecification = () => {
             </div>
           </div>
         </div>
+
+        {/* 디버깅용 Raw Data 표시 */}
+        {rawData && (
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitle}>🔍 Raw Data (디버깅용)</div>
+            </div>
+            <div className={styles.projectOverview}>
+              <pre style={{ 
+                fontSize: '12px', 
+                backgroundColor: '#f5f5f5', 
+                padding: '10px', 
+                borderRadius: '4px',
+                overflow: 'auto',
+                maxHeight: '200px'
+              }}>
+                {JSON.stringify(rawData, null, 2)}
+                { rawData.field }
+              </pre>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
