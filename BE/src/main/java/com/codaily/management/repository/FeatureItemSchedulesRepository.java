@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -29,6 +30,7 @@ public interface FeatureItemSchedulesRepository extends JpaRepository<FeatureIte
     LocalDate findLastScheduleDateByProjectIdAndPriorityLess(Long projectId, Integer priorityLevel);
 
     @Modifying
+    @Transactional
     @Query("DELETE FROM FeatureItemSchedule s WHERE s.featureItem.featureId IN :featureIds")
     void deleteByFeatureIdInBatch(@Param("featureIds") List<Long> featureIds);
 

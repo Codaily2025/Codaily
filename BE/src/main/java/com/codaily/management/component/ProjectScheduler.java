@@ -216,7 +216,7 @@ public class ProjectScheduler {
         }
 
         try {
-            log.info("🔄 프로젝트 {} 재시도 시작 ({}회째)", projectId, failedJob.getRetryCount() + 1);
+            log.info("프로젝트 {} 재시도 시작 ({}회째)", projectId, failedJob.getRetryCount() + 1);
 
             // 재시도 시작 표시
             failedJob.markAsProcessing();
