@@ -105,15 +105,18 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     }
     return { startDate: '', endDate: '' };
   };
-  console.log('project.duration:', projectData?.duration)  // project.duration: 2025-08-01 ~ 2025-11-30
+  console.log('프로젝트 기간:', projectData?.duration)  // project.duration: 2025-08-01 ~ 2025-11-30
   const { startDate: initialStartDate, endDate: initialEndDate } = parseDuration(projectData?.duration);
 
-  const [formData, setFormData] = useState({
+  const [projectDetails, setProjectDetails] = useState({
     projectName: projectData?.title || '', // 프로젝트 이름
     startDate: initialStartDate, // 시작일
     endDate: initialEndDate, // 종료일
     repoUrl: projectData?.repoUrl || '', // 저장소 URL
+    timeByDay: projectData?.timeByDay || { 월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0 },
   });
+
+  console.log('현재프로젝트 정보:', projectDetails)
 
   // 에러 상태 관리
   const [errors, setErrors] = useState({ projectName: false });
@@ -124,7 +127,8 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setProjectDetails(prev => ({ ...prev, [name]: value }));
+    // setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   // 날짜 선택 핸들러
@@ -136,10 +140,10 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     }).replace(/\.\s*/g, '.').replace(/\.$/, '');
 
     if (type === 'start') {
-      setFormData(prev => ({ ...prev, startDate: formattedDate }));
+      setProjectDetails(prev => ({ ...prev, startDate: formattedDate }));
       setShowStartCalendar(false);
     } else {
-      setFormData(prev => ({ ...prev, endDate: formattedDate }));
+      setProjectDetails(prev => ({ ...prev, endDate: formattedDate }));
       setShowEndCalendar(false);
     }
   };
@@ -209,13 +213,6 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
 
   const days = ['월', '화', '수', '목', '금', '토', '일'];
-  
-  // 각 요일별 투자 시간 정보
-  const [timeByDay, setTimeByDay] = useState(() => {
-    return projectData?.timeByDay || {
-      월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0
-    };
-  });
 
   // 요일별 버튼 active 기본 상태 설정
   const [activeDay, setActiveDay] = useState('월'); // 현재 슬라이더 조정 중인 요일
@@ -223,21 +220,25 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // 슬라이더 움직이기
   // 진행률 상태값
   // const [progress, setProgress] = useState(70); // 0~100 사이 숫자
-  const [step, setStep] = useState(13);
+  // const [step, setStep] = useState(13);
+  const [step, setStep] = useState(0);
   const maxStep = 20; // 30분 단위, 총 10시간
 
   // activeDay 변경 시 step 업데이트
   useEffect(() => {
-    const dayTime = timeByDay[activeDay] || 0;
+    const dayTime = projectDetails.timeByDay[activeDay] || 0;
     setStep(dayTime * 2); // 30분 단위 → 1시간은 step 2
-  }, [activeDay, timeByDay]);
+  }, [activeDay, projectDetails.timeByDay]);
   
   // activeDay 기준으로 투자 시간 업데이트
   const handleSliderChange = (newStep) => {
     setStep(newStep); // UI 업데이트
-    setTimeByDay(prev => ({
+    setProjectDetails(prev => ({
       ...prev,
-      [activeDay]: newStep * 0.5, // 0.5시간 단위 (30분)
+      timeByDay: {
+        ...prev.timeByDay,
+        [activeDay]: newStep * 0.5, // 0.5시간 단위 (30분)
+      }
     }));
   };
 
@@ -277,7 +278,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   const handleSave = (e) => {
     e.preventDefault();
 
-    if (formData.projectName.trim() === '') {
+    if (projectDetails.projectName.trim() === '') {
       setErrors(prev => ({ ...prev, projectName: true }));
       return;
     }
@@ -302,10 +303,10 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       userId: userId, // props로 전달받은 userId 사용
       projectId: projectData.id,
       projectData: {
-        title: formData.projectName,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        timeByDay: timeByDay,
+        title: projectDetails.projectName,
+        startDate: projectDetails.startDate,
+        endDate: projectDetails.endDate,
+        timeByDay: projectDetails.timeByDay,
         // repoUrl은 API 명세에 없으므로 여기서는 제외함
       },
     }, {
@@ -351,7 +352,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     id="projectName" 
                     name="projectName" 
                     className={styles.inputText} 
-                    value={formData.projectName} 
+                    value={projectDetails.projectName} 
                     onChange={handleChange} 
                   />
                 </div>
@@ -368,7 +369,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                         id="startDate" 
                         name="startDate" 
                         className={styles.inputText} 
-                        value={formData.startDate} 
+                        value={projectDetails.startDate} 
                         onChange={handleChange} 
                         onClick={() => setShowStartCalendar(true)}
                         readOnly
@@ -377,7 +378,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                         <Calendar 
                           onDateSelect={(date) => handleDateSelect(date, 'start')} 
                           onClose={() => setShowStartCalendar(false)} 
-                          selectedDate={formData.startDate ? new Date(formData.startDate.replace(/\./g, '-')) : null} 
+                          selectedDate={projectDetails.startDate ? new Date(projectDetails.startDate.replace(/\./g, '-')) : null} 
                         />
                       )}
                     </div>
@@ -391,7 +392,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                         id="endDate" 
                         name="endDate" 
                         className={styles.inputText} 
-                        value={formData.endDate} 
+                        value={projectDetails.endDate} 
                         onChange={handleChange} 
                         onClick={() => setShowEndCalendar(true)}
                         readOnly
@@ -400,7 +401,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                         <Calendar 
                           onDateSelect={(date) => handleDateSelect(date, 'end')} 
                           onClose={() => setShowEndCalendar(false)} 
-                          selectedDate={formData.endDate ? new Date(formData.endDate.replace(/\./g, '-')) : null} 
+                          selectedDate={projectDetails.endDate ? new Date(projectDetails.endDate.replace(/\./g, '-')) : null} 
                         />
                       )}
                     </div>
@@ -415,7 +416,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     let className = styles.dayChip;
                     if (day === activeDay) {
                       className += ` ${styles.active}`;
-                    } else if (timeByDay[day] > 0) {
+                    } else if (projectDetails.timeByDay[day] > 0) {
                       className += ` ${styles.inactive}`;
                     } else {
                       className += ` ${styles.disabled}`;
