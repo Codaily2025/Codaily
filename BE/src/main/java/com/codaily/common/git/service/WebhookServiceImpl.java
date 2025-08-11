@@ -10,10 +10,12 @@ import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepositoriesRepository;
+import com.codaily.project.service.ProductivityEventService;
 import com.codaily.project.service.ProjectRepositoriesService;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -42,6 +44,8 @@ public class WebhookServiceImpl implements WebhookService {
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepositoriesService projectRepositoriesService;
 
+    @Autowired
+    private ProductivityEventService productivityEventService;
 
 
     @Value("${github.api-url}")
@@ -85,6 +89,11 @@ public class WebhookServiceImpl implements WebhookService {
             Long projectId = repositories.getProject().getProjectId();
 
             sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId, commitInfoDto);
+
+            // 생산성 즉시 업데이트
+            productivityEventService.updateProductivityOnCommit(
+                    projectId, userId, LocalDateTime.parse(commit.getTimestamp())
+            );
         }
     }
 

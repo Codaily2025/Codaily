@@ -6,6 +6,7 @@ import com.codaily.project.entity.*;
 import com.codaily.project.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,9 @@ public class FeatureDetailServiceImpl implements FeatureDetailService {
     private final FeatureItemRepository featureItemRepository;
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepository projectRepository;
+
+    @Autowired
+    private ProductivityEventService productivityEventService;
 
     @Override
     public FeatureDetailResponse getFeatureDetail(Long projectId, Long featureId, Long userId) {
@@ -379,6 +383,12 @@ public class FeatureDetailServiceImpl implements FeatureDetailService {
             // 상태 변경에 따른 completedAt 처리
             if ("DONE".equals(request.getStatus()) && !"DONE".equals(oldStatus)) {
                 feature.setCompletedAt(LocalDateTime.now());
+                //생산성 즉시 업데이트
+                productivityEventService.updateProductivityOnTaskComplete(
+                        feature.getProject().getProjectId(),
+                        feature.getProject().getUser().getUserId(),
+                        LocalDate.now()
+                );
             } else if (!"DONE".equals(request.getStatus()) && "DONE".equals(oldStatus)) {
                 feature.setCompletedAt(null);
             }
