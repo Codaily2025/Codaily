@@ -59,7 +59,7 @@ public class FeatureItemController {
         return ResponseEntity.ok(updatedFeature);
     }
 
-//    @PutMapping("/update")
+    //    @PutMapping("/update")
 //    public ResponseEntity<String> updateFeatureItem(@RequestBody FeatureSaveItem request) {
 //        featureItemService.updateFeatureItem(request);
 //        return ResponseEntity.ok("기능 정보가 수정되었습니다.");
@@ -97,5 +97,13 @@ public class FeatureItemController {
     ) {
         FeatureItem updateFeature = featureFieldService.updateFeatureStatus(featureId, request.getNewStatus());
         return ResponseEntity.ok(updateFeature);
+    }
+
+    @GetMapping("/parents")
+    @Operation(summary = "부모 기능 목록 조회", description = "수동 기능 추가 시 부모 기능 선택 드롭다운에 사용됩니다.")
+    public ResponseEntity<ParentFeatureListResponse> getParentFeatures(@PathVariable Long projectId) {
+        ParentFeatureListResponse response = featureItemService.getParentFeatures(projectId);
+
+        return ResponseEntity.ok(response);
     }
 }

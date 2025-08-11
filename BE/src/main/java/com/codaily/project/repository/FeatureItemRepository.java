@@ -164,4 +164,5 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
             Pageable pageable
     );
 
+    List<FeatureItem> findByParentFeature_FeatureIdIsNullOrderByCreatedAtAsc();
 }
