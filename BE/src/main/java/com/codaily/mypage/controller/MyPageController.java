@@ -216,4 +216,18 @@ public class MyPageController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+
+    @DeleteMapping("/user")
+    @Operation(summary = "회원 탈퇴")
+    public ResponseEntity<Map<String, String>> deleteUser(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ){
+        userService.deleteUser(userDetails.getUser().getUserId());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "회원 탈퇴가 완료되었습니다.");
+
+        return ResponseEntity.ok(response);
+    }
+
 }
