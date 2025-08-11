@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -25,6 +26,10 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     // 작성자: yeongenn - UserRepository 추가
     private final UserRepository userRepository;
 
+
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
@@ -40,8 +45,11 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             jwtCookie.setHttpOnly(true);
             jwtCookie.setPath("/");
             jwtCookie.setMaxAge(24 * 60 * 60); // 24시간
+            // HTTPS 사용 시 secure 설정
+            if (frontendUrl.startsWith("https://")) {
+                jwtCookie.setSecure(true);
+            }
             response.addCookie(jwtCookie);
-
 
             // // 2. 프론트엔드로 리다이렉트 (토큰을 URL 파라미터로 전달)
             // String redirectUrl = "http://localhost:5173/oauth/callback?token=" + token;
@@ -53,11 +61,11 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
             if (user != null && user.isFirstLogin()) {
                 // 최초 로그인인 경우 추가 정보 입력 페이지로 리다이렉트
-                redirectUrl = "http://localhost:5173/oauth/callback?token=" + token + "&isFirstLogin=true";
+                redirectUrl = frontendUrl + "/oauth/callback?token=" + token + "&isFirstLogin=true";
                 log.info("해당 유저는 최초 로그인임~: " + userIdentifier + ", redirecting to additional info page");
             } else {
                 // 기존 사용자는 홈페이지로 리다이렉트
-                redirectUrl = "http://localhost:5173/oauth/callback?token=" + token + "&isFirstLogin=false";
+                redirectUrl = frontendUrl + "/oauth/callback?token=" + token + "&isFirstLogin=false";
                 log.info("해당 유저는 이미 로그인한 적 있음~: " + userIdentifier + ", redirecting to home");
             }
 
@@ -65,7 +73,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             response.sendRedirect(redirectUrl);
         } catch (Exception e) {
             log.error("Error in LoginSuccessHandler", e);
-            response.sendRedirect("http://localhost:5173/login?error=authentication_failed");
+            response.sendRedirect(frontendUrl + "/login?error=authentication_failed");
         }
     }
 

@@ -41,6 +41,9 @@ public class GithubLinkController {
     private final ProjectService projectService;
     private final WebClient webClient = WebClient.create();
 
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     @Value("${github.client-id}")
     private String clientId;
     @Value("${github.client-secret}")
@@ -73,7 +76,7 @@ public class GithubLinkController {
                                 )
                                 .thenReturn(
                                         ResponseEntity.status(HttpStatus.FOUND)
-                                                .location(URI.create("http://localhost:5173/settings?github=connected"))
+                                                .location(URI.create(frontendUrl + "/settings?github=connected"))
                                                 .build()
                                 )
                 );
