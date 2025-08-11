@@ -39,5 +39,5 @@ public interface FeatureItemService {
 
     void generateFeatureItemChecklist(Long projectId);
 
-    void generateExtraFeatureItemChecklist(Long featureId);
+    boolean generateExtraFeatureItemChecklist(Long featureId);
 }

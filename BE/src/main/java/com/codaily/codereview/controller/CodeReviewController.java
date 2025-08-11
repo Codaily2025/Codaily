@@ -5,7 +5,7 @@ import com.codaily.codereview.dto.*;
 import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.codereview.service.CodeReviewService;
 import com.codaily.codereview.service.FeatureItemChecklistService;
-//import com.codaily.common.git.service.WebhookService;
+import com.codaily.common.git.service.WebhookService;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.service.FeatureItemService;
@@ -30,7 +30,7 @@ public class CodeReviewController {
     private final CodeReviewService codeReviewService;
     private final FeatureItemService featureItemService;
     private final FeatureItemChecklistService featureItemChecklistService;
-//    private final WebhookService webhookService;
+    private final WebhookService webhookService;
     private final ProjectService projectService;
     private final CodeReviewResponseMapper codeReviewResponseMapper;
 
@@ -47,28 +47,28 @@ public class CodeReviewController {
                 .collect(Collectors.toList());
     }
 
-//    @PostMapping("/project/{projectId}/commit/{commitHash}/files")
-//    @Operation(summary = "백엔드용")
-//    public List<FullFileDto> getFullFilesByPaths(@PathVariable Long projectId, @PathVariable String commitHash,
-//                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto,
-//                                                 @AuthenticationPrincipal PrincipalDetails userDetails){
-//        List<String> paths = fileFetchRequestDto.getFilePaths();
-//        String repoName = fileFetchRequestDto.getRepoName();
-//        String repoOwner = fileFetchRequestDto.getRepoOwner();
-//
-//        Project project = projectService.findById(projectId);
-//        Long userId = project.getUser().getUserId();
-//        Long loginUserId = userDetails.getUser().getUserId();
-//
-//        if(userId != loginUserId) {
-//            log.info("해당 프로젝트에 접근할 권한이 없습니다.");
-//        }
-//        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
-//
-//        return fullFiles.stream()
-//                .map(file -> new FullFileDto(file.getFilePath(), file.getContent()))
-//                .collect(Collectors.toList());
-//    }
+    @PostMapping("/project/{projectId}/commit/{commitHash}/files")
+    @Operation(summary = "백엔드용")
+    public List<FullFileDto> getFullFilesByPaths(@PathVariable Long projectId, @PathVariable String commitHash,
+                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto,
+                                                 @AuthenticationPrincipal PrincipalDetails userDetails){
+        List<String> paths = fileFetchRequestDto.getFilePaths();
+        String repoName = fileFetchRequestDto.getRepoName();
+        String repoOwner = fileFetchRequestDto.getRepoOwner();
+
+        Project project = projectService.findById(projectId);
+        Long userId = project.getUser().getUserId();
+        Long loginUserId = userDetails.getUser().getUserId();
+
+        if(userId != loginUserId) {
+            log.info("해당 프로젝트에 접근할 권한이 없습니다.");
+        }
+        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
+
+        return fullFiles.stream()
+                .map(file -> new FullFileDto(file.getFilePath(), file.getContent()))
+                .collect(Collectors.toList());
+    }
 
     @PostMapping("/code-review/result")
     @Operation(summary = "백엔드용")

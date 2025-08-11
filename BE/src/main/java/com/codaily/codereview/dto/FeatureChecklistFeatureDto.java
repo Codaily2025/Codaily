@@ -11,5 +11,4 @@ import lombok.NoArgsConstructor;
 public class FeatureChecklistFeatureDto {
     private Long featureId;
     private String title;
-    private String description;
 }
