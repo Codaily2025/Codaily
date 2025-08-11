@@ -6,7 +6,7 @@ const ModalContainer = ({ children }) => {
       className='fade-in'
       style={{
         backgroundColor: '#fff',
-        padding: '24px',
+        padding: '48px 80px 40px 60px',
         borderRadius: '16px',
         minWidth: '300px',
         maxWidth: '90%',

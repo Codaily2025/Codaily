@@ -1,7 +1,6 @@
 import React from 'react'
 import FieldItem from './FieldItem'
 import Badge from '../atoms/Badge'
-import Button from '../atoms/Button'
 import Text from '../atoms/Text'
 import Title from '../atoms/Title'
 import { 
@@ -34,6 +33,12 @@ const EventDetailContent = ({ event, onClose, className = '', style = {} }) => {
     }
   }
 
+  // 카테고리에 따른 Badge 색상 결정
+  const getCategoryColor = (category) => {
+    // TODO: 실제 카테고리에 따른 색상 매핑 로직 필요
+    return 'orange'
+  }
+
   // 상태 텍스트 변환
   const getStatusText = (status) => {
     switch(status) {
@@ -51,22 +56,13 @@ const EventDetailContent = ({ event, onClose, className = '', style = {} }) => {
   }
 
   const titleStyle = {
-    fontSize: '32px',
+    fontSize: '28px',
     fontWeight: 700,
     color: '#1a1a1a',
-    marginBottom: '48px',
+    marginBottom: '40px',
     textAlign: 'left',
-    lineHeight: 1.2
-  }
-
-  const buttonStyle = {
-    backgroundColor: '#e9ecef',
-    color: '#6c757d',
-    marginTop: '48px',
-    padding: '12px 32px',
-    fontSize: '16px',
-    fontWeight: 500,
-    borderRadius: '8px'
+    lineHeight: 1.3,
+    wordBreak: 'keep-all' // 한글 줄바꿈 최적화
   }
 
   const start = formattedDate(event.start)
@@ -100,8 +96,13 @@ const EventDetailContent = ({ event, onClose, className = '', style = {} }) => {
         icon={<Box size={24} />}
         label="Project"
       >
-        <Text style={{ fontSize: '16px', color: '#1a1a1a', fontWeight: 500 }}>
-          {event.extendedProps?.projectId}
+        <Text style={{ 
+          fontSize: '16px', 
+          color: '#1a1a1a', 
+          fontWeight: 500,
+          textDecoration: 'underline'
+        }}>
+          {event.extendedProps?.projectName || event.extendedProps?.projectId}
         </Text>
       </FieldItem>
 
@@ -111,7 +112,7 @@ const EventDetailContent = ({ event, onClose, className = '', style = {} }) => {
       >
         <Badge 
           content={event.extendedProps?.category}
-          color="blue"
+          color={getCategoryColor(event.extendedProps?.category)}
         />
       </FieldItem>
 
