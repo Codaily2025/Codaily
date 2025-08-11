@@ -44,7 +44,7 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/naver"
           kakao:
             client-id: ${KAKAO_REST_API_KEY}
-            redirect-uri: http://localhost:8081/login/oauth2/code/kakao
+            redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
             authorization-grant-type: authorization_code
             scope: profile_nickname
             client-name: Kakao
@@ -63,7 +63,7 @@ spring:
 github:
   client-id: ${GITHUB.CLIENT_ID}
   client-secret: ${GITHUB.CLIENT_SECRET}
-  redirect-uri: http://localhost:8081/oauth/github/callback
+  redirect-uri: "{baseUrl}/oauth/github/callback"
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
   api-url: https://api.github.com
@@ -76,7 +76,7 @@ gpt:
 file:
   upload:
     dir: uploads
-    base-url: http://localhost:8081
+    base-url: https://i13a601.p.ssafy.io
 
 springdoc:
   api-docs:
