@@ -33,7 +33,7 @@ const Button = ({ children, onClick, type = 'primary', htmlType = 'button', disa
     const combinedStyle = {
         ...baseStyle,
         ...(typeStyles[type] || {}),
-        // ...style,
+        ...style,
     }
 
 
