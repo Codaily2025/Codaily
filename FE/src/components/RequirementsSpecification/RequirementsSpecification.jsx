@@ -102,7 +102,7 @@ const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, par
         </div>
         <PriorityBadge level={task.priority} />
       </div>
-      <div className={styles.subTaskRight}>
+      <div className={styles.subTaskRight} style={{ marginRight: '12px' }}>
         <div className={styles.subTaskActions}>
           <TimeIndicator hours={task.hours} />
         </div>
@@ -262,7 +262,18 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
 
 
 const RequirementsSpecification = () => {
-  const { projectOverview, mainFeatures, techStack, rawData, processSpecData } = useSpecificationStore();
+  const { 
+    projectOverview, 
+    mainFeatures, 
+    techStack, 
+    rawData, 
+    projectId,
+    specId,
+    processSpecData, 
+    resetSpecification,
+    debugPrintSpecification 
+  } = useSpecificationStore();
+  
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
   // mainFeatures가 있으면 사용하고, 없으면 초기 데이터 사용
@@ -272,10 +283,8 @@ const RequirementsSpecification = () => {
   useEffect(() => {
     if (rawData) {
       console.log('RequirementsSpecification - Raw data received:', rawData);
-      // 테스트용: rawData가 있으면 processSpecData 호출
-      if (rawData.field && rawData.mainFeature && rawData.subFeature) {
-        processSpecData(rawData);
-      }
+      // API 응답 데이터 처리
+      processSpecData(rawData);
     }
   }, [rawData, processSpecData]);
 
@@ -286,8 +295,9 @@ const RequirementsSpecification = () => {
     }
   }, [mainFeatures]);
 
-  // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수
+  // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수들
   useEffect(() => {
+    // 테스트 데이터 처리 함수
     window.testSpecData = () => {
       const testData = {
         projectId: 27,
@@ -320,11 +330,55 @@ const RequirementsSpecification = () => {
       processSpecData(testData);
       console.log('테스트 데이터 처리 완료:', testData);
     };
+
+    // 프로젝트 요약 정보 테스트
+    window.testProjectSummary = () => {
+      const testSummary = {
+        projectTitle: "온라인 쇼핑몰 플랫폼 개발",
+        specTitle: "온라인 쇼핑몰 플랫폼 명세서",
+        projectDescription: "사용자들이 온라인으로 상품을 구매할 수 있는 쇼핑몰 웹사이트를 개발하는 프로젝트입니다.",
+        projectId: 1,
+        specId: 1
+      };
+      processSpecData(testSummary);
+      console.log('프로젝트 요약 정보 테스트 완료:', testSummary);
+    };
+
+    // 상세 기능 추가 테스트
+    window.testSubFeature = () => {
+      const testSubFeature = {
+        parentFeatureId: 964,
+        featureSaveItem: {
+          id: 967,
+          title: "포인트 사용 선택 인터페이스 표시",
+          description: "사용자가 결제 시 포인트를 사용할 수 있도록 선택할 수 있는 옵션을 화면에 표시",
+          estimatedTime: 2,
+          priorityLevel: 7
+        }
+      };
+      processSpecData(testSubFeature);
+      console.log('상세 기능 추가 테스트 완료:', testSubFeature);
+    };
+
+    // 명세서 초기화 테스트
+    window.resetSpec = () => {
+      resetSpecification();
+      console.log('명세서 초기화 완료');
+    };
+
+    // 현재 상태 출력
+    window.printSpec = () => {
+      debugPrintSpecification();
+    };
     
     return () => {
       delete window.testSpecData;
+      delete window.testProjectSummary;
+      delete window.testSubFeature;
+      delete window.resetSpec;
+      delete window.printSpec;
     };
-  }, [processSpecData]);
+  }, [processSpecData, resetSpecification, debugPrintSpecification]);
 
   // 열림/닫힘 상태를 토글하는 함수
   const handleToggleOpen = useCallback((taskId) => {
@@ -381,6 +435,16 @@ const RequirementsSpecification = () => {
 
   }, []);
 
+  // 디버깅 버튼 클릭 핸들러
+  const handleDebugPrint = () => {
+    debugPrintSpecification();
+  };
+
+  // 초기화 버튼 클릭 핸들러
+  const handleReset = () => {
+    resetSpecification();
+    setFeatures([]);
+  };
 
   return (
     <div className={styles.requirementsSidebar}>
@@ -390,20 +454,65 @@ const RequirementsSpecification = () => {
           <div className={styles.headerTitleContent}>
             <div className={styles.title}>요구사항 명세서</div>
           </div>
-          <button className={styles.pdfDownloadWrapper}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
-              <path d="M21 15.5V19.5C21 20.0304 20.7893 20.5391 20.4142 20.9142C20.0391 21.2893 19.5304 21.5 19 21.5H5C4.46957 21.5 3.96086 21.2893 3.58579 20.9142C3.21071 20.5391 3 20.0304 3 19.5V15.5M7 10.5L12 15.5M12 15.5L17 10.5M12 15.5V3.5" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <div className={styles.pdfText}>PDF 내보내기</div>
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {/* 디버깅 버튼 */}
+            <button 
+              className={styles.pdfDownloadWrapper}
+              onClick={handleDebugPrint}
+              style={{ backgroundColor: '#007bff', color: 'white' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 1V15M1 8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div className={styles.pdfText}>디버그</div>
+            </button>
+            
+            {/* 초기화 버튼 */}
+            <button 
+              className={styles.pdfDownloadWrapper}
+              onClick={handleReset}
+              style={{ backgroundColor: '#dc3545', color: 'white' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3V1L3 6L8 11V9C11.866 9 15 12.134 15 16C15 12.134 11.866 9 8 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div className={styles.pdfText}>초기화</div>
+            </button>
+
+            {/* PDF 다운로드 버튼 */}
+            <button className={styles.pdfDownloadWrapper}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
+                <path d="M21 15.5V19.5C21 20.0304 20.7893 20.5391 20.4142 20.9142C20.0391 21.2893 19.5304 21.5 19 21.5H5C4.46957 21.5 3.96086 21.2893 3.58579 20.9142C3.21071 20.5391 3 20.0304 3 19.5V15.5M7 10.5L12 15.5M12 15.5L17 10.5M12 15.5V3.5" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div className={styles.pdfText}>PDF 내보내기</div>
+            </button>
+          </div>
         </div>
 
-        {/* 예상 작업 완료일 */}
-        {/* <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <div className={styles.cardTitle}>📈 예상 작업 완료일 : {requirements[0].completionDate}</div>
+        {/* 프로젝트 정보 표시 */}
+        {/* {(projectId || specId) && (
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <div className={styles.cardTitle}>프로젝트 정보</div>
+            </div>
+            <div className={styles.projectOverview}>
+              <div className={styles.overviewItem}>
+                <div className={styles.bullet}>•</div>
+                <div className={styles.itemContent}>
+                  <span className={styles.itemLabel}>Project ID: </span>
+                  <span className={styles.itemValue}>{projectId || 'N/A'}</span>
+                </div>
+              </div>
+              <div className={styles.overviewItem} style={{borderBottom: 'none'}}>
+                <div className={styles.bullet}>•</div>
+                <div className={styles.itemContent}>
+                  <span className={styles.itemLabel}>Spec ID: </span>
+                  <span className={styles.itemValue}>{specId || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div> */}
+        )} */}
 
         {/* 프로젝트 개요 */}
         <div className={styles.card}>
@@ -415,52 +524,18 @@ const RequirementsSpecification = () => {
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel}>프로젝트명: </span>
-                <span className={styles.itemValue}>{projectOverview.projectName}</span>
+                <span className={styles.itemValue}>{projectOverview.projectName || 'N/A'}</span>
               </div>
             </div>
-            {/* 목적 */}
-            {/* <div className={styles.overviewItem}>
-              <div className={styles.bullet}>•</div>
-              <div className={styles.itemContent}>
-                <span className={styles.itemLabel}>목적:</span>
-                <span className={styles.itemValue}> {projectOverview.projectPurpose}</span>
-              </div>
-            </div> */}
             <div className={styles.overviewItem} style={{borderBottom: 'none'}}>
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel} style={{marginBottom: '10px'}}>설명 </span>
-                <span className={styles.itemValue}>{projectOverview.projectDescription}</span>
+                <span className={styles.itemValue}>{projectOverview.projectDescription || 'N/A'}</span>
               </div>
             </div>
-            {/* <div className={styles.descriptionContainer}>
-              <div className={styles.descriptionHeader}>
-                <div className={styles.bullet}>•</div>
-                <div className={styles.itemLabel}>설명</div>
-              </div>
-              <div className={styles.descriptionText}>
-                {projectOverview.projectDescription}
-              </div>
-            </div> */}
           </div>
         </div>
-
-        {/* 기술 스택 */}
-        {/* <div className={styles.card}>
-          <div className={styles.techStackHeader}>
-            <div className={styles.techStackTitle}>
-              <div className={styles.cardTitle}>기술 스택</div>
-            </div>
-            <div className={styles.addTechButton}>
-              <div className={styles.addTechText}>기술 추가하기</div>
-            </div>
-          </div>
-          <div className={styles.techTags}>
-            {techStack.map((tag, index) => (
-              <TechTag key={index} label={tag} />
-            ))}
-          </div>
-        </div> */}
 
         {/* 주요 기능 */}
         <div className={styles.card}>
@@ -468,14 +543,20 @@ const RequirementsSpecification = () => {
             <div className={styles.mainFeaturesTitle}>주요 기능</div>
           </div>
           <div className={styles.mainFeaturesList}>
-            {features?.map(feature => (
-              <TaskItem
-                key={feature.id}
-                task={feature}
-                onToggleOpen={handleToggleOpen}
-                onToggleChecked={handleToggleChecked}
-              />
-            ))}
+            {features?.length > 0 ? (
+              features.map(feature => (
+                <TaskItem
+                  key={feature.id}
+                  task={feature}
+                  onToggleOpen={handleToggleOpen}
+                  onToggleChecked={handleToggleChecked}
+                />
+              ))
+            ) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#6C757D' }}>
+                아직 기능이 추가되지 않았습니다.
+              </div>
+            )}
             <div className={styles.addNewTaskSection}>
               <div className={styles.addNewTaskButton}>
                 <div className={styles.addIconContainer}>
@@ -508,7 +589,6 @@ const RequirementsSpecification = () => {
                 maxHeight: '200px'
               }}>
                 {JSON.stringify(rawData, null, 2)}
-                { rawData.field }
               </pre>
             </div>
           </div>
