@@ -235,7 +235,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         boolean hasValidWorkingHours = daysOfWeek.stream()
-                .anyMatch(request -> request.getHours() <= 0);
+                .anyMatch(request -> request.getHours() > 0);
 
         if (!hasValidWorkingHours) {
             throw new IllegalArgumentException("최소 하나 이상의 요일에는 작업 시간이 설정되어야 합니다.");
