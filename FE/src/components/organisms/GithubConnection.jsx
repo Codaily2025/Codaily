@@ -1,29 +1,54 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Title from '@/components/atoms/Title'
 import Button from '@/components/atoms/Button'
 import RepositoryOptionCard from '@/components/molecules/RepositoryOptionCard'
 import RepositoryUrlInput from '@/components/molecules/RepositoryUrlInput'
 import styles from './GithubConnection.module.css'
+import { useLinkGithubRepoMutation, useCreateGithubRepoMutation } from '@/queries/useGitHub'
 
 const GithubConnection = () => {
-    const [selectedOption, setSelectedOption] = useState(null)      // 전역 관리 필요 X
-    const [existedRepositoryUrl, setExistedRepositoryUrl] = useState('')          // 마찬가지
-    const [newRepositoryUrl, setNewRepositoryUrl] = useState('')          // 마찬가지
+    const [selectedOption, setSelectedOption] = useState(null)                      // 전역 관리 필요 X
+    const [existedRepositoryUrl, setExistedRepositoryUrl] = useState('')            // 마찬가지
+    const [newRepositoryUrl, setNewRepositoryUrl] = useState('')                    // 마찬가지
+    
+    const navigate = useNavigate()
+    
+    // github 연동 후 해당 프로젝트 페이지로 네비게이션
+    const handleNavigateToProject = (projectId) => {
+        navigate(`/project/${projectId}`)
+    }
+    
+    // github 저장소 연동/생성 mutation 훅 생성
+    // - handleNavigateToProject: mutation 성공 시 실행할 콜백 함수
+    // - mutate 실행 시 넘긴 variables.projectId를 콜백 인자로 전달
+    const linkGithubRepoMutation = useLinkGithubRepoMutation(handleNavigateToProject)
+    const createGithubRepoMutation = useCreateGithubRepoMutation(handleNavigateToProject)
 
     const handleSelect = (option) => {
         setSelectedOption(option)
     }
 
+    // projectId 테스트용 하드코딩
+    // TODO: 프로젝트 생성 페이지 내에서 projectId 어떻게 관리되는지 확인 후 수정
+    const projectId = 10
+
     const handleCreate = () => {
         if (selectedOption === 'existing') {
             if (existedRepositoryUrl.trim()) {
                 console.log(existedRepositoryUrl)
+                // const repoName = existedRepositoryUrl.split('/').pop().replace('.git', '')
+                const repoName = existedRepositoryUrl
+                linkGithubRepoMutation.mutate({ projectId, repoName })
             } else {
                 alert('레포지토리 URL을 입력해주세요.')
             }
         } else if (selectedOption === 'new') {
             if (newRepositoryUrl.trim()) {
                 console.log(newRepositoryUrl)
+                // const repoName = newRepositoryUrl.split('/').pop().replace('.git', '')
+                const repoName = newRepositoryUrl
+                createGithubRepoMutation.mutate({ projectId, repoName })
             } else {
                 alert('레포지토리 URL을 입력해주세요.')
             }
