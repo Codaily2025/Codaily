@@ -17,10 +17,10 @@ const Login = ({ onLogin }) => {
   const handleSocialLogin = (provider) => {
     if (provider === 'google') {
       // 구글 OAuth 로그인 - 백엔드 OAuth 엔드포인트로 리다이렉트
-      window.location.href = 'http://localhost:8081/oauth2/authorization/google';
+      window.location.href = 'https://i13a601.p.ssafy.io:8081/oauth2/authorization/google';
     } else if (provider === 'naver') {
       // 네이버 OAuth 로그인
-      window.location.href = 'http://localhost:8081/oauth2/authorization/naver';
+      window.location.href = 'https://i13a601.p.ssafy.io:8081/oauth2/authorization/naver';
     } else {
       // 카카오는 아직 구현되지 않음
       console.log(`${provider} 로그인은 아직 구현되지 않았습니다.`);
