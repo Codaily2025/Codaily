@@ -70,20 +70,20 @@ spring:
 github:
   client-id: ${GITHUB.CLIENT_ID}
   client-secret: ${GITHUB.CLIENT_SECRET}
-  redirect-uri: http://localhost:8081/oauth/github/callback
+  redirect-uri: ${app.url.backend}/oauth/github/callback
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
   api-url: https://api.github.com
 
 gpt:
   api:
-    feature-inference-url: http://localhost:8000/api/feature-inference
-    generate-checklist-url: http://localhost:8000/api/generate-checklist
+    feature-inference-url: ${app.url.ai}/api/feature-inference
+    generate-checklist-url: ${app.url.ai}/api/generate-checklist
 
 file:
   upload:
     dir: uploads
-    base-url: http://localhost:8081
+    base-url: ${app.url.backend}
 
 springdoc:
   api-docs:
