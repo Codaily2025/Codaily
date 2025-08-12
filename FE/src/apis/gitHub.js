@@ -28,3 +28,31 @@ export const disconnectGithub = async () => {
         console.error('깃허브 연동 해제 실패:', error);
     }
 };
+
+// 작성자: yeongenn
+// 기존 레포지토리 연동 api
+export const linkGithubRepository = async (projectId, repoName) => {
+    try {
+        const url = `repo/link?projectId=${projectId}&repoName=${repoName}`
+        const response = await githubInstance.post(url)
+        console.log('기존 레포지토리 연동 완료: ', response.data)
+        return response.data
+    } catch (error) {
+        console.error('linkGithubRepository Error: ', error)
+        throw new Error(error.response?.data?.message || '기존 레포지토리 연동에 실패했습니다.')
+    }
+}
+
+// 작성자: yeongenn
+// 새로운 레포지토리 생성 api
+export const createGithubRepository = async (projectId, repoName) => {
+    try {
+        const url = `repo/create?projectId=${projectId}&repoName=${repoName}`
+        const response = await githubInstance.post(url)
+        console.log('새로운 레포지토리 생성 완료: ', response.data)
+        return response.data
+    } catch (error) {
+        console.error('linkGithubRepository Error: ', error)
+        throw new Error(error.response?.data?.message || '새로운 레포지토리 생성에 실패했습니다.')
+    }
+}

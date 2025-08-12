@@ -1,6 +1,6 @@
 // src/queries/usegitHub.js
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGithubId, disconnectGithub } from '../apis/gitHub';
+import { fetchGithubId, disconnectGithub, linkGithubRepository, createGithubRepository } from '../apis/gitHub';
 
 export const useGithubIdQuery = () => {
     return useQuery({
@@ -35,3 +35,43 @@ export const useDisconnectGithubMutation = () => {
         },
     });
 };
+
+// 작성자: yeongenn
+// 기존 레포지토리 연동 mutation
+export const useLinkGithubRepoMutation = (onSuccessCallback) => {
+    // const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: ({ projectId, repoName }) => linkGithubRepository(projectId, repoName),
+        onSuccess: (data, variables) => {
+            console.log('useLinkGithubRepoMutation 실행: ', variables)
+            if (onSuccessCallback) {
+                // console.log(onSuccessCallback)
+                onSuccessCallback(variables.projectId)
+            }
+        },
+        onError: (error) => {
+            console.error('useLinkGithubRepoMutation Error: ', error)
+        }
+    })
+}
+
+// 작성자: yeongenn
+// 새로운 레포지토리 연동 mutation
+export const useCreateGithubRepoMutation = (onSuccessCallback) => {
+    // const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: ({ projectId, repoName }) => createGithubRepository(projectId, repoName),
+        onSuccess: (data, variables) => {
+            console.log('useCreateGithubRepoMutation 실행: ', variables)
+            if (onSuccessCallback) {
+                // console.log(onSuccessCallback)
+                onSuccessCallback(variables.projectId)
+            }
+        },
+        onError: (error) => {
+            console.error('useCreateGithubRepoMutation Error: ', error)
+        }
+    })
+}
