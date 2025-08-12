@@ -265,8 +265,8 @@ const RequirementsSpecification = () => {
   const { projectOverview, mainFeatures, techStack, rawData, processSpecData } = useSpecificationStore();
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
-  // const [features, setFeatures] = useState(initialRequirementsData[0].mainFeatures);
-  const [features, setFeatures] = useState();
+  // mainFeatures가 있으면 사용하고, 없으면 초기 데이터 사용
+  const [features, setFeatures] = useState(mainFeatures && mainFeatures.length > 0 ? mainFeatures : initialRequirementsData[0].mainFeatures);
 
   // rawData가 있으면 콘솔에 출력하여 구조 확인
   useEffect(() => {
@@ -399,11 +399,11 @@ const RequirementsSpecification = () => {
         </div>
 
         {/* 예상 작업 완료일 */}
-        <div className={styles.card}>
+        {/* <div className={styles.card}>
           <div className={styles.cardHeader}>
             <div className={styles.cardTitle}>📈 예상 작업 완료일 : {requirements[0].completionDate}</div>
           </div>
-        </div>
+        </div> */}
 
         {/* 프로젝트 개요 */}
         <div className={styles.card}>
@@ -446,7 +446,7 @@ const RequirementsSpecification = () => {
         </div>
 
         {/* 기술 스택 */}
-        <div className={styles.card}>
+        {/* <div className={styles.card}>
           <div className={styles.techStackHeader}>
             <div className={styles.techStackTitle}>
               <div className={styles.cardTitle}>기술 스택</div>
@@ -460,7 +460,7 @@ const RequirementsSpecification = () => {
               <TechTag key={index} label={tag} />
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* 주요 기능 */}
         <div className={styles.card}>

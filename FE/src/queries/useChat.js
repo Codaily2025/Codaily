@@ -94,16 +94,23 @@ export const useSendUserMessage = (projectId, specId) => {
                  // 백엔드 구현에 따라, 첫 조각인지 식별할 방법이 필요함
                  // 여기서는 간단히 regenerateSpec 호출
                  processSpecData(data.content); // 새로운 데이터 처리 함수 사용
+                 console.log('showSidebar 호출 - spec/spec:regenerate');
                  showSidebar(); // 요구사항 명세서 사이드바 표시
                  break;
               case 'spec:add:field':
                 processSpecData(data.content); // 새로운 데이터 처리 함수 사용
+                console.log('showSidebar 호출 - spec:add:field');
+                showSidebar(); // 요구사항 명세서 사이드바 표시
                 break;
               case 'spec:add:feature:main':
                  processSpecData(data.content); // 새로운 데이터 처리 함수 사용
+                 console.log('showSidebar 호출 - spec:add:feature:main');
+                 showSidebar(); // 요구사항 명세서 사이드바 표시
                  break;
               case 'spec:add:feature:sub':
                 processSpecData(data.content); // 새로운 데이터 처리 함수 사용
+                console.log('showSidebar 호출 - spec:add:feature:sub');
+                showSidebar(); // 요구사항 명세서 사이드바 표시
                 break;
               default:
                 console.warn("Unknown SSE event type:", data.type);

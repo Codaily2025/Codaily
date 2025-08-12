@@ -4,9 +4,9 @@ import { create } from 'zustand';
 // priorityLevel을 priority로 변환하는 헬퍼 함수
 const convertPriorityLevel = (priorityLevel) => {
   if (priorityLevel === null || priorityLevel === undefined) return 'Normal';
-  if (priorityLevel < 5) return 'Low';
-  if (priorityLevel < 10) return 'Normal';
-  return 'High';
+  if (priorityLevel < 3) return 'High';
+  if (priorityLevel < 7) return 'Normal';
+  return 'Low';
 };
 
 // API 응답 데이터 구조에 맞춰 초기 상태 정의
@@ -176,7 +176,13 @@ export const useSpecificationStore = create((set) => ({
   })),
 
   // 사이드바 표시/숨김 제어
-  showSidebar: () => set({ showSidebar: true }),
-  hideSidebar: () => set({ showSidebar: false }),
+  showSidebar: () => {
+    console.log('showSidebar 함수 호출됨');
+    set({ showSidebar: true });
+  },
+  hideSidebar: () => {
+    console.log('hideSidebar 함수 호출됨');
+    set({ showSidebar: false });
+  },
   toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
 }));
