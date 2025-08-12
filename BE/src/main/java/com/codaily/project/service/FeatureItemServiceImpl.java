@@ -6,6 +6,7 @@ import com.codaily.codereview.dto.FeatureChecklistResponseDto;
 import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.codereview.repository.FeatureItemChecklistRepository;
 import com.codaily.global.exception.ProjectNotFoundException;
+import com.codaily.management.entity.FeatureItemSchedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.project.dto.*;
@@ -24,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final FeatureItemChecklistRepository checklistRepository;
     private final WebClient langchainWebClient;
     private final AsyncScheduleService asyncScheduleService;
+    private final FeatureItemSchedulesRepository featureItemSchedulesRepository;
 
     @Override
     public FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest featureItem) {
@@ -138,35 +141,63 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         Integer oldPriorityLevel = feature.getPriorityLevel();
         Double oldEstimatedTime = feature.getEstimatedTime();
         boolean needsRescheduling = false;
+        String oldStatus = feature.getStatus();
 
         if (update.getStatus() != null) {
-            feature.setStatus(update.getStatus());
-        }
-        if (update.getPriorityLevel() != null) {
-            Integer oldPriority = feature.getPriorityLevel();
-            feature.setPriorityLevel(update.getPriorityLevel());
-            if (!java.util.Objects.equals(oldPriority, update.getPriorityLevel())) {
-                needsRescheduling = true;
-            }
-        }
-        if (update.getEstimatedTime() != null) {
-            if (update.getEstimatedTime() < 0) {
-                throw new IllegalArgumentException("예상 시간은 0 이상이어야 합니다.");
-            }
-            Double oldTime = feature.getEstimatedTime();
-            feature.setEstimatedTime(update.getEstimatedTime());
-            if (!java.util.Objects.equals(oldTime, update.getEstimatedTime())) {
-                needsRescheduling = true;
-            }
-        }
+            String newStatus = update.getStatus();
+            if ("DONE".equals(newStatus) && !"DONE".equals(oldStatus)) {
+                List<FeatureItemSchedule> schedules = featureItemSchedulesRepository.findByFeatureItem_FeatureIdOrderByScheduleDateAsc(featureId);
 
-        if (needsRescheduling) {
-            asyncScheduleService.rescheduleFromFeatureUpdateAsync(projectId, feature, oldPriorityLevel, oldEstimatedTime);
-        }
+                if (!schedules.isEmpty()) {
+                    LocalDate lastScheduledDate = schedules.get(schedules.size() - 1).getScheduleDate();
+                    LocalDate today = LocalDate.now();
 
-        log.info("기능 수정 완료 - 프로젝트 ID: {}, 기능 ID: {}", projectId, featureId);
-        return convertToResponseDto(feature);
+                    // 예정된 마지막 날보다 일찍 완료된 경우에만 재스케줄링
+                    if (today.isBefore(lastScheduledDate)) {
+                        featureItemSchedulesRepository.deleteByFeatureItem_FeatureIdAndScheduleDateAfter(
+                                featureId, today);
+
+                        asyncScheduleService.rescheduleProjectAsync(feature.getProjectId())
+                                .whenComplete((result, throwable) -> {
+                                    if (throwable != null) {
+                                        log.error("기능 완료 후 일정 재조정 실패 - 기능: {}, 프로젝트: {}",
+                                                featureId, feature.getProjectId(), throwable);
+                                    } else {
+                                        log.info("기능 완료 후 일정 재조정 성공 - 기능: {}, 프로젝트: {}",
+                                                featureId, feature.getProjectId());
+                                    }
+                                });
+                    }
+                }
+            }
+        }
+                if (update.getPriorityLevel() != null) {
+                    Integer oldPriority = feature.getPriorityLevel();
+                    feature.setPriorityLevel(update.getPriorityLevel());
+                    if (!java.util.Objects.equals(oldPriority, update.getPriorityLevel())) {
+                        needsRescheduling = true;
+                    }
+                }
+                if (update.getEstimatedTime() != null) {
+                    if (update.getEstimatedTime() < 0) {
+                        throw new IllegalArgumentException("예상 시간은 0 이상이어야 합니다.");
+                    }
+                    Double oldTime = feature.getEstimatedTime();
+                    feature.setEstimatedTime(update.getEstimatedTime());
+                    if (!java.util.Objects.equals(oldTime, update.getEstimatedTime())) {
+                        needsRescheduling = true;
+                    }
+                }
+
+                if (needsRescheduling) {
+                    asyncScheduleService.rescheduleFromFeatureUpdateAsync(projectId, feature, oldPriorityLevel, oldEstimatedTime);
+                }
+
+                log.info("기능 수정 완료 - 프로젝트 ID: {}, 기능 ID: {}", projectId, featureId);
+                return convertToResponseDto(feature);
+
     }
+
 
     @Override
     @Transactional

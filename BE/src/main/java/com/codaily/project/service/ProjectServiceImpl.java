@@ -35,7 +35,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepositoriesRepository repository;
     private final SpecificationRepository specificationRepository;
     private final FeatureItemRepository featureItemRepository;
-    private final ScheduleService scheduleService;
+    private final AsyncScheduleService asyncScheduleService;
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();
@@ -213,7 +213,7 @@ public class ProjectServiceImpl implements ProjectService {
             updateDaysOfWeek(project, request.getDaysOfWeek());
         }
         if (scheduleChanged || daysOfWeekChanged || dateChanged) {
-            scheduleService.rescheduleProject(projectId);
+            asyncScheduleService.rescheduleProjectAsync(projectId);
         }
     }
 
