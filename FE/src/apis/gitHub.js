@@ -29,6 +29,42 @@ export const disconnectGithub = async () => {
     }
 };
 
+// 깃허브 연동 팝업 처리 함수
+export const handleGithubConnectPopup = (GITHUB_CLIENT_ID, onSuccess) => {
+    // localStorage에서 JWT 토큰 가져오기
+    const token = localStorage.getItem('authToken') || '';
+    console.log('유저의 jwt token: ', token);
+
+    // const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=http://localhost:8081/oauth/github/callback`;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user,admin:repo_hook&redirect_uri=http%3A//localhost%3A8081/api/oauth/github/callback`;
+    const popup = window.open(githubAuthUrl, 'github-auth', 'width=500,height=600');
+    if (!popup) {
+        alert('깃허브 연동 페이지를 열 수 없습니다. 브라우저 설정을 확인해주세요.');
+        return null;
+    }
+
+    const handleMessage = (event) => {
+        if (event.origin !== 'http://localhost:8081') return;
+        if (event.data.type === 'GITHUB_CONNECTED') {
+            onSuccess();
+            popup.close();
+            window.removeEventListener('message', handleMessage);
+        }
+    };
+
+    // 클린업: 팝업이 수동으로 닫힐 경우를 대비
+    const checkClosed = setInterval(() => {
+        if (popup.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', handleMessage);
+        }
+    }, 1000);
+
+    window.addEventListener('message', handleMessage);
+    
+    return { popup, handleMessage, checkClosed };
+};
+
 // 작성자: yeongenn
 // 기존 레포지토리 연동 api
 export const linkGithubRepository = async (projectId, repoName) => {
