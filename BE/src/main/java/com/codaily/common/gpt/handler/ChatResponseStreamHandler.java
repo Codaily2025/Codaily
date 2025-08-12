@@ -53,7 +53,7 @@ public class ChatResponseStreamHandler {
 
         Flux<String> chatFlux = chatService.streamChat(
                 request.getIntent(),
-                request.getUserId(),
+                request.getProjectId(),
                 request.getMessage(),
                 request.getFeatureId(),
                 request.getField()

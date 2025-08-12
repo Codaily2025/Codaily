@@ -205,8 +205,7 @@ public class ChatController {
             }
     )
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter streamChat(@RequestParam("userId") String userId,
-                                 @RequestParam("message") String message,
+    public SseEmitter streamChat(@RequestParam("message") String message,
                                  @RequestParam("projectId") Long projectId,
                                  @RequestParam("specId") Long specId) {
         ChatIntentResponse result = chatService.classifyIntent(message, projectId).block();
@@ -230,7 +229,6 @@ public class ChatController {
 
         ChatStreamRequest streamRequest = new ChatStreamRequest(
                 result.getIntent(),
-                userId,
                 message,
                 projectId,
                 specId,

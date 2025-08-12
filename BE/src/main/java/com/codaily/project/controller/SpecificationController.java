@@ -110,7 +110,6 @@ public class SpecificationController {
     ) {
         return chatResponseStreamHandler.stream(new ChatStreamRequest(
                 "spec:regenerate",
-                request.getUserId(),
                 "[SYSTEM] 명세서를 다시 생성해 주세요.",
                 request.getProjectId(),
                 specId,
