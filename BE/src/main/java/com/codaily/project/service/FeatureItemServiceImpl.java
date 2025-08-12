@@ -624,4 +624,24 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             featureItemRepository.bulkUpdateIsReducedByIds(allIds.subList(i, end), isReduced);
         }
     }
+
+    @Override
+    @Transactional
+    public SpecificationFinalizeResponse finalizeSpecification(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다. id=" + projectId));
+
+        Specification spec = project.getSpecification();
+        if (spec == null) {
+            throw new IllegalStateException("프로젝트에 연결된 스펙이 없습니다. projectId=" + projectId);
+        }
+
+        int deleted = featureItemRepository.deleteReducedBySpecId(spec.getSpecId());
+
+        return SpecificationFinalizeResponse.builder()
+                .projectId(project.getProjectId())
+                .specId(spec.getSpecId())
+                .deletedCount(deleted)
+                .build();
+    }
 }
