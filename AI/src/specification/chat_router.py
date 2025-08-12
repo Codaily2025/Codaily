@@ -30,13 +30,14 @@ user_histories = {}
 @router.get("/gpt/stream")
 async def chat_stream(
     intent: ChatIntent,
-    user_id: str,
+    project_id: int,
     message: str,
     feature_id: int = None,
     title: str = None,
     field: str = None,
 ):
-    history = user_histories.setdefault(user_id, ChatMessageHistory())
+    print("project_id: ", project_id)
+    history = user_histories.setdefault(project_id, ChatMessageHistory())
     history.add_user_message(message)
 
     params = {

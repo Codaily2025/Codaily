@@ -17,6 +17,7 @@ import AdditionalInfo from './pages/AdditionalInfo/AdditionalInfo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ModalManager from './components/organisms/ModalManager';
 import { useAuthStore } from './stores/authStore';
+import { useSpecificationStore } from './stores/specificationStore';
 
 // 보호된 라우트 컴포넌트 : 로그인 상태가 아니면 접근 불가
 const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => { 
@@ -39,6 +40,7 @@ const ProtectedRoute = ({ children, isLoggedIn, onRedirectToLogin }) => {
 
 function AppContent() {
   const { isAuthenticated, logout, token } = useAuthStore();
+  const { resetSpecification } = useSpecificationStore();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -46,6 +48,20 @@ function AppContent() {
   useEffect(() => {
     console.log('Auth state - token:', !!token, 'isAuthenticated:', isAuthenticated);
   }, [token, isAuthenticated]);
+  
+  // 페이지 이동 시 명세서 초기화
+  useEffect(() => {
+    const currentPath = location.pathname;
+    
+    // 명세서가 필요한 페이지가 아닌 경우 명세서 초기화
+    const specRequiredPages = ['/project/create/step2', '/project/create/step4'];
+    const isSpecRequired = specRequiredPages.some(page => currentPath.includes(page));
+    
+    if (!isSpecRequired) {
+      console.log('페이지 이동으로 인한 명세서 초기화:', currentPath);
+      resetSpecification();
+    }
+  }, [location.pathname, resetSpecification]);
   
   // 현재 경로에 따라 활성 메뉴 결정
   const getActiveMenu = () => {

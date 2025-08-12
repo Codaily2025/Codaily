@@ -88,8 +88,17 @@ export const streamChatResponse = ({
   onOpen,
   onError,
   onClose,
+  onSpecData, // 명세서 데이터 처리용 콜백 추가
 }) => {
   let specNotificationSent = false; // 요구사항 명세서 알림이 한 번만 전송되도록 플래그
+  
+  // projectId와 projectSpecId가 전달되지 않았으면 에러
+  if (!projectId || !projectSpecId) {
+    console.error('projectId와 projectSpecId가 필요합니다:', { projectId, projectSpecId });
+    onError?.(new Error('projectId와 projectSpecId가 필요합니다.'));
+    return { close: () => {} };
+  }
+  
   const eventSourceUrl =
     `http://localhost:8081/api/chat/stream` +
     `?userId=1` +
@@ -108,7 +117,7 @@ export const streamChatResponse = ({
   let fullContent = "";
   let ended = false; // 의도적 종료 플래그
 
-  const es = new EventSource(eventSourceUrl);
+  const es = new EventSource(eventSourceUrl, { withCredentials: true });
 
   es.onopen = () => {
     console.log('SSE 연결');
@@ -123,20 +132,12 @@ export const streamChatResponse = ({
       return;
     }
 
-    // for (const jsonString of jsonStrings) {
-    // if (jsonString.trim() === '') continue;
-
     try {
-      // const { type, content } = JSON.parse(jsonString);
       const msg = JSON.parse(event.data);
-      console.log('!!!!!!!!', msg.type, msg)
-      // event.data
-      // type이 chat일 때,
-      // 
-      if (msg?.type && msg.type === 'chat') {
-        // 일반 대화 데이터
-        onMessage?.({ type: msg?.type, content: msg?.content });
-      } else if (
+      console.log('!!!! SSE 메시지 수신:', msg.type, msg);
+
+      // 명세서 관련 데이터 처리
+      if (
         msg?.type === 'spec' ||
         msg?.type === 'spec:regenerate' ||
         msg?.type === 'project:summarization' ||
@@ -144,24 +145,31 @@ export const streamChatResponse = ({
         msg?.type === 'spec:add:feature:main' ||
         msg?.type === 'spec:add:field'
       ) {
-        // console.log({type: msg?.type, content: msg?.content})
         // 요구사항 명세서 관련 작업이므로 "요구사항 명세서를 확인해주세요" 메시지 한 번만 출력
         if (!specNotificationSent) {
           onMessage?.({ type: 'chat', content: '요구사항 명세서를 확인해주세요' });
           specNotificationSent = true;
         }
+        
+        // 명세서 데이터 처리 콜백 호출
+        if (onSpecData && msg?.content) {
+          onSpecData({ type: msg.type, content: msg.content });
+        }
+        
         // 실제 데이터는 원본 타입과 함께 전달
+        // onMessage?.({ type: msg?.type, content: msg?.content });
+      } else if (msg?.type === 'chat') {
+        // 일반 대화 데이터
         onMessage?.({ type: msg?.type, content: msg?.content });
       } else {
-        console.log({type: 'error', content: msg?.content})
+        console.log('알 수 없는 메시지 타입:', msg?.type, msg?.content);
         onMessage?.({ type: 'error', content: msg?.content });
       }
 
     } catch (e) {
       console.error('파싱 실패:', event.data);
-      onMessage?.({ type: 'error', content: event.data }); // 원문 전달
+      onMessage?.({ type: event?.type, content: event.data }); // 원문 전달
     }
-    // }
   };
 
   es.onerror = (error) => {
@@ -187,7 +195,7 @@ export const postUserMessage = async (
   userText,
   projectId,
   projectSpecId,
-  { onMessage, onOpen, onError, onClose } = {}
+  { onMessage, onOpen, onError, onClose, onSpecData } = {}
 ) => {
   if (useMock2) {
     // 더미 모드: 간단히 콜백 호출
@@ -200,8 +208,11 @@ export const postUserMessage = async (
 
   // projectId와 specId가 전달되지 않았으면 에러
   if (!projectId || !projectSpecId) {
+    console.error('postUserMessage: projectId와 projectSpecId가 필요합니다:', { projectId, projectSpecId });
     throw new Error('projectId와 projectSpecId가 필요합니다.');
   }
+
+  console.log('postUserMessage 호출 - 프로젝트 정보:', { projectId, projectSpecId, userText });
 
   // SSE 연결 시작
   const es = streamChatResponse({
@@ -212,8 +223,131 @@ export const postUserMessage = async (
     onOpen,
     onError,
     onClose,
+    onSpecData, // 명세서 데이터 처리 콜백 전달
   });
 
   // 호출자에서 필요 시 es.close()로 종료
   return es;
+};
+
+/**
+ * 명세서 기능 수동 추가 API
+ * @param {number} projectId - 프로젝트 ID
+ * @param {Object} taskData - 작업 데이터
+ * @returns {Promise} - API 응답
+ */
+// /api/projects/{projectId}/features
+// 파라미터 : projectId
+// request body : {
+//   "title": "string",
+//   "description": "string",
+//   "field": "string",
+//   "category": "string",
+//   "priorityLevel": 0,
+//   "estimatedTime": 0,
+//   "isCustom": true,
+//   "projectId": 0,
+//   "parentFeatureId": 0
+// }
+export const addManualFeature = async (projectId, taskData) => {
+  try {
+    console.log('수동 기능 추가 요청:', taskData);
+    console.log('수동 기능 추가 요청 JSON:', JSON.stringify(taskData, null, 2));
+    console.log('수동 기능 추가 요청 URL:', `projects/${projectId}/features`);
+    const response = await authInstance.post(`projects/${projectId}/features`, taskData);
+    console.log('수동 기능 추가 응답:', response.data);
+    console.log('수동 기능 추가 응답 JSON:', JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    console.error('수동 기능 추가 실패:', error);
+    console.error('수동 기능 추가 실패 응답:', error.response?.data);
+    throw error;
+  }
+};
+// 응답 형식
+// {
+//   "featureId": 0,
+//   "title": "string",
+//   "description": "string",
+//   "field": "string",
+//   "category": "string",
+//   "status": "string",
+//   "priorityLevel": 0,
+//   "estimatedTime": 0,
+//   "isSelected": true,
+//   "isCustom": true,
+//   "isReduced": true,
+//   "projectId": 0,
+//   "specificationId": 0,
+//   "parentFeatureId": 0,
+//   "childFeatures": [
+//     "string"
+//   ]
+// }
+
+const mapPriority = (p) => {
+  if (p === 'high') return 1;
+  if (p === 'medium') return 4;
+  if (p === 'low') return 8;
+  return p; // 이미 숫자면 그대로
+};
+
+/**
+ * 주 기능 추가를 위한 API 요청 데이터 구성
+ * @param {Object} formData - 폼 데이터
+ * @param {number} projectId - 프로젝트 ID
+ * @param {string} field - 필드명 (카테고리)
+ * @returns {Object} - API 요청용 데이터
+ */
+export const buildMainFeatureRequest = (formData, projectId, field = 'Custom Feature') => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    field: field, // 주 기능의 경우 field 필요
+    category: field, // 카테고리는 field와 동일하게 설정
+    priorityLevel: mapPriority(formData.priorityLevel),
+    estimatedTime: formData.estimatedTime,
+    isCustom: true,
+    projectId: projectId
+  };
+};
+
+/**
+ * 필드 안의 주 기능 추가를 위한 API 요청 데이터 구성
+ * @param {Object} formData - 폼 데이터
+ * @param {number} projectId - 프로젝트 ID
+ * @param {string} fieldName - 필드 이름
+ * @returns {Object} - API 요청용 데이터
+ */
+export const buildMainFeatureToFieldRequest = (formData, projectId, fieldName) => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    field: fieldName, // 필드 이름을 field로 설정
+    category: fieldName, // 카테고리도 필드 이름과 동일하게 설정
+    priorityLevel: mapPriority(formData.priorityLevel),
+    estimatedTime: formData.estimatedTime,
+    isCustom: true,
+    projectId: projectId
+  };
+};
+
+/**
+ * 상세 기능 추가를 위한 API 요청 데이터 구성
+ * @param {Object} formData - 폼 데이터
+ * @param {number} projectId - 프로젝트 ID
+ * @param {number} parentFeatureId - 부모 기능 ID
+ * @returns {Object} - API 요청용 데이터
+ */
+export const buildSubFeatureRequest = (formData, projectId, parentFeatureId) => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    priorityLevel: mapPriority(formData.priorityLevel),
+    estimatedTime: formData.estimatedTime,
+    isCustom: true,
+    projectId: projectId,
+    parentFeatureId: parentFeatureId
+    // field와 category는 상세 기능 추가 시에는 포함하지 않음
+  };
 };

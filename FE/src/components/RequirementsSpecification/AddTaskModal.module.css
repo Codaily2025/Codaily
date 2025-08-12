@@ -1,0 +1,235 @@
+/* FE/src/components/RequirementsSpecification/AddTaskModal.module.css */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+  }
+  
+  .modalContent {
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: modalFadeIn 0.2s ease-out;
+  }
+  
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  
+  .modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .modalTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+  
+  .closeButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  
+  .closeButton:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+  }
+  
+  .parentTaskInfo {
+    padding: 16px 24px;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+  }
+  
+  .parentTaskLabel {
+    color: #6b7280;
+    margin-right: 8px;
+  }
+  
+  .parentTaskName {
+    color: #374151;
+    font-weight: 500;
+  }
+  
+  .modalForm {
+    padding: 24px;
+  }
+  
+  .formGroup {
+    margin-bottom: 20px;
+  }
+  
+  .formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .formLabel {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+  }
+  
+  .required {
+    color: #ef4444;
+  }
+  
+  .formInput,
+  .formTextarea,
+  .formSelect {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: white;
+  }
+  
+  .formInput:focus,
+  .formTextarea:focus,
+  .formSelect:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .formTextarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+  }
+  
+  .formSelect {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 40px;
+  }
+  
+  .error {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  }
+  
+  .errorMessage {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: #ef4444;
+  }
+  
+  .modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .cancelButton,
+  .submitButton {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    min-width: 80px;
+  }
+  
+  .cancelButton {
+    background-color: white;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+  }
+  
+  .cancelButton:hover:not(:disabled) {
+    background-color: #f9fafb;
+    color: #374151;
+  }
+  
+  .submitButton {
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  .submitButton:hover:not(:disabled) {
+    background-color: #2563eb;
+  }
+  
+  .cancelButton:disabled,
+  .submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  /* 반응형 디자인 */
+  @media (max-width: 640px) {
+    .modalContent {
+      width: 95%;
+      margin: 20px;
+    }
+    
+    .modalHeader {
+      padding: 20px 20px 12px 20px;
+    }
+    
+    .modalForm {
+      padding: 20px;
+    }
+    
+    .formRow {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    
+    .modalActions {
+      flex-direction: column-reverse;
+    }
+    
+    .cancelButton,
+    .submitButton {
+      width: 100%;
+    }
+  }

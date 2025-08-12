@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ProfileAvatar from '@/components/atoms/ProfileAvatar'
 import Button from '@/components/atoms/Button'
@@ -16,21 +16,8 @@ const SignupForm = () => {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
 
-    // const [formData, setFormData] = useState({
-    //     firstName: "",
-    //     lastName: "",
-    //     email: "",
-    //     nickname: "",
-    //     country: "",
-    //     city: "",
-    //     address: "",
-    //     zipCode: "",
-    //     phone: "",
-    // })
-
     const [formData, setFormData] = useState({
         nickname: '',
-        // githubAccount: '',
         profileImage: null
     })
 
@@ -38,24 +25,8 @@ const SignupForm = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isGithubConnected, setIsGithubConnected] = useState(false)
 
-    // 컴포넌트 마운트 시 localStorage에서 폼 데이터 복원 및 GitHub 상태 확인
+    // 컴포넌트 마운트 시 GitHub 상태 확인
     useEffect(() => {
-        // 저장된 폼 데이터 복원
-        const savedFormData = localStorage.getItem('signupFormData')
-        if (savedFormData) {
-            try {
-                const parsedData = JSON.parse(savedFormData)
-                setFormData(prev => ({
-                    ...prev,
-                    nickname: parsedData.nickname || '',
-                    githubAccount: parsedData.githubAccount || ''
-                }))
-                console.log('폼 데이터 복원:', parsedData)
-            } catch (error) {
-                console.error('저장된 폼 데이터 파싱 오류:', error)
-            }
-        }
-
         // GitHub 연동 상태 확인
         const githubStatus = searchParams.get('github')
         console.log('GitHub 연동 상태:', githubStatus)
@@ -71,18 +42,10 @@ const SignupForm = () => {
     }, [searchParams])
 
     const updateField = (field, value) => {
-        const newFormData = {
-            ...formData,
+        setFormData(prev => ({
+            ...prev,
             [field]: value
-        }
-        setFormData(newFormData)
-        
-        // localStorage에 저장 (프로필 이미지 제외)
-        const dataToSave = {
-            nickname: newFormData.nickname,
-            githubAccount: newFormData.githubAccount
-        }
-        localStorage.setItem('signupFormData', JSON.stringify(dataToSave))
+        }))
     }
 
     // 폼 유효성 검사
@@ -101,21 +64,9 @@ const SignupForm = () => {
         //     newErrors.nickname = '닉네임은 영문, 한글, 숫자, 언더바만 사용 가능합니다'
         // }
 
-        // // GitHub 계정 유효성 검사
-        // if (!formData.githubAccount.trim()) {
-        //     newErrors.githubAccount = 'GitHub 계정을 입력해주세요'
-        // } else if (!/^[a-zA-Z0-9][a-zA-Z0-9_-]*[a-zA-Z0-9]$|^[a-zA-Z0-9]$/.test(formData.githubAccount)) {
-        //     newErrors.githubAccount = '올바른 GitHub 계정 형식이 아닙니다'
-        // }
-
         setErrors(newErrors)
         return Object.keys(newErrors).length === 0
     }
-
-    // const handleSave = (e) => {
-    //     if (e) e.preventDefault()
-    //     console.log('사용자 입력값: ', formData)
-    // }
 
     // submit 핸들러
     const handleSubmit = async (e) => {
@@ -140,8 +91,7 @@ const SignupForm = () => {
             // 바로 api 요청
             await updateUserAdditionalInfo(submitData)
 
-            // 성공 시 localStorage 정리 후 메인으로 이동
-            localStorage.removeItem('signupFormData')
+            // 성공 시 메인으로 이동
             navigate('/')
         } catch (error) {
             console.error('추가 정보 입력 실패: ', error)
@@ -152,28 +102,20 @@ const SignupForm = () => {
         }
     }
 
-    // 닉네임 중복 체크 진행 X
-    // const handleNicknameCheck = () => {
-    //     openModal('NICKNAME_CHECK', {
-    //         nickname: formData.nickname || 'user_nickname'
-    //     })
-    // }
-
-    const handleGithubConnect = () => {
+    const handleGithubConnect = useCallback(() => {
         console.log('GitHub 연동 팝업 열기')
         
-        // 현재 폼 데이터를 localStorage에 저장
-        const dataToSave = {
-            nickname: formData.nickname,
-            githubAccount: formData.githubAccount
-        }
-        localStorage.setItem('signupFormData', JSON.stringify(dataToSave))
+        // GitHub OAuth URL 구성
+        const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
+        const scope = import.meta.env.VITE_GITHUB_SCOPE
+        const redirectUri = encodeURIComponent(import.meta.env.VITE_GITHUB_REDIRECT_URI)
+        const githubOAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=${scope}&redirect_uri=${redirectUri}`
         
         // GitHub OAuth 팝업 열기
         const popup = window.open(
-            'http://localhost:8081/oauth2/authorization/github',
+            githubOAuthUrl,
             'github-oauth',
-            'width=500,height=600,scrollbars=yes,resizable=yes'
+            'width=600,height=700,scrollbars=yes,resizable=yes'
         )
         
         if (!popup) {
@@ -181,18 +123,23 @@ const SignupForm = () => {
             return
         }
         
-        // // 팝업 완료 확인 (주기적으로 체크)
-        // const checkPopup = setInterval(() => {
-        //     if (popup.closed) {
-        //         clearInterval(checkPopup)
-                
-        //         // 팝업이 닫힌 후 잠시 대기 후 페이지 새로고침하여 상태 확인
-        //         setTimeout(() => {
-        //             window.location.reload()
-        //         }, 500)
-        //     }
-        // }, 1000)
-    }
+        // 팝업에서 메시지를 받아 GitHub 연동 완료 처리
+        const handleMessage = (event) => {
+            if (event.origin !== "http://localhost:8081") return
+            
+            if (event.data.type === 'GITHUB_CONNECTED') {
+                setIsGithubConnected(true)
+                popup.close()
+                window.removeEventListener('message', handleMessage)
+                console.log('GitHub 연동 완료!')
+            } else if (event.data.type === 'GITHUB_POPUP_CLOSED') {
+                window.removeEventListener('message', handleMessage)
+                console.log('GitHub 연동 팝업이 닫혔습니다.')
+            }
+        }
+        
+        window.addEventListener('message', handleMessage)
+    }, [])
 
     const handleAvatarEdit = () => {
         const input = document.createElement('input')
@@ -231,30 +178,8 @@ const SignupForm = () => {
             />
 
             <form onSubmit={handleSubmit}>
-                {/* <FormRow className={styles.formRow}>
-                    <InputGroup 
-                        label="First Name"
-                        fieldName="firstName"
-                        placeholder="First Name"
-                        value={formData.firstName}
-                        onChange={(e) => updateField('firstName', e.target.value)}
-                        className={styles.formGroup}
-                        labelClassName={styles.formLabel}
-                        inputClassName={styles.formInput}
-                    />
-                    <InputGroup 
-                        label="Last Name"
-                        fieldName="lastName"
-                        placeholder="Last Name"
-                        value={formData.lastName}
-                        onChange={(e) => updateField('lastName', e.target.value)}
-                        className={styles.formGroup}
-                        labelClassName={styles.formLabel}
-                        inputClassName={styles.formInput}
-                    />
-                </FormRow> */}
 
-                <FormRow className={styles.formRow}>
+                {/* <FormRow className={styles.formRow}>
                     <InputGroup
                         label="Email Address"
                         fieldName="email"
@@ -266,7 +191,7 @@ const SignupForm = () => {
                         labelClassName={styles.formLabel}
                         inputClassName={styles.formInput}
                     />
-                </FormRow>
+                </FormRow> */}
 
                 <FormRow className={styles.formRow}>
                     <NicknameInputGroup
@@ -282,7 +207,6 @@ const SignupForm = () => {
                     />
                 </FormRow>
 
-                {/* TODO: github 계정 입력란 */}
                 <FormRow className={styles.formRow}>
                     <GithubAccountInputGroup
                         fieldName="githubAccount"
@@ -298,39 +222,21 @@ const SignupForm = () => {
                     />
                 </FormRow>
 
-                {/* <AddressSection 
-                    formData={formData}
-                    updateField={updateField}
-                    className={styles.addressSection}
-                    titleClassName={styles.sectionTitle}
-                    rowClassName={styles.formRow}
-                    groupClassName={styles.formGroup}
-                    labelClassName={styles.formLabel}
-                    inputClassName={styles.formInput}
-                /> */}
-
                 <div className={styles.buttonGroup}>
                     <Button
                         htmlType="submit"
                         disabled={isSubmitting}
-                        className={styles.submitButton}
+                        style={{
+                            borderRadius: '8px',
+                            height: '40px',
+                            backgroundColor: '#5A597D',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            marginTop: '20px'
+                        }}
                     >
                         {isSubmitting ? '저장 중...' : '저장하고 시작하기'}
                     </Button>
-                    {/* <button
-                        onClick={handleSave}
-                        style={{
-                            backgroundColor: '#5A597D',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '12px',
-                            padding: '8px 16px',
-                            cursor: 'pointer',
-                            marginTop: '16px',
-                        }}
-                    >
-                        저장
-                    </button> */}
                 </div>
             </form>
         </div>
