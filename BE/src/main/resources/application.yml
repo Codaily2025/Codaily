@@ -36,15 +36,15 @@ spring:
             scope:
               - profile
               - email
-            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+            redirect-uri: "{baseUrl}/api/login/oauth2/code/google"
           naver:
             client-id: ${NAVER.CLIENT_ID}
             client-secret: ${NAVER.CLIENT_SECRET}
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/naver"
+            redirect-uri: "{baseUrl}/api/login/oauth2/code/naver"
           kakao:
             client-id: ${KAKAO_REST_API_KEY}
-            redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
+            redirect-uri: "{baseUrl}/api/login/oauth2/code/kakao"
             authorization-grant-type: authorization_code
             scope: profile_nickname
             client-name: Kakao
