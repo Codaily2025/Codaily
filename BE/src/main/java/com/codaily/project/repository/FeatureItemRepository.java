@@ -164,5 +164,6 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
             Pageable pageable
     );
 
-    List<FeatureItem> findByParentFeature_FeatureIdIsNullOrderByCreatedAtAsc();
+    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.createdAt ASC")
+    List<FeatureItem> findParentFeaturesByProject(@Param("projectId") Long projectId);
 }

@@ -1,5 +1,6 @@
 package com.codaily.project.entity;
 
+import com.codaily.management.entity.FeatureItemSchedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -74,6 +75,10 @@ public class FeatureItem {
     @OneToMany(mappedBy = "parentFeature", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<FeatureItem> childFeatures = new ArrayList<>();
+
+    @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<FeatureItemSchedule> schedules = new ArrayList<>();
 
     @Column(name = "remaining_time")
     private Double remainingTime;

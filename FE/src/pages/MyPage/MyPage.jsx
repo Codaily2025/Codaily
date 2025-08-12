@@ -77,7 +77,7 @@ const Mypage = () => {
             <label>GitHub 연동</label>
             <div className="info-box github-link">
               <img src={githubIcon} alt="github icon" />
-              <span>@{githubId.githubId}</span>
+              <span>@{githubId?.githubId}</span>
             </div>
           </div>
         </div>

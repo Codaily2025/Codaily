@@ -2,9 +2,12 @@ import React from 'react';
 import './Home.css';
 import home_background from '../../assets/home_background.png';
 import { useNavigate } from 'react-router-dom';
+import { useUserQuery } from '../../queries/useUser';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { data: user } = useUserQuery();
+  console.log('Home 페이지 사용자 정보:', user);
   return (
     <div className="home-container">
       <img
