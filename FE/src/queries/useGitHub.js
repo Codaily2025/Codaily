@@ -1,7 +1,10 @@
 // src/queries/usegitHub.js
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchGithubId, disconnectGithub, linkGithubRepository, createGithubRepository } from '../apis/gitHub';
+import { syncGithubTechStack } from '../apis/profile';
 
+// 깃허브 아이디 조회 커스텀 훅
+// 캐시 키 : ['githubId']
 export const useGithubIdQuery = () => {
     return useQuery({
         queryKey: ['githubId'],
@@ -11,6 +14,8 @@ export const useGithubIdQuery = () => {
     });
 };
 
+// 깃허브 연동 해제 커스텀 훅
+// 캐시 키 : ['githubId']
 export const useDisconnectGithubMutation = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -35,6 +40,23 @@ export const useDisconnectGithubMutation = () => {
         },
     });
 };
+
+export function useGithubTechStackSyncMutation() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: syncGithubTechStack,
+        onSuccess: (data) => {
+            console.log('GitHub 기술스택 동기화 성공:', data);
+            // 프로필 쿼리를 다시 가져와서 UI 업데이트
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+            queryClient.invalidateQueries({ queryKey: ['techStack'] });
+        },
+        onError: (error) => {
+            console.error('GitHub 기술스택 동기화 실패:', error);
+        }
+    });
+}
 
 // 작성자: yeongenn
 // 기존 레포지토리 연동 mutation

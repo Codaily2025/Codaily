@@ -10,29 +10,43 @@ import MyPageProductivityGraph from '../../components/MyPageProductivityGraph';
 import { useGetProfileImageQuery } from '../../queries/useProfile';
 import useModalStore from '../../store/modalStore';
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
-import { useGithubIdQuery } from '../../queries/useGitHub';
+import { useGithubIdQuery, useGithubTechStackSyncMutation } from '../../queries/useGitHub';
 
 const Mypage = () => {
   const { isOpen, modalType, openModal, closeModal } = useModalStore()
-  const { 
-    data: profile, 
-    isLoading, isError, 
-    error 
+  const {
+    data: profile,
+    isLoading, isError,
+    error
   } = useProfileQuery(); // 프로필 조회 훅
-  
+
   const { data: githubId } = useGithubIdQuery();
   /* profile 객체에 githubId 추가 */
   // const githubIdStr = githubId?.githubId || '정보 없음';
   // profile.githubId = githubIdStr;
   // console.log('깃허브 아이디:', githubId);
-  
+
+  const githubTechStackSyncMutation = useGithubTechStackSyncMutation();
+  const handleSyncTechStack = () => {
+    githubTechStackSyncMutation.mutate();
+  };
+
+  // 깃허브 연동 여부
+  const isGithubConnected = !!githubId?.githubId;
+  // 기술 스택 배열
+  const techStack = Array.isArray(profile?.techStack) ? profile?.techStack : [];
+  // 깃허브 연동 여부 확인 -> 미연동이면 항상 빈 배열
+  const displayTechStack = isGithubConnected ? techStack : [];
+  // 기술 스택 비어있는지 확인
+  const isTechStackEmpty = displayTechStack.length === 0;
+
   const { data: profileImage } = useGetProfileImageQuery();
   // const profileImageStr = profileImage?.imageUrl || null;
   // profile.profileImage = profileImageStr;
   // console.log('유저 프로필 이미지:', profileImage);
 
   console.log('유저 프로필:', profile);
-  
+
   if (isLoading) return <div>로딩 중...</div>;
 
   if (isError) return <div>에러 발생: {error.message}</div>;
@@ -45,7 +59,7 @@ const Mypage = () => {
         <div className="profile-card">
           <div className="profile-image-placeholder">
             {profileImage && (
-              <img src={profileImage.imageUrl} alt="profile" />
+              <img src={profileImage.imageUrl} alt="" />
             )}
           </div>
           {/* <a onClick={() => setIsModalOpen(true)} className="edit-profile-link"> */}
@@ -60,11 +74,28 @@ const Mypage = () => {
           <div className="info-section">
             <label>사용 가능한 기술 스택</label>
             <div className="info-box tech-stack">
-              { profile.techStack && profile.techStack.map((tech, index) => (
-                <span key={index} className="tech-tag">{tech}</span>
-              ))}
-              { profile.techStack && profile.techStack.length === 0 && (
-                <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
+              {!isGithubConnected ? ( // 깃허브 미연동일때
+                <div className="tech-stack-empty">
+                  <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
+                  <button
+                    className="sync-tech-stack-btn"
+                    onClick={handleSyncTechStack}
+                    disabled={githubTechStackSyncMutation.isPending}
+                  >
+                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : 'GitHub 동기화'}
+                  </button>
+                </div>
+              ) : 
+              isTechStackEmpty ? ( // 기술스택 비어있을때
+                <div className="tech-stack-empty">
+                  <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
+                </div>
+              ) : (
+                <>
+                  {displayTechStack.map((tech, index) => (
+                    <span key={index} className="tech-tag">{tech}</span>
+                  ))}
+                </>
               )}
               {/* <span className="tech-tag">JavaScript</span>
               <span className="tech-tag">React</span>
@@ -72,6 +103,16 @@ const Mypage = () => {
               <span className="tech-tag">Next.js</span>
               <span className="tech-tag">Node.js</span> */}
             </div>
+            {githubTechStackSyncMutation.isError && (
+              <div className="error-message">
+                동기화에 실패했습니다. 깃허브 연동을 확인하세요.
+              </div>
+            )}
+            {githubTechStackSyncMutation.isSuccess && (
+              <div className="success-message">
+                기술스택이 성공적으로 동기화되었습니다!
+              </div>
+            )}
           </div>
           <div className="info-section">
             <label>GitHub 연동</label>
