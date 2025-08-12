@@ -96,12 +96,13 @@ public class GithubLinkController {
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
         String repoOwner = userService.getGithubUsername(userDetails.getUserId());
-        githubService.registerWebhook(repoOwner, repoName, accessToken);
 
         return githubService.createRepository(accessToken, repoName)
-                .doOnNext(repoUrl ->
-                        projectService.saveRepositoryForProject(projectId, repoName, repoUrl)
-                )
+                .doOnNext(repoUrl -> {
+                    // 작성자: yeongenn - 리포지토리 생성 완료 후 웹훅 등록
+                    githubService.registerWebhook(repoOwner, repoName, accessToken);
+                    projectService.saveRepositoryForProject(projectId, repoName, repoUrl);
+                })
                 .map(repoUrl -> ResponseEntity
                         .created(URI.create(repoUrl))
                         .build()
@@ -119,11 +120,16 @@ public class GithubLinkController {
     @PostMapping("/repo/link")
     public Mono<ResponseEntity<Void>> linkExistingRepository(
             @AuthenticationPrincipal PrincipalDetails userDetails,
-            @Parameter(description = "리포지토리 소유자 (owner)") @RequestParam String owner,
+//            @Parameter(description = "리포지토리 소유자 (owner)") @RequestParam String owner,
             @Parameter(description = "리포지토리 이름") @RequestParam String repoName,
             @Parameter(description = "연결할 프로젝트 ID") @RequestParam Long projectId
     ) {
-        String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
+        // 작성자: yeongenn
+        Long userId = userDetails.getUserId();
+        String owner = userService.getGithubUsername(userId);
+        String accessToken = userService.getGithubAccessToken(userId);
+
+        // String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
         githubService.registerWebhook(owner, repoName, accessToken);
 
         return githubService.getRepositoryInfo(accessToken, owner, repoName)

@@ -24,12 +24,15 @@ spring:
     oauth2:
       client:
         registration:
-          #          github:
-          #            client-id: ${GITHUB.CLIENT_ID}
-          #            client-secret: ${GITHUB.CLIENT_SECRET}
-          #            redirect-uri: http://localhost:8080/oauth/github/callback
+          github:
+            client-id: ${GITHUB.CLIENT_ID}
+            client-secret: ${GITHUB.CLIENT_SECRET}
+            redirect-uri: http://localhost:8081/oauth/github/callback
           #            token-uri: https://github.com/login/oauth/access_token
           #            user-uri: https://api.github.com/user
+            scope:
+              - user
+              - repo
           google:
             client-id: ${GOOGLE.CLIENT_ID}
             client-secret: ${GOOGLE.CLIENT_SECRET}
@@ -49,6 +52,10 @@ spring:
             scope: profile_nickname
             client-name: Kakao
         provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
             token-uri: https://nid.naver.com/oauth2.0/token

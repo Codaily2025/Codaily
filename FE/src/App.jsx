@@ -12,6 +12,7 @@ import History from './pages/History/History';
 import MyPage from './pages/MyPage/MyPage';
 import Login from './pages/Login/Login';
 import OAuthCallback from './pages/OAuthCallback';
+import GithubOAuth from './pages/githubOAuth';
 import AdditionalInfo from './pages/AdditionalInfo/AdditionalInfo';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ModalManager from './components/organisms/ModalManager';
@@ -127,6 +128,7 @@ function AppContent() {
           <Route path="/login" element={<Login onLogin={handleLogin} />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/additional-info" element={<AdditionalInfo />} />
+          <Route path="/settings" element={<GithubOAuth />} />
 
           
           {/* 보호된 라우트들 : 로그인 상태가 아니면 접근 불가 */}
