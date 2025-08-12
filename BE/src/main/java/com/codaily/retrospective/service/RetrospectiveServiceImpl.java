@@ -13,9 +13,13 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.retrospective.dto.*;
 import com.codaily.retrospective.entity.Retrospective;
 import com.codaily.retrospective.repository.RetrospectiveRepository;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -213,10 +217,10 @@ public class RetrospectiveServiceImpl implements RetrospectiveService {
                 .build();
     }
 
-
-    public RetrospectiveGenerateResponse toResponse(Retrospective e){
-        var root = readTreeSafe(e.getSummaryJson());
-        var summaryNode = root != null ? root.path("summary") : null;
+    @Transactional
+    public RetrospectiveGenerateResponse toResponse(Retrospective e) {
+        JsonNode root = readTreeSafe(e.getSummaryJson());
+        JsonNode summaryNode = root != null ? root.path("summary") : null;
 
         RetrospectiveSummary summary = null;
         if (summaryNode != null && !summaryNode.isMissingNode() && summaryNode.isObject()) {
@@ -247,8 +251,53 @@ public class RetrospectiveServiceImpl implements RetrospectiveService {
 
     private com.fasterxml.jackson.databind.JsonNode readTreeSafe(String json) {
         if (json == null || json.isBlank()) return null;
-        try { return objectMapper.readTree(json); }
-        catch (Exception ex) { log.warn("summaryJson 역직렬화 실패", ex); return null; }
+        try {
+            return objectMapper.readTree(json);
+        } catch (Exception ex) {
+            log.warn("summaryJson 역직렬화 실패", ex);
+            return null;
+        }
     }
 
+    @Override
+    public RetrospectiveScrollResponse getProjectScroll(Long projectId, LocalDate before, int limit) {
+        int pageSize = clamp(limit, 1, 50);
+        Pageable pageable = PageRequest.of(0, pageSize);
+        Slice<Retrospective> slice = retrospectiveRepository.findProjectSlice(projectId, before, pageable);
+
+        List<RetrospectiveGenerateResponse> items = slice.getContent().stream()
+                .map(this::toResponse)
+                .toList();
+
+        String nextBefore = (slice.hasNext() && !items.isEmpty()) ? items.get(items.size() - 1).getDate().toString() : null;
+
+        return RetrospectiveScrollResponse.builder()
+                .items(items)
+                .hasNext(slice.hasNext())
+                .nextBefore(nextBefore)
+                .build();
+    }
+
+    @Override
+    public RetrospectiveScrollResponse getUserScroll(Long userId, LocalDate before, int limit) {
+        int pageSize = clamp(limit, 1, 50);
+        Pageable pageable = PageRequest.of(0, pageSize);
+        Slice<Retrospective> slice = retrospectiveRepository.findUserSlice(userId, before, pageable);
+
+        List<RetrospectiveGenerateResponse> items = slice.getContent().stream()
+                .map(this::toResponse)
+                .toList();
+
+        String nextBefore = (slice.hasNext() && !items.isEmpty()) ? items.get(items.size() - 1).getDate().toString() : null;
+
+        return RetrospectiveScrollResponse.builder()
+                .items(items)
+                .hasNext(slice.hasNext())
+                .nextBefore(nextBefore)
+                .build();
+    }
+
+    private int clamp(int v, int min, int max) {
+        return Math.max(min, Math.min(max, v));
+    }
 }
