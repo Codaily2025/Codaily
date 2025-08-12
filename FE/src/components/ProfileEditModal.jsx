@@ -2,20 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfileStore } from '../stores/profileStore';
 import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation, useUploadProfileImageMutation } from '../queries/useProfile';
+import { useDisconnectGithubMutation, useGithubIdQuery } from '../queries/usegitHub';
 import { updateProfile, getProfileImage } from '../apis/profile'; // 서버 갱신
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 import { useGetProfileImageQuery } from '../queries/useProfile';
+import { useDeleteUserMutation } from '../queries/useUser';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
 
 // GitHub OAuth 설정
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
 
 const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
+  const navigate = useNavigate();
+  const { logout } = useAuthStore();
   const queryClient = useQueryClient();
   const [imgBust, setImgBust] = useState(0);
   // React Query로 프로필 데이터 조회
   const { data: profileData } = useProfileQuery();
   const { data: profileImage } = useGetProfileImageQuery();
+  const { data: githubId } = useGithubIdQuery();
   // Zustand 스토어에서 폼 상태만 가져오기
   const {
     editFormData,
@@ -44,6 +51,8 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const updateNicknameMutation = useUpdateNicknameMutation();
   const updateProfileMutation = useUpdateProfileMutation();
   const uploadProfileImageMutation = useUploadProfileImageMutation();
+  const disconnectGithubMutation = useDisconnectGithubMutation();
+  const deleteUserMutation = useDeleteUserMutation();
 
   // 모달이 열릴 때마다 서버 프로필 데이터로 폼 초기화
   useEffect(() => {
@@ -86,14 +95,6 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
         alert('이미지 파일만 업로드 가능합니다.');
         return;
       }
-
-      // // 미리보기 설정
-      // const reader = new FileReader();
-      // reader.onload = (ev) => {
-      //   setPreviewImage(ev.target.result);
-      //   updateFormField('profileImage', ev.target.result);
-      // };
-      // reader.readAsDataURL(file);
 
       // 즉시 화면 반영: Object URL 프리뷰
       const objectUrl = URL.createObjectURL(file);
@@ -191,6 +192,19 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     window.location.href = githubAuthUrl;
   };
 
+  // 깃허브 연동 해제 핸들러
+  const handleGithubDisconnect = async () => {
+    try {
+      await disconnectGithubMutation.mutateAsync();
+      setGithubReconnected(false);
+      // setGithubConnecting(false);
+      setFormErrors({ githubAccount: '' }); // 에러 메시지 초기화
+      setFormError('githubAccount', 'GitHub 계정 연동이 해제되었습니다');
+    } catch (error) {
+      console.error('깃허브 연동 해제 실패:', error);
+    }
+  };
+
   // 모든 필드 유효성 검사
   const validateAllFields = () => {
     const newErrors = {};
@@ -250,6 +264,33 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const handleCancel = () => {
     resetFormState(); // 폼 상태 초기화
     onClose(); // 모달 닫기
+  };
+
+  // 회원 탈퇴 핸들러
+  const handleDeleteUser = async () => {
+    if (window.confirm('정말 회원 탈퇴하시겠습니까?')) {
+      try {
+        // 깃허브 연동 해제 (현재 연동되어 있는 경우에만)
+        if (githubId?.githubId) {
+          await disconnectGithubMutation.mutateAsync();
+        }
+
+        // 회원 탈퇴 API 호출
+        await deleteUserMutation.mutateAsync();
+
+        // 로그아웃 -> 로컬 스토리지, zustand 스토어 상태 초기화
+        logout();
+
+        // 쿼리 데이터 초기화 (React Query)
+        queryClient.clear();
+
+        // 홈페이지로 이동
+        navigate('/');
+      } catch (error) {
+        console.error('회원 탈퇴 실패:', error);
+        alert('회원 탈퇴에 실패했습니다.');
+      }
+    }
   };
 
   if (!isOpen) return null; // 모달이 닫혀 있으면 렌더링 x
@@ -360,18 +401,22 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 <Github size={18} className={styles.inputIcon} />
                 <input
                   type="text"
-                  value={`@${editFormData.githubAccount ?? ""}`}
+                  value={githubId?.githubId ? `@${githubId.githubId}` : ''}
                   readOnly
                   className={`${styles.inputField} ${styles.githubInputField} ${styles.readOnlyInput} ${formErrors.githubAccount ? styles.inputError : ''}`}
-                  placeholder="GitHub 연동 후 계정명이 표시됩니다"
+                  placeholder="연동 후 계정명이 표시됩니다"
                 />
               </div>
+              {/* 깃허브 연동 버튼 */}
+              {/* isGithubReconnected: 깃허브 연동 여부 */}
               <button
                 type="button"
-                onClick={handleGithubConnect}
+                // githubId?.githubId가 있으면 연동된 상태이므로 연동 해제, 클릭 시 Disconnect 기능 실행
+                // githubId?.githubId가 없으면 연동 안 된 상태이므로 연동 버튼, 클릭 시 Connect 기능 실행
+                onClick={githubId?.githubId ? handleGithubDisconnect : handleGithubConnect}
                 className={`${styles.actionButton} ${styles.githubButton}`}
               >
-                변경
+                {githubId?.githubId ? '연동 해제' : '연동'}
               </button>
             </div>
             {isGithubReconnected && (
@@ -388,7 +433,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
             )}
           </div>
           <div style={{ cursor: 'pointer', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginRight: '10px' }}>
-            <p style={{ color: '#737373', fontSize: '15px', fontWeight: '500' }}>회원 탈퇴</p>
+            <p onClick={handleDeleteUser} style={{ color: '#737373', fontSize: '15px', fontWeight: '500', marginTop: '0px', marginBottom: '0px' }}>회원 탈퇴</p>
           </div>
         </div>
 

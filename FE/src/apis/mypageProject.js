@@ -215,6 +215,7 @@ export const updateProjectAPI = async ({ projectId, projectData }) => {
   };
   
   try {
+    console.log('수정 요청 데이터:', transformedData)
     const response = await authInstance.patch(`projects/${projectId}`, transformedData, {
       headers: {
         'Content-Type': 'application/json'
