@@ -29,6 +29,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.web.util.UriComponentsBuilder;
 @Log4j2
 @RestController
 @RequestMapping("/oauth/github")
@@ -41,7 +42,7 @@ public class GithubLinkController {
     private final ProjectService projectService;
     private final WebClient webClient = WebClient.create();
 
-    @Value("${app.frontend.url:http://localhost:5173}")
+    @Value("${app.frontend.url:${app.frontend-url:${APP_FRONTEND_URL:http://localhost:5173}}}")
     private String frontendUrl;
 
     @Value("${github.client-id}")
