@@ -22,6 +22,7 @@ class ChatIntent(str, Enum):
     SPEC_ADD_FEATURE_MAIN = "spec:add:feature:main"
     SPEC_ADD_FEATURE_SUB = "spec:add:feature:sub"
     SPEC_ADD_FIELD = "spec:add:field"
+    DELETE = "delete"
 
 
 # 프롬프트: intent 분류

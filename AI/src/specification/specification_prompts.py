@@ -4,7 +4,7 @@ CHAT_INTENT_PROMPT = """
 
 출력은 반드시 다음 JSON 형식으로 반환하세요 (추가 설명 없이 JSON만 출력):
 {{
-  "intent": "chat | spec | spec:regenerate | spec:add:feature:main | spec:add:feature:sub | spec:add:field",
+  "intent": "chat | spec | spec:regenerate | spec:add:feature:main | spec:add:feature:sub | spec:add:field | delete",
   "featureId": number 또는 null,
   "field": string 또는 null
 }}
@@ -19,10 +19,23 @@ CHAT_INTENT_PROMPT = """
 판단 가능한 intent 목록과 의미는 다음과 같습니다:
 - 'chat': 아직 기능 명세서를 만들기에는 정보가 부족하거나, 주제와 무관한 일반적인 대화
 - 'spec': 사용자가 만들고자 하는 서비스 또는 기능에 대해 충분한 정보를 제공한 경우 (명세서 생성 가능)
-- 'spec:regenerate': 사용자가 기존 명세서를 새로 만들어달라고 요청한 경우
+- 'spec:regenerate': 사용자가 명세서를 **새로 혹은 다시** 만들어달라고 요청한 경우
 - 'spec:add:feature:main': 기존 주 기능과 무관한 **새로운 기능** 추가 요청
 - 'spec:add:feature:sub': 기존 주 기능에 관련된 **상세 기능** 추가 요청
 - 'spec:add:field': 기존 기능 그룹에 포함되지 않는 **완전히 새로운 주제/카테고리의 기능** 요청
+- 'delete': 사용자가 기능/항목의 **삭제/비활성/제거/해제/끄기/옵션 제외**를 명시적으로 요청한 경우(현재는 채팅으로 실제 삭제 미지원이므로 intent만 분류)
+
+[우선순위 규칙]
+- 아래 규칙을 위에서부터 순서대로 적용하며, 앞 규칙이 만족되면 뒤 규칙을 검토하지 마세요.
+1) 'delete' 키워드/표현이 감지되면 무조건 intent='delete'로 출력한다.
+2) 그 외에 'spec:add:feature:sub' 판단 규칙을 적용한다.
+3) 그 외에 'spec:add:feature:main' 판단 규칙을 적용한다.
+4) 그 외에 'spec:add:field' 판단 규칙을 적용한다.
+5) 그 외에는 'spec' 또는 'spec:regenerate' 또는 'chat'을 판단한다.
+
+다음의 경우는 반드시 'chat'으로 판단하세요:
+- 위 조건이 거의 충족되지 않음 (아이디어 탐색 등)
+- 기능이 핵심 목적과 무관한 부가 기능일 경우 (예: 다크모드, 테마 변경 등)
 
 다음 조건 중 **2개 이상을 충족**할 경우에만 'spec'으로 판단하세요:
 1. 서비스 목적이나 해결하고자 하는 문제 설명
@@ -32,9 +45,11 @@ CHAT_INTENT_PROMPT = """
 5. 명세 생성 의사 표현 ('명세서 만들어줘')
 6. 챗봇이 명세 생성 안내를 먼저 한 경우
 
-다음의 경우는 반드시 'chat'으로 판단하세요:
-- 위 조건이 거의 충족되지 않음 (아이디어 탐색 등)
-- 기능이 핵심 목적과 무관한 부가 기능일 경우 (예: 다크모드, 테마 변경 등)
+다음의 경우는 반드시 'spec:regenerate'으로 판단하세요:
+- 사용자가 기존 명세서를 **완전히 새로 생성**해 달라고 요청한 경우
+- 예: '명세서 다시 만들어줘', '처음부터 명세서를 다시 작성해줘', '전체 명세를 재생성해줘' 등
+- 부분 수정 요청이나 일부 기능 추가/삭제 요청은 해당 intent 규칙에 따라 판단하고, 전면 재생성 의도가 있는 경우에만 'spec:regenerate'로 설정하세요.
+- 이때 featureId와 field는 반드시 null로 설정하세요.
 
 다음의 경우는 반드시 'spec:add:feature:main'으로 판단하세요:
 - 사용자가 새로운 기능 하나를 명확히 요청했고, 그것이 기존 주 기능들과 관련 없음
@@ -50,23 +65,34 @@ CHAT_INTENT_PROMPT = """
 - 이 intent는 'spec:add:feature:main'보다 우선적으로 판단되어야 합니다.
 - 이 경우 field는 반드시 null로 설정하세요.
 
+다음의 경우는 반드시 'delete'로 판단하세요:
+- 아래 표현이 하나라도 포함되면 의도는 '삭제/제거/비활성화/해제/끄기'로 간주합니다.
+  예) '없었으면 좋겠어', '삭제', '지워', '제거', '빼', '없애', '비활성', '끄', '해제', 
+      '옵션 제거', '옵션 빼기', '옵션 끄기', '필요없', '제외', 'drop', 'remove', 'delete',
+      'disable', 'deactivate', 'turn off', 'opt-out'
+- 대상이 기능/옵션/정책/검증/필드/항목 중 무엇이든 상관없이 intent='delete'입니다.
+- 이때 featureId와 field는 반드시 null로 설정하세요. (현재 채팅을 통한 삭제는 지원하지 않음)
+
 - 사용자의 요청 문장이 기존 주 기능 또는 기능 그룹(field)과 관련 있는지를 판단할 때는 다음 절차를 따르세요:
 1. 먼저, 사용자의 요청 문장을 기존 주 기능의 title들과 비교하여, 명확하게 연관된 주 기능이 있다면 그 기능의 id와 field를 사용하세요. 이 경우 intent는 'spec:add:feature:sub'가 됩니다.
 2. 주 기능들과는 관련이 없지만, 기존 기능 그룹(field) 중 하나와는 관련이 있는 경우라면 intent는 'spec:add:feature:main'이고, 해당 기능 그룹명을 field로 지정하세요.
 3. 사용자의 요청이 기존 모든 기능 그룹(field)과도 무관할 경우, intent는 'spec:add:field'이며, 이 경우 field는 반드시 null로 설정하세요.
 ※ 유사도 판단 시에는 주 기능 title 및 기능 그룹명을 사용자의 문장에서 직접적으로 언급했는지, 또는 문맥상 같은 의미를 가지는지를 판단 기준으로 삼습니다.
 
-예시:
+
+출력 예시:
 - {{"intent": "spec:add:feature:sub", "featureId": 5, "field": "결제"}}
 - {{"intent": "spec:add:feature:main", "featureId": null, "field": "상품 관리"}}
 - {{"intent": "spec:add:field", "featureId": null, "field": null}}
-
-출력 예시:
 - {{"intent": "chat", "featureId": null, "field": null}}
 - {{"intent": "spec:regenerate", "featureId": null, "field": null}}
 - {{"intent": "spec:add:feature:main", "featureId": null, "field": "알림 설정"}}
 - {{"intent": "spec:add:feature:sub", "featureId": 2, "field": "일정 관리"}}
 - {{"intent": "spec:add:field", "featureId": null, "field": null}}
+- {{"intent": "delete", "featureId": null, "field": null}}
+- {{"intent": "delete", "featureId": null, "field": null}}  ← "상품 정보 유효성 검증은 없었으면 좋겠어."
+- {{"intent": "delete", "featureId": null, "field": null}}  ← "푸시 알림은 끄고 싶어"
+- {{"intent": "delete", "featureId": null, "field": null}}  ← "결제수단에서 무통장입금은 빼줘"
 
 현재 주 기능 목록은 다음과 같은 형식으로 제공됩니다:
 - id: 1, title: "작업 생성", field: "프로젝트 관리"

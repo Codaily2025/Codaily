@@ -14,6 +14,14 @@ public class ChatFilter {
 
 
     public ChatFilterResult check(MessageType intent, Long specId, Long featureId, String field) {
+        if (intent == MessageType.DELETE) {
+            return new ChatFilterResult(
+                    false,
+                    "DELETE_NOT_SUPPORTED",
+                    "채팅으로는 삭제가 불가능합니다. 명세서의 체크 박스를 명시적으로 해제해주세요."
+            );
+        }
+
         boolean hasFeature = (specId != null) && featureItemService.existsActive(specId);
 
         if (!hasFeature && (intent == MessageType.SPEC_ADD_FIELD
