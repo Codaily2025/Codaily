@@ -3,15 +3,18 @@ package com.codaily.retrospective.controller;
 import com.codaily.project.entity.Project;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.retrospective.dto.RetrospectiveGenerateResponse;
-import com.codaily.retrospective.dto.RetrospectiveListResponse;
+import com.codaily.retrospective.dto.RetrospectiveScrollResponse;
 import com.codaily.retrospective.service.RetrospectiveGenerateService;
 import com.codaily.retrospective.service.RetrospectiveService;
+import com.codaily.retrospective.service.RetrospectiveTriggerType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -117,98 +120,98 @@ public class RetrospectiveController {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
 
-        return retrospectiveGenerateService.generateProjectDailyRetrospective(project)
+        return retrospectiveGenerateService.generateProjectDailyRetrospective(project, RetrospectiveTriggerType.MANUAL)
                 .thenApply(ResponseEntity::ok);
     }
 
-    @Operation(
-            summary = "프로젝트 회고 전체 조회",
-            description = "해당 프로젝트의 **모든 일일 회고를 최신순**으로 반환합니다."
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "조회 성공",
-            content = @Content(
-                    schema = @Schema(implementation = RetrospectiveListResponse.class),
-                    examples = @ExampleObject(
-                            name = "성공 응답 예시",
-                            value = """
-                        {
-                          "retrospectives": [
-                            {
-                              "date": "2025-08-10",
-                              "projectId": 3,
-                              "userId": 3,
-                              "triggerType": "AUTO",
-                              "contentMarkdown": "## 요약\\n오늘은 두 주요 기능이 성공적으로 완료되었으며...",
-                              "summary": {
-                                "overall": "오늘의 진행상황은 전반적으로 안정적이며...",
-                                "strengths": "기능 안정성, 높은 품질지표...",
-                                "improvements": "체크리스트 미완료 항목 해결...",
-                                "risks": "체크리스트 미완료로 인한 리스크..."
-                              },
-                              "actionItems": null,
-                              "productivityMetrics": {
-                                "codeQuality": 88.75,
-                                "productivityScore": 90.5,
-                                "completedFeatures": 2,
-                                "totalCommits": 5
-                              },
-                              "completedFeatures": [
-                                {
-                                  "featureId": 1001,
-                                  "title": "상품 목록 조회 기능",
-                                  "field": "상품 관리",
-                                  "checklistCount": 2,
-                                  "checklistDoneCount": 1,
-                                  "codeQualityScore": 85.5,
-                                  "summary": "성능 양호, 개선 여지 있음",
-                                  "reviewIssues": [
-                                    {
-                                      "featureTitle": "상품 목록 조회 기능",
-                                      "checklistItem": "상품 목록 API 연동",
-                                      "category": "PERFORMANCE",
-                                      "severity": "MEDIUM",
-                                      "message": "N+1 쿼리 가능성",
-                                      "filePath": "src/main/java/ProductService.java"
-                                    }
-                                  ]
-                                },
-                                {
-                                  "featureId": 1002,
-                                  "title": "주문 결제 기능",
-                                  "field": "결제",
-                                  "checklistCount": 2,
-                                  "checklistDoneCount": 2,
-                                  "codeQualityScore": 92.0,
-                                  "summary": "결제 흐름 안정적",
-                                  "reviewIssues": [
-                                    {
-                                      "featureTitle": "주문 결제 기능",
-                                      "checklistItem": "결제 모듈 연동",
-                                      "category": "SECURITY",
-                                      "severity": "LOW",
-                                      "message": "응답 로그 카드정보 마스킹",
-                                      "filePath": "src/main/java/PaymentService.java"
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        }
-                        """
-                    )
-            )
-    )
-    @GetMapping
-    public ResponseEntity<RetrospectiveListResponse> getAll(
-            @Parameter(description = "프로젝트 ID", example = "1")
-            @PathVariable Long projectId
-    ) {
-        RetrospectiveListResponse response = retrospectiveService.getAllDailyRetrospectives(projectId);
-        return ResponseEntity.ok(response);
-    }
+//    @Operation(
+//            summary = "프로젝트 회고 전체 조회",
+//            description = "해당 프로젝트의 **모든 일일 회고를 최신순**으로 반환합니다."
+//    )
+//    @ApiResponse(
+//            responseCode = "200",
+//            description = "조회 성공",
+//            content = @Content(
+//                    schema = @Schema(implementation = RetrospectiveListResponse.class),
+//                    examples = @ExampleObject(
+//                            name = "성공 응답 예시",
+//                            value = """
+//                                    {
+//                                      "retrospectives": [
+//                                        {
+//                                          "date": "2025-08-10",
+//                                          "projectId": 3,
+//                                          "userId": 3,
+//                                          "triggerType": "AUTO",
+//                                          "contentMarkdown": "## 요약\\n오늘은 두 주요 기능이 성공적으로 완료되었으며...",
+//                                          "summary": {
+//                                            "overall": "오늘의 진행상황은 전반적으로 안정적이며...",
+//                                            "strengths": "기능 안정성, 높은 품질지표...",
+//                                            "improvements": "체크리스트 미완료 항목 해결...",
+//                                            "risks": "체크리스트 미완료로 인한 리스크..."
+//                                          },
+//                                          "actionItems": null,
+//                                          "productivityMetrics": {
+//                                            "codeQuality": 88.75,
+//                                            "productivityScore": 90.5,
+//                                            "completedFeatures": 2,
+//                                            "totalCommits": 5
+//                                          },
+//                                          "completedFeatures": [
+//                                            {
+//                                              "featureId": 1001,
+//                                              "title": "상품 목록 조회 기능",
+//                                              "field": "상품 관리",
+//                                              "checklistCount": 2,
+//                                              "checklistDoneCount": 1,
+//                                              "codeQualityScore": 85.5,
+//                                              "summary": "성능 양호, 개선 여지 있음",
+//                                              "reviewIssues": [
+//                                                {
+//                                                  "featureTitle": "상품 목록 조회 기능",
+//                                                  "checklistItem": "상품 목록 API 연동",
+//                                                  "category": "PERFORMANCE",
+//                                                  "severity": "MEDIUM",
+//                                                  "message": "N+1 쿼리 가능성",
+//                                                  "filePath": "src/main/java/ProductService.java"
+//                                                }
+//                                              ]
+//                                            },
+//                                            {
+//                                              "featureId": 1002,
+//                                              "title": "주문 결제 기능",
+//                                              "field": "결제",
+//                                              "checklistCount": 2,
+//                                              "checklistDoneCount": 2,
+//                                              "codeQualityScore": 92.0,
+//                                              "summary": "결제 흐름 안정적",
+//                                              "reviewIssues": [
+//                                                {
+//                                                  "featureTitle": "주문 결제 기능",
+//                                                  "checklistItem": "결제 모듈 연동",
+//                                                  "category": "SECURITY",
+//                                                  "severity": "LOW",
+//                                                  "message": "응답 로그 카드정보 마스킹",
+//                                                  "filePath": "src/main/java/PaymentService.java"
+//                                                }
+//                                              ]
+//                                            }
+//                                          ]
+//                                        }
+//                                      ]
+//                                    }
+//                                    """
+//                    )
+//            )
+//    )
+//    @GetMapping(params = {"!before", "!limit"})
+//    public ResponseEntity<RetrospectiveListResponse> getAll(
+//            @Parameter(description = "프로젝트 ID", example = "1")
+//            @PathVariable Long projectId
+//    ) {
+//        RetrospectiveListResponse response = retrospectiveService.getAllDailyRetrospectives(projectId);
+//        return ResponseEntity.ok(response);
+//    }
 
     @Operation(
             summary = "특정 날짜 회고 조회",
@@ -279,4 +282,118 @@ public class RetrospectiveController {
         RetrospectiveGenerateResponse response = retrospectiveService.getDailyRetrospective(projectId, date);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(
+            summary = "특정 프로젝트 회고 무한 스크롤 조회",
+            description = """
+                지정한 프로젝트의 회고를 최신순으로 무한 스크롤 방식으로 조회합니다.
+                `before`는 커서(yyyy-MM-dd)로, 해당 날짜 **이전**의 데이터부터 조회합니다.
+                `limit`은 한 번에 가져올 개수이며 기본값은 15입니다.
+                """
+    )
+    @Parameters({
+            @Parameter(
+                    name = "projectId",
+                    description = "프로젝트 ID (path 변수)",
+                    required = true
+            ),
+            @Parameter(
+                    name = "before",
+                    description = "커서 날짜(yyyy-MM-dd). 이 날짜 **이전** 데이터부터 조회",
+                    example = "2025-08-10",
+                    required = true
+            ),
+            @Parameter(
+                    name = "limit",
+                    description = "조회 개수(기본 15)",
+                    example = "15",
+                    required = true
+            )
+    })
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            schema = @Schema(implementation = RetrospectiveScrollResponse.class),
+                            examples = @ExampleObject(
+                                    name = "성공 응답 예시",
+                                    value = """
+                                        {
+                                          "items": [
+                                            {
+                                              "date": "2025-08-10",
+                                              "projectId": 7,
+                                              "userId": 3,
+                                              "triggerType": "AUTO",
+                                              "contentMarkdown": "## 요약\\n오늘은 두 주요 기능이 성공적으로 완료되었으며...",
+                                              "summary": {
+                                                "overall": "오늘 진행은 안정적이며 주요 기능 완료",
+                                                "strengths": "기능 안정성, 품질지표 양호, 커밋 꾸준함",
+                                                "improvements": "미완 체크리스트 처리, 코드 리뷰 강화",
+                                                "risks": "체크리스트 미완료로 인한 품질 저하 가능성"
+                                              },
+                                              "actionItems": null,
+                                              "productivityMetrics": {
+                                                "codeQuality": 88.75,
+                                                "productivityScore": 90.5,
+                                                "completedFeatures": 2,
+                                                "totalCommits": 5
+                                              },
+                                              "completedFeatures": [
+                                                {
+                                                  "featureId": 1001,
+                                                  "title": "상품 목록 조회 기능",
+                                                  "field": "상품 관리",
+                                                  "checklistCount": 2,
+                                                  "checklistDoneCount": 1,
+                                                  "codeQualityScore": 85.5,
+                                                  "summary": "성능 양호, 개선 여지 있음",
+                                                  "reviewIssues": [
+                                                    {
+                                                      "featureTitle": "상품 목록 조회 기능",
+                                                      "checklistItem": "상품 목록 API 연동",
+                                                      "category": "PERFORMANCE",
+                                                      "severity": "MEDIUM",
+                                                      "message": "N+1 쿼리 가능성",
+                                                      "filePath": "src/main/java/ProductService.java"
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ],
+                                          "hasNext": true,
+                                          "nextBefore": "2025-08-07"
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트 없음",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "프로젝트 미존재 예시",
+                                    value = "{\"message\": \"존재하지 않는 프로젝트입니다.\"}"
+                            )
+                    )
+            )
+    })
+    @GetMapping(params = {"before", "limit"})
+    public ResponseEntity<RetrospectiveScrollResponse> scrollProject(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate before,
+            @RequestParam(defaultValue = "15") int limit
+    ) {
+        projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
+
+        RetrospectiveScrollResponse resp = retrospectiveService.getProjectScroll(projectId, before, limit);
+        return ResponseEntity.ok(resp);
+    }
+
+
 }

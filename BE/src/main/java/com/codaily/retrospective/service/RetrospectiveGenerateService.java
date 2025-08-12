@@ -6,5 +6,5 @@ import com.codaily.retrospective.dto.RetrospectiveGenerateResponse;
 import java.util.concurrent.CompletableFuture;
 
 public interface RetrospectiveGenerateService {
-    CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project);
+    CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project, RetrospectiveTriggerType type);
 }

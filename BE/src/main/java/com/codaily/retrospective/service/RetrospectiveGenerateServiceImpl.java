@@ -23,7 +23,7 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
     private final RetrospectiveService retrospectiveService;
 
     @Override
-    public CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project) {
+    public CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project, RetrospectiveTriggerType type) {
         final LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
 
         return Mono.fromCallable(() -> {
@@ -65,14 +65,14 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
                     // 신규 생성: LLM 서버 호출
                     RetrospectiveGenerateRequest payload = (RetrospectiveGenerateRequest) obj;
                     return langchainWebClient.post()
-                            .uri("/api/retrospective/generate")
+                            .uri("ai/api/retrospective/generate")
                             .bodyValue(payload)
                             .retrieve()
                             .bodyToMono(RetrospectiveGenerateResponse.class)
                             .publishOn(Schedulers.boundedElastic())
                             .flatMap(resp -> Mono.fromRunnable(() ->
                                             retrospectiveService.saveRetrospective(
-                                                    project, resp, today, RetrospectiveTriggerType.AUTO))
+                                                    project, resp, today, type))
                                     .thenReturn(resp));
                 })
                 .toFuture();

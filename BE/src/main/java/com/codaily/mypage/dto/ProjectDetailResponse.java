@@ -1,7 +1,6 @@
 package com.codaily.mypage.dto;
 
-import com.codaily.management.entity.DaysOfWeek;
-import com.codaily.management.entity.Schedule;
+import com.codaily.project.dto.ProjectRepositoryResponse;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,14 +9,14 @@ import java.util.List;
 
 @Data
 @Builder
-public class ProjectListResponse {
+public class ProjectDetailResponse {
     private Long projectId;
     private String title;
+    private String description;
     private LocalDate startDate;
     private LocalDate endDate;
     private String status;
-    private int progressRate;
-    private List<String> techStacks;
     private List<DaysOfWeekResponse> daysOfWeeks;
     private List<ScheduleResponse> schedules;
+    private List<ProjectRepositoryResponse> repositories;
 }
