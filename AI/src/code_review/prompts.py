@@ -10,17 +10,14 @@ feature_inference_prompt = ChatPromptTemplate.from_messages([
      - 기능은 아래 제공된 기능 후보 목록(available_features) 중에서만 고르세요.
      - 복수의 기능이 포함되어 있다면, 쉼표(,)로 구분된 하나의 줄로 기능명을 모두 나열하세요.
      - 후보 목록에 없거나 관련 없는 변경은 포함하지 마세요.
-     - 결과는 오직 아래 형식 중 하나로만 출력하세요:
-     - 없다면 `"기능 없음"`으로만 응답
+     - 코드 변경(diff)이 기능 후보와 직접적인 관련이 없어 보이더라도, 유사하거나 간접적으로 관련 있으면 고르세요.
+     - 정말 관련이 없고 무관한 경우에만, "기능 없음"
      - 절대 설명이나 줄바꿈 없이, 딱 그 문장 하나만 출력할 것
+     - 결과는 오직 아래 형식 중 하나로만 출력하세요:
 
      👉 "기능 없음"
      👉 "기능1, 기능2, 기능3"
-    
-        📌 예시 출력:
-        로그인 기능
-        회원가입 기능
-        기능 없음
+  
         
      """),
     ("human", 
@@ -59,8 +56,8 @@ checklist_evaluation_prompt = ChatPromptTemplate.from_messages([
      각 체크리스트 항목에 대해 true/false로 판단해 주세요.
 
      - checklist 외에도 추가적으로 구현된 항목이 있다면 extra_implemented 목록에 추가합니다.
-     - 모든 checklist가 True일 경우 implements는 True, 하나라도 False이면 False입니다.
-       어떤 파일에 구현되었는지도 함께 반환하세요. 
+     - 모든 checklist가 True일 경우 implemented는 True, 하나라도 False이면 False입니다.
+       어떤 파일에 구현되었는지도 경로와 함께 반환하세요. 
 
      📌 출력은 반드시 아래 JSON 형식을 따라야 합니다:
 
@@ -71,11 +68,11 @@ checklist_evaluation_prompt = ChatPromptTemplate.from_messages([
             "OAuth 인증 요청 URL 생성 및 리디렉션 처리": true,
             "소셜 플랫폼에서 액세스 토큰 수신 및 유저 정보 조회": false
           }},
-          "implements": false,
+          "implemented": false,
           "extra_implemented": ["로깅 처리", "에러 응답 통일"],
           "checklist_file_map": {{
             "OAuth 인증 요청 URL 생성 및 리디렉션 처리": ["OAuthService.java", "AuthController.java"],
-            "로깅 처리": ["LogUtil.java", "OAuthService.java"]
+            "로깅 처리": ["src/main/java/com/util/LogUtil.java", "src/main/java/com/auth/service/OAuthService.java"]
           }}
         }}
 
@@ -88,8 +85,8 @@ checklist_evaluation_prompt = ChatPromptTemplate.from_messages([
     ),
     ("user",
         "기능명: {feature_name}\n"
-        "전체 코드:\n{code}\n\n"
-        "체크리스트 항목:\n{checklist}")
+        "전체 코드:\n{diff_files}\n\n"
+        "체크리스트 항목:\n{checklist_items}")
 ])
 
 code_review_prompt = ChatPromptTemplate.from_messages([
@@ -100,6 +97,7 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         - 코딩 컨벤션
         - 버그 위험도
         - 보안 위험
+        - 복잡도
         - 성능 최적화
         - 리팩토링 제안
         - 요약
@@ -117,7 +115,7 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         - file_path: 문제가 발견된 파일 경로 (예: login.js)
         - line_range: 문제가 있는 줄 범위 (예: 30-60 또는 42 한 줄)
         - severity: 심각도 ("높음", "중간", "낮음" 중 하나)
-        - message: 한 줄 리뷰 메시지 (줄바꿈 없이 작성)
+        - message: 문제점과 개선점을 포함한 한 줄 리뷰 메시지 (줄바꿈 없이 작성)
 
         📌 마지막에는 전체 코드 리뷰에 대한 종합적인 총평을 `summary` 필드로 작성하세요.  
         이 필드는 한 줄일 필요는 없으며, 자유롭게 여러 줄로 서술해도 됩니다.  
@@ -171,12 +169,13 @@ review_summary_prompt = ChatPromptTemplate.from_messages([
     당신은 코드 리뷰를 요약해주는 요약 전문가입니다.
 
     특정 프로젝트 기능에 대해 여러 개의 코드 리뷰가 존재하며,  
-    이 리뷰들은 각기 다른 카테고리(코딩 컨벤션, 버그 가능성, 보안 위험, 성능 최적화, 리팩토링 제안)에 따라 분류되어 있습니다.  
+    이 리뷰들은 각기 다른 카테고리(코딩 컨벤션(convention), 버그 가능성(bug_risk), 보안 위험(security_risk), 성능 최적화(performance), 리팩토링 제안(refactoring_suggestion), 복잡도(complexity))에 따라 분류되어 있습니다.  
 
     📌 당신의 역할은 다음과 같습니다:
     - 각 카테고리별로 요약을 **한 줄씩만 작성**하세요.
     - 전체 코드 리뷰 내용을 종합해, 이 기능 구현의 **종합 요약**과 **100점 만점 기준의 점수**도 작성하세요.
     - 각 항목별로 **리뷰의 severity(심각도)** 정보를 참고해, **높음** 수준의 문제는 특히 강조해서 반영하세요.
+    - 요약(summary) 항목은 코드리뷰 각 항목들(코딩 컨벤션, 버그 가능성, 보안 위험, 성능 최적화, 리팩토링 제안, 복잡도)에 대한 코드 리뷰 요약입니다.
 
     ✨ 입력 데이터는 각 카테고리별로 다음 두 정보만 포함됩니다:
     - `severity`: 심각도 (높음, 중간, 낮음)
@@ -186,24 +185,14 @@ review_summary_prompt = ChatPromptTemplate.from_messages([
     각 항목은 절대 줄바꿈 없이 `- 항목:` 뒤에 한 줄로 이어지게 작성하세요.
 
     🔸 출력 형식:
-        - 요약: ...
-        - 점수: 00
-        - 코딩 컨벤션: ...
-        - 버그 가능성: ...
-        - 보안 위험: ...
-        - 성능 최적화: ...
-        - 리팩토링 제안: ...
-
-    ⚠️ 아래 예시는 '형식 참고용'이며, **내용은 절대 참고하지 마세요. 반드시 실제 리뷰 내용을 바탕으로 작성해야 합니다.**
-
-    예시:
-        - 요약: ...
-        - 점수: 78
-        - 코딩 컨벤션: ...
-        - 버그 가능성: ...
-        - 보안 위험: ...
-        - 성능 최적화: ...
-        - 리팩토링 제안: ...
+        - summary: ...
+        - quality_score: 00
+        - convention: ...
+        - bug_risk: ...
+        - complexity: ...
+        - security_risk: ...
+        - performance: ...
+        - refactoring_suggestion: ...
 
     📌 종결어미는 모두 '~함' 형태로 통일하세요.  
     "~해야 함"처럼 이미 '~ㅁ'으로 끝나는 경우에는 중복으로 '~함'을 붙이지 마세요.

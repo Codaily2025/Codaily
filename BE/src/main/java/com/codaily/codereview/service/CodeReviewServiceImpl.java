@@ -18,16 +18,15 @@ import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.service.FeatureItemService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CodeReviewServiceImpl implements CodeReviewService {
 
     private final FeatureItemRepository featureItemRepository;
@@ -41,11 +40,13 @@ public class CodeReviewServiceImpl implements CodeReviewService {
     private final CodeReviewItemService codeReviewItemService;
     private final CodeReviewResponseMapper codeReviewResponseMapper;
     private final UserService userService;
+    private final com.github.benmanes.caffeine.cache.Cache<String, Boolean> idempotencyCache;
+
 
 
     @Override
     public void saveCodeReviewResult(CodeReviewResultRequest request) {
-        Map<String, String> summary = request.getReviewSummary();
+        Map<String, String> summary = request.getReviewSummaries();
 
         CodeReview review = CodeReview.builder()
                 .featureItem(featureItemRepository.getReferenceById(request.getFeatureId()))
@@ -54,71 +55,154 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                 .summary(summary.getOrDefault("요약", ""))
                 .convention(summary.getOrDefault("코딩 컨벤션", ""))
                 .bugRisk(summary.getOrDefault("버그 가능성", ""))
+                .performance(summary.getOrDefault("성능 최적화", ""))
                 .securityRisk(summary.getOrDefault("보안 위험", ""))
-                .complexity(summary.getOrDefault("성능 최적화", ""))
-                .refactorSuggestion(summary.getOrDefault("리팩터링 제안", ""))
+                .complexity(summary.getOrDefault("복잡도", ""))
+                .refactorSuggestion(summary.getOrDefault("리팩토링 제안", ""))
                 .build();
 
         codeReviewRepository.save(review);
         FeatureItem featureItem = featureItemService.findById(request.getFeatureId());
         featureItem.setStatus("DONE");
+
+        List<FeatureItem> childFeatures = featureItemRepository.findByParentFeature(featureItem.getParentFeature());
+
+        boolean allDone = childFeatures.stream()
+                .allMatch(feature -> "DONE".equals(feature.getStatus()));
+
+        if (allDone) {
+            featureItem.getParentFeature().setStatus("DONE");
+        }
+
     }
 
     // 체크리스트 항목 코드리뷰 저장
     @Override
     @Transactional
     public void saveChecklistReviewItems(CodeReviewResultRequest request) {
+        // 0) 필수값 가드
         Long featureId = request.getFeatureId();
+        if (featureId == null || request.getFeatureName() == null || request.getFeatureName().isEmpty()) {
+            log.error("[CodeReviewItem][SKIP] feature 식별 불가: featureId={}, featureName={}", featureId, request.getFeatureName());
+            return;
+        }
 
-        for (CodeReviewItemDto review : request.getCodeReviewItems()) {
-            String checklistItem = review.getChecklistItem();
-            String category = review.getCategory();
+        List<CodeReviewItemDto> reviews = Optional.ofNullable(request.getCodeReviewItems()).orElse(List.of());
+        if (reviews.isEmpty()) {
+            log.warn("[CodeReviewItem][SKIP] codeReviewItems 비어있음: featureId={}", featureId);
+            return;
+        }
 
-            List<ReviewItemDto> items = review.getItems();
-            if (items.isEmpty()) continue;
+        // 1) 연관 엔티티 존재 검증 (getReferenceById 대신 findById로 즉시 검증)
+        FeatureItem featureItem = featureItemRepository.findById(featureId)
+                .orElseThrow(() -> new IllegalArgumentException("featureItem not found: " + featureId));
 
-            for (ReviewItemDto item : items) {
-                String filePath = item.getFilePath();
-                String lineRange = item.getLineRange();
-                String severity = item.getSeverity();
-                String message = item.getMessage();
-                FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
-                CodeReviewItem entity = CodeReviewItem.builder()
-                        .featureItem(featureItem)
-                        .featureItemChecklist(featureItemChecklistService.findByFeatureItem_FeatureIdAndItem(featureId, checklistItem))
-                        .filePath(filePath)
-                        .lineRange(lineRange)
-                        .severity(severity)
-                        .message(message)
-                        .build();
+        List<CodeReviewItem> toSave = new ArrayList<>();
+        int groupCount = 0;
+        int itemCount  = 0;
 
-                codeReviewItemRepository.save(entity);
+        try {
+            for (CodeReviewItemDto review : reviews) {
+                groupCount++;
+                String checklistItem = review.getChecklistItem();
+                List<ReviewItemDto> items = Optional.ofNullable(review.getItems()).orElse(List.of());
+                if (items.isEmpty()) {
+                    log.debug("[CodeReviewItem][SKIP-GROUP] items empty: checklistItem={}", checklistItem);
+                    continue;
+                }
+
+                // 2) 체크리스트 항목 엔티티 조회 (없으면 스킵 or 예외)
+                var fic = featureItemChecklistService
+                        .findByFeatureItem_FeatureIdAndItem(featureId, checklistItem);
+                if (fic == null) {
+                    log.warn("[CodeReviewItem][SKIP-GROUP] checklist 항목 없음: featureId={}, item={}", featureId, checklistItem);
+                    continue; // 필요하면 여기서 throw 로 바꿔도 됨
+                }
+
+                for (ReviewItemDto item : items) {
+                    itemCount++;
+                    CodeReviewItem entity = CodeReviewItem.builder()
+                            .featureItem(featureItem)
+                            .featureItemChecklist(fic)
+                            .filePath(item.getFilePath())
+                            .lineRange(item.getLineRange())
+                            .severity(item.getSeverity())
+                            .message(item.getMessage())
+                            .build();
+                    toSave.add(entity);
+                }
             }
+
+            if (toSave.isEmpty()) {
+                log.warn("[CodeReviewItem][SKIP] 저장할 항목 없음: groups={}, items={}", groupCount, itemCount);
+                return;
+            }
+
+            codeReviewItemRepository.saveAll(toSave);
+            codeReviewItemRepository.flush();  // ← 예외를 지금 즉시 터뜨려서 롤백 원인 확인
+
+            log.info("[CodeReviewItem][OK] saved: groups={}, itemsSaved={}", groupCount, toSave.size());
+
+        } catch (Exception e) {
+            log.error("[CodeReviewItem][FAIL] featureId={}, groups={}, builtItems={}, cause={}",
+                    featureId, groupCount, toSave.size(), e.toString(), e);
+            throw e; // 트랜잭션 롤백되도록 재던짐
         }
     }
+
 
 
     @Override
-    public void saveFeatureName(Long projectId, List<String> featureNames, Long commitId) {
+    public void saveFeatureName(Long projectId, String featureName, Long commitId) {
         CodeCommit commit = codeCommitService.findById(commitId);
 
-        for(String name : featureNames) {
-            commit.addFeatureName(name);
+            if(!commit.getFeatureNames().contains(featureName)) {
+                commit.addFeatureName(featureName);
 
-            FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, name);
-            commit.addFeatureItem(featureItem);
-        }
-
+                FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
+                commit.addFeatureItem(featureItem);
+            }
     }
+
+
+//    @Override
+//    @Transactional
+//    public void updateChecklistEvaluation(Long featureId, Map<String, Boolean> checklistEvaluation,
+//                                          List<String> extraImplemented) {
+//        for(Map.Entry<String, Boolean> entry : checklistEvaluation.entrySet()) {
+//            String item = entry.getKey();
+//            boolean isDone = entry.getValue();
+//            FeatureItemChecklist featureItemChecklist = featureItemChecklistService.findByFeatureItem_FeatureIdAndItem(featureId, item);
+//            featureItemChecklist.updateDone(isDone);
+//        }
+//
+//        // 추가 구현 항목 처리
+//        for(String extra : extraImplemented) {
+//            boolean exists = featureItemChecklistService.existsByFeatureItem_FeatureIdAndItem(featureId, extra);
+//            FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
+//
+//            if(!exists) {
+//                FeatureItemChecklist checklist = FeatureItemChecklist.builder()
+//                        .featureItem(featureItem)
+//                        .item(extra)
+//                        .description(extra)
+//                        .done(true)
+//                        .build();
+//
+//                featureItemChecklistRepository.save(checklist);
+//            }
+//        }
+//    }
 
     @Override
     @Transactional
-    public void updateChecklistEvaluation(Long featureId, Map<String, Boolean> checklistEvaluation,
-                                          List<String> extraImplemented) {
+    public void updateChecklistEvaluation(Long projectId, Map<String, Boolean> checklistEvaluation, List<String> extraImplemented, String featureName) {
+        FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
+        Long featureId = featureItem.getFeatureId();
+
         for(Map.Entry<String, Boolean> entry : checklistEvaluation.entrySet()) {
             String item = entry.getKey();
             boolean isDone = entry.getValue();
-
             FeatureItemChecklist featureItemChecklist = featureItemChecklistService.findByFeatureItem_FeatureIdAndItem(featureId, item);
             featureItemChecklist.updateDone(isDone);
         }
@@ -126,8 +210,6 @@ public class CodeReviewServiceImpl implements CodeReviewService {
         // 추가 구현 항목 처리
         for(String extra : extraImplemented) {
             boolean exists = featureItemChecklistService.existsByFeatureItem_FeatureIdAndItem(featureId, extra);
-            FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
-
             if(!exists) {
                 FeatureItemChecklist checklist = FeatureItemChecklist.builder()
                         .featureItem(featureItem)
@@ -139,7 +221,9 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                 featureItemChecklistRepository.save(checklist);
             }
         }
+
     }
+
 
     @Override
     public void addChecklistFilePaths(Long featureId, Map<String, List<String>> checklistFieldMap) {
@@ -355,6 +439,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                 })
                 .collect(java.util.stream.Collectors.toList());
     }
+
 
     /** 리뷰가 없으면 null 점수로 처리 */
     private Double getQualityScoreSafe(Long featureId) {

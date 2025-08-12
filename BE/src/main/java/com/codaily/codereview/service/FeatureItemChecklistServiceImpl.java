@@ -23,7 +23,7 @@ public class FeatureItemChecklistServiceImpl implements FeatureItemChecklistServ
     @Override
     public FeatureItemChecklist findByFeatureItem_FeatureIdAndItem(Long featureId, String item) {
         return checklistRepository.findByFeatureItem_FeatureIdAndItem(featureId, item)
-                .orElseThrow(() -> new IllegalArgumentException("체크리스트 항목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException(featureId + " 체크리스트 항목을 찾을 수 없습니다. " + item));
     }
 
     @Override

@@ -42,7 +42,7 @@ public class SecurityConfig {
         jwtAuthenticationFilter.setFilterProcessesUrl("/api/login");
 
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/webhook").disable())
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/webhook", "/actuator/health").disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                         .requestMatchers("/api/webhook").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable())

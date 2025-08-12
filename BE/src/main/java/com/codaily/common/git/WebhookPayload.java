@@ -1,5 +1,6 @@
 package com.codaily.common.git;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -7,6 +8,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WebhookPayload {
     private String ref;
     private String before;
@@ -15,6 +17,7 @@ public class WebhookPayload {
     private List<Commit> commits;
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Repository {
         private String name;
         private String full_name;
@@ -22,6 +25,7 @@ public class WebhookPayload {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Commit {
         private String id; // SHA
         private String message;
@@ -34,6 +38,7 @@ public class WebhookPayload {
     }
 
     @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Author {
         private String name;
         private String email;

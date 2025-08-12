@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,59 +36,116 @@ public class CodeReviewController {
     private final CodeReviewResponseMapper codeReviewResponseMapper;
 
     // 체크리스트 전달
-    @GetMapping("/project/{projectId}/feature/{featureName}/checklist")
+    @GetMapping("/project/{projectId}/feature/checklist")
     @Operation(summary = "백엔드용")
-    public List<ChecklistItemDto> getChecklistItems(@PathVariable Long projectId, @PathVariable String featureName) {
+    public ChecklistItemResultDto getChecklistItems(@PathVariable Long projectId, @RequestParam String featureName) {
         FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
 
         List<FeatureItemChecklist> list = featureItemChecklistService.findByFeatureItem_FeatureId(featureItem.getFeatureId());
 
-        return list.stream()
-                .map(item -> new ChecklistItemDto(item.getItem(), item.isDone()))
-                .collect(Collectors.toList());
+        return ChecklistItemResultDto.builder().featureId(featureItem.getFeatureId())
+                .checklistItems(list.stream()
+                                .map(item -> new ChecklistItemDto(item.getItem(), item.isDone()))
+                                .collect(Collectors.toList())).build();
     }
+
+
+//    @PostMapping("/project/{projectId}/commit/{commitHash}/files")
+//    @Operation(summary = "백엔드용")
+//    public List<FullFileDto> getFullFilesByPaths(@PathVariable Long projectId, @PathVariable String commitHash,
+//                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto,
+//                                                 @AuthenticationPrincipal PrincipalDetails userDetails){
+//        List<String> paths = fileFetchRequestDto.getFilePaths();
+//        String repoName = fileFetchRequestDto.getRepoName();
+//        String repoOwner = fileFetchRequestDto.getRepoOwner();
+//
+//        Project project = projectService.findById(projectId);
+//        Long userId = project.getUser().getUserId();
+//        Long loginUserId = userDetails.getUser().getUserId();
+//
+//        if(userId != loginUserId) {
+//            log.info("해당 프로젝트에 접근할 권한이 없습니다.");
+//        }
+//        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
+//
+//        return fullFiles.stream()
+//                .map(file -> new FullFileDto(file.getFilePath(), file.getContent()))
+//                .collect(Collectors.toList());
+//    }
 
     @PostMapping("/project/{projectId}/commit/{commitHash}/files")
     @Operation(summary = "백엔드용")
     public List<FullFileDto> getFullFilesByPaths(@PathVariable Long projectId, @PathVariable String commitHash,
-                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto,
-                                                 @AuthenticationPrincipal PrincipalDetails userDetails){
+                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto){
+
         List<String> paths = fileFetchRequestDto.getFilePaths();
         String repoName = fileFetchRequestDto.getRepoName();
         String repoOwner = fileFetchRequestDto.getRepoOwner();
+        String commitBranch = normalizeRef(fileFetchRequestDto.getCommitBranch());;
 
         Project project = projectService.findById(projectId);
         Long userId = project.getUser().getUserId();
-        Long loginUserId = userDetails.getUser().getUserId();
+//        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
 
-        if(userId != loginUserId) {
-            log.info("해당 프로젝트에 접근할 권한이 없습니다.");
+        // paths가 있으면: 레포 경로 기반으로 해당 파일들만 조회
+        if (!paths.isEmpty()) {
+            List<FullFile> files = webhookService.getFilesFromRepoPaths(
+                    userId, repoOwner, repoName, paths, commitBranch
+            );
+            return files.stream()
+                    .map(f -> new FullFileDto(f.getFilePath(), f.getContent()))
+                    .collect(Collectors.toList());
         }
-        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
 
-        return fullFiles.stream()
-                .map(file -> new FullFileDto(file.getFilePath(), file.getContent()))
+        // paths가 없으면: 커밋 변경 파일 조회(기존 동작)
+        List<FullFile> files = webhookService.getFullFilesFromCommit(
+                commitHash, projectId, userId, repoOwner, repoName
+        );
+        return files.stream()
+                .map(f -> new FullFileDto(f.getFilePath(), f.getContent()))
                 .collect(Collectors.toList());
     }
 
-    @PostMapping("/code-review/result")
+    /** "refs/heads/main" → "main", "refs/tags/v1.0.0" → "v1.0.0" */
+    private static String normalizeRef(String ref) {
+        if (ref == null || ref.isBlank()) return null;
+        if (ref.startsWith("refs/heads/")) return ref.substring("refs/heads/".length());
+        if (ref.startsWith("refs/tags/"))  return ref.substring("refs/tags/".length());
+        return ref;
+    }
+
+
+    @PostMapping("/result")
     @Operation(summary = "백엔드용")
     public ResponseEntity<?> receiveCodeReviewResult(@RequestBody CodeReviewResultRequest request) {
-        if(request.getFeatureNames() != null && !request.getFeatureNames().isEmpty()) {
-            codeReviewService.saveFeatureName(request.getProjectId(), request.getFeatureNames(), request.getCommitId());
+        if(request.getFeatureName() != null && !request.getFeatureName().isEmpty()) {
+            codeReviewService.saveFeatureName(request.getProjectId(), request.getFeatureName(), request.getCommitId());
             log.info("기능명 저장 완료");
         }
+        // featureName 으로 찾아야될듯 ... ?
         // 체크리스트 구현 여부 변경 or 커밋 메시지 구현 완료 or 사용자가 작업완료 버튼 클릭
+//        if((request.getChecklistFileMap() != null && !request.getChecklistFileMap().isEmpty()) || request.isForceDone()) {
+//            codeReviewService.updateChecklistEvaluation(request.getFeatureId(), request.getChecklistEvaluation(), request.getExtraImplemented());
+//            log.info("체크리스트 구현 여부 업데이트");
+//        }
+
         if((request.getChecklistFileMap() != null && !request.getChecklistFileMap().isEmpty()) || request.isForceDone()) {
-            codeReviewService.updateChecklistEvaluation(request.getFeatureId(), request.getChecklistEvaluation(), request.getExtraImplemented());
+            codeReviewService.updateChecklistEvaluation(request.getProjectId(), request.getChecklistEvaluation(), request.getExtraImplemented(),
+                    request.getFeatureName());
             log.info("체크리스트 구현 여부 업데이트");
         }
-        if (request.getReviewSummary() != null) {
-            codeReviewService.saveCodeReviewResult(request);
-            log.info("기능 구현 완료 -> 코드 리뷰 생성");
-        } else {
+
+        if(request.getReviewSummary() != null) {
+            log.info("체크리스트 코드 리뷰 요청 수신: featureId={}, items={}",
+                    request.getFeatureId(),
+                    request.getCodeReviewItems() == null ? 0 : request.getCodeReviewItems().size());
             codeReviewService.saveChecklistReviewItems(request);
-            log.info("기능 미구현, 체크리스트 코드 리뷰 생성");
+            log.info("체크리스트 코드 리뷰 저장 시도 완료");
+        }
+
+        if (request.getReviewSummaries() != null) {
+            codeReviewService.saveCodeReviewResult(request);
+            log.info("기능 구현 완료 -> 코드 리뷰(CodeReview) 생성");
         }
         return ResponseEntity.ok().build();
 

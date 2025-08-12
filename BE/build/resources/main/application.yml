@@ -96,3 +96,8 @@ springdoc:
 
 server:
   port: 8081
+
+logging:
+  level:
+    root: INFO
+    com.codaily: INFO

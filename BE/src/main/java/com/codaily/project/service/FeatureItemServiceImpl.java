@@ -25,6 +25,7 @@ import com.codaily.project.repository.SpecificationRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +51,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ScheduleRepository scheduleRepository;
     private final FeatureItemChecklistRepository checklistRepository;
-    private final WebClient webClient;
+    @Qualifier("langchainWebClient")   // ★ LangChain(FastAPI) 호출용
+    private final WebClient langchainWebClient;
 
     @Override
     public FeatureItemResponse createFeature(Long projectId, FeatureItemCreateRequest featureItem) {
@@ -433,7 +435,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                     .build();
 
             try {
-                FeatureChecklistResponseDto response = webClient
+                FeatureChecklistResponseDto response = langchainWebClient
                         .post()
                         .uri("/api/generate-checklist")
                         .bodyValue(request)
@@ -492,7 +494,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .build();
 
         try {
-            FeatureChecklistExtraResponseDto response = webClient
+            FeatureChecklistExtraResponseDto response = langchainWebClient
                     .post()
                     .uri("/api/generate-checklist/extra")
                     .bodyValue(request)
