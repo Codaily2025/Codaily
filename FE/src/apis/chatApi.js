@@ -108,7 +108,7 @@ export const streamChatResponse = ({
   let fullContent = "";
   let ended = false; // 의도적 종료 플래그
 
-  const es = new EventSource(eventSourceUrl);
+  const es = new EventSource(eventSourceUrl, { withCredentials: true });
 
   es.onopen = () => {
     console.log('SSE 연결');

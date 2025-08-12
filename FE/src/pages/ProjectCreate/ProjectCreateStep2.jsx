@@ -16,16 +16,48 @@ import RequirementsSidebar from '../../components/RequirementsSpecification/Requ
 const ProjectCreateStep2 = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [isSplitView, setIsSplitView] = useState(false); // 분할 화면 상태
+  // const [isSplitView, setIsSplitView] = useState(false); // 분할 화면 상태
+  // zustand 스토어의 showSidebar 상태 가져오기
+  const isSidebarVisible = useSpecificationStore((state) => state.showSidebar);
+  const mainFeatures = useSpecificationStore((state) => state.mainFeatures);
+  const toggleSidebar = useSpecificationStore((state) => state.toggleSidebar);
+  const hideSidebar = useSpecificationStore((state) => state.hideSidebar);
   
-  // 요구사항 명세서 사이드바 표시 상태
-  const showSidebar = useSpecificationStore((state) => state.showSidebar);
+  // 사이드바 표시 조건: isSidebarVisible이 true이거나 mainFeatures가 있을 때
+  const shouldShowSidebar = isSidebarVisible || (mainFeatures && mainFeatures.length > 0);
+  
+  // 디버깅을 위한 로그 추가
+  useEffect(() => {
+    console.log('isSidebarVisible 상태 변경:', isSidebarVisible);
+    console.log('mainFeatures 상태:', mainFeatures);
+    console.log('shouldShowSidebar:', shouldShowSidebar);
+  }, [isSidebarVisible, mainFeatures, shouldShowSidebar]);
+
+  // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수
+  useEffect(() => {
+    window.testSidebar = () => {
+      console.log('사이드바 테스트 함수 호출');
+      console.log('현재 상태:', { isSidebarVisible, mainFeatures, shouldShowSidebar });
+      toggleSidebar();
+    };
+    
+    return () => {
+      delete window.testSidebar;
+    };
+  }, [isSidebarVisible, mainFeatures, shouldShowSidebar, toggleSidebar]);
   
   // URL 파라미터에서 projectId와 specId 가져오기
   const projectId = searchParams.get('projectId');
   const specId = searchParams.get('specId');
   
   console.log('ProjectCreateStep2 진입 - projectId:', projectId, 'specId:', specId);
+  
+  // 페이지 로드 시 사이드바를 명시적으로 숨김 (mainFeatures가 없을 때만)
+  useEffect(() => {
+    if (!mainFeatures || mainFeatures.length === 0) {
+      hideSidebar();
+    }
+  }, [hideSidebar, mainFeatures]);
   
   // projectId나 specId가 없으면 이전 페이지로 이동
   useEffect(() => {
@@ -69,7 +101,8 @@ const ProjectCreateStep2 = () => {
 
   // 다음으로 버튼 클릭 핸들러
   const handleNextClick = () => {
-    setIsSplitView(true); // 수동으로 분할 화면 활성화
+    // setIsSplitView(true); // 수동으로 분할 화면 활성화
+    navigate('/project/create/step4')
   };
 
   // projectId나 specId가 없으면 로딩 표시
@@ -85,20 +118,20 @@ const ProjectCreateStep2 = () => {
       {/* 채팅 영역 */}
       <div className="main-content-container">
       <div className={`chat-main-content`}>
-        <div className={`chat-window-container ${(isSplitView || showSidebar) ? 'split-view' : ''}`}>
+        <div className={`chat-window-container ${(shouldShowSidebar) ? 'split-view' : ''}`}>
           <div className="chat-window">
             <div className="chat-scroll-area">
               {messages.map((message) => (
                 message.sender === 'bot' ? (
                   <ChatbotMessage
                     key={message.id}
-                    isSmall={(isSplitView || showSidebar) ? true : false}>
+                    isSmall={shouldShowSidebar ? true : false}>
                     {message.text}
                   </ChatbotMessage>
                 ) : (
                   <ChatUserMessage
                     key={message.id}
-                    isSmall={(isSplitView || showSidebar) ? true : false}>
+                    isSmall={shouldShowSidebar ? true : false}>
                     {message.text}
                   </ChatUserMessage>
                 )
@@ -113,7 +146,7 @@ const ProjectCreateStep2 = () => {
         <ChatInputBar
           onSend={text => sendUserMessage.mutate(text)} // 사용자 메세지 전송 함수 호출
           isSending={sendUserMessage.isLoading} // 메세지 전송 중인지 표시
-          isSplitView={(isSplitView || showSidebar)} // 분할 화면 상태 전달
+          isSplitView={shouldShowSidebar} // 분할 화면 상태 전달
         />
         {isLoading && <div className="loading-message">채팅 기록을 불러오는 중입니다...</div>}
 
@@ -121,7 +154,7 @@ const ProjectCreateStep2 = () => {
         {/* 요구사항 명세서 영역 (분할 화면일 때만 표시) */}
         
       </div>
-      {(isSplitView || showSidebar) && (
+      {shouldShowSidebar && (
         <RequirementsSidebar />
       )}
       </div>
