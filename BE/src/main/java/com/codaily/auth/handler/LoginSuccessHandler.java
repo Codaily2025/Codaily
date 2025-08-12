@@ -28,7 +28,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final UserRepository userRepository;
 
 
-    @Value("${app.frontend.url:${app.frontend-url:${APP_FRONTEND_URL:http://localhost:5173}}}")
+    @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     @Override
