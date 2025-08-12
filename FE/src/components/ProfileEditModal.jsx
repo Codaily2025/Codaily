@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfileStore } from '../stores/profileStore';
 import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation, useUploadProfileImageMutation } from '../queries/useProfile';
-import { useDisconnectGithubMutation, useGithubIdQuery } from '../queries/usegitHub';
+import { useDisconnectGithubMutation, useGithubIdQuery } from '../queries/useGitHub';
 import { updateProfile, getProfileImage } from '../apis/profile'; // 서버 갱신
+import { handleGithubConnectPopup } from '../apis/gitHub';
 import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 import { useGetProfileImageQuery } from '../queries/useProfile';
@@ -19,6 +20,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const { logout } = useAuthStore();
   const queryClient = useQueryClient();
   const [imgBust, setImgBust] = useState(0);
+  const [githubConnected, setGithubConnected] = useState(false); // 깃허브 연동 여부
   // React Query로 프로필 데이터 조회
   const { data: profileData } = useProfileQuery();
   const { data: profileImage } = useGetProfileImageQuery();
@@ -180,17 +182,15 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   };
 
   // 깃허브 연동 핸들러
-  const handleGithubConnect = async () => {
-    // localStorage에서 JWT 토큰 가져오기
-    const token = localStorage.getItem('authToken') || '';
-    console.log('유저의 jwt token: ', token);
-
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=http://localhost:8081/oauth/github/callback`;
-    console.log('githubAuthUrl: ', githubAuthUrl);
-
+  const handleGithubConnect = useCallback(() => {
+    const onSuccess = () => {
+      setGithubConnected(true);
+    };
+    
+    handleGithubConnectPopup(GITHUB_CLIENT_ID, onSuccess);
+  }, []);
     // GitHub OAuth 페이지로 리다이렉트
-    window.location.href = githubAuthUrl;
-  };
+    // window.location.href = githubAuthUrl;
 
   // 깃허브 연동 해제 핸들러
   const handleGithubDisconnect = async () => {
@@ -419,7 +419,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 {githubId?.githubId ? '연동 해제' : '연동'}
               </button>
             </div>
-            {isGithubReconnected && (
+            {githubConnected && (
               <div className={styles.successMessage}>
                 <Check size={16} />
                 GitHub 계정이 연동되었습니다
