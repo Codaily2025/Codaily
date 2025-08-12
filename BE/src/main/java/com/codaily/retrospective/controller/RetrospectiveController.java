@@ -6,6 +6,7 @@ import com.codaily.retrospective.dto.RetrospectiveGenerateResponse;
 import com.codaily.retrospective.dto.RetrospectiveScrollResponse;
 import com.codaily.retrospective.service.RetrospectiveGenerateService;
 import com.codaily.retrospective.service.RetrospectiveService;
+import com.codaily.retrospective.service.RetrospectiveTriggerType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -119,7 +120,7 @@ public class RetrospectiveController {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
 
-        return retrospectiveGenerateService.generateProjectDailyRetrospective(project)
+        return retrospectiveGenerateService.generateProjectDailyRetrospective(project, RetrospectiveTriggerType.MANUAL)
                 .thenApply(ResponseEntity::ok);
     }
 
