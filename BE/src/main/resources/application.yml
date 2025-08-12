@@ -27,7 +27,7 @@ spring:
           github:
             client-id: ${GITHUB.CLIENT_ID}
             client-secret: ${GITHUB.CLIENT_SECRET}
-            redirect-uri: http://localhost:8081/oauth/github/callback
+            redirect-uri: http://localhost:8081/api/oauth/github/callback
           #            token-uri: https://github.com/login/oauth/access_token
           #            user-uri: https://api.github.com/user
             scope:
@@ -70,7 +70,7 @@ spring:
 github:
   client-id: ${GITHUB.CLIENT_ID}
   client-secret: ${GITHUB.CLIENT_SECRET}
-  redirect-uri: ${app.url.backend}/oauth/github/callback
+  redirect-uri: ${app.url.backend}/api/oauth/github/callback
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
   api-url: https://api.github.com

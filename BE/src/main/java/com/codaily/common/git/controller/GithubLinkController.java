@@ -31,7 +31,7 @@ import java.util.Map;
 
 @Log4j2
 @RestController
-@RequestMapping("/oauth/github")
+@RequestMapping("/api/oauth/github")
 @RequiredArgsConstructor
 @Tag(name = "Github Link API", description = "GitHub OAuth 및 리포지토리 연동 기능 제공")
 public class GithubLinkController {
@@ -60,23 +60,71 @@ public class GithubLinkController {
 //            @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @GetMapping("/callback")
-    public Mono<ResponseEntity<Void>> githubCallback(
+    public Mono<ResponseEntity<String>> githubCallback(
             @Parameter(description = "GitHub로부터 받은 인가 코드") @RequestParam("code") String code,
             @AuthenticationPrincipal PrincipalDetails userDetails
     ) {
         log.info("code: {}", code);
+        log.info("실제 사용되는 redirect-uri: {}", redirectUri);
         return fetchAccessToken(code)
                 .flatMap(accessToken ->
                         fetchGithubProfile(accessToken)
                                 .doOnNext(profile ->
                                         userService.linkGithub(userDetails.getUserId(), profile, accessToken)
                                 )
-                                .thenReturn(
-                                        ResponseEntity.status(HttpStatus.FOUND)
-                                                .location(URI.create("http://localhost:5173/settings?github=connected"))
-                                                .build()
-                                )
-                );
+                                .thenReturn(createSuccessResponse())
+                )
+                .onErrorReturn(createErrorResponse());
+    }
+
+    private ResponseEntity<String> createSuccessResponse() {
+        String html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>GitHub 연동 완료</title>
+            </head>
+            <body>
+                <script>
+                    window.opener.postMessage({
+                        type: 'GITHUB_CONNECTED',
+                        success: true
+                    }, 'http://localhost:5173');
+                    window.close();
+                </script>
+                <p>GitHub 연동이 완료되었습니다. 창이 자동으로 닫힙니다.</p>
+            </body>
+            </html>
+            """;
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(html);
+    }
+
+    private ResponseEntity<String> createErrorResponse() {
+        String html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>GitHub 연동 실패</title>
+            </head>
+            <body>
+                <script>
+                    window.opener.postMessage({
+                        type: 'GITHUB_ERROR',
+                        success: false
+                    }, 'http://localhost:5173');
+                    window.close();
+                </script>
+                <p>GitHub 연동에 실패했습니다. 창이 자동으로 닫힙니다.</p>
+            </body>
+            </html>
+            """;
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(html);
     }
 
     @Operation(summary = "새 GitHub 리포지토리 생성", description = "새 GitHub 리포지토리를 생성하고 프로젝트에 연결")
