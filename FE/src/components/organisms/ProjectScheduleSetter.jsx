@@ -3,14 +3,17 @@ import { Calendar as CalendarIcon } from 'lucide-react'
 import Title from '@/components/atoms/Title'
 import Button from '@/components/atoms/Button'
 import styles from './ProjectScheduleSetter.module.css'
+// import { saveProjectSchedule } from '@/apis/projectScheduleApi'
+import { useSaveProjectSchedule } from '@/hooks/useProjectScheduleMutation'
 
 const ProjectScheduleSetter = () => {
     
     const [formData, setFormData] = useState({
         startDate: '',
         endDate: '',
+        availableDates: [],
         timeByDay: {
-            월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0
+            MONDAY: 0, TUESDAY: 0, WEDNESDAY: 0, THURSDAY: 0, FRIDAY: 0, SATURDAY: 0, SUNDAY: 0
         }
     })
 
@@ -27,6 +30,9 @@ const ProjectScheduleSetter = () => {
     const maxStep = 20
 
     const days = ['월', '화', '수', '목', '금', '토', '일']
+
+    // 
+    const saveProjectSchedule = useSaveProjectSchedule()
 
     // startDate ~ endDate 사이 날짜 계산
     const getDatesBetween = (startDate, endDate) => {
@@ -68,30 +74,70 @@ const ProjectScheduleSetter = () => {
         setAvailableWorkDays(newAvailableDays)
     }
 
-    // 저장 버튼 핸들러
-    const handleSaveDates = () => {
-        const periodData = {
-            startDate: formData.startDate,
-            endDate: formData.endDate
-        }
-        console.log('설정 기간:', periodData)
-    }
+    // // 저장 버튼 핸들러
+    // const handleSaveDates = () => {
+    //     const periodData = {
+    //         startDate: formData.startDate,
+    //         endDate: formData.endDate
+    //     }
+    //     console.log('설정 기간:', periodData)
+    // }
 
     // 생성하기 버튼 클릭 시
     // TODO: api 요청 여부에 따라 상태 관리 코드 달라질 예정
     const handleCreate = () => {
-        const timeScheduleData = formData.timeByDay
+        // 작업 가능 일자 - YYYY-MM-DD 형식으로 변환
         const availableWorkDaysList = Array.from(availableWorkDays).map(dateString => {
             const date = new Date(dateString)
-            return date.toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit'
-            }).replace(/\. /g, '/').replace(/\.$/, '')
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            return `${year}-${month}-${day}`
         }).sort()
+
+        // 요일별 작업 시간 - 영어 요일명으로 변환하고 0시간인 요일 제외
+        const dayMapping = {
+            '월': 'MONDAY',
+            '화': 'TUESDAY', 
+            '수': 'WEDNESDAY',
+            '목': 'THURSDAY',
+            '금': 'FRIDAY',
+            '토': 'SATURDAY',
+            '일': 'SUNDAY'
+        }
+
+        const workingHours = {}
+        Object.entries(formData.timeByDay).forEach(([koreanDay, hours]) => {
+            if (hours > 0) {
+                const englishDay = dayMapping[koreanDay]
+                if (englishDay) {
+                    workingHours[englishDay] = hours
+                }
+            }
+        })
+
+        // 시작일/종료일 YYYY-MM-DD 형식으로 변환
+        const formatDate = (dateStr) => {
+            if (!dateStr) return ''
+            const date = new Date(dateStr.replace(/\//g, '-'))
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+            return `${year}-${month}-${day}`
+        }
+
+        // POST 요청용 formData 구성
+        const postFormData = {
+            startDate: formatDate(formData.startDate),
+            endDate: formatDate(formData.endDate),
+            availableDates: availableWorkDaysList,
+            workingHours: workingHours
+        }
         
-        console.log('요일별 작업 시간:', JSON.stringify(timeScheduleData, null, 2))
-        console.log('작업 가능 일자:', availableWorkDaysList)
+        console.log('프로젝트 생성 내 일정 설정: ', JSON.stringify(postFormData, null, 2))
+
+        // const response = saveProjectSchedule(postFormData)
+        saveProjectSchedule.mutate({ formData: postFormData })
     }
 
     // '작업 가능 일자' 컴포넌트에서 날짜 선택시
@@ -214,13 +260,13 @@ const ProjectScheduleSetter = () => {
                                 )}
                             </div>
                         </div>
-                        <Button 
+                        {/* <Button 
                             type="secondary" 
                             onClick={handleSaveDates}
                             className={styles.saveButton}
                         >
                             저장
-                        </Button>
+                        </Button> */}
                     </div>
                 </div>
 
