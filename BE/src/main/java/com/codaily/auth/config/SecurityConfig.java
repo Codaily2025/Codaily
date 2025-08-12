@@ -58,9 +58,9 @@ public class SecurityConfig {
                 .oauth2Login(oauth -> oauth
                         .successHandler(loginSuccessHandler)
                         .authorizationEndpoint(auth -> auth
-                                .baseUri("/oauth2/authorization"))
+                                .baseUri("/api/oauth2/authorization"))
                         .redirectionEndpoint(redirect -> redirect
-                                .baseUri("/login/oauth2/code/*"))
+                                .baseUri("/api/login/oauth2/code/*"))
                 )
                 .logout(logout -> logout
                         .logoutUrl("/api/logout")
