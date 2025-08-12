@@ -94,10 +94,6 @@ springdoc:
 server:
   port: 8081
 
-app:
-  frontend-url: https://i13a601.p.ssafy.io
-
-
 
 logging:
   level:
