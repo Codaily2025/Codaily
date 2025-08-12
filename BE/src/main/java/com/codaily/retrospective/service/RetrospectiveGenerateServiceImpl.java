@@ -24,7 +24,7 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
 
     @Override
     public CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project, RetrospectiveTriggerType type) {
-        final LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        LocalDate today = type == RetrospectiveTriggerType.AUTO ? LocalDate.now(ZoneId.of("Asia/Seoul")) : LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1);
 
         return Mono.fromCallable(() -> {
                     // 1) 이미 오늘 회고가 있으면 → DTO만 반환(저장 금지)
