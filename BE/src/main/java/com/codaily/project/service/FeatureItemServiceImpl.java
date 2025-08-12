@@ -565,7 +565,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
     @Override
     public ParentFeatureListResponse getParentFeatures(Long projectId) {
-        List<FeatureItem> parentFeatures = featureItemRepository.findByParentFeature_FeatureIdIsNullOrderByCreatedAtAsc();
+        List<FeatureItem> parentFeatures = featureItemRepository.findParentFeaturesByProject(projectId);
 
         List<ParentFeatureResponse> responseList = parentFeatures.stream()
                 .map(feature -> {
