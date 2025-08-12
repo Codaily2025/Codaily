@@ -26,6 +26,31 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findByUser_UserId(Long userId);
 
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.daysOfWeek " +
+            "WHERE p.user.userId = :userId")
+    List<Project> findByUserIdWithDays(Long userId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.schedules " +
+            "WHERE p.user.userId = :userId")
+    List<Project> findByUserIdWithSchedules(Long userId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.daysOfWeek " +
+            "WHERE p.projectId = :projectId")
+    Optional<Project> findByIdWithDays(@Param("projectId") Long projectId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.schedules " +
+            "WHERE p.projectId = :projectId")
+    Optional<Project> findByIdWithSchedules(@Param("projectId") Long projectId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.projectRepositories pr " +
+            "WHERE p.projectId = :projectId")
+    Optional<Project> findByIdWithRepositories(Long projectId);
+
     List<Project> findByUser_UserIdAndStatus(Long userId, Enum<Project.ProjectStatus> status);
 
     void deleteByProjectId(Long projectId);

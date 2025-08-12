@@ -38,6 +38,16 @@ public class MyPageController {
         return ResponseEntity.ok(projects);
     }
 
+    @GetMapping("/projects/{projectId}")
+    @Operation(summary = "프로젝트 상세 조회", description = "프로젝트 제목, 기간, 요일별 작업 가능 시간, 작업 가능 날짜, 연결된 레포지토리를 보여줍니다.")
+    public ResponseEntity<ProjectDetailResponse> getProjectDetail(
+            @AuthenticationPrincipal PrincipalDetails userDetails,
+            @PathVariable Long projectId
+    ){
+        ProjectDetailResponse project = myPageService.getProjectDetail(projectId);
+        return ResponseEntity.ok(project);
+    }
+
     @DeleteMapping("/projects/{projectId}")
     @Operation(summary ="프로젝트 삭제")
     public ResponseEntity<Void> deleteProject(
@@ -229,5 +239,4 @@ public class MyPageController {
 
         return ResponseEntity.ok(response);
     }
-
 }

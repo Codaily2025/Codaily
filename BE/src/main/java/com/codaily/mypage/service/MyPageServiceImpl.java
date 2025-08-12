@@ -4,11 +4,14 @@ import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.UserRepository;
 import com.codaily.common.file.service.FileStorageService;
 import com.codaily.common.file.service.FileStorageServiceImpl;
+import com.codaily.management.entity.DaysOfWeek;
+import com.codaily.management.entity.Schedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
-import com.codaily.mypage.dto.ProjectListResponse;
-import com.codaily.mypage.dto.ProjectStatusResponse;
+import com.codaily.mypage.dto.*;
+import com.codaily.project.dto.ProjectRepositoryResponse;
 import com.codaily.project.entity.Project;
+import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
@@ -19,7 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,10 +43,21 @@ public class MyPageServiceImpl implements MyPageService {
 
     @Override
     public List<ProjectListResponse> getProjectList(Long userId) {
-        List<Project> projects = projectRepository.findByUser_UserId(userId);
+        List<Project> projectsWithDays = projectRepository.findByUserIdWithDays(userId);
+        List<Project> projectsWithSchedules = projectRepository.findByUserIdWithSchedules(userId);
 
-        return projects.stream()
-                .map(this::converToList)
+        Map<Long, Project> projectMap = projectsWithDays.stream()
+                .collect(Collectors.toMap(Project::getProjectId, Function.identity()));
+
+        projectsWithSchedules.forEach(projectWithSchedule -> {
+            Project existingProject = projectMap.get(projectWithSchedule.getProjectId());
+            if (existingProject != null) {
+                existingProject.setSchedules(projectWithSchedule.getSchedules());
+            }
+        });
+
+        return projectMap.values().stream()
+                .map(this::convertToList)
                 .collect(Collectors.toList());
     }
 
@@ -87,7 +104,7 @@ public class MyPageServiceImpl implements MyPageService {
         List<Project> projects = projectRepository.findByStatusAndUser_UserIdOrderByCreatedAtDesc(status, userId);
 
         return projects.stream()
-                .map(this::converToList)
+                .map(this::convertToList)
                 .collect(Collectors.toList());
     }
 
@@ -165,13 +182,88 @@ public class MyPageServiceImpl implements MyPageService {
         userRepository.save(user);
     }
 
-    private ProjectListResponse converToList(Project project){
+    @Override
+    public ProjectDetailResponse getProjectDetail(Long projectId) {
+        Project project = projectRepository.getProjectByProjectId(projectId);
+
+        if(project == null){
+            throw new IllegalArgumentException("해당 프로젝트를 찾을 수 없습니다.");
+        }
+
+        Project projectWithDays = projectRepository.findByIdWithDays(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found with id: " + projectId));
+
+        Project projectWithSchedules = projectRepository.findByIdWithSchedules(projectId)
+                .orElse(null);
+
+        Project projectWithRepositories = projectRepository.findByIdWithRepositories(projectId)
+                .orElse(null);
+
+        if (projectWithSchedules != null) {
+            projectWithDays.setSchedules(projectWithSchedules.getSchedules());
+        }
+
+        if (projectWithRepositories != null) {
+            projectWithDays.setProjectRepositories(projectWithRepositories.getProjectRepositories());
+        }
+
+        return ProjectDetailResponse.builder()
+                .projectId(project.getProjectId())
+                .title(project.getTitle())
+                .description(project.getDescription())
+                .startDate(project.getStartDate())
+                .endDate(project.getEndDate())
+                .status(project.getStatus() != null ? project.getStatus().name() : null)
+                .daysOfWeeks(convertDaysOfWeekToDto(project.getDaysOfWeek()))
+                .schedules(convertSchedulesToDto(project.getSchedules()))
+                .repositories(convertRepositoriesToDto(project.getProjectRepositories()))
+                .build();
+    }
+
+    private List<DaysOfWeekResponse> convertDaysOfWeekToDto(List<DaysOfWeek> daysOfWeeks) {
+        if (daysOfWeeks == null) return new ArrayList<>();
+
+        return daysOfWeeks.stream()
+                .map(day -> DaysOfWeekResponse.builder()
+                        .dayId(day.getDaysId())
+                        .dateName(day.getDateName())
+                        .hours(day.getHours())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<ScheduleResponse> convertSchedulesToDto(List<Schedule> schedules) {
+        if (schedules == null) return new ArrayList<>();
+
+        return schedules.stream()
+                .map(schedule -> ScheduleResponse.builder()
+                        .scheduleId(schedule.getScheduleId())
+                        .scheduledDate(schedule.getScheduledDate())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private ProjectListResponse convertToList(Project project){
         return ProjectListResponse.builder()
                 .projectId(project.getProjectId())
                 .title(project.getTitle())
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
                 .status(project.getStatus().toString())
+                .daysOfWeeks(convertDaysOfWeekToDto(project.getDaysOfWeek()))
+                .schedules(convertSchedulesToDto(project.getSchedules()))
                 .build();
+    }
+
+    private List<ProjectRepositoryResponse> convertRepositoriesToDto(List<ProjectRepositories> projectRepositories) {
+        if (projectRepositories == null) return new ArrayList<>();
+
+        return projectRepositories.stream()
+                .map(pr -> ProjectRepositoryResponse.builder()
+                        .repoId(pr.getRepoId())
+                        .repoName(pr.getRepoName())
+                        .repoUrl(pr.getRepoUrl())
+                        .build())
+                .collect(Collectors.toList());
     }
 }
