@@ -135,7 +135,7 @@ export const useSpecificationStore = create((set, get) => ({
       };
     }
     
-    // spec:add:feature:sub 처리
+    // spec:add:feature:sub 처리 (상세 기능 추가)
     if (data.parentFeatureId && data.featureSaveItem) {
       const newSubFeature = {
         id: data.featureSaveItem.id,
@@ -173,6 +173,36 @@ export const useSpecificationStore = create((set, get) => ({
           ...feature,
           subTasks: updatedSubTasks
         };
+      });
+
+      return { 
+        mainFeatures: newMainFeatures,
+        rawData: data
+      };
+    }
+
+    // spec:add:feature:main 처리 (주 기능 추가)
+    if (data.field && data.featureSaveItem) {
+      const newMainFeature = {
+        id: data.featureSaveItem.id,
+        name: data.featureSaveItem.title,
+        description: data.featureSaveItem.description,
+        hours: data.featureSaveItem.estimatedTime || 0,
+        priority: convertNumberToPriority(data.featureSaveItem.priorityLevel),
+        checked: true,
+        isOpen: false,
+        subTasks: [],
+      };
+      
+      // field 이름으로 해당 필드를 찾아서 subTasks에 추가
+      const newMainFeatures = state.mainFeatures.map(feature => {
+        if (feature.name === data.field) {
+          return {
+            ...feature,
+            subTasks: [...feature.subTasks, newMainFeature]
+          };
+        }
+        return feature;
       });
 
       return { 
@@ -243,10 +273,12 @@ export const useSpecificationStore = create((set, get) => ({
     };
   }),
 
-  // 수동으로 상세 기능 추가, 페이지에서는 secondSubTask로 추가
-  addSubFeatureManually: (parentFeatureId, featureData) => set((state) => {
+  // 필드 이름 기반으로 주 기능 추가 (필드 안의 subTasks에 추가)
+  addMainFeatureToField: (fieldName, featureData) => set((state) => {
+    console.log('addMainFeatureToField 호출됨:', { fieldName, featureData });
+    
     const newSubFeature = {
-      id: Date.now(), // 임시 ID (실제로는 API 응답에서 받아야 함)
+      id: featureData.id || Date.now(), // API 응답에서 받은 featureId 사용
       name: featureData.title,
       description: featureData.description,
       hours: featureData.estimatedTime || 0,
@@ -256,10 +288,49 @@ export const useSpecificationStore = create((set, get) => ({
       subTasks: [],
     };
 
+    console.log('새로 추가할 주 기능:', newSubFeature);
+
+    // 필드 이름으로 해당 필드를 찾아서 subTasks에 추가
+    const newMainFeatures = state.mainFeatures.map(feature => {
+      if (feature.name === fieldName) {
+        console.log('필드 찾음:', feature.name, '기존 subTasks:', feature.subTasks);
+        return {
+          ...feature,
+          subTasks: [...feature.subTasks, newSubFeature]
+        };
+      }
+      return feature;
+    });
+
+    console.log('업데이트된 mainFeatures:', newMainFeatures);
+
+    return {
+      mainFeatures: newMainFeatures
+    };
+  }),
+
+  // 수동으로 상세 기능 추가, 페이지에서는 secondSubTask로 추가
+  addSubFeatureManually: (parentFeatureId, featureData) => set((state) => {
+    console.log('addSubFeatureManually 호출됨:', { parentFeatureId, featureData });
+    
+    const newSubFeature = {
+      id: featureData.id || Date.now(), // API 응답에서 받은 featureId 사용
+      name: featureData.title,
+      description: featureData.description,
+      hours: featureData.estimatedTime || 0,
+      priority: convertNumberToPriority(featureData.priorityLevel),
+      checked: true,
+      isOpen: false,
+      subTasks: [],
+    };
+
+    console.log('새로 추가할 상세 기능:', newSubFeature);
+
     // 재귀적으로 부모 찾기 및 추가
     const addToFeature = (features, targetId) => {
       return features.map(feature => {
         if (feature.id === targetId) {
+          console.log('부모 기능 찾음:', feature.name, '기존 subTasks:', feature.subTasks);
           return {
             ...feature,
             subTasks: [...feature.subTasks, newSubFeature]
@@ -277,8 +348,11 @@ export const useSpecificationStore = create((set, get) => ({
       });
     };
 
+    const updatedFeatures = addToFeature(state.mainFeatures, parentFeatureId);
+    console.log('업데이트된 mainFeatures:', updatedFeatures);
+
     return {
-      mainFeatures: addToFeature(state.mainFeatures, parentFeatureId)
+      mainFeatures: updatedFeatures
     };
   }),
 

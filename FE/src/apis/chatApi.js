@@ -252,11 +252,15 @@ export const postUserMessage = async (
 export const addManualFeature = async (projectId, taskData) => {
   try {
     console.log('수동 기능 추가 요청:', taskData);
+    console.log('수동 기능 추가 요청 JSON:', JSON.stringify(taskData, null, 2));
+    console.log('수동 기능 추가 요청 URL:', `projects/${projectId}/features`);
     const response = await authInstance.post(`projects/${projectId}/features`, taskData);
     console.log('수동 기능 추가 응답:', response.data);
+    console.log('수동 기능 추가 응답 JSON:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
     console.error('수동 기능 추가 실패:', error);
+    console.error('수동 기능 추가 실패 응답:', error.response?.data);
     throw error;
   }
 };
@@ -309,6 +313,26 @@ export const buildMainFeatureRequest = (formData, projectId, field = 'Custom Fea
 };
 
 /**
+ * 필드 안의 주 기능 추가를 위한 API 요청 데이터 구성
+ * @param {Object} formData - 폼 데이터
+ * @param {number} projectId - 프로젝트 ID
+ * @param {string} fieldName - 필드 이름
+ * @returns {Object} - API 요청용 데이터
+ */
+export const buildMainFeatureToFieldRequest = (formData, projectId, fieldName) => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    field: fieldName, // 필드 이름을 field로 설정
+    category: fieldName, // 카테고리도 필드 이름과 동일하게 설정
+    priorityLevel: mapPriority(formData.priorityLevel),
+    estimatedTime: formData.estimatedTime,
+    isCustom: true,
+    projectId: projectId
+  };
+};
+
+/**
  * 상세 기능 추가를 위한 API 요청 데이터 구성
  * @param {Object} formData - 폼 데이터
  * @param {number} projectId - 프로젝트 ID
@@ -324,5 +348,6 @@ export const buildSubFeatureRequest = (formData, projectId, parentFeatureId) => 
     isCustom: true,
     projectId: projectId,
     parentFeatureId: parentFeatureId
+    // field와 category는 상세 기능 추가 시에는 포함하지 않음
   };
 };

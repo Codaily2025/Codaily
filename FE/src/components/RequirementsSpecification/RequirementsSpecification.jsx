@@ -7,7 +7,7 @@ import TimeIndicator from './TimeIndicator';
 import PriorityBadge from './PriorityBadge';
 import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
-import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest } from '../../apis/chatApi';
+import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest, buildMainFeatureToFieldRequest } from '../../apis/chatApi';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -268,7 +268,7 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
               />
             ))}
             <AddNewTaskButton 
-              onClick={() => onOpenModal('main')} 
+              onClick={() => onOpenModal('main', task)} 
               text="주 기능 추가" 
             />
           </div>
@@ -291,7 +291,8 @@ const RequirementsSpecification = () => {
     resetSpecification,
     debugPrintSpecification,
     addMainFeatureManually,
-    addSubFeatureManually
+    addSubFeatureManually,
+    addMainFeatureToField
   } = useSpecificationStore();
   
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
@@ -314,29 +315,42 @@ const RequirementsSpecification = () => {
       }
 
       console.log('작업 추가 시작 - 프로젝트 정보:', { projectId, specId });
+      console.log('modalState:', modalState);
+      console.log('taskData:', taskData);
 
       let requestData;
+      let response;
 
       if (modalState.taskType === 'main') {
-        requestData = buildMainFeatureRequest(taskData, projectId, 'Custom Feature');
-        const response = await addManualFeature(projectId, requestData);
+        // 주 기능 추가 - 필드 이름을 사용하여 해당 필드 안에 추가
+        const fieldName = modalState.parentTask ? modalState.parentTask.name : 'Custom Feature';
+        console.log('주 기능 추가 - fieldName:', fieldName);
+        requestData = buildMainFeatureToFieldRequest(taskData, projectId, fieldName);
+        console.log('주 기능 추가 API 요청 데이터:', requestData);
+        response = await addManualFeature(projectId, requestData);
 
-        // 스토어에 추가
-        addMainFeatureManually({
+        // 스토어에 추가 - 필드 안의 주 기능으로 추가
+        addMainFeatureToField(fieldName, {
           ...taskData,
-          id: response.featureId || Date.now() // API 응답에서 featureId 사용
+          id: response.featureId // API 응답에서 featureId 사용
         });
       } else { // 상세 기능(secondSubTask) 추가
+        console.log('상세 기능 추가 - parentTask:', modalState.parentTask);
+        console.log('상세 기능 추가 - parentTask.id:', modalState.parentTask.id);
+        console.log('상세 기능 추가 - taskData:', taskData);
         requestData = buildSubFeatureRequest(taskData, projectId, modalState.parentTask.id);
-        const response = await addManualFeature(projectId, requestData);
+        console.log('상세 기능 추가 API 요청 데이터:', requestData);
+        console.log('상세 기능 추가 API 요청 데이터 JSON:', JSON.stringify(requestData, null, 2));
+        response = await addManualFeature(projectId, requestData);
 
         // 스토어에 추가
         addSubFeatureManually(modalState.parentTask.id, {
           ...taskData,
-          id: response.featureId || Date.now() // API 응답에서 featureId 사용
+          id: response.featureId // API 응답에서 featureId 사용
         });
       }
       console.log('작업 추가 성공:', requestData);
+      console.log('API 응답:', response);
       closeModal();
     } catch (error) {
       console.error('수동 기능 추가 실패:', error);
@@ -354,6 +368,7 @@ const RequirementsSpecification = () => {
 
   // mainFeatures가 업데이트되면 로컬 state도 업데이트
   useEffect(() => {
+    console.log('mainFeatures 업데이트됨:', mainFeatures);
     if (mainFeatures && mainFeatures.length > 0) {
       setFeatures(mainFeatures);
     }
@@ -453,6 +468,7 @@ const RequirementsSpecification = () => {
 
   // 모달 열기/닫기
   const openModal = (taskType, parentTask = null) => {
+    console.log('openModal 호출됨:', { taskType, parentTask });
     setModalState({
       isOpen: true,
       taskType,
@@ -524,9 +540,10 @@ const RequirementsSpecification = () => {
 
    // 하위 작업 추가 핸들러
    const handleAddSubTask = (parentTask) => {
-    // 부모 작업의 레벨에 따라 타입 결정
-    // 최상위 기능에서 추가하면 주 기능, 주 기능에서 추가하면 상세 기능
-    const taskType = parentTask.subTasks && parentTask.subTasks.length === 0 ? 'main' : 'sub';
+    // 이 함수는 "상세 기능 추가" 버튼을 클릭할 때만 호출됨
+    // 따라서 항상 taskType은 'sub'여야 함
+    const taskType = 'sub';
+    console.log('handleAddSubTask - parentTask:', parentTask, 'taskType:', taskType);
     openModal(taskType, parentTask);
   };
 
