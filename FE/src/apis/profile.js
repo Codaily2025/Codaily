@@ -62,6 +62,20 @@ export async function fetchTechStack() {
     }
 }
 
+// GitHub 기술스택 동기화 API
+// /api/github/tech-stack/sync
+export async function syncGithubTechStack() {
+    try {
+        const response = await authInstance.post(`github/tech-stack/sync`);
+        console.log('GitHub 기술스택 동기화 응답:', response.data);
+        return response.data;
+    }
+    catch (error) {
+        console.error('GitHub 기술스택 동기화 실패:', error);
+        throw error;
+    }
+}
+
 // 프로필 이미지 업로드 API
 // api/upload-profile-image
 // request body: { file: string}
@@ -70,7 +84,7 @@ export async function uploadProfileImage(file) {
         const formData = new FormData(); // 파일 업로드 시 필요
         formData.append('file', file);
         const response = await authInstance.post(`upload-profile-image`, formData);
-        console.log('프로필 이미지 업로드 응답:', response.data);
+        // console.log('프로필 이미지 업로드 응답:', response.data);
         return response.data;
         // 예상 응답 형식
         // {
