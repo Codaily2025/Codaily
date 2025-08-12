@@ -5,8 +5,9 @@ import TechTag from './TechTag';
 import Checkbox from './Checkbox';
 import TimeIndicator from './TimeIndicator';
 import PriorityBadge from './PriorityBadge';
+import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
-
+import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest } from '../../apis/chatApi';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -83,6 +84,23 @@ const initialRequirementsData = [
     ]
   }];
 
+// AddNewTaskButton 컴포넌트
+const AddNewTaskButton = ({ onClick, text = "새 작업 추가" }) => (
+  <div className={styles.addNewTaskSection} style={{ cursor: 'pointer' }}>
+    <div className={styles.addNewTaskButton} onClick={onClick}>
+      <div className={styles.addIconContainer}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 3.33325V12.6666" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3.33594 8H12.6693" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <div className={styles.addNewTaskText}>
+        <div className={styles.addNewTaskTextContent}>{text}</div>
+      </div>
+    </div>
+  </div>
+);
+
 const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, parentId }) => {
   return (
     /* 클릭했을 때 상위 task의 드롭다운이 닫히면 안됨, 이벤트 막기 */
@@ -111,7 +129,7 @@ const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, par
   );
 };
 
-const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
+const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level = 0 }) => {
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
     <div className={styles.expandIconContainer} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
@@ -156,6 +174,14 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
                 <SecondSubTaskItem key={subTask.id} task={subTask} onToggleOpen={onToggleOpen} onToggleChecked={onToggleChecked} level={level + 1} parentId={task.id}
                 />
               ))}
+              {/* 상세 기능 추가 버튼 */}
+              <AddNewTaskButton 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddSubTask(task);
+                }} 
+                text="상세 기능 추가" 
+              />
             </div>
           </div>
         </div>
@@ -196,7 +222,7 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
 };
 
 // 작업을 렌더링하는 컴포넌트
-const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
+const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenModal, level = 0 }) => {
   const hasSubTasks = task.subTasks && task.subTasks.length > 0;
 
   // SVG 아이콘 컴포넌트
@@ -207,6 +233,7 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
       </svg>
     </div>
   );
+
 
   return (
     <div className={level === 0 ? styles.mainFeatureCard : styles.subTaskItem}>
@@ -237,22 +264,13 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0 }) => {
                 onToggleChecked={onToggleChecked}
                 level={level + 1}
                 parentId={task.id}
-
+                onAddSubTask={onAddSubTask}
               />
             ))}
-            <div className={styles.addNewTaskSection}>
-              <div className={styles.addNewTaskButton}>
-                <div className={styles.addIconContainer}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 3.33325V12.6666" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M3.33594 8H12.6693" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div className={styles.addNewTaskText}>
-                  <div className={styles.addNewTaskTextContent}>새 작업 추가</div>
-                </div>
-              </div>
-            </div>
+            <AddNewTaskButton 
+              onClick={() => onOpenModal('main')} 
+              text="주 기능 추가" 
+            />
           </div>
         </div>
       )}
@@ -271,13 +289,59 @@ const RequirementsSpecification = () => {
     specId,
     processSpecData, 
     resetSpecification,
-    debugPrintSpecification 
+    debugPrintSpecification,
+    addMainFeatureManually,
+    addSubFeatureManually
   } = useSpecificationStore();
   
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
   // mainFeatures가 있으면 사용하고, 없으면 초기 데이터 사용
   const [features, setFeatures] = useState(mainFeatures && mainFeatures.length > 0 ? mainFeatures : initialRequirementsData[0].mainFeatures);
+
+  // 모달 상태 관리 -> 상세 기능 추가 모달 열기 위해 필요
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    taskType: null,
+    parentTask: null
+  });
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+
+  const handleAddTask = async (taskData) => {
+    try {
+      if (!projectId) {
+        throw new Error('프로젝트 ID가 없습니다.');
+      }
+
+      console.log('작업 추가 시작 - 프로젝트 정보:', { projectId, specId });
+
+      let requestData;
+
+      if (modalState.taskType === 'main') {
+        requestData = buildMainFeatureRequest(taskData, projectId, 'Custom Feature');
+        const response = await addManualFeature(projectId, requestData);
+
+        // 스토어에 추가
+        addMainFeatureManually({
+          ...taskData,
+          id: response.featureId || Date.now() // API 응답에서 featureId 사용
+        });
+      } else { // 상세 기능(secondSubTask) 추가
+        requestData = buildSubFeatureRequest(taskData, projectId, modalState.parentTask.id);
+        const response = await addManualFeature(projectId, requestData);
+
+        // 스토어에 추가
+        addSubFeatureManually(modalState.parentTask.id, {
+          ...taskData,
+          id: response.featureId || Date.now() // API 응답에서 featureId 사용
+        });
+      }
+      console.log('작업 추가 성공:', requestData);
+      closeModal();
+    } catch (error) {
+      console.error('수동 기능 추가 실패:', error);
+    }
+  };
 
   // rawData가 있으면 콘솔에 출력하여 구조 확인
   useEffect(() => {
@@ -299,9 +363,12 @@ const RequirementsSpecification = () => {
   useEffect(() => {
     // 테스트 데이터 처리 함수
     window.testSpecData = () => {
+      const currentProjectId = projectId || 1; // 현재 프로젝트 ID 사용, 없으면 기본값
+      const currentSpecId = specId || 1; // 현재 스펙 ID 사용, 없으면 기본값
+      
       const testData = {
-        projectId: 27,
-        specId: 30,
+        projectId: currentProjectId,
+        specId: currentSpecId,
         field: "배포 환경: AWS, Vercel, Netlify 등 클라우드 서비스",
         mainFeature: {
           id: 964,
@@ -333,12 +400,15 @@ const RequirementsSpecification = () => {
 
     // 프로젝트 요약 정보 테스트
     window.testProjectSummary = () => {
+      const currentProjectId = projectId || 1; // 현재 프로젝트 ID 사용, 없으면 기본값
+      const currentSpecId = specId || 1; // 현재 스펙 ID 사용, 없으면 기본값
+      
       const testSummary = {
         projectTitle: "온라인 쇼핑몰 플랫폼 개발",
         specTitle: "온라인 쇼핑몰 플랫폼 명세서",
         projectDescription: "사용자들이 온라인으로 상품을 구매할 수 있는 쇼핑몰 웹사이트를 개발하는 프로젝트입니다.",
-        projectId: 1,
-        specId: 1
+        projectId: currentProjectId,
+        specId: currentSpecId
       };
       processSpecData(testSummary);
       console.log('프로젝트 요약 정보 테스트 완료:', testSummary);
@@ -380,6 +450,23 @@ const RequirementsSpecification = () => {
     };
   }, [processSpecData, resetSpecification, debugPrintSpecification]);
 
+
+  // 모달 열기/닫기
+  const openModal = (taskType, parentTask = null) => {
+    setModalState({
+      isOpen: true,
+      taskType,
+      parentTask
+    });
+  }
+
+  const closeModal = () => {
+    setModalState({
+      isOpen: false,
+      taskType: 'main', // 기본값
+      parentTask: null
+    });
+  }
   // 열림/닫힘 상태를 토글하는 함수
   const handleToggleOpen = useCallback((taskId) => {
     const toggleOpen = (tasks) => {
@@ -434,6 +521,14 @@ const RequirementsSpecification = () => {
     });
 
   }, []);
+
+   // 하위 작업 추가 핸들러
+   const handleAddSubTask = (parentTask) => {
+    // 부모 작업의 레벨에 따라 타입 결정
+    // 최상위 기능에서 추가하면 주 기능, 주 기능에서 추가하면 상세 기능
+    const taskType = parentTask.subTasks && parentTask.subTasks.length === 0 ? 'main' : 'sub';
+    openModal(taskType, parentTask);
+  };
 
   // 디버깅 버튼 클릭 핸들러
   const handleDebugPrint = () => {
@@ -490,7 +585,7 @@ const RequirementsSpecification = () => {
         </div>
 
         {/* 프로젝트 정보 표시 */}
-        {/* {(projectId || specId) && (
+        {(projectId || specId) && (
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div className={styles.cardTitle}>프로젝트 정보</div>
@@ -512,7 +607,7 @@ const RequirementsSpecification = () => {
               </div>
             </div>
           </div>
-        )} */}
+        )}
 
         {/* 프로젝트 개요 */}
         <div className={styles.card}>
@@ -550,6 +645,9 @@ const RequirementsSpecification = () => {
                   task={feature}
                   onToggleOpen={handleToggleOpen}
                   onToggleChecked={handleToggleChecked}
+                  onAddSubTask={handleAddSubTask}
+                  // onOpenModal={(type, parentTask = null) => openModal(type, parentTask)}
+                  onOpenModal={openModal}
                 />
               ))
             ) : (
@@ -557,19 +655,12 @@ const RequirementsSpecification = () => {
                 아직 기능이 추가되지 않았습니다.
               </div>
             )}
-            <div className={styles.addNewTaskSection}>
-              <div className={styles.addNewTaskButton}>
-                <div className={styles.addIconContainer}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 3.3335V12.6668" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M3.33594 8H12.6693" stroke="#6C757D" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div className={styles.addNewTaskText}>
-                  <div className={styles.addNewTaskTextContent}>새 작업 추가</div>
-                </div>
-              </div>
-            </div>
+            {/* 필드는 아직 수동 추가 기능 없음, 막기 */}
+            {/* <AddNewTaskButton onClick={() => setIsAddTaskModalOpen(true)} /> */}
+            {/* <AddNewTaskButton 
+              onClick={() => openModal('main')} 
+              text="주 기능 추가" 
+            /> */}
           </div>
         </div>
 
@@ -594,6 +685,13 @@ const RequirementsSpecification = () => {
           </div>
         )}
       </div>
+      <AddTaskModal
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        onSubmit={handleAddTask}
+        taskType={modalState.taskType}
+        parentTask={modalState.parentTask}
+      />
     </div>
   );
 };
