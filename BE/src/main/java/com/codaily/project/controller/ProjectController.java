@@ -3,14 +3,19 @@ package com.codaily.project.controller;
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.project.dto.FeatureItemReduceResponse;
 import com.codaily.project.dto.ProjectCreateRequest;
+import com.codaily.project.dto.SpecificationFinalizeResponse;
+import com.codaily.project.dto.ToggleReduceRequest;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
+import com.codaily.project.service.FeatureItemService;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +35,7 @@ import java.util.Map;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final FeatureItemService featureItemService;
 
     @Operation(
             summary = "프로젝트 생성(일정 생성 페이지에서 '다음으로' 버튼 클릭 시 실행되어야 합니다.)",
@@ -176,4 +182,172 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "감축 플래그 토글",
+            description = """
+                    프로젝트의 기능에 대해 감축 플래그(isReduced)를 설정/해제합니다.
+                    
+                    대상 선택 규칙:
+                    - featureId가 주어지면 해당 기능(및 하위 트리 전체)을 대상으로 합니다.
+                    - featureId가 없고 field가 주어지면 해당 필드의 모든 기능을 대상으로 합니다.
+                    - field와 featureId는 동시에 줄 수 없습니다.
+                    """
+    )
+    @Parameters({
+            @Parameter(name = "projectId", description = "프로젝트 ID", required = true, example = "101"),
+            @Parameter(name = "field", description = "기능 그룹(필드)명. 예: '계정', '결제'", required = false, example = "계정"),
+            @Parameter(name = "featureId", description = "대상 기능 ID. 주어지면 단건(+하위 트리) 처리", required = false, example = "987")
+    })
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true,
+            description = "감축 여부 설정 바디",
+            content = @Content(
+                    schema = @Schema(implementation = ToggleReduceRequest.class),
+                    examples = {
+                            @ExampleObject(name = "단건/트리 감축 활성화", value = "{ \"isReduced\": true }"),
+                            @ExampleObject(name = "필드 전체 감축 해제", value = "{ \"isReduced\": false }")
+                    }
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "성공 (본문 없음)"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "요청 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "isReduced 누락",
+                                            value = """
+                                                    {
+                                                      "code": "BAD_REQUEST",
+                                                      "message": "isReduced 값이 필요합니다."
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "field/featureId 동시 또는 모두 누락",
+                                            value = """
+                                                    {
+                                                      "code": "BAD_REQUEST",
+                                                      "message": "field 또는 featureId 중 하나만 지정해야 합니다."
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "프로젝트 없음",
+                                            value = """
+                                                    {
+                                                      "code": "BAD_REQUEST",
+                                                      "message": "존재하지 않는 프로젝트입니다. projectId=101"
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "기능-프로젝트 불일치",
+                                            value = """
+                                                    {
+                                                      "code": "BAD_REQUEST",
+                                                      "message": "해당 기능이 프로젝트에 속하지 않습니다. featureId=987"
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            )
+    })
+    @PatchMapping("/{projectId}/specification/reduce")
+    public ResponseEntity<Void> patchReduceFlag(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) String field,
+            @RequestParam(required = false) Long featureId,
+            @org.springframework.web.bind.annotation.RequestBody ToggleReduceRequest body
+    ) {
+        featureItemService.updateIsReduced(projectId, field, featureId, body.getIsReduced());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(
+            summary = "스펙 확정 (감축 항목 삭제)",
+            description = """
+                    프로젝트에 연결된 스펙에서 isReduced=true 인 기능들을 모두 삭제합니다.
+                    삭제 결과(삭제 개수 등)를 본문으로 반환합니다.
+                    """
+    )
+    @Parameters({
+            @Parameter(name = "projectId", description = "프로젝트 ID", required = true, example = "101")
+    })
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "성공",
+                    content = @Content(
+                            schema = @Schema(implementation = SpecificationFinalizeResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "삭제 발생",
+                                            value = """
+                                                    {
+                                                      "projectId": 101,
+                                                      "specId": 555,
+                                                      "deletedCount": 7
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "삭제할 항목 없음",
+                                            value = """
+                                                    {
+                                                      "projectId": 101,
+                                                      "specId": 555,
+                                                      "deletedCount": 0
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "요청 오류",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = {
+                                    @ExampleObject(
+                                            name = "프로젝트 없음",
+                                            value = """
+                                                    {
+                                                      "code": "BAD_REQUEST",
+                                                      "message": "존재하지 않는 프로젝트입니다. id=101"
+                                                    }
+                                                    """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "스펙 미연결",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "프로젝트에 스펙 없음",
+                                    value = """
+                                            {
+                                              "code": "NOT_FOUND",
+                                              "message": "프로젝트에 연결된 스펙이 없습니다. projectId=101"
+                                            }
+                                            """
+                            )
+                    )
+            )
+    })
+    @PostMapping("/{projectId}/specification/finalize")
+    public ResponseEntity<SpecificationFinalizeResponse> finalizeSpecification(
+            @PathVariable Long projectId
+    ) {
+        SpecificationFinalizeResponse resp = featureItemService.finalizeSpecification(projectId);
+        return ResponseEntity.ok(resp);
+    }
 }

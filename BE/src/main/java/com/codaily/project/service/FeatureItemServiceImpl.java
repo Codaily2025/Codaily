@@ -24,15 +24,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class FeatureItemServiceImpl implements FeatureItemService {
+
+    private static final Integer BATCH_SIZE = 1_000;
 
     private final ScheduleService scheduleService;
     private final ProjectRepository projectRepository;
@@ -242,6 +242,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         FeatureSaveItem mainFeatureDto = FeatureSaveItem.builder()
                 .id(savedMain.getFeatureId())
                 .title(savedMain.getTitle())
+                .isReduced(false)
                 .description(savedMain.getDescription())
                 .estimatedTime(savedMain.getEstimatedTime())
                 .priorityLevel(null)
@@ -254,6 +255,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                     .description(sub.getDescription())
                     .field(savedMain.getField())
                     .project(project)
+                    .isReduced(false)
                     .specification(spec)
                     .priorityLevel(sub.getPriorityLevel())
                     .parentFeature(savedMain)
@@ -265,6 +267,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             return FeatureSaveItem.builder()
                     .id(savedSub.getFeatureId())
                     .title(savedSub.getTitle())
+                    .isReduced(false)
                     .description(savedSub.getDescription())
                     .estimatedTime(savedSub.getEstimatedTime())
                     .priorityLevel(savedSub.getPriorityLevel())
@@ -275,6 +278,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .projectId(projectId)
                 .specId(specId)
                 .field(chunk.getField())
+                .isReduced(false)
                 .mainFeature(mainFeatureDto)
                 .subFeature(subFeatureDtos)
                 .build();
@@ -367,6 +371,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                                         FeatureSaveItem.builder()
                                                 .id(saved.getFeatureId())
                                                 .title(saved.getTitle())
+                                                .isReduced(false)
                                                 .description(saved.getDescription())
                                                 .estimatedTime(saved.getEstimatedTime())
                                                 .priorityLevel(saved.getPriorityLevel())
@@ -569,6 +574,79 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
         return ParentFeatureListResponse.builder()
                 .parentFeatures(responseList)
+                .build();
+    }
+
+    @Override
+    public Long getSpecIdByFeatureId(Long featureId) {
+        if (featureId == null) return null;
+
+        return featureItemRepository.findSpecIdByFeatureId(featureId);
+    }
+
+    @Override
+    public boolean existsActive(Long specId) {
+        if (specId == null) return false;
+        return featureItemRepository.existsBySpecification_SpecId(specId);
+    }
+
+    @Transactional
+    public void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced) {
+        if (isReduced == null) throw new IllegalArgumentException("isReduced 값이 필요합니다.");
+        if ((field == null && featureId == null) || (field != null && featureId != null)) {
+            throw new IllegalArgumentException("field 또는 featureId 중 하나만 지정해야 합니다.");
+        }
+
+        // 프로젝트 존재 확인 (권한/소유 검증은 컨트롤러/인터셉터에서 추가)
+        if (!projectRepository.existsById(projectId)) {
+            throw new IllegalArgumentException("존재하지 않는 프로젝트입니다. projectId=" + projectId);
+        }
+
+        if (field != null) {
+            // 1) 프로젝트 + 필드 단위 벌크 업데이트 (조인 불필요)
+            featureItemRepository.bulkUpdateIsReducedByField(projectId, field, isReduced);
+            return;
+        }
+
+        // 2) featureId 모드: 해당 기능이 해당 프로젝트에 속하는지 확인
+        if (!featureItemRepository.existsByFeatureIdAndProjectId(featureId, projectId)) {
+            throw new IllegalArgumentException("해당 기능이 프로젝트에 속하지 않습니다. featureId=" + featureId);
+        }
+
+        // 3) 서브트리 모든 ID BFS 수집 (ID만 다룸 → 가볍고 빠름)
+        Deque<Long> q = new ArrayDeque<>();
+        List<Long> allIds = new ArrayList<>();
+        q.add(featureId);
+        while (!q.isEmpty()) {
+            Long cur = q.pollFirst();
+            allIds.add(cur);
+            q.addAll(featureItemRepository.findChildIds(cur));
+        }
+
+        // 4) IN 벌크 업데이트 (대용량 대비 배치 처리)
+        for (int i = 0; i < allIds.size(); i += BATCH_SIZE) {
+            int end = Math.min(i + BATCH_SIZE, allIds.size());
+            featureItemRepository.bulkUpdateIsReducedByIds(allIds.subList(i, end), isReduced);
+        }
+    }
+
+    @Override
+    @Transactional
+    public SpecificationFinalizeResponse finalizeSpecification(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다. id=" + projectId));
+
+        Specification spec = project.getSpecification();
+        if (spec == null) {
+            throw new IllegalStateException("프로젝트에 연결된 스펙이 없습니다. projectId=" + projectId);
+        }
+
+        int deleted = featureItemRepository.deleteReducedBySpecId(spec.getSpecId());
+
+        return SpecificationFinalizeResponse.builder()
+                .projectId(project.getProjectId())
+                .specId(spec.getSpecId())
+                .deletedCount(deleted)
                 .build();
     }
 }

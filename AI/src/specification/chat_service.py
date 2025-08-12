@@ -22,6 +22,9 @@ class ChatIntent(str, Enum):
     SPEC_ADD_FEATURE_MAIN = "spec:add:feature:main"
     SPEC_ADD_FEATURE_SUB = "spec:add:feature:sub"
     SPEC_ADD_FIELD = "spec:add:field"
+    DELETE = "delete"
+    CHAT_SMALLTALK = "chat:smalltalk"
+    IGNORE_DROP = "ignore:drop"
 
 
 # 프롬프트: intent 분류
@@ -174,7 +177,7 @@ async def add_main_feature(
     main_func_full = f"{main_feature['title']}. {main_feature['description']}"
     # print(main_func_full)
     # 상세 기능들 생성
-    sub_features = spec_sub_functions_generator(
+    sub_features = await spec_sub_functions_generator(
         project_description=message,
         function_group=field,
         main_function=main_func_full,

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -166,4 +167,48 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.createdAt ASC")
     List<FeatureItem> findParentFeaturesByProject(@Param("projectId") Long projectId);
+
+    @Query("select f.specification.specId from FeatureItem f where f.featureId = :featureId")
+    Long findSpecIdByFeatureId(@Param("featureId") Long featureId);
+
+    boolean existsBySpecification_SpecId(Long specId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           update FeatureItem f
+              set f.isReduced = :isReduced
+            where f.specification.specId = :specId
+              and f.field = :field
+           """)
+    int bulkUpdateIsReducedByField(Long specId, String field, Boolean isReduced);
+
+    @Query("""
+           select f.featureId
+             from FeatureItem f
+            where f.parentFeature.featureId = :parentId
+           """)
+    List<Long> findChildIds(@Param("parentId") Long parentId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           update FeatureItem f
+              set f.isReduced = :isReduced
+            where f.featureId in :ids
+           """)
+    int bulkUpdateIsReducedByIds(@Param("ids") Collection<Long> ids,
+                                 @Param("isReduced") Boolean isReduced);
+
+    @Query("""
+           select count(f) > 0
+             from FeatureItem f
+            where f.featureId = :featureId
+              and f.project.projectId = :projectId
+           """)
+    boolean existsByFeatureIdAndProjectId(@Param("featureId") Long featureId,
+                                          @Param("projectId") Long projectId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from FeatureItem f " +
+            "where f.specification.specId = :specId and f.isReduced = true")
+    int deleteReducedBySpecId(@Param("specId") Long specId);
 }
