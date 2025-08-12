@@ -43,5 +43,7 @@ public interface FeatureItemService {
 
     Long getSpecIdByFeatureId(Long featureId);
 
+    void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced);
+
     boolean existsActive(Long specId);
 }

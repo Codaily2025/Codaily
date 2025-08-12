@@ -3,8 +3,10 @@ package com.codaily.project.controller;
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.project.dto.FeatureItemReduceResponse;
 import com.codaily.project.dto.ProjectCreateRequest;
+import com.codaily.project.dto.ToggleReduceRequest;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
+import com.codaily.project.service.FeatureItemService;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,6 +32,7 @@ import java.util.Map;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final FeatureItemService featureItemService;
 
     @Operation(
             summary = "프로젝트 생성(일정 생성 페이지에서 '다음으로' 버튼 클릭 시 실행되어야 합니다.)",
@@ -176,4 +179,14 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{projectId}/specification/reduce")
+    public ResponseEntity<Void> patchReduceFlag(
+            @PathVariable Long projectId,
+            @RequestParam(required = false) String field,
+            @RequestParam(required = false) Long featureId,
+            @RequestBody ToggleReduceRequest body
+    ) {
+        featureItemService.updateIsReduced(projectId, field, featureId, body.getIsReduced());
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -24,15 +24,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class FeatureItemServiceImpl implements FeatureItemService {
+
+    private static final Integer BATCH_SIZE = 1_000;
 
     private final ScheduleService scheduleService;
     private final ProjectRepository projectRepository;
@@ -583,5 +583,45 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     public boolean existsActive(Long specId) {
         if (specId == null) return false;
         return featureItemRepository.existsBySpecification_SpecId(specId);
+    }
+
+    @Transactional
+    public void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced) {
+        if (isReduced == null) throw new IllegalArgumentException("isReduced 값이 필요합니다.");
+        if ((field == null && featureId == null) || (field != null && featureId != null)) {
+            throw new IllegalArgumentException("field 또는 featureId 중 하나만 지정해야 합니다.");
+        }
+
+        // 프로젝트 존재 확인 (권한/소유 검증은 컨트롤러/인터셉터에서 추가)
+        if (!projectRepository.existsById(projectId)) {
+            throw new IllegalArgumentException("존재하지 않는 프로젝트입니다. projectId=" + projectId);
+        }
+
+        if (field != null) {
+            // 1) 프로젝트 + 필드 단위 벌크 업데이트 (조인 불필요)
+            featureItemRepository.bulkUpdateIsReducedByField(projectId, field, isReduced);
+            return;
+        }
+
+        // 2) featureId 모드: 해당 기능이 해당 프로젝트에 속하는지 확인
+        if (!featureItemRepository.existsByFeatureIdAndProjectId(featureId, projectId)) {
+            throw new IllegalArgumentException("해당 기능이 프로젝트에 속하지 않습니다. featureId=" + featureId);
+        }
+
+        // 3) 서브트리 모든 ID BFS 수집 (ID만 다룸 → 가볍고 빠름)
+        Deque<Long> q = new ArrayDeque<>();
+        List<Long> allIds = new ArrayList<>();
+        q.add(featureId);
+        while (!q.isEmpty()) {
+            Long cur = q.pollFirst();
+            allIds.add(cur);
+            q.addAll(featureItemRepository.findChildIds(cur));
+        }
+
+        // 4) IN 벌크 업데이트 (대용량 대비 배치 처리)
+        for (int i = 0; i < allIds.size(); i += BATCH_SIZE) {
+            int end = Math.min(i + BATCH_SIZE, allIds.size());
+            featureItemRepository.bulkUpdateIsReducedByIds(allIds.subList(i, end), isReduced);
+        }
     }
 }
