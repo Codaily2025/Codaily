@@ -118,3 +118,66 @@
   color: #404040;
   margin-bottom: 20px;
 }
+
+.tech-stack-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.sync-tech-stack-btn {
+  background-color: #24292e;
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.sync-tech-stack-btn:hover:not(:disabled) {
+  background-color: #1b1f23;
+}
+
+.sync-tech-stack-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* 메시지 스타일 */
+.error-message {
+  color: #e84757;
+  font-size: 12px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  /* background-color: #f8d7da; */
+  /* border: 1px solid #f5c6cb; */
+  /* border-radius: 4px; */
+}
+
+.success-message {
+  color: #155724;
+  font-size: 12px;
+  margin-top: 4px;
+  padding: 4px 8px;
+  /* background-color: #d4edda; */
+  /* border: 1px solid #c3e6cb; */
+  /* border-radius: 4px; */
+  animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
