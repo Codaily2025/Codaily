@@ -88,6 +88,7 @@ export const streamChatResponse = ({
   onOpen,
   onError,
   onClose,
+  onSpecData, // 명세서 데이터 처리용 콜백 추가
 }) => {
   let specNotificationSent = false; // 요구사항 명세서 알림이 한 번만 전송되도록 플래그
   const eventSourceUrl =
@@ -108,7 +109,7 @@ export const streamChatResponse = ({
   let fullContent = "";
   let ended = false; // 의도적 종료 플래그
 
-  const es = new EventSource(eventSourceUrl);
+  const es = new EventSource(eventSourceUrl, { withCredentials: true });
 
   es.onopen = () => {
     console.log('SSE 연결');
@@ -123,20 +124,12 @@ export const streamChatResponse = ({
       return;
     }
 
-    // for (const jsonString of jsonStrings) {
-    // if (jsonString.trim() === '') continue;
-
     try {
-      // const { type, content } = JSON.parse(jsonString);
       const msg = JSON.parse(event.data);
-      console.log('!!!!!!!!', msg.type, msg)
-      // event.data
-      // type이 chat일 때,
-      // 
-      if (msg?.type && msg.type === 'chat') {
-        // 일반 대화 데이터
-        onMessage?.({ type: msg?.type, content: msg?.content });
-      } else if (
+      console.log('!!!! SSE 메시지 수신:', msg.type, msg);
+
+      // 명세서 관련 데이터 처리
+      if (
         msg?.type === 'spec' ||
         msg?.type === 'spec:regenerate' ||
         msg?.type === 'project:summarization' ||
@@ -144,24 +137,31 @@ export const streamChatResponse = ({
         msg?.type === 'spec:add:feature:main' ||
         msg?.type === 'spec:add:field'
       ) {
-        // console.log({type: msg?.type, content: msg?.content})
         // 요구사항 명세서 관련 작업이므로 "요구사항 명세서를 확인해주세요" 메시지 한 번만 출력
         if (!specNotificationSent) {
           onMessage?.({ type: 'chat', content: '요구사항 명세서를 확인해주세요' });
           specNotificationSent = true;
         }
+        
+        // 명세서 데이터 처리 콜백 호출
+        if (onSpecData && msg?.content) {
+          onSpecData({ type: msg.type, content: msg.content });
+        }
+        
         // 실제 데이터는 원본 타입과 함께 전달
+        // onMessage?.({ type: msg?.type, content: msg?.content });
+      } else if (msg?.type === 'chat') {
+        // 일반 대화 데이터
         onMessage?.({ type: msg?.type, content: msg?.content });
       } else {
-        console.log({type: 'error', content: msg?.content})
+        console.log('알 수 없는 메시지 타입:', msg?.type, msg?.content);
         onMessage?.({ type: 'error', content: msg?.content });
       }
 
     } catch (e) {
       console.error('파싱 실패:', event.data);
-      onMessage?.({ type: 'error', content: event.data }); // 원문 전달
+      onMessage?.({ type: event?.type, content: event.data }); // 원문 전달
     }
-    // }
   };
 
   es.onerror = (error) => {
@@ -187,7 +187,7 @@ export const postUserMessage = async (
   userText,
   projectId,
   projectSpecId,
-  { onMessage, onOpen, onError, onClose } = {}
+  { onMessage, onOpen, onError, onClose, onSpecData } = {}
 ) => {
   if (useMock2) {
     // 더미 모드: 간단히 콜백 호출
@@ -212,6 +212,7 @@ export const postUserMessage = async (
     onOpen,
     onError,
     onClose,
+    onSpecData, // 명세서 데이터 처리 콜백 전달
   });
 
   // 호출자에서 필요 시 es.close()로 종료

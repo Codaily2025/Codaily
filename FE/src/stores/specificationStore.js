@@ -4,9 +4,9 @@ import { create } from 'zustand';
 // priorityLevel을 priority로 변환하는 헬퍼 함수
 const convertPriorityLevel = (priorityLevel) => {
   if (priorityLevel === null || priorityLevel === undefined) return 'Normal';
-  if (priorityLevel < 5) return 'Low';
-  if (priorityLevel < 10) return 'Normal';
-  return 'High';
+  if (priorityLevel < 3) return 'High';
+  if (priorityLevel < 7) return 'Normal';
+  return 'Low';
 };
 
 // API 응답 데이터 구조에 맞춰 초기 상태 정의
@@ -14,61 +14,75 @@ const initialState = {
   projectOverview: {
     projectName: '',
     projectDescription: '',
-    projectPurpose: '', // 필요시 추가
+    projectPurpose: '',
   },
   mainFeatures: [], // { id, name, description, subTasks: [...] }
   techStack: [],
   showSidebar: false, // 요구사항 명세서 사이드바 표시 여부
   rawData: null, // 디버깅용 raw data
+  projectId: null,
+  specId: null,
 };
 
-export const useSpecificationStore = create((set) => ({
+// 명세서 초기화용 데이터 구조
+const specInitialData = {
+  projectOverview: {
+    projectName: '',
+    projectDescription: '',
+    projectPurpose: '',
+  },
+  mainFeatures: [],
+  techStack: [],
+  showSidebar: false,
+  rawData: null,
+  projectId: null,
+  specId: null,
+};
+
+export const useSpecificationStore = create((set, get) => ({
   ...initialState,
   
-  // 명세서 요약 정보 설정
+  // 명세서 초기화
+  resetSpecification: () => set(specInitialData),
+  
+  // 프로젝트 정보 설정
+  setProjectInfo: (projectId, specId) => set({ projectId, specId }),
+  
+  // 명세서 요약 정보 설정 (project:summarization)
   setProjectSummary: (summary) => set((state) => ({
     ...state,
     projectOverview: {
-      // projectName: summary.projectTitle,
-      projectName: summary.specTitle,
-      projectDescription: summary.projectDescription,
-      projectPurpose: state.projectOverview.projectPurpose, // 기존 값 유지 또는 업데이트
+      projectName: summary.specTitle || summary.projectTitle || '',
+      projectDescription: summary.projectDescription || '',
+      projectPurpose: summary.projectPurpose || '',
     },
+    projectId: summary.projectId || state.projectId,
+    specId: summary.specId || state.specId,
   })),
 
   // 명세서 전체 또는 필드 단위로 기능 추가/업데이트
   setFeatures: (features) => set({ mainFeatures: features }),
   
-  // 기존 명세서에 새 기능 그룹(필드) 추가
-  addFeatureField: (featureGroup) => set((state) => {
-     // API 데이터 구조를 UI 데이터 구조로 변환
-     const newFeature = {
-        id: featureGroup.mainFeature.id,
-        name: featureGroup.mainFeature.title,
-        description: featureGroup.mainFeature.description,
-        hours: featureGroup.mainFeature.estimatedTime || 0,
-        priority: convertPriorityLevel(featureGroup.mainFeature.priorityLevel),
-        isOpen: true,
-        checked: true,
-        subTasks: featureGroup.subFeature.map(sub => ({
-            id: sub.id,
-            name: sub.title,
-            description: sub.description,
-            hours: sub.estimatedTime || 0,
-            priority: convertPriorityLevel(sub.priorityLevel),
-            checked: true,
-            isOpen: false,
-            subTasks: [],
-        })),
-     };
-     return { mainFeatures: [...state.mainFeatures, newFeature] };
-  }),
-
-  // 새로운 spec 데이터 처리 (spec, spec:regenerate, spec:add:field)
+  // API 응답 데이터 처리 - 모든 spec 관련 타입 처리
   processSpecData: (data) => set((state) => {
-    console.log('Processing spec data:', data);
+    console.log('요구사항 명세서 데이터 처리 중:', data);
     
-    // field가 있는 경우 새로운 기능 그룹 추가
+    // project:summarization 처리
+    if (data.projectTitle || data.specTitle || data.projectDescription) {
+      return {
+        ...state,
+        projectOverview: {
+          projectName: data.specTitle || data.projectTitle || state.projectOverview.projectName,
+          projectDescription: data.projectDescription || state.projectOverview.projectDescription,
+          projectPurpose: data.projectPurpose || state.projectOverview.projectPurpose,
+        },
+        projectId: data.projectId || state.projectId,
+        specId: data.specId || state.specId,
+        rawData: data
+      };
+    }
+    
+    // spec, spec:regenerate, spec:add:field 처리
     if (data.field && data.mainFeature && data.subFeature) {
       // field를 최상위 기능으로, mainFeature를 subTask로, subFeature를 secondSubTask로 매핑
       const newFeature = {
@@ -121,47 +135,57 @@ export const useSpecificationStore = create((set) => ({
       };
     }
     
-    return { rawData: data }; // 디버깅용
-  }),
-
-  // 기존 주기능에 상세 기능 추가
-  addSubFeature: (payload) => set((state) => {
-    const newSubFeature = {
-        id: payload.featureSaveItem.id,
-        name: payload.featureSaveItem.title,
-        description: payload.featureSaveItem.description,
-        hours: payload.featureSaveItem.estimatedTime || 0,
-        priority: convertPriorityLevel(payload.featureSaveItem.priorityLevel),
+    // spec:add:feature:sub 처리
+    if (data.parentFeatureId && data.featureSaveItem) {
+      const newSubFeature = {
+        id: data.featureSaveItem.id,
+        name: data.featureSaveItem.title,
+        description: data.featureSaveItem.description,
+        hours: data.featureSaveItem.estimatedTime || 0,
+        priority: convertPriorityLevel(data.featureSaveItem.priorityLevel),
         checked: true,
         isOpen: false,
         subTasks: [],
-    };
-    
-    const newMainFeatures = state.mainFeatures.map(feature => {
-        if (feature.id === payload.parentFeatureId) {
-            return {
-                ...feature,
-                subTasks: [...feature.subTasks, newSubFeature]
-            };
+      };
+      
+      // parentFeatureId로 해당 기능을 찾아서 subTasks에 추가
+      const newMainFeatures = state.mainFeatures.map(feature => {
+        // 최상위 기능에서 찾기
+        if (feature.id === data.parentFeatureId) {
+          return {
+            ...feature,
+            subTasks: [...feature.subTasks, newSubFeature]
+          };
         }
-        return feature;
-    });
+        
+        // subTasks에서 찾기
+        const updatedSubTasks = feature.subTasks.map(subTask => {
+          if (subTask.id === data.parentFeatureId) {
+            return {
+              ...subTask,
+              subTasks: [...subTask.subTasks, newSubFeature]
+            };
+          }
+          return subTask;
+        });
+        
+        return {
+          ...feature,
+          subTasks: updatedSubTasks
+        };
+      });
 
-    return { mainFeatures: newMainFeatures };
+      return { 
+        mainFeatures: newMainFeatures,
+        rawData: data
+      };
+    }
+    
+    return { ...state, rawData: data };
   }),
 
   // 명세서 재생성
   regenerateSpec: (features) => set({ mainFeatures: features }),
-
-  // 새로운 데이터 구조를 처리하기 위한 임시 액션 (디버깅용)
-  addRawSpecData: (data) => set((state) => {
-    console.log('Raw spec data received:', data);
-    // 임시로 데이터를 그대로 저장하여 구조 확인
-    return {
-      ...state,
-      rawData: data
-    };
-  }),
 
   // 기술 스택 설정
   setTechStack: (techStack) => set({ techStack }),
@@ -176,7 +200,29 @@ export const useSpecificationStore = create((set) => ({
   })),
 
   // 사이드바 표시/숨김 제어
-  showSidebar: () => set({ showSidebar: true }),
-  hideSidebar: () => set({ showSidebar: false }),
+  showSidebar: () => {
+    console.log('showSidebar 함수 호출됨');
+    set({ showSidebar: true });
+  },
+  hideSidebar: () => {
+    console.log('hideSidebar 함수 호출됨');
+    set({ showSidebar: false });
+  },
   toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
+
+  // 디버깅용: 현재 명세서 상태 출력
+  debugPrintSpecification: () => {
+    const state = get();
+    console.log('=== 현재 명세서 상태 ===');
+    console.log('프로젝트 정보:', {
+      projectId: state.projectId,
+      specId: state.specId
+    });
+    console.log('프로젝트 개요:', state.projectOverview);
+    console.log('주요 기능:', state.mainFeatures);
+    console.log('기술 스택:', state.techStack);
+    console.log('Raw Data:', state.rawData);
+    console.log('========================');
+    return state;
+  },
 }));
