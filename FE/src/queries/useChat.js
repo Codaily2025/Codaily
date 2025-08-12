@@ -43,16 +43,8 @@ export const useSendUserMessage = (projectId, specId) => {
   const queryClient = useQueryClient(); // 데이터 캐시 관리
   const { addMessage, removeMessage, appendLastMessageContent } = useChatStore((state) => state); // 메세지 추가
   const { 
-    setProjectSummary, 
-    addFeatureField, 
-    addSubFeature, 
-    regenerateSpec, 
-    setFeatures,
-    addRawSpecData,
-    setTechStack,
-    setProjectOverview,
-    showSidebar,
-    processSpecData
+    processSpecData,
+    showSidebar
   } = useSpecificationStore((state) => state);
 
   return useMutation({
@@ -86,35 +78,25 @@ export const useSendUserMessage = (projectId, specId) => {
                 appendLastMessageContent(data.content);
                 break;
               case 'project:summarization':
-                setProjectSummary(data.content);
-                break;
               case 'spec':
               case 'spec:regenerate':
-                 // spec, regenerate는 기존 명세서를 대체하므로, 첫 조각에서 초기화 후 추가
-                 // 백엔드 구현에 따라, 첫 조각인지 식별할 방법이 필요함
-                 // 여기서는 간단히 regenerateSpec 호출
-                 processSpecData(data.content); // 새로운 데이터 처리 함수 사용
-                 console.log('showSidebar 호출 - spec/spec:regenerate');
-                 showSidebar(); // 요구사항 명세서 사이드바 표시
-                 break;
               case 'spec:add:field':
-                processSpecData(data.content); // 새로운 데이터 처리 함수 사용
-                console.log('showSidebar 호출 - spec:add:field');
-                showSidebar(); // 요구사항 명세서 사이드바 표시
-                break;
               case 'spec:add:feature:main':
-                 processSpecData(data.content); // 새로운 데이터 처리 함수 사용
-                 console.log('showSidebar 호출 - spec:add:feature:main');
-                 showSidebar(); // 요구사항 명세서 사이드바 표시
-                 break;
               case 'spec:add:feature:sub':
-                processSpecData(data.content); // 새로운 데이터 처리 함수 사용
-                console.log('showSidebar 호출 - spec:add:feature:sub');
+                // 모든 명세서 관련 데이터는 processSpecData로 통합 처리
+                processSpecData(data.content);
+                console.log('showSidebar 호출 - 명세서 데이터 수신:', data.type);
                 showSidebar(); // 요구사항 명세서 사이드바 표시
                 break;
               default:
                 console.warn("Unknown SSE event type:", data.type);
             }
+          },
+          onSpecData: (specData) => {
+            // 명세서 데이터 처리 콜백
+            console.log('명세서 데이터 처리:', specData);
+            processSpecData(specData.content);
+            showSidebar();
           },
           onClose: () => {
             console.log("SSE stream closed.");

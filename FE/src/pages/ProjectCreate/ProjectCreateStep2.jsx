@@ -29,8 +29,8 @@ const ProjectCreateStep2 = () => {
   // 디버깅을 위한 로그 추가
   useEffect(() => {
     console.log('isSidebarVisible 상태 변경:', isSidebarVisible);
-    console.log('mainFeatures 상태:', mainFeatures);
-    console.log('shouldShowSidebar:', shouldShowSidebar);
+    // console.log('mainFeatures 상태:', mainFeatures);
+    // console.log('shouldShowSidebar:', shouldShowSidebar);
   }, [isSidebarVisible, mainFeatures, shouldShowSidebar]);
 
   // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수
