@@ -36,7 +36,7 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
                     // 2) 신규 생성 필요 → 재료 수집
                     final Long userId = project.getUserId();
                     RetrospectiveGenerateRequest payload =
-                            retrospectiveService.collectRetrospectiveData(project, userId, RetrospectiveTriggerType.AUTO);
+                            retrospectiveService.collectRetrospectiveData(project, userId, type);
 
                     // 3) 재료가 전무하면 생성 스킵
                     boolean noCompleted = payload.getCompletedFeatures() == null || payload.getCompletedFeatures().isEmpty();
