@@ -8,7 +8,9 @@ public enum MessageType {
     SPEC_ADD_FEATURE_SUB,
     PROJECT_SUMMARIZATION,
     SPEC_ADD_FIELD,
-    DELETE;
+    DELETE,
+    CHAT_SMALLTALK,
+    IGNORE_DROP;
 
     public static MessageType fromString(String raw) {
         return switch (raw.toLowerCase()) {
@@ -20,6 +22,8 @@ public enum MessageType {
             case "spec:add:feature:sub" -> SPEC_ADD_FEATURE_SUB;
             case "project:summarization" -> PROJECT_SUMMARIZATION;
             case "delete" -> DELETE;
+            case "chat:smalltalk" -> CHAT_SMALLTALK;
+            case "ignore:drop" -> IGNORE_DROP;
             default -> throw new IllegalArgumentException("Unknown intent: " + raw);
         };
     }

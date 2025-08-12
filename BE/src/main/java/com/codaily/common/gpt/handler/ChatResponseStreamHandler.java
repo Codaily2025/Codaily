@@ -28,6 +28,9 @@ public class ChatResponseStreamHandler {
 
     public SseEmitter stream(ChatStreamRequest request) {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        if(MessageType.fromString(request.getIntent()) == MessageType.CHAT_SMALLTALK) {
+            request.setIntent(MessageType.CHAT.name().toLowerCase());
+        }
         Flux<String> chatFlux = chatService.streamChat(
                 request.getIntent(),
                 request.getUserId(),
@@ -53,10 +56,12 @@ public class ChatResponseStreamHandler {
             return emitter;
         }
 
+
         Disposable subscription = chatFlux.subscribe(chunk -> {
                     try {
                         JsonNode root = objectMapper.readTree(chunk);
                         MessageType type = MessageType.fromString(root.path("type").asText());
+                        if(type == MessageType.CHAT_SMALLTALK) type = MessageType.CHAT;
                         JsonNode content = root.path("content");
                         log.info("sse chunk: {}", content.asText());
 

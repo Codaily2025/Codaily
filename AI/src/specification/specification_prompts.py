@@ -4,7 +4,7 @@ CHAT_INTENT_PROMPT = """
 
 출력은 반드시 다음 JSON 형식으로 반환하세요 (추가 설명 없이 JSON만 출력):
 {{
-  "intent": "chat | spec | spec:regenerate | spec:add:feature:main | spec:add:feature:sub | spec:add:field | delete",
+  "intent": "chat | spec | spec:regenerate | spec:add:feature:main | spec:add:feature:sub | spec:add:field | delete | chat:smalltalk | ignore:drop",
   "featureId": number 또는 null,
   "field": string 또는 null
 }}
@@ -17,7 +17,9 @@ CHAT_INTENT_PROMPT = """
     - intent가 'spec:add:field'이거나 그 외의 intent일 경우, 반드시 null로 설정하세요.
 
 판단 가능한 intent 목록과 의미는 다음과 같습니다:
-- 'chat': 아직 기능 명세서를 만들기에는 정보가 부족하거나, 주제와 무관한 일반적인 대화
+- 'chat': 명세·기능·요구사항·흐름·구조·품질 속성에 대한 논의이지만, 실행 의사(추가·삭제·재생성)가 없는 경우
+- 'chat:smalltalk': 명세와 무관하며 짧은 인사·감사·칭찬·감탄 등 의례적 표현(1~2문장)
+- 'ignore:drop': 명세와 무관하며 구체적 정보·작업 요청이나 긴 사담(레시피, 날씨, 뉴스, 농담 등)
 - 'spec': 사용자가 만들고자 하는 서비스 또는 기능에 대해 충분한 정보를 제공한 경우 (명세서 생성 가능)
 - 'spec:regenerate': 사용자가 명세서를 **새로 혹은 다시** 만들어달라고 요청한 경우
 - 'spec:add:feature:main': 기존 주 기능과 무관한 **새로운 기능** 추가 요청
@@ -31,11 +33,8 @@ CHAT_INTENT_PROMPT = """
 2) 그 외에 'spec:add:feature:sub' 판단 규칙을 적용한다.
 3) 그 외에 'spec:add:feature:main' 판단 규칙을 적용한다.
 4) 그 외에 'spec:add:field' 판단 규칙을 적용한다.
-5) 그 외에는 'spec' 또는 'spec:regenerate' 또는 'chat'을 판단한다.
+5) 그 외에는 'spec', 'spec:regenerate', 'chat', 'chat:smalltalk', 'ignore:drop' 등으로 판단한다.
 
-다음의 경우는 반드시 'chat'으로 판단하세요:
-- 위 조건이 거의 충족되지 않음 (아이디어 탐색 등)
-- 기능이 핵심 목적과 무관한 부가 기능일 경우 (예: 다크모드, 테마 변경 등)
 
 다음 조건 중 **2개 이상을 충족**할 경우에만 'spec'으로 판단하세요:
 1. 서비스 목적이나 해결하고자 하는 문제 설명
@@ -44,6 +43,43 @@ CHAT_INTENT_PROMPT = """
 4. 입력값과 출력값의 관계 ('입력하면 요약된 정보 반환')
 5. 명세 생성 의사 표현 ('명세서 만들어줘')
 6. 챗봇이 명세 생성 안내를 먼저 한 경우
+
+다음의 경우는 반드시 'chat'으로 판단하세요:
+- 위 조건이 거의 충족되지 않음 (아이디어 탐색 등)
+- 사용자의 발화가 **서비스/기능 명세와 직접적으로 관련**은 있으나,
+    아래 어느 실행 intent에도 해당하지 않아 **아직 정보를 더 모아야 하는 상태**.
+    (예: 아이디어 탐색, 요구사항 모호, 논의/질문, 비기능적 요구 논의 등)
+- 기능이 핵심 목적과 무관한 부가 기능일 경우 (예: 다크모드, 테마 변경 등)
+- 'chat'로 판단하는 전형적인 경우:
+  a) 아이디어 탐색/질문: "결제 쪽에서 어떤 인증을 쓰는 게 좋을까요?"
+  b) 범위·정의 논의: "알림은 시스템 알림이랑 이메일 둘 다 필요할까요?"
+  c) 비기능 요구(성능/보안/모니터링 등) 방향성 논의: "동시 접속 1만 명이면 어떤 구조가 좋을까요?"
+  d) 핵심 목적은 맞는데 **추가/삭제 실행 의사 표현이 없음**: "캘린더 연동이 어려울까요?"
+  e) 기능명만 있고 **연결/그룹/행동 의사 미표시**: "태그 기능도 생각하고 있어요." (그룹/주/상세 어느 쪽인지 불명)
+
+- 다음 중 하나라도 해당하면 'chat' **아님**:
+  1) 삭제/비활성/해제 의사 → intent='delete'
+  2) 기존 주 기능의 상세 기능 추가 의사(대상 주 기능이 식별됨) → 'spec:add:feature:sub'
+  3) 기존 기능 그룹에 새 주 기능 추가 의사 → 'spec:add:feature:main'
+  4) 어떤 기존 그룹과도 무관한 새 그룹 제안 → 'spec:add:field'
+  5) 기존 명세를 완전히 다시 만들 의사 → 'spec:regenerate'
+  6) 명세와 무관(잡담/레시피/날씨/뉴스 등) → 'chat:smalltalk' 또는 'ignore:drop'
+
+[chat / ignore 경계]
+- chat: 명세·기능·요구사항·흐름·구조·품질 속성에 대한 논의이지만 실행 의사(추가·삭제·재생성)가 없는 경우
+- chat:smalltalk: 명세와 무관하며 짧은 인사·감사·칭찬·감탄 등 의례적 표현(1~2문장)
+- ignore:drop: 명세와 무관하며 구체적 정보·작업 요청이나 긴 사담(레시피, 날씨, 뉴스, 농담 등)
+- 판정 기준: 짧고 의례적이면 chat:smalltalk, 명세 관련 논의면 chat, 그 외 무관한 요청은 ignore:drop
+
+다음의 경우는 반드시 'chat:smalltalk'으로 판단하세요:
+- 명세와 무관하며 짧은 인사·감사·칭찬·감탄 등 의례적 표현(1~2문장)인 경우
+- 예: "안녕하세요", "고맙습니다", "좋아요!", "수고하셨습니다"
+- 이때 featureId와 field는 반드시 null로 설정하세요.
+
+다음의 경우는 반드시 'ignore:drop'으로 판단하세요:
+- 명세와 무관하며 구체적 정보·작업 요청이나 긴 사담인 경우
+- 예: "소갈비찜 레시피 알려줘", "오늘 날씨 어때?", "최근 뉴스 요약해줘"
+- 이때 featureId와 field는 반드시 null로 설정하세요.
 
 다음의 경우는 반드시 'spec:regenerate'으로 판단하세요:
 - 사용자가 기존 명세서를 **완전히 새로 생성**해 달라고 요청한 경우
@@ -85,6 +121,10 @@ CHAT_INTENT_PROMPT = """
 - {{"intent": "spec:add:feature:main", "featureId": null, "field": "상품 관리"}}
 - {{"intent": "spec:add:field", "featureId": null, "field": null}}
 - {{"intent": "chat", "featureId": null, "field": null}}
+- {{"intent": "chat:smalltalk", "featureId": null, "field": null}}  ← "안녕하세요"
+- {{"intent": "chat:smalltalk", "featureId": null, "field": null}}  ← "좋아요!"
+- {{"intent": "ignore:drop", "featureId": null, "field": null}}  ← "소갈비찜 레시피 알려줘"
+- {{"intent": "ignore:drop", "featureId": null, "field": null}}  ← "오늘 날씨 어때?"
 - {{"intent": "spec:regenerate", "featureId": null, "field": null}}
 - {{"intent": "spec:add:feature:main", "featureId": null, "field": "알림 설정"}}
 - {{"intent": "spec:add:feature:sub", "featureId": 2, "field": "일정 관리"}}

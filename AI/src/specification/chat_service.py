@@ -23,6 +23,8 @@ class ChatIntent(str, Enum):
     SPEC_ADD_FEATURE_SUB = "spec:add:feature:sub"
     SPEC_ADD_FIELD = "spec:add:field"
     DELETE = "delete"
+    CHAT_SMALLTALK = "chat:smalltalk"
+    IGNORE_DROP = "ignore:drop"
 
 
 # 프롬프트: intent 분류

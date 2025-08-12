@@ -22,6 +22,14 @@ public class ChatFilter {
             );
         }
 
+        if(intent == MessageType.IGNORE_DROP) {
+            return new ChatFilterResult(
+                    false,
+                    "OUT_OF_SCOPE",
+                    "명세서 생성과 관련된 채팅 부탁드립니다."
+            );
+        }
+
         boolean hasFeature = (specId != null) && featureItemService.existsActive(specId);
 
         if (!hasFeature && (intent == MessageType.SPEC_ADD_FIELD
