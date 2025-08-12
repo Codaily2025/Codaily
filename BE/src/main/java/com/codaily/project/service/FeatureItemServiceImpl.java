@@ -1,43 +1,33 @@
 package com.codaily.project.service;
 
-import com.codaily.global.exception.ProjectNotFoundException;
-import com.codaily.management.entity.DaysOfWeek;
-import com.codaily.management.entity.FeatureItemSchedule;
-import com.codaily.management.repository.DaysOfWeekRepository;
-import com.codaily.management.repository.FeatureItemSchedulesRepository;
-import com.codaily.project.dto.*;
 import com.codaily.codereview.dto.FeatureChecklistFeatureDto;
 import com.codaily.codereview.dto.FeatureChecklistRequestDto;
 import com.codaily.codereview.dto.FeatureChecklistResponseDto;
 import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.codereview.repository.FeatureItemChecklistRepository;
-import com.codaily.project.dto.FeatureSaveContent;
-import com.codaily.project.dto.FeatureSaveItem;
-import com.codaily.project.dto.FeatureSaveRequest;
-import com.codaily.project.dto.FeatureSaveResponse;
+import com.codaily.global.exception.ProjectNotFoundException;
+import com.codaily.management.repository.DaysOfWeekRepository;
+import com.codaily.management.repository.FeatureItemSchedulesRepository;
+import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
 import com.codaily.project.exception.FeatureNotFoundException;
-import com.codaily.project.exception.SpecificationNotFoundException;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
 import com.codaily.project.repository.SpecificationRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -52,7 +42,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ScheduleRepository scheduleRepository;
     private final FeatureItemChecklistRepository checklistRepository;
-    private final WebClient webClient;
+    private final WebClient langchainWebClient;
     private final AsyncScheduleService asyncScheduleService;
 
     @Override
@@ -425,9 +415,9 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                     .build();
 
             try {
-                FeatureChecklistResponseDto response = webClient
+                FeatureChecklistResponseDto response = langchainWebClient
                         .post()
-                        .uri("/api/generate-checklist")
+                        .uri("ai/api/generate-checklist")
                         .bodyValue(request)
                         .retrieve()
                         .bodyToMono(FeatureChecklistResponseDto.class)
@@ -475,7 +465,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 //        try {
 //            FeatureChecklistResponseDto response = webClient
 //                    .post()
-//                    .uri("/api/generate-checklist")
+//                    .uri("ai/api/generate-checklist")
 //                    .bodyValue(request)
 //                    .retrieve()
 //                    .bodyToMono(FeatureChecklistResponseDto.class)
@@ -529,9 +519,9 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .build();
 
         try {
-            FeatureChecklistResponseDto response = webClient
+            FeatureChecklistResponseDto response = langchainWebClient
                     .post()
-                    .uri("/api/generate-checklist")
+                    .uri("ai/api/generate-checklist")
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(FeatureChecklistResponseDto.class)

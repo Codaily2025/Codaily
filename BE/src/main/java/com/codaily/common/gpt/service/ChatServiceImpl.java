@@ -27,7 +27,7 @@ public class ChatServiceImpl implements ChatService {
         return langchainWebClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder
-                            .path("/chat/gpt/stream")
+                            .path("ai/api/chat/gpt/stream")
                             .queryParam("intent", intent)
                             .queryParam("user_id", userId)
                             .queryParam("message", message)
@@ -52,7 +52,7 @@ public class ChatServiceImpl implements ChatService {
                 .map(f -> new FeatureClassifyRequest(f.getFeatureId(), f.getTitle(), f.getField()))
                 .toList();
         return langchainWebClient.post()
-                .uri("/chat/intent")
+                .uri("ai/api/chat/intent")
                 .bodyValue(new ChatIntentRequest(message, mainFeatures))
                 .retrieve()
                 .bodyToMono(ChatIntentResponse.class);

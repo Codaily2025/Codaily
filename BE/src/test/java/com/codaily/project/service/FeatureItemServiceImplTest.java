@@ -28,7 +28,7 @@ class FeatureItemServiceImplTest {
     void setUp() {
         featureItemRepository = mock(FeatureItemRepository.class);
         projectRepository = mock(ProjectRepository.class);
-        featureItemService = new FeatureItemServiceImpl(projectRepository,null,featureItemRepository,null, null, null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
+        featureItemService = new FeatureItemServiceImpl(null, projectRepository, null, featureItemRepository, null, null, null, null, null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
     }
 
     @Test
@@ -51,8 +51,6 @@ class FeatureItemServiceImplTest {
                 .build();
 
         FeatureItemUpdateRequest updateRequest = FeatureItemUpdateRequest.builder()
-                .title("수정된 제목")
-                .description("수정된 설명")
                 .estimatedTime(5.0)
                 .priorityLevel(9)
                 .build();
@@ -79,8 +77,6 @@ class FeatureItemServiceImplTest {
         Long featureId = 123123123L;
 
         FeatureItemUpdateRequest updateRequest = FeatureItemUpdateRequest.builder()
-                .title("제목")
-                .description("설명")
                 .estimatedTime(3.0)
                 .priorityLevel(7)
                 .build();
