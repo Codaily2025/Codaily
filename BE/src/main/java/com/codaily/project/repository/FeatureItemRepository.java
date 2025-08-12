@@ -166,4 +166,9 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.createdAt ASC")
     List<FeatureItem> findParentFeaturesByProject(@Param("projectId") Long projectId);
+
+    @Query("select f.specification.specId from FeatureItem f where f.featureId = :featureId")
+    Long findSpecIdByFeatureId(@Param("featureId") Long featureId);
+
+    boolean existsBySpecification_SpecId(Long specId);
 }

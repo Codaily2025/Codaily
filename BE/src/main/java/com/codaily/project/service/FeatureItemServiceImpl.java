@@ -571,4 +571,17 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .parentFeatures(responseList)
                 .build();
     }
+
+    @Override
+    public Long getSpecIdByFeatureId(Long featureId) {
+        if (featureId == null) return null;
+
+        return featureItemRepository.findSpecIdByFeatureId(featureId);
+    }
+
+    @Override
+    public boolean existsActive(Long specId) {
+        if (specId == null) return false;
+        return featureItemRepository.existsBySpecification_SpecId(specId);
+    }
 }

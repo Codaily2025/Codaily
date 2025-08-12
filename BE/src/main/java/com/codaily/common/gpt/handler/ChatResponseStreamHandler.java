@@ -1,7 +1,9 @@
 package com.codaily.common.gpt.handler;
 
 import com.codaily.common.gpt.dispatcher.SseMessageDispatcher;
+import com.codaily.common.gpt.dto.ChatFilterResult;
 import com.codaily.common.gpt.dto.ChatStreamRequest;
+import com.codaily.common.gpt.filter.ChatFilter;
 import com.codaily.common.gpt.service.ChatService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,11 +14,14 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
+import java.util.Map;
+
 @Log4j2
 @Component
 @RequiredArgsConstructor
 public class ChatResponseStreamHandler {
 
+    private final ChatFilter chatFilter;
     private final ChatService chatService;
     private final SseMessageDispatcher dispatcher;
     private final ObjectMapper objectMapper;
@@ -30,6 +35,23 @@ public class ChatResponseStreamHandler {
                 request.getFeatureId(),
                 request.getField()
         );
+
+        ChatFilterResult check = chatFilter.check(MessageType.fromString(request.getIntent()),
+                request.getSpecId(),
+                request.getFeatureId(),
+                request.getField());
+
+        if (!check.isAllowed()) {
+            try {
+                var payload = Map.of("type", "chat", "content", check.getMessage());
+                emitter.send(SseEmitter.event().data(payload));
+                emitter.send(SseEmitter.event().name("end").data("blocked"));
+            } catch (Exception ignore) {
+            } finally {
+                emitter.complete();
+            }
+            return emitter;
+        }
 
         Disposable subscription = chatFlux.subscribe(chunk -> {
                     try {

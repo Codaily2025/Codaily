@@ -4,8 +4,6 @@ import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
 
 import java.util.List;
-import com.codaily.project.dto.FeatureSaveRequest;
-import com.codaily.project.dto.FeatureSaveResponse;
 
 
 public interface FeatureItemService {
@@ -42,4 +40,8 @@ public interface FeatureItemService {
     void generateExtraFeatureItemChecklist(Long featureId);
 
     ParentFeatureListResponse getParentFeatures(Long projectId);
+
+    Long getSpecIdByFeatureId(Long featureId);
+
+    boolean existsActive(Long specId);
 }

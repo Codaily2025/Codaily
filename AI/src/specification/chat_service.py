@@ -174,7 +174,7 @@ async def add_main_feature(
     main_func_full = f"{main_feature['title']}. {main_feature['description']}"
     # print(main_func_full)
     # 상세 기능들 생성
-    sub_features = spec_sub_functions_generator(
+    sub_features = await spec_sub_functions_generator(
         project_description=message,
         function_group=field,
         main_function=main_func_full,
