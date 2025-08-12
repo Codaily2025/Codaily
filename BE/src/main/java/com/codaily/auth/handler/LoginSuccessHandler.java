@@ -50,6 +50,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             if (frontendUrl.startsWith("https://")) {
                 jwtCookie.setSecure(true);
             }
+
+            log.info("front-redirect: {}", frontendUrl);
             response.addCookie(jwtCookie);
 
             // // 2. 프론트엔드로 리다이렉트 (토큰을 URL 파라미터로 전달)
