@@ -91,6 +91,14 @@ export const streamChatResponse = ({
   onSpecData, // 명세서 데이터 처리용 콜백 추가
 }) => {
   let specNotificationSent = false; // 요구사항 명세서 알림이 한 번만 전송되도록 플래그
+  
+  // projectId와 projectSpecId가 전달되지 않았으면 에러
+  if (!projectId || !projectSpecId) {
+    console.error('projectId와 projectSpecId가 필요합니다:', { projectId, projectSpecId });
+    onError?.(new Error('projectId와 projectSpecId가 필요합니다.'));
+    return { close: () => {} };
+  }
+  
   const eventSourceUrl =
     `http://localhost:8081/api/chat/stream` +
     `?userId=1` +
@@ -200,8 +208,11 @@ export const postUserMessage = async (
 
   // projectId와 specId가 전달되지 않았으면 에러
   if (!projectId || !projectSpecId) {
+    console.error('postUserMessage: projectId와 projectSpecId가 필요합니다:', { projectId, projectSpecId });
     throw new Error('projectId와 projectSpecId가 필요합니다.');
   }
+
+  console.log('postUserMessage 호출 - 프로젝트 정보:', { projectId, projectSpecId, userText });
 
   // SSE 연결 시작
   const es = streamChatResponse({
@@ -217,4 +228,126 @@ export const postUserMessage = async (
 
   // 호출자에서 필요 시 es.close()로 종료
   return es;
+};
+
+/**
+ * 명세서 기능 수동 추가 API
+ * @param {number} projectId - 프로젝트 ID
+ * @param {Object} taskData - 작업 데이터
+ * @returns {Promise} - API 응답
+ */
+// /api/projects/{projectId}/features
+// 파라미터 : projectId
+// request body : {
+//   "title": "string",
+//   "description": "string",
+//   "field": "string",
+//   "category": "string",
+//   "priorityLevel": 0,
+//   "estimatedTime": 0,
+//   "isCustom": true,
+//   "projectId": 0,
+//   "parentFeatureId": 0
+// }
+export const addManualFeature = async (projectId, taskData) => {
+  try {
+    console.log('수동 기능 추가 요청:', taskData);
+    console.log('수동 기능 추가 요청 JSON:', JSON.stringify(taskData, null, 2));
+    console.log('수동 기능 추가 요청 URL:', `projects/${projectId}/features`);
+    const response = await authInstance.post(`projects/${projectId}/features`, taskData);
+    console.log('수동 기능 추가 응답:', response.data);
+    console.log('수동 기능 추가 응답 JSON:', JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    console.error('수동 기능 추가 실패:', error);
+    console.error('수동 기능 추가 실패 응답:', error.response?.data);
+    throw error;
+  }
+};
+// 응답 형식
+// {
+//   "featureId": 0,
+//   "title": "string",
+//   "description": "string",
+//   "field": "string",
+//   "category": "string",
+//   "status": "string",
+//   "priorityLevel": 0,
+//   "estimatedTime": 0,
+//   "isSelected": true,
+//   "isCustom": true,
+//   "isReduced": true,
+//   "projectId": 0,
+//   "specificationId": 0,
+//   "parentFeatureId": 0,
+//   "childFeatures": [
+//     "string"
+//   ]
+// }
+
+const mapPriority = (p) => {
+  if (p === 'high') return 1;
+  if (p === 'medium') return 4;
+  if (p === 'low') return 8;
+  return p; // 이미 숫자면 그대로
+};
+
+/**
+ * 주 기능 추가를 위한 API 요청 데이터 구성
+ * @param {Object} formData - 폼 데이터
+ * @param {number} projectId - 프로젝트 ID
+ * @param {string} field - 필드명 (카테고리)
+ * @returns {Object} - API 요청용 데이터
+ */
+export const buildMainFeatureRequest = (formData, projectId, field = 'Custom Feature') => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    field: field, // 주 기능의 경우 field 필요
+    category: field, // 카테고리는 field와 동일하게 설정
+    priorityLevel: mapPriority(formData.priorityLevel),
+    estimatedTime: formData.estimatedTime,
+    isCustom: true,
+    projectId: projectId
+  };
+};
+
+/**
+ * 필드 안의 주 기능 추가를 위한 API 요청 데이터 구성
+ * @param {Object} formData - 폼 데이터
+ * @param {number} projectId - 프로젝트 ID
+ * @param {string} fieldName - 필드 이름
+ * @returns {Object} - API 요청용 데이터
+ */
+export const buildMainFeatureToFieldRequest = (formData, projectId, fieldName) => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    field: fieldName, // 필드 이름을 field로 설정
+    category: fieldName, // 카테고리도 필드 이름과 동일하게 설정
+    priorityLevel: mapPriority(formData.priorityLevel),
+    estimatedTime: formData.estimatedTime,
+    isCustom: true,
+    projectId: projectId
+  };
+};
+
+/**
+ * 상세 기능 추가를 위한 API 요청 데이터 구성
+ * @param {Object} formData - 폼 데이터
+ * @param {number} projectId - 프로젝트 ID
+ * @param {number} parentFeatureId - 부모 기능 ID
+ * @returns {Object} - API 요청용 데이터
+ */
+export const buildSubFeatureRequest = (formData, projectId, parentFeatureId) => {
+  return {
+    title: formData.title,
+    description: formData.description,
+    priorityLevel: mapPriority(formData.priorityLevel),
+    estimatedTime: formData.estimatedTime,
+    isCustom: true,
+    projectId: projectId,
+    parentFeatureId: parentFeatureId
+    // field와 category는 상세 기능 추가 시에는 포함하지 않음
+  };
 };

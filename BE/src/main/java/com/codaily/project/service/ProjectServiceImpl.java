@@ -12,6 +12,7 @@ import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.entity.Specification;
 import com.codaily.project.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepositoriesRepository repository;
     private final SpecificationRepository specificationRepository;
     private final FeatureItemRepository featureItemRepository;
-    private final ScheduleService scheduleService;
+    private final AsyncScheduleService asyncScheduleService;
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();
@@ -210,38 +211,74 @@ public class ProjectServiceImpl implements ProjectService {
             updateDaysOfWeek(project, request.getDaysOfWeek());
         }
         if (scheduleChanged || daysOfWeekChanged || dateChanged) {
-            scheduleService.rescheduleProject(projectId);
+            asyncScheduleService.rescheduleProjectAsync(projectId);
         }
     }
 
     private void updateDaysOfWeek(Project project, List<ProjectUpdateRequest.DaysOfWeekRequest> daysOfWeek) {
-        daysOfWeekRepository.deleteByProject(project);
 
-        // 새로운 요일별 시간 생성
-        List<DaysOfWeek> newDaysOfWeek = daysOfWeek.stream()
-                .map(request -> DaysOfWeek.builder()
-                        .project(project)
-                        .dateName(request.getDateName())
-                        .hours(request.getHours())
-                        .build())
-                .collect(Collectors.toList());
+        if (daysOfWeek == null) {
+            throw new IllegalArgumentException("요일별 시간 정보가 없습니다.");
+        }
 
-        daysOfWeekRepository.saveAll(newDaysOfWeek);
+        for (ProjectUpdateRequest.DaysOfWeekRequest request : daysOfWeek) {
+            if (request.getHours() == null) {
+                throw new IllegalArgumentException("작업 시간이 입력되지 않았습니다.");
+            }
+
+            if (request.getHours() < 0) {
+                throw new IllegalArgumentException("올바르지 않은 시간 정보가 포함되어 있습니다.");
+            }
+        }
+
+        boolean hasValidWorkingHours = daysOfWeek.stream()
+                .anyMatch(request -> request.getHours() > 0);
+
+        if (!hasValidWorkingHours) {
+            throw new IllegalArgumentException("최소 하나 이상의 요일에는 작업 시간이 설정되어야 합니다.");
+        }
+
+        try {
+            daysOfWeekRepository.deleteByProject(project);
+
+            // 새로운 요일별 시간 생성
+            List<DaysOfWeek> newDaysOfWeek = daysOfWeek.stream()
+                    .map(request -> DaysOfWeek.builder()
+                            .project(project)
+                            .dateName(request.getDateName().trim())
+                            .hours(request.getHours())
+                            .build())
+                    .collect(Collectors.toList());
+
+            daysOfWeekRepository.saveAll(newDaysOfWeek);
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException("요일별 시간 업데이트 중 데이터베이스 오류가 발생했습니다.", e);
+        }
     }
 
     private void updateSchedules(Project project, List<LocalDate> scheduledDates) {
-        scheduleRepository.deleteByProject(project);
-        scheduleRepository.flush();
+        if (scheduledDates.isEmpty()) {
+            throw new IllegalArgumentException("최소 하나 이상의 스케줄 날짜를 입력해주세요.");
+        }
 
-        // 새로운 스케줄 생성
-        List<Schedule> newSchedules = scheduledDates.stream()
-                .map(date -> Schedule.builder()
-                        .project(project)
-                        .scheduledDate(date)
-                        .build())
-                .collect(Collectors.toList());
+        try {
+            scheduleRepository.deleteByProject(project);
+            scheduleRepository.flush();
 
-        scheduleRepository.saveAll(newSchedules);
+            // 새로운 스케줄 생성
+            List<Schedule> newSchedules = scheduledDates.stream()
+                    .map(date -> Schedule.builder()
+                            .project(project)
+                            .scheduledDate(date)
+                            .build())
+                    .collect(Collectors.toList());
+
+            scheduleRepository.saveAll(newSchedules);
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException("스케줄 업데이트 중 데이터베이스 오류가 발생했습니다.", e);
+        }
     }
 
 

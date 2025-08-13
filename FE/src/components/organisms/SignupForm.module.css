@@ -14,7 +14,12 @@
     border-radius: 16px;
     padding: 30px;
     box-shadow: 2px 2px 2px rgba(0,0,0,0.1);
-    box-sizing: border-box; /* 전체 컨테이너도 box-sizing 적용 */
+    box-sizing: border-box;
+    width: 480px;
+    min-height: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .headerSection {
@@ -39,15 +44,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100px;
-    margin: 15px 0px 30px 0px;
+    height: 130px;
+    margin: 30px 0px 30px 0px;
 }
 
 .profileAvatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100px;
+    width: 130px;
     height: 100%;
     border-radius: 50%;
     background: #D6D5EB;
@@ -74,7 +79,7 @@
 .formRow {
     display: flex;
     gap: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 28px;
 }
 
 .formGroup {
@@ -123,42 +128,12 @@
     margin-bottom: 20px;
 }
 
-/*
-.formActions {
-    display: flex;
-    justify-content: flex-end;
-    justify-content: center;
-    margin-top: 30px;
-    padding-top: 20px;
-}
-*/
-
 .buttonGroup {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 8px;
-}
-
-.submitButton {
-  background-color: #4f46e5;
-  color: white;
-  border: none;
-  padding: 16px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.submitButton:hover:not(:disabled) {
-  background-color: #4338ca;
-}
-
-.submitButton:disabled {
-  background-color: #a5a5a5;
-  cursor: not-allowed;
+  margin-top: auto;
+  padding-top: 30px;
 }
 
 .nicknameInputContainer {

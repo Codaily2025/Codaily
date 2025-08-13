@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 
 // priorityLevel을 priority로 변환하는 헬퍼 함수
-const convertPriorityLevel = (priorityLevel) => {
+const convertNumberToPriority  = (priorityLevel) => {
   if (priorityLevel === null || priorityLevel === undefined) return 'Normal';
   if (priorityLevel < 3) return 'High';
   if (priorityLevel < 7) return 'Normal';
@@ -90,7 +90,7 @@ export const useSpecificationStore = create((set, get) => ({
         name: data.field, // field를 최상위 기능명으로 사용
         description: data.field, // field를 description으로도 사용
         hours: (data.mainFeature.estimatedTime || 0) + data.subFeature.reduce((sum, sub) => sum + (sub.estimatedTime || 0), 0), // 전체 시간 합계
-        priority: convertPriorityLevel(data.mainFeature.priorityLevel),
+        priority: convertNumberToPriority(data.mainFeature.priorityLevel),
         isOpen: true,
         checked: true,
         subTasks: [
@@ -99,7 +99,7 @@ export const useSpecificationStore = create((set, get) => ({
             name: data.mainFeature.title,
             description: data.mainFeature.description,
             hours: data.mainFeature.estimatedTime || 0,
-            priority: convertPriorityLevel(data.mainFeature.priorityLevel),
+            priority: convertNumberToPriority(data.mainFeature.priorityLevel),
             checked: true,
             isOpen: true, // 기본적으로 열려있도록 설정
             subTasks: data.subFeature.map(sub => ({
@@ -107,7 +107,7 @@ export const useSpecificationStore = create((set, get) => ({
               name: sub.title,
               description: sub.description,
               hours: sub.estimatedTime || 0,
-              priority: convertPriorityLevel(sub.priorityLevel),
+              priority: convertNumberToPriority(sub.priorityLevel),
               checked: true,
               isOpen: false,
               subTasks: [],
@@ -135,14 +135,14 @@ export const useSpecificationStore = create((set, get) => ({
       };
     }
     
-    // spec:add:feature:sub 처리
+    // spec:add:feature:sub 처리 (상세 기능 추가)
     if (data.parentFeatureId && data.featureSaveItem) {
       const newSubFeature = {
         id: data.featureSaveItem.id,
         name: data.featureSaveItem.title,
         description: data.featureSaveItem.description,
         hours: data.featureSaveItem.estimatedTime || 0,
-        priority: convertPriorityLevel(data.featureSaveItem.priorityLevel),
+        priority: convertNumberToPriority(data.featureSaveItem.priorityLevel),
         checked: true,
         isOpen: false,
         subTasks: [],
@@ -173,6 +173,36 @@ export const useSpecificationStore = create((set, get) => ({
           ...feature,
           subTasks: updatedSubTasks
         };
+      });
+
+      return { 
+        mainFeatures: newMainFeatures,
+        rawData: data
+      };
+    }
+
+    // spec:add:feature:main 처리 (주 기능 추가)
+    if (data.field && data.featureSaveItem) {
+      const newMainFeature = {
+        id: data.featureSaveItem.id,
+        name: data.featureSaveItem.title,
+        description: data.featureSaveItem.description,
+        hours: data.featureSaveItem.estimatedTime || 0,
+        priority: convertNumberToPriority(data.featureSaveItem.priorityLevel),
+        checked: true,
+        isOpen: false,
+        subTasks: [],
+      };
+      
+      // field 이름으로 해당 필드를 찾아서 subTasks에 추가
+      const newMainFeatures = state.mainFeatures.map(feature => {
+        if (feature.name === data.field) {
+          return {
+            ...feature,
+            subTasks: [...feature.subTasks, newMainFeature]
+          };
+        }
+        return feature;
       });
 
       return { 
@@ -224,5 +254,152 @@ export const useSpecificationStore = create((set, get) => ({
     console.log('Raw Data:', state.rawData);
     console.log('========================');
     return state;
+  },
+  // 수동으로 주 기능 추가, 페이지에서는 subTask로 추가
+  addMainFeatureManually: (featureData) => set((state) => {
+    const newFeature = {
+      id: Date.now(), // 임시 ID (실제로는 API 응답에서 받아야 함)
+      name: featureData.title,
+      description: featureData.description,
+      hours: featureData.estimatedTime || 0,
+      priority: convertNumberToPriority(featureData.priorityLevel),
+      isOpen: false,
+      checked: true,
+      subTasks: [],
+    };
+
+    return {
+      mainFeatures: [...state.mainFeatures, newFeature]
+    };
+  }),
+
+  // 필드 이름 기반으로 주 기능 추가 (필드 안의 subTasks에 추가)
+  addMainFeatureToField: (fieldName, featureData) => set((state) => {
+    console.log('addMainFeatureToField 호출됨:', { fieldName, featureData });
+    
+    const newSubFeature = {
+      id: featureData.id || Date.now(), // API 응답에서 받은 featureId 사용
+      name: featureData.title,
+      description: featureData.description,
+      hours: featureData.estimatedTime || 0,
+      priority: convertNumberToPriority(featureData.priorityLevel),
+      checked: true,
+      isOpen: false,
+      subTasks: [],
+    };
+
+    console.log('새로 추가할 주 기능:', newSubFeature);
+
+    // 필드 이름으로 해당 필드를 찾아서 subTasks에 추가
+    const newMainFeatures = state.mainFeatures.map(feature => {
+      if (feature.name === fieldName) {
+        console.log('필드 찾음:', feature.name, '기존 subTasks:', feature.subTasks);
+        return {
+          ...feature,
+          subTasks: [...feature.subTasks, newSubFeature]
+        };
+      }
+      return feature;
+    });
+
+    console.log('업데이트된 mainFeatures:', newMainFeatures);
+
+    return {
+      mainFeatures: newMainFeatures
+    };
+  }),
+
+  // 수동으로 상세 기능 추가, 페이지에서는 secondSubTask로 추가
+  addSubFeatureManually: (parentFeatureId, featureData) => set((state) => {
+    console.log('addSubFeatureManually 호출됨:', { parentFeatureId, featureData });
+    
+    const newSubFeature = {
+      id: featureData.id || Date.now(), // API 응답에서 받은 featureId 사용
+      name: featureData.title,
+      description: featureData.description,
+      hours: featureData.estimatedTime || 0,
+      priority: convertNumberToPriority(featureData.priorityLevel),
+      checked: true,
+      isOpen: false,
+      subTasks: [],
+    };
+
+    console.log('새로 추가할 상세 기능:', newSubFeature);
+
+    // 재귀적으로 부모 찾기 및 추가
+    const addToFeature = (features, targetId) => {
+      return features.map(feature => {
+        if (feature.id === targetId) {
+          console.log('부모 기능 찾음:', feature.name, '기존 subTasks:', feature.subTasks);
+          return {
+            ...feature,
+            subTasks: [...feature.subTasks, newSubFeature]
+          };
+        }
+        
+        if (feature.subTasks && feature.subTasks.length > 0) {
+          return {
+            ...feature,
+            subTasks: addToFeature(feature.subTasks, targetId)
+          };
+        }
+        
+        return feature;
+      });
+    };
+
+    const updatedFeatures = addToFeature(state.mainFeatures, parentFeatureId);
+    console.log('업데이트된 mainFeatures:', updatedFeatures);
+
+    return {
+      mainFeatures: updatedFeatures
+    };
+  }),
+
+  // API 응답으로 실제 ID 업데이트 (선택적)
+  updateFeatureId: (tempId, realId) => set((state) => {
+    const updateIdRecursive = (features) => {
+      return features.map(feature => {
+        if (feature.id === tempId) {
+          return { ...feature, id: realId };
+        }
+        
+        if (feature.subTasks && feature.subTasks.length > 0) {
+          return {
+            ...feature,
+            subTasks: updateIdRecursive(feature.subTasks)
+          };
+        }
+        
+        return feature;
+      });
+    };
+
+    return {
+      mainFeatures: updateIdRecursive(state.mainFeatures)
+    };
+  }),
+
+  // 특정 기능을 ID로 찾기 (부모-자식 관계 확인용)
+  findFeatureById: (featureId) => {
+    const state = get();
+    
+    const searchFeature = (features, targetId, parentId = null) => {
+      for (const feature of features) {
+        if (feature.id === targetId) {
+          return { feature, parentId };
+        }
+        
+        if (feature.subTasks && feature.subTasks.length > 0) {
+          const result = searchFeature(feature.subTasks, targetId, feature.id);
+          if (result) {
+            return result;
+          }
+        }
+      }
+      return null;
+    };
+
+    return searchFeature(state.mainFeatures, featureId);
   },
 }));

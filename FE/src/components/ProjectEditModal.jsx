@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, memo } from 'react';
 import styles from './ProjectEditModal.module.css';
 import { useProjectStore } from '../stores/mypageProjectStore';
 import { useUpdateProjectMutation } from '../queries/useProjectMutation';
+import { useGetProjectDetailMutation } from '../queries/useProjectMutation';
 
 // SVG 아이콘들
 const CloseIcon = () => (
@@ -51,7 +52,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('project:', data?.title)
   
   // useProjectStore에서 프로젝트 정보 가져오기
-  const { projects } = useProjectStore();
+  const { projects, projectDetail, getProjectDetail } = useProjectStore();
   
   // data prop으로 전달된 프로젝트 ID를 사용하여 스토어에서 프로젝트 정보 찾기
   const projectFromStore = data?.id ? projects.find(p => p.id === data.id) : null;
@@ -59,9 +60,23 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // 스토어에서 가져온 정보가 있으면 사용하고, 없으면 data prop 사용
   const projectData = projectFromStore || data;
 
+  // 프로젝트 상세 조회 뮤테이션
+  const { mutate: fetchProjectDetail } = useGetProjectDetailMutation();
+
+  // 프로젝트 상세 조회 뮤테이션 실행 -> projectData가 변경될 때마다 실행
+  // 뮤테이션이란? 데이터를 변경하는 함수
+  useEffect(() => {
+    if (projectData) {
+      fetchProjectDetail(projectData.id);
+    }
+  }, [projectData, fetchProjectDetail]);
+
   // 프로젝트 수정 뮤테이션
   const { mutate, isPending } = useUpdateProjectMutation();
-
+  
+  // 스토어에서 상세 정보 가져오기
+  const detailFromStore = getProjectDetail();
+  
   // project가 없을 때 기본값 처리
   if (!projectData) {
     console.log('project is null')
@@ -105,18 +120,44 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     }
     return { startDate: '', endDate: '' };
   };
-  console.log('프로젝트 기간:', projectData?.duration)  // project.duration: 2025-08-01 ~ 2025-11-30
+  
+  // console.log('프로젝트 기간:', projectData?.duration)  // project.duration: 2025-08-01 ~ 2025-11-30
   const { startDate: initialStartDate, endDate: initialEndDate } = parseDuration(projectData?.duration);
 
+  // 상세 정보에서 시작일과 종료일 가져오기 (우선순위: 상세 정보 > 기존 데이터)
+  const finalStartDate = detailFromStore?.startDate?.replace(/-/g, '.') || initialStartDate;
+  const finalEndDate = detailFromStore?.endDate?.replace(/-/g, '.') || initialEndDate;
+  
+  // 상세 정보에서 요일별 투자 시간 가져오기 (우선순위: 상세 정보 > 기존 데이터)
+  const finalTimeByDay = detailFromStore?.timeByDay || projectData?.timeByDay || { 월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0 };
+
   const [projectDetails, setProjectDetails] = useState({
-    projectName: projectData?.title || '', // 프로젝트 이름
-    startDate: initialStartDate, // 시작일
-    endDate: initialEndDate, // 종료일
+    projectName: detailFromStore?.title || projectData?.title || '', // 프로젝트 이름
+    startDate: finalStartDate, // 시작일
+    endDate: finalEndDate, // 종료일
     repoUrl: projectData?.repoUrl || '', // 저장소 URL
-    timeByDay: projectData?.timeByDay || { 월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0 },
+    timeByDay: finalTimeByDay, // 요일별 투자 시간
   });
 
-  console.log('현재프로젝트 정보:', projectDetails)
+  // console.log('현재프로젝트 정보:', projectDetails)
+  console.log('스토어에서 가져온 상세 정보:', detailFromStore)
+
+  // 상세 정보가 업데이트될 때마다 컴포넌트 상태 업데이트
+  useEffect(() => {
+    if (detailFromStore) {
+      const finalStartDate = detailFromStore.startDate?.replace(/-/g, '.') || initialStartDate;
+      const finalEndDate = detailFromStore.endDate?.replace(/-/g, '.') || initialEndDate;
+      const finalTimeByDay = detailFromStore.timeByDay || { 월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0 };
+
+      setProjectDetails(prev => ({
+        ...prev,
+        projectName: detailFromStore.title || prev.projectName,
+        startDate: finalStartDate,
+        endDate: finalEndDate,
+        timeByDay: finalTimeByDay,
+      }));
+    }
+  }, [detailFromStore, initialStartDate, initialEndDate]);
 
   // 에러 상태 관리
   const [errors, setErrors] = useState({ projectName: false });

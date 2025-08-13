@@ -46,4 +46,8 @@ public interface FeatureItemSchedulesRepository extends JpaRepository<FeatureIte
             @Param("projectId") Long projectId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate);
+
+    List<FeatureItemSchedule> findByFeatureItem_FeatureIdOrderByScheduleDateAsc(Long featureId);
+
+    void deleteByFeatureItem_FeatureIdAndScheduleDateAfter(Long featureId, LocalDate today);
 }

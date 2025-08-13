@@ -121,6 +121,7 @@ public class UserServiceImpl implements UserService {
 
         user.setGithubAccessToken(null);
         user.setGithubAccount(null);
+        user.setGithubProfileUrl(null);
 
         userRepository.save(user);
     }
