@@ -69,9 +69,10 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   
   // 새로운 GitHub 레포지토리 생성 뮤테이션
   const { mutate: createNewRepo, isPending: isCreatingRepo } = useCreateNewGithubRepoMutation((repoName) => {
-    setConnectedRepoName(repoName);
     setSelectedRepoOption(0); // 현재 레포지토리로 변경
     setNewRepoName('');
+    // 프로젝트 상세 정보를 다시 불러와서 최신 상태로 업데이트
+    fetchProjectDetail(projectData.id);
     alert('새로운 레포지토리가 성공적으로 생성되었습니다.');
   });
 
@@ -375,7 +376,6 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   const [selectedRepoOption, setSelectedRepoOption] = useState(0); // 0: 현재, 1: 새로 만들기, 2: 기존 연결
   const [newRepoName, setNewRepoName] = useState(''); // 새로운 레포지토리 이름
   const [selectedExistingRepo, setSelectedExistingRepo] = useState(''); // 선택된 기존 레포지토리
-  const [connectedRepoName, setConnectedRepoName] = useState(''); // 연결된 레포지토리 이름 (성공 후 표시용)
 
   // 새로운 레포지토리 생성 핸들러
   const handleCreateNewRepo = () => {
@@ -392,9 +392,10 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
   // 기존 레포지토리 연결 뮤테이션
   const { mutate: linkExistingRepo, isPending: isLinkingRepo } = useLinkGithubRepoMutation((repoName) => {
-    setConnectedRepoName(repoName);
     setSelectedRepoOption(0); // 현재 레포지토리로 변경
     setSelectedExistingRepo('');
+    // 프로젝트 상세 정보를 다시 불러와서 최신 상태로 업데이트
+    fetchProjectDetail(projectData.id);
     alert('기존 레포지토리가 성공적으로 연결되었습니다.');
   });
 
@@ -576,7 +577,9 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       <div className={styles.repoTextContent}>
                         <div className={`${styles.repoTitle} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>현재 레포지토리</div>
                         <div className={`${styles.repoUrl} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>
-                          {connectedRepoName || projectData?.repoUrl || '연결된 레포지토리가 없습니다.'}
+                          {detailFromStore?.repositories && detailFromStore.repositories.length > 0 
+                            ? detailFromStore.repositories[0].repoUrl 
+                            : '연결된 레포지토리가 없습니다.'}
                         </div>
                       </div>
                     </div>
