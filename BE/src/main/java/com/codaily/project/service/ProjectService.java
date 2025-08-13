@@ -5,6 +5,7 @@ import com.codaily.mypage.dto.ProjectUpdateRequest;
 import com.codaily.project.dto.FeatureItemReduceResponse;
 import com.codaily.project.dto.ProjectCreateRequest;
 import com.codaily.project.dto.ProjectRepositoryResponse;
+import com.codaily.project.dto.ProjectSpecOverviewResponse;
 import com.codaily.project.entity.Project;
 
 import java.util.List;
@@ -31,4 +32,6 @@ public interface ProjectService {
     Project findById(Long projectId);
 
     boolean isProjectOwner(Long userId, Long projectId);
+
+    ProjectSpecOverviewResponse getProjectSpecOverview(Long projectId);
 }

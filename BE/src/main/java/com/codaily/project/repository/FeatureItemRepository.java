@@ -211,4 +211,14 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("delete from FeatureItem f " +
             "where f.specification.specId = :specId and f.isReduced = true")
     int deleteReducedBySpecId(@Param("specId") Long specId);
+
+    @Query("""
+           select distinct f
+           from FeatureItem f
+           left join fetch f.childFeatures
+           where f.specification.specId = :specId
+             and f.parentFeature is null
+           order by f.featureId
+           """)
+    List<FeatureItem> findMainWithChildrenBySpecId(@Param("specId") Long specId);
 }
