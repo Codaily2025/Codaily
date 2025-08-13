@@ -44,12 +44,9 @@ public class UserServiceImpl implements UserService {
         user.setGithubAccessToken(accessToken);
         user.setGithubScope(null); // scope 추출 시 여기에 넣어도 됨
         user.setTokenExpiredAt(null); // GitHub는 만료시간 제공 안 함
-        user.setGithubScope(null);
-        user.setGithubAccessToken(accessToken);
-        user.setGithubProfileUrl(profile.getHtmlUrl());
-        user.setGithubAccount(profile.getLogin());
 
         userRepository.save(user);
+        log.info("save github token: {}", user);
     }
 
     @Override
