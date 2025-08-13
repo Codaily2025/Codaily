@@ -98,6 +98,11 @@ export const useSendUserMessage = (projectId, specId) => {
             processSpecData(specData.content);
             showSidebar();
           },
+          onShowSidebar: () => {
+            // 사이드바 표시 콜백 - 파싱 전에 호출됨
+            console.log('onShowSidebar 호출 - 사이드바 표시');
+            showSidebar();
+          },
           onClose: () => {
             console.log("SSE stream closed.");
             resolve(); // Promise를 resolve하여 mutation을 성공 상태로 만듦

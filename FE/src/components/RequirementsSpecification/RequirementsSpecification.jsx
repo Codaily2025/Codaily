@@ -8,7 +8,7 @@ import PriorityBadge from './PriorityBadge';
 import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
 import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest, buildMainFeatureToFieldRequest } from '../../apis/chatApi';
-import { downloadSpecDocument } from '../../apis/requirementsSpecification';
+import { downloadSpecDocument, toggleReduceFlag } from '../../apis/requirementsSpecification';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -293,7 +293,9 @@ const RequirementsSpecification = () => {
     debugPrintSpecification,
     addMainFeatureManually,
     addSubFeatureManually,
-    addMainFeatureToField
+    addMainFeatureToField,
+    toggleFeatureChecked,
+    toggleFeatureOpen
   } = useSpecificationStore();
 
   const [specDocument, setSpecDocument] = useState(null); // pdf 다운로드 받기 위한 변수
@@ -342,7 +344,7 @@ const RequirementsSpecification = () => {
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
   // mainFeatures가 있으면 사용하고, 없으면 초기 데이터 사용
-  const [features, setFeatures] = useState(mainFeatures && mainFeatures.length > 0 ? mainFeatures : initialRequirementsData[0].mainFeatures);
+  const features = mainFeatures && mainFeatures.length > 0 ? mainFeatures : initialRequirementsData[0].mainFeatures;
 
   // 모달 상태 관리 -> 상세 기능 추가 모달 열기 위해 필요
   const [modalState, setModalState] = useState({
@@ -413,9 +415,6 @@ const RequirementsSpecification = () => {
   // mainFeatures가 업데이트되면 로컬 state도 업데이트
   useEffect(() => {
     console.log('mainFeatures 업데이트됨:', mainFeatures);
-    if (mainFeatures && mainFeatures.length > 0) {
-      setFeatures(mainFeatures);
-    }
   }, [mainFeatures]);
 
   // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수들
@@ -529,58 +528,69 @@ const RequirementsSpecification = () => {
   }
   // 열림/닫힘 상태를 토글하는 함수
   const handleToggleOpen = useCallback((taskId) => {
-    const toggleOpen = (tasks) => {
-      return tasks.map(task => {
-        if (task.id === taskId) {
-          return { ...task, isOpen: !task.isOpen };
-        }
-        if (task.subTasks) {
-          return { ...task, subTasks: toggleOpen(task.subTasks) };
-        }
-        return task;
-      });
-    };
-    setFeatures(prevFeatures => toggleOpen(prevFeatures));
-  }, []);
+    toggleFeatureOpen(taskId);
+  }, [toggleFeatureOpen]);
 
   // 체크 상태를 토글하는 함수
-  const handleToggleChecked = useCallback((taskId) => {
-    // console.log('토글 호출, taskId:', taskId);
-    let newState;
+  const handleToggleChecked = useCallback(async (taskId) => {
+    console.log('토글 호출, taskId:', taskId);
+    
+    if (!projectId) {
+      console.error('프로젝트 ID가 없습니다.');
+      return;
+    }
 
-    const toggleAndPropagate = list =>
-      list.map(item => {
-        if (item.id === taskId) {
-          const newChecked = !item.checked;
-          return {
-            ...item,
-            checked: newChecked,
-            subTasks: item.subTasks?.map(st => ({ ...st, checked: newChecked, subTasks: st.subTasks ? /* 재귀 */[] : [] })) ?? []
-          };
+    // 현재 상태에서 해당 task 찾기
+    const findTask = (tasks, targetId) => {
+      for (const task of tasks) {
+        if (task.id === targetId) {
+          return task;
         }
-        if (item.subTasks) {
-          return { ...item, subTasks: toggleAndPropagate(item.subTasks) };
+        if (task.subTasks) {
+          const found = findTask(task.subTasks, targetId);
+          if (found) return found;
         }
-        return item;
-      });
+      }
+      return null;
+    };
 
-    // 2) 부모 체크는 자식 전부 체크되어야만 true
-    const updateParents = list =>
-      list.map(item => {
-        if (item.subTasks && item.subTasks.length) {
-          const updatedSubs = updateParents(item.subTasks);
-          const allChecked = updatedSubs.every(st => st.checked);
-          return { ...item, subTasks: updatedSubs, checked: allChecked };
-        }
-        return item;
-      });
+    const currentTask = findTask(features, taskId);
+    if (!currentTask) {
+      console.error('Task를 찾을 수 없습니다:', taskId);
+      return;
+    }
 
-    setFeatures(prev => {
-      newState = toggleAndPropagate(prev);
-      return updateParents(newState);
-    });
+    const newChecked = !currentTask.checked;
+    const isReduced = !newChecked; // 체크 해제 시 isReduced=true, 체크 시 isReduced=false
 
-  }, []);
+    try {
+      // API 호출
+      let field = null;
+      let featureId = null;
+
+      // 최상위 기능(field)인지 확인 - ID가 'field_'로 시작하는지 확인
+      const isTopLevel = taskId.toString().startsWith('field_');
+      if (isTopLevel) {
+        field = currentTask.name; // field는 이름으로 전달
+        console.log('최상위 기능 토글 - field:', field, 'taskId:', taskId);
+      } else {
+        featureId = taskId; // subTask나 secondSubTask는 ID로 전달
+        console.log('하위 기능 토글 - featureId:', featureId, 'taskId:', taskId);
+      }
+
+      console.log('API 호출 파라미터:', { projectId, field, featureId, isReduced });
+      await toggleReduceFlag(projectId, field, featureId, isReduced);
+      console.log('체크박스 토글 API 호출 성공');
+
+      // 스토어를 통해 UI 상태 업데이트
+      toggleFeatureChecked(taskId, newChecked);
+
+    } catch (error) {
+      console.error('체크박스 토글 API 호출 실패:', error);
+      // 에러 발생 시 UI 상태를 원래대로 되돌리지 않음 (사용자가 다시 시도할 수 있도록)
+    }
+
+  }, [features, projectId]);
 
   // 하위 작업 추가 핸들러
   const handleAddSubTask = (parentTask) => {
@@ -599,7 +609,6 @@ const RequirementsSpecification = () => {
   // 초기화 버튼 클릭 핸들러
   const handleReset = () => {
     resetSpecification();
-    setFeatures([]);
   };
 
   return (

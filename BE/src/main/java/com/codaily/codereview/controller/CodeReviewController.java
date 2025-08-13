@@ -9,14 +9,17 @@ import com.codaily.common.git.service.WebhookService;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.service.FeatureItemService;
+import com.codaily.project.service.ProductivityEventService;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +36,9 @@ public class CodeReviewController {
     private final WebhookService webhookService;
     private final ProjectService projectService;
     private final CodeReviewResponseMapper codeReviewResponseMapper;
+
+    @Autowired
+    private ProductivityEventService productivityEventService;
 
     // 체크리스트 전달
     @GetMapping("/project/{projectId}/feature/{featureName}/checklist")
@@ -84,6 +90,13 @@ public class CodeReviewController {
         }
         if (request.getReviewSummary() != null) {
             codeReviewService.saveCodeReviewResult(request);
+            //생산성 즉시 업데이트
+            Project project = projectService.findById(request.getProjectId());
+            productivityEventService.updateProductivityOnReview(
+                    request.getProjectId(),
+                    project.getUser().getUserId(),
+                    LocalDate.now()
+            );
             log.info("기능 구현 완료 -> 코드 리뷰 생성");
         } else {
             codeReviewService.saveChecklistReviewItems(request);

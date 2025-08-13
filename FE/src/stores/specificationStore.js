@@ -63,6 +63,25 @@ export const useSpecificationStore = create((set, get) => ({
   // 명세서 전체 또는 필드 단위로 기능 추가/업데이트
   setFeatures: (features) => set({ mainFeatures: features }),
   
+  // 기능의 isOpen 상태 토글
+  toggleFeatureOpen: (taskId) => set((state) => {
+    const toggleOpen = (tasks) => {
+      return tasks.map(task => {
+        if (task.id === taskId) {
+          return { ...task, isOpen: !task.isOpen };
+        }
+        if (task.subTasks) {
+          return { ...task, subTasks: toggleOpen(task.subTasks) };
+        }
+        return task;
+      });
+    };
+    
+    return {
+      mainFeatures: toggleOpen(state.mainFeatures)
+    };
+  }),
+  
   // API 응답 데이터 처리 - 모든 spec 관련 타입 처리
   processSpecData: (data) => set((state) => {
     console.log('요구사항 명세서 데이터 처리 중:', data);
@@ -82,13 +101,13 @@ export const useSpecificationStore = create((set, get) => ({
       };
     }
     
-    // spec, spec:regenerate, spec:add:field 처리
-    if (data.field && data.mainFeature && data.subFeature) {
-      // field를 최상위 기능으로, mainFeature를 subTask로, subFeature를 secondSubTask로 매핑
-      const newFeature = {
-        id: Date.now(), // field는 고유 ID가 없으므로 timestamp 사용
-        name: data.field, // field를 최상위 기능명으로 사용
-        description: data.field, // field를 description으로도 사용
+      // spec, spec:regenerate, spec:add:field 처리
+      if (data.field && data.mainFeature && data.subFeature) {
+        // field를 최상위 기능으로, mainFeature를 subTask로, subFeature를 secondSubTask로 매핑
+        const newFeature = {
+          id: `field_${data.field}`, // field는 이름 기반 ID 사용 (DB에서 field는 이름으로 식별)
+          name: data.field, // field를 최상위 기능명으로 사용
+          description: data.field, // field를 description으로도 사용
         hours: (data.mainFeature.estimatedTime || 0) + data.subFeature.reduce((sum, sub) => sum + (sub.estimatedTime || 0), 0), // 전체 시간 합계
         priority: convertNumberToPriority(data.mainFeature.priorityLevel),
         isOpen: true,
@@ -356,7 +375,7 @@ export const useSpecificationStore = create((set, get) => ({
     };
   }),
 
-  // API 응답으로 실제 ID 업데이트 (선택적)
+  // API 응답으로 실제 ID 업데이트
   updateFeatureId: (tempId, realId) => set((state) => {
     const updateIdRecursive = (features) => {
       return features.map(feature => {
@@ -401,5 +420,63 @@ export const useSpecificationStore = create((set, get) => ({
     };
 
     return searchFeature(state.mainFeatures, featureId);
+  },
+
+  // 체크박스 토글 상태 업데이트 (API 호출 후 UI 상태 동기화용)
+  toggleFeatureChecked: (taskId, newChecked) => set((state) => {
+    const updateFeatureRecursive = (features) => {
+      return features.map(feature => {
+        if (feature.id === taskId) {
+          return {
+            ...feature,
+            checked: newChecked,
+            subTasks: feature.subTasks?.map(st => ({ 
+              ...st, 
+              checked: newChecked, 
+              subTasks: st.subTasks ? st.subTasks.map(sst => ({ ...sst, checked: newChecked })) : [] 
+            })) ?? []
+          };
+        }
+        
+        if (feature.subTasks && feature.subTasks.length > 0) {
+          return {
+            ...feature,
+            subTasks: updateFeatureRecursive(feature.subTasks)
+          };
+        }
+        
+        return feature;
+      });
+    };
+
+    const updatedFeatures = updateFeatureRecursive(state.mainFeatures);
+    
+    // 부모 체크 상태 업데이트 (모든 자식이 체크되어야 부모도 체크)
+    const updateParents = (features) => {
+      return features.map(feature => {
+        if (feature.subTasks && feature.subTasks.length > 0) {
+          const updatedSubs = updateParents(feature.subTasks);
+          const allChecked = updatedSubs.every(st => st.checked);
+          return { ...feature, subTasks: updatedSubs, checked: allChecked };
+        }
+        return feature;
+      });
+    };
+
+    return {
+      mainFeatures: updateParents(updatedFeatures)
+    };
+  }),
+
+  // 요구사항 명세서가 있는지 확인하는 헬퍼 함수
+  hasSpecification: () => {
+    const state = get();
+    return state.mainFeatures && state.mainFeatures.length > 0;
+  },
+
+  // 요구사항 명세서의 기능 개수 반환
+  getSpecificationCount: () => {
+    const state = get();
+    return state.mainFeatures ? state.mainFeatures.length : 0;
   },
 }));

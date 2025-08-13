@@ -22,6 +22,7 @@ const ProjectCreateStep2 = () => {
   const mainFeatures = useSpecificationStore((state) => state.mainFeatures);
   const toggleSidebar = useSpecificationStore((state) => state.toggleSidebar);
   const hideSidebar = useSpecificationStore((state) => state.hideSidebar);
+  const hasSpecification = useSpecificationStore((state) => state.hasSpecification);
   
   // 사이드바 표시 조건: isSidebarVisible이 true이거나 mainFeatures가 있을 때
   const shouldShowSidebar = isSidebarVisible || (mainFeatures && mainFeatures.length > 0);
@@ -29,9 +30,10 @@ const ProjectCreateStep2 = () => {
   // 디버깅을 위한 로그 추가
   useEffect(() => {
     console.log('isSidebarVisible 상태 변경:', isSidebarVisible);
-    // console.log('mainFeatures 상태:', mainFeatures);
+    console.log('mainFeatures 상태:', mainFeatures);
+    console.log('hasSpecification:', hasSpecification());
     // console.log('shouldShowSidebar:', shouldShowSidebar);
-  }, [isSidebarVisible, mainFeatures, shouldShowSidebar]);
+  }, [isSidebarVisible, mainFeatures, shouldShowSidebar, hasSpecification]);
 
   // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수
   useEffect(() => {
@@ -101,6 +103,10 @@ const ProjectCreateStep2 = () => {
 
   // 다음으로 버튼 클릭 핸들러
   const handleNextClick = () => {
+    // 요구사항 명세서가 없으면 클릭 무시
+    if (!hasSpecification()) {
+      return;
+    }
     // setIsSplitView(true); // 수동으로 분할 화면 활성화
     navigate('/project/create/step4')
   };
@@ -113,7 +119,10 @@ const ProjectCreateStep2 = () => {
   return (
     <div className="chat-page-container">
       {/* 스텝바 */}
-      <ChatProgressBar />
+      {/* <ChatProgressBar /> */}
+
+      {/* 수정자: yeongenn - 현재 스텝 인덱스를 props로 넘기기 */}
+      <ChatProgressBar currentStep={1} />
 
       {/* 채팅 영역 */}
       <div className="main-content-container">
@@ -167,8 +176,9 @@ const ProjectCreateStep2 = () => {
           이전으로
         </button>
         <button
-          className="nav-button next-button"
-          onClick={handleNextClick}>
+          className={`nav-button next-button ${!hasSpecification() ? 'disabled' : ''}`}
+          onClick={handleNextClick}
+          disabled={!hasSpecification()}>
           다음으로
         </button>
       </div>
