@@ -322,11 +322,10 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
         // 3) 모든 프로젝트의 기능들 모아서 요약 생성
         return projects.stream()
-                .flatMap(project -> {
-                    List<FeatureItem> features = featureItemRepository.findByProject_ProjectId(project.getProjectId());
-                    return features.stream();
-                })
-                .map(feature -> {
+                .flatMap(project -> featureItemRepository.findByProject_ProjectId(project.getProjectId()).stream())
+                .flatMap(feature ->
+                        codeReviewRepository.findByFeatureItem_FeatureId(feature.getFeatureId()).stream()
+                .map(codeReview -> {
                     Long featureId = feature.getFeatureId();
 
                     // 점수 (리뷰 없을 수도 있으니 NPE/예외 방지)
@@ -334,10 +333,6 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
                     // severity 합산(카테고리 무시, severity만 집계)
                     Map<String, Integer> severityCount = getSeverityCount(featureId);
-
-                    // createdAt
-                    CodeReview codeReview = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
-                            .orElseThrow(() -> new IllegalArgumentException(featureId + "의 코드리뷰를 찾을 수 없습니다."));
 
                     int commitCounts = codeCommitService.findByFeature_FeatureIdOrderByCommittedAtDesc(featureId).size();
 
@@ -353,6 +348,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                             .severityCount(severityCount)        // 예: {"중간":2,"낮음":1}
                             .build();
                 })
+        )
                 .collect(java.util.stream.Collectors.toList());
     }
 
