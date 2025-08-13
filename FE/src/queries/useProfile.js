@@ -1,7 +1,7 @@
 // src/queries/useProfile.js
 // React Query 훅 정의
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchProfile, updateProfile, fetchNickname, updateNickname, fetchTechStack, uploadProfileImage, getProfileImage } from '../apis/profile';
+import { fetchProfile, updateProfile, fetchNickname, updateNickname, fetchTechStack, uploadProfileImage, getProfileImage, deleteProfileImage } from '../apis/profile';
 
 // 프로필 조회용 커스텀 훅
 // 캐시 키 : ['profile']
@@ -82,5 +82,22 @@ export function useGetProfileImageQuery() {
   return useQuery({
     queryKey: ['profileImage'],
     queryFn: getProfileImage,
+  });
+}
+
+// 프로필 이미지 삭제용 커스텀 훅
+export function useDeleteProfileImageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteProfileImage,
+    onSuccess: () => {
+      // 프로필 이미지 캐시 초기화
+      queryClient.setQueryData(['profileImage'], { imageUrl: null });
+      // 프로필 캐시에서도 이미지 URL 제거
+      queryClient.setQueryData(['profile'], (oldData) => ({
+        ...oldData,
+        profileImage: null
+      }));
+    },
   });
 }

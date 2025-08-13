@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useProfileStore } from '../stores/profileStore';
-import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation, useUploadProfileImageMutation } from '../queries/useProfile';
+import { useProfileQuery, useUpdateNicknameMutation, useUpdateProfileMutation, useUploadProfileImageMutation, useDeleteProfileImageMutation } from '../queries/useProfile';
 import { useDisconnectGithubMutation, useGithubIdQuery } from '../queries/useGitHub';
 import { updateProfile, getProfileImage } from '../apis/profile'; // 서버 갱신
 import { handleGithubConnectPopup } from '../apis/gitHub';
-import { X, User, Camera, Mail, Github, AlertCircle, Check } from 'lucide-react';
+import { X, User, Camera, Mail, Github, AlertCircle, Check, Upload, Trash2 } from 'lucide-react';
 import styles from './ProfileEditModal.module.css';
 import { useGetProfileImageQuery } from '../queries/useProfile';
 import { useDeleteUserMutation } from '../queries/useUser';
@@ -21,6 +21,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const queryClient = useQueryClient();
   const [imgBust, setImgBust] = useState(0);
   const [githubConnected, setGithubConnected] = useState(false); // 깃허브 연동 여부
+  const [showImageTooltip, setShowImageTooltip] = useState(false); // 이미지 툴팁 표시 상태
   // React Query로 프로필 데이터 조회
   const { data: profileData } = useProfileQuery();
   const { data: profileImage } = useGetProfileImageQuery();
@@ -53,6 +54,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
   const updateNicknameMutation = useUpdateNicknameMutation();
   const updateProfileMutation = useUpdateProfileMutation();
   const uploadProfileImageMutation = useUploadProfileImageMutation();
+  const deleteProfileImageMutation = useDeleteProfileImageMutation();
   const disconnectGithubMutation = useDisconnectGithubMutation();
   const deleteUserMutation = useDeleteUserMutation();
 
@@ -84,6 +86,9 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
 
   // 이미지 업로드 핸들러
   const handleImageUpload = (e) => {
+    // 툴팁 즉시 닫기
+    setShowImageTooltip(false);
+    
     const file = e.target.files[0];
     if (file) {
       // 파일 크기 검증 (5MB 제한)
@@ -135,6 +140,63 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
       });
     }
   };
+
+  // 기본 이미지 적용 핸들러
+  const handleApplyDefaultImage = () => {
+    // 툴팁 즉시 닫기
+    setShowImageTooltip(false);
+    
+    // 현재 프로필 이미지가 있는지 확인
+    if (profileImage?.imageUrl) {
+      // 프로필 이미지가 있으면 삭제 API 호출
+      deleteProfileImageMutation.mutate(undefined, {
+        onSuccess: () => {
+          console.log('프로필 이미지 삭제 성공');
+          // 브라우저 캐시 우회 파라미터 갱신
+          setImgBust(Date.now());
+        },
+        onError: (error) => {
+          console.error('프로필 이미지 삭제 실패:', error);
+          alert('기본 이미지 적용에 실패했습니다.');
+        }
+      });
+    }
+  };
+
+  // 이미지 클릭 핸들러
+  const handleImageClick = (e) => {
+    e.stopPropagation(); // 이벤트 버블링 방지
+    console.log('이미지 클릭됨, 현재 툴팁 상태:', showImageTooltip);
+    setShowImageTooltip(!showImageTooltip);
+  };
+
+  // 툴팁 외부 클릭 시 닫기
+  const handleTooltipOutsideClick = (e) => {
+    // 툴팁 내부 클릭은 무시
+    if (e.target.closest(`.${styles.imageTooltip}`)) {
+      return;
+    }
+    // 프로필 이미지 영역 클릭도 무시 (토글을 위해)
+    if (e.target.closest(`.${styles.profileImage}`)) {
+      return;
+    }
+    setShowImageTooltip(false);
+  };
+
+  // 컴포넌트 마운트 시 외부 클릭 이벤트 리스너 추가
+  useEffect(() => {
+    if (showImageTooltip) {
+      // 약간의 지연을 두어 클릭 이벤트가 처리된 후 리스너 추가
+      const timer = setTimeout(() => {
+        document.addEventListener('click', handleTooltipOutsideClick);
+      }, 100);
+      
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('click', handleTooltipOutsideClick);
+      };
+    }
+  }, [showImageTooltip]);
 
   // 입력 필드 유효성 검사 -> 입력 필드 변경 시 호출
   const validateField = (field, value) => {
@@ -314,25 +376,44 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
           {/* 프로필 이미지 */}
           <div className={styles.profileImageContainer}>
             <div className={styles.profileImageWrapper}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className={styles.fileInputOverlay}
-              />
-              <div className={styles.profileImage}>
+              <div className={styles.profileImage} onClick={handleImageClick}>
                 {profileImage?.imageUrl ? (
                   <img src={profileImage.imageUrl} alt="프로필" className={styles.profileImagePreview} />
                 ) : (
                   <User size={32} className={styles.profileImageIcon} />
                 )}
               </div>
-              <label className={styles.cameraButton}>
+              <div className={styles.cameraButton} onClick={(e) => e.stopPropagation()}>
                 <Camera size={16} className={styles.cameraIcon} />
-              </label>
+              </div>
             </div>
             {uploadProfileImageMutation.isPending && (
               <p className={styles.uploadStatus}>이미지 업로드 중...</p>
+            )}
+            {deleteProfileImageMutation.isPending && (
+              <p className={styles.uploadStatus}>기본 이미지 적용 중...</p>
+            )}
+            {showImageTooltip && (
+              <div className={styles.imageTooltip}>
+                {console.log('툴팁 렌더링됨')}
+                <div className={styles.tooltipContent}>
+                  <div className={styles.tooltipOption} onClick={() => document.getElementById('profile-image-upload').click()}>
+                    <Upload size={16} />
+                    <span>이미지 업로드</span>
+                  </div>
+                  <div className={styles.tooltipOption} onClick={handleApplyDefaultImage}>
+                    <Trash2 size={16} />
+                    <span>기본 이미지 적용</span>
+                  </div>
+                </div>
+                <input
+                  id="profile-image-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
+                />
+              </div>
             )}
           </div>
 
