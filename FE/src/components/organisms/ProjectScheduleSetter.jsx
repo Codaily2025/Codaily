@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import Title from '@/components/atoms/Title'
 import Button from '@/components/atoms/Button'
 import styles from './ProjectScheduleSetter.module.css'
-// import { saveProjectSchedule } from '@/apis/projectScheduleApi'
 import { useSaveProjectSchedule } from '@/hooks/useProjectScheduleMutation'
 
 const ProjectScheduleSetter = () => {
@@ -31,8 +31,14 @@ const ProjectScheduleSetter = () => {
 
     const days = ['월', '화', '수', '목', '금', '토', '일']
 
-    // 
-    const saveProjectSchedule = useSaveProjectSchedule()
+    const navigate = useNavigate()
+
+    // 일정 정보 저장 후 step2 페이지로 네비게이션
+    const handleNavigateToStep2 = (projectId, specId) => {
+        navigate(`/project/create/step2?projectId=${projectId}&specId=${specId}`)
+    }
+    // 프로젝트 일정 정보 설정 후 저장
+    const saveProjectSchedule = useSaveProjectSchedule(handleNavigateToStep2)
 
     // startDate ~ endDate 사이 날짜 계산
     const getDatesBetween = (startDate, endDate) => {
@@ -74,17 +80,7 @@ const ProjectScheduleSetter = () => {
         setAvailableWorkDays(newAvailableDays)
     }
 
-    // // 저장 버튼 핸들러
-    // const handleSaveDates = () => {
-    //     const periodData = {
-    //         startDate: formData.startDate,
-    //         endDate: formData.endDate
-    //     }
-    //     console.log('설정 기간:', periodData)
-    // }
-
     // 생성하기 버튼 클릭 시
-    // TODO: api 요청 여부에 따라 상태 관리 코드 달라질 예정
     const handleCreate = () => {
         // 작업 가능 일자 - YYYY-MM-DD 형식으로 변환
         const availableWorkDaysList = Array.from(availableWorkDays).map(dateString => {
@@ -260,13 +256,6 @@ const ProjectScheduleSetter = () => {
                                 )}
                             </div>
                         </div>
-                        {/* <Button 
-                            type="secondary" 
-                            onClick={handleSaveDates}
-                            className={styles.saveButton}
-                        >
-                            저장
-                        </Button> */}
                     </div>
                 </div>
 

@@ -113,7 +113,10 @@ const ProjectCreateStep2 = () => {
   return (
     <div className="chat-page-container">
       {/* 스텝바 */}
-      <ChatProgressBar />
+      {/* <ChatProgressBar /> */}
+
+      {/* 수정자: yeongenn - 현재 스텝 인덱스를 props로 넘기기 */}
+      <ChatProgressBar currentStep={1} />
 
       {/* 채팅 영역 */}
       <div className="main-content-container">
