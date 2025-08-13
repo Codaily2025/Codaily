@@ -51,9 +51,10 @@ const initialProjects = [
   }
 ];
 
-export const useProjectStore = create((set) => ({
+export const useProjectStore = create((set, get) => ({
   projects: [], // 프로젝트 목록 상태
-  
+  projectDetail: null, // 프로젝트 상세 정보 상태
+
   // 프로젝트 목록 설정 (정렬하여 저장)
   setProjects: (projects) => set({ projects: sortProjects(projects) }),
   
@@ -78,4 +79,63 @@ export const useProjectStore = create((set) => ({
       const newProjects = [...state.projects, newProject];
       return { projects: sortProjects(newProjects) };
     }),
+
+  // 프로젝트 상세 정보 설정 (API 응답을 프론트엔드 형식으로 변환)
+  setProjectDetail: (apiResponse) => {
+    if (!apiResponse) {
+      set({ projectDetail: null });
+      return;
+    }
+
+    // API 응답을 프론트엔드 형식으로 변환
+    const projectDetail = {
+      id: apiResponse.projectId,
+      title: apiResponse.title,
+      description: apiResponse.description,
+      startDate: apiResponse.startDate,
+      endDate: apiResponse.endDate,
+      status: apiResponse.status,
+      // daysOfWeeks를 timeByDay 형식으로 변환
+      timeByDay: convertDaysOfWeeksToTimeByDay(apiResponse.daysOfWeeks),
+      // repositories 정보
+      repositories: apiResponse.repositories || [],
+      // 작업 가능한 날짜
+      schedules: apiResponse.schedules || []
+    };
+
+    set({ projectDetail });
+  },
+
+  // 프로젝트 상세 정보 가져오기
+  getProjectDetail: () => get().projectDetail,
 }));
+
+// 헬퍼 함수: 영문 요일명을 한글로 변환
+const convertEnglishDayToKorean = (englishDay) => {
+  const dayMap = {
+    'MONDAY': '월',
+    'TUESDAY': '화', 
+    'WEDNESDAY': '수',
+    'THURSDAY': '목',
+    'FRIDAY': '금',
+    'SATURDAY': '토',
+    'SUNDAY': '일'
+  };
+  return dayMap[englishDay] || englishDay;
+};
+
+// 헬퍼 함수: API 응답의 daysOfWeeks를 프론트엔드 timeByDay 형식으로 변환
+const convertDaysOfWeeksToTimeByDay = (daysOfWeeks) => {
+  const timeByDay = {
+    '월': 0, '화': 0, '수': 0, '목': 0, '금': 0, '토': 0, '일': 0
+  };
+  
+  if (daysOfWeeks && Array.isArray(daysOfWeeks)) {
+    daysOfWeeks.forEach(day => {
+      const koreanDay = convertEnglishDayToKorean(day.dateName);
+      timeByDay[koreanDay] = day.hours || 0;
+    });
+  }
+  
+  return timeByDay;
+};
