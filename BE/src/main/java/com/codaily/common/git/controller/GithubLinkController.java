@@ -3,12 +3,16 @@ package com.codaily.common.git.controller;
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.service.UserService;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
+import com.codaily.common.git.dto.GithubRepositoriesResponse;
+import com.codaily.common.git.dto.GithubRepositoryResponse;
 import com.codaily.common.git.service.GithubService;
-import com.codaily.common.git.service.WebhookService;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,7 +21,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +30,7 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Log4j2
@@ -69,8 +73,9 @@ public class GithubLinkController {
         return fetchAccessToken(code)
                 .flatMap(accessToken ->
                         fetchGithubProfile(accessToken)
-                                .doOnNext(profile ->
-                                        userService.linkGithub(userDetails.getUserId(), profile, accessToken)
+                                .doOnNext(profile ->{
+//                                        log.info("doOnNext accessToken: {}", accessToken);
+                                        userService.linkGithub(userDetails.getUserId(), profile, accessToken);}
                                 )
                                 .thenReturn(createSuccessResponse())
                 )
@@ -157,6 +162,76 @@ public class GithubLinkController {
                 );
     }
 
+    @Operation(
+            summary = "사용자 GitHub 리포지토리 목록 조회",
+            description = "연동된 GitHub 계정의 리포지토리 목록을 DTO 형식으로 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "리포지토리 목록 조회 성공",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = GithubRepositoriesResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "success",
+                                            summary = "정상 응답",
+                                            value =
+                                                    """
+                                                    {
+                                                      "repositories": [
+                                                        {
+                                                          "name": "codaily",
+                                                          "htmlUrl": "https://github.com/yourname/codaily",
+                                                          "description": "Project management platform",
+                                                          "isPrivate": false
+                                                        },
+                                                        {
+                                                          "name": "pathfindservice",
+                                                          "htmlUrl": "https://github.com/yourname/pathfindservice",
+                                                          "description": "Real-time pathfinding service",
+                                                          "isPrivate": true
+                                                        }
+                                                      ]
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "empty",
+                                            summary = "리포지토리가 없을 때",
+                                            value = "{ \"repositories\": [] }"
+                                    )
+                            }
+                    )
+            )
+    })
+    @GetMapping("/repos")
+    public Mono<ResponseEntity<GithubRepositoriesResponse>> getUserRepositories(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long userId = userDetails.getUserId();
+        String accessToken = userService.getGithubAccessToken(userId);
+
+        return githubService.getUserRepositories(accessToken)
+                .map(list -> {
+                    List<GithubRepositoryResponse> repoList = list.stream()
+                            .map(repo -> GithubRepositoryResponse.builder()
+                                    .name((String) repo.get("name"))
+                                    .htmlUrl((String) repo.get("html_url"))
+                                    .description((String) repo.get("description"))
+                                    .isPrivate(Boolean.TRUE.equals(repo.get("private")))
+                                    .build()
+                            )
+                            .toList();
+
+                    return GithubRepositoriesResponse.builder()
+                            .repositories(repoList)
+                            .build();
+                })
+                .map(ResponseEntity::ok);
+    }
+
     @Operation(summary = "기존 GitHub 리포지토리 연결", description = "이미 존재하는 리포지토리를 프로젝트에 연결")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "기존 리포지토리 연결 성공"),
@@ -213,6 +288,7 @@ public class GithubLinkController {
     }
 
     private Mono<String> fetchAccessToken(String code) {
+//        log.info("feathcAccessToken...");
         return webClient.post()
                 .uri(tokenUri)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
@@ -227,8 +303,9 @@ public class GithubLinkController {
                 })
                 .map(body -> {
                     String token = (String) body.get("access_token");
+                    log.info("token: {}", token);
                     if (token == null) {
-                        log.error("GitHub에서 access_token을 가져오지 못했습니다. 응답 body: {}", body);
+//                        log.error("GitHub에서 access_token을 가져오지 못했습니다. 응답 body: {}", body);
                         throw new RuntimeException("GitHub access token null");
                     }
                     return token;
