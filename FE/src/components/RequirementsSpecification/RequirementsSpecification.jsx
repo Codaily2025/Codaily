@@ -8,6 +8,7 @@ import PriorityBadge from './PriorityBadge';
 import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
 import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest, buildMainFeatureToFieldRequest } from '../../apis/chatApi';
+import { downloadSpecDocument } from '../../apis/requirementsSpecification';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -109,12 +110,12 @@ const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, par
       // onToggleOpen(parentId);
     }}>
       <div className={styles.subTaskLeft}>
-        <Checkbox 
-        checked={task.checked} 
-        onChange={(e) => {
-          e.stopPropagation();
-          onToggleChecked(task.id);
-        }} />
+        <Checkbox
+          checked={task.checked}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggleChecked(task.id);
+          }} />
         <div className={styles.subTaskNameContainer}>
           <div className={styles.subTaskName}>{task.name}</div>
         </div>
@@ -146,12 +147,12 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
           <div className={styles.expandedSectionHeader}>
             <div className={styles.expandedSectionHeaderInner}>
               <div className={styles.subTaskLeft}>
-                <Checkbox 
-                checked={task.checked} 
-                onChange={(e) => {
-                  e.stopPropagation();
-                  onToggleChecked(task.id);
-                }}
+                <Checkbox
+                  checked={task.checked}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleChecked(task.id);
+                  }}
                 />
                 <div className={styles.subTaskNameContainer}>
                   <div className={styles.subTaskName}>{task.name}</div>
@@ -175,12 +176,12 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
                 />
               ))}
               {/* 상세 기능 추가 버튼 */}
-              <AddNewTaskButton 
+              <AddNewTaskButton
                 onClick={(e) => {
                   e.stopPropagation();
                   onAddSubTask(task);
-                }} 
-                text="상세 기능 추가" 
+                }}
+                text="상세 기능 추가"
               />
             </div>
           </div>
@@ -188,12 +189,12 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
       ) : (
         <div className={styles.subTaskItem} onClick={() => onToggleOpen(task.id)}>
           <div className={styles.subTaskLeft}>
-            <Checkbox 
-            checked={task.checked} 
-            onChange={(e) => {
-              e.stopPropagation();
-              onToggleChecked(task.id);
-            }} />
+            <Checkbox
+              checked={task.checked}
+              onChange={(e) => {
+                e.stopPropagation();
+                onToggleChecked(task.id);
+              }} />
             <div className={styles.subTaskNameContainer}>
               <div className={styles.subTaskName}>{task.name}</div>
             </div>
@@ -239,12 +240,12 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
     <div className={level === 0 ? styles.mainFeatureCard : styles.subTaskItem}>
       <div className={styles.mainFeatureHeader} onClick={() => hasSubTasks && onToggleOpen(task.id)}>
         <div className={styles.mainFeatureHeaderLeft}>
-          <Checkbox 
-          checked={task.checked} 
-          onChange={(e) => {
-            e.stopPropagation();
-            onToggleChecked(task.id);
-          }} />
+          <Checkbox
+            checked={task.checked}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleChecked(task.id);
+            }} />
           <div className={styles.mainFeatureName}>{task.name}</div>
           <PriorityBadge level={task.priority} />
         </div>
@@ -267,9 +268,9 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
                 onAddSubTask={onAddSubTask}
               />
             ))}
-            <AddNewTaskButton 
-              onClick={() => onOpenModal('main', task)} 
-              text="주 기능 추가" 
+            <AddNewTaskButton
+              onClick={() => onOpenModal('main', task)}
+              text="주 기능 추가"
             />
           </div>
         </div>
@@ -280,21 +281,64 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
 
 
 const RequirementsSpecification = () => {
-  const { 
-    projectOverview, 
-    mainFeatures, 
-    techStack, 
-    rawData, 
+  const {
+    projectOverview,
+    mainFeatures,
+    techStack,
+    rawData,
     projectId,
     specId,
-    processSpecData, 
+    processSpecData,
     resetSpecification,
     debugPrintSpecification,
     addMainFeatureManually,
     addSubFeatureManually,
     addMainFeatureToField
   } = useSpecificationStore();
-  
+
+  const [specDocument, setSpecDocument] = useState(null); // pdf 다운로드 받기 위한 변수
+
+  // 파일명 추출 
+  function getFileName(headerValue) {
+    if (!headerValue) return null;
+    const match = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(headerValue);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  // pdf 다운로드 받기 함수
+  const handleDownloadSpecDocument = async () => {
+    try {
+      const response = await downloadSpecDocument(projectId);
+
+      // 서버가 에러를 JSON으로 보낸 경우(예: 200인데 실제는 에러 바디)
+    const ct = response.headers['content-type'] || '';
+    if (ct.includes('application/json')) {
+      const text = await response.data.text?.(); // blob → text
+      console.error('서버 에러 바디:', text);
+      alert('문서 생성 중 오류가 발생했습니다.');
+      return;
+    }
+    
+    const blob = new Blob([response.data], { type: ct || 'application/pdf' });
+    setSpecDocument(blob);
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const cd = response.headers['content-disposition'];
+    a.download = getFileName(cd) || `specification_${projectId}.pdf`;
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+    console.log('프로젝트 요구사항 명세서 다운로드 성공');
+    } catch (error) {
+      console.error('프로젝트 요구사항 명세서 다운로드 실패:', error);
+    }
+  };
+
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
   // mainFeatures가 있으면 사용하고, 없으면 초기 데이터 사용
@@ -380,7 +424,7 @@ const RequirementsSpecification = () => {
     window.testSpecData = () => {
       const currentProjectId = projectId || 1; // 현재 프로젝트 ID 사용, 없으면 기본값
       const currentSpecId = specId || 1; // 현재 스펙 ID 사용, 없으면 기본값
-      
+
       const testData = {
         projectId: currentProjectId,
         specId: currentSpecId,
@@ -417,7 +461,7 @@ const RequirementsSpecification = () => {
     window.testProjectSummary = () => {
       const currentProjectId = projectId || 1; // 현재 프로젝트 ID 사용, 없으면 기본값
       const currentSpecId = specId || 1; // 현재 스펙 ID 사용, 없으면 기본값
-      
+
       const testSummary = {
         projectTitle: "온라인 쇼핑몰 플랫폼 개발",
         specTitle: "온라인 쇼핑몰 플랫폼 명세서",
@@ -455,7 +499,7 @@ const RequirementsSpecification = () => {
     window.printSpec = () => {
       debugPrintSpecification();
     };
-    
+
     return () => {
       delete window.testSpecData;
       delete window.testProjectSummary;
@@ -511,7 +555,7 @@ const RequirementsSpecification = () => {
           return {
             ...item,
             checked: newChecked,
-            subTasks: item.subTasks?.map(st => ({ ...st, checked: newChecked, subTasks: st.subTasks ? /* 재귀 */ [] : [] })) ?? []
+            subTasks: item.subTasks?.map(st => ({ ...st, checked: newChecked, subTasks: st.subTasks ? /* 재귀 */[] : [] })) ?? []
           };
         }
         if (item.subTasks) {
@@ -519,7 +563,7 @@ const RequirementsSpecification = () => {
         }
         return item;
       });
-  
+
     // 2) 부모 체크는 자식 전부 체크되어야만 true
     const updateParents = list =>
       list.map(item => {
@@ -530,7 +574,7 @@ const RequirementsSpecification = () => {
         }
         return item;
       });
-  
+
     setFeatures(prev => {
       newState = toggleAndPropagate(prev);
       return updateParents(newState);
@@ -538,8 +582,8 @@ const RequirementsSpecification = () => {
 
   }, []);
 
-   // 하위 작업 추가 핸들러
-   const handleAddSubTask = (parentTask) => {
+  // 하위 작업 추가 핸들러
+  const handleAddSubTask = (parentTask) => {
     // 이 함수는 "상세 기능 추가" 버튼을 클릭할 때만 호출됨
     // 따라서 항상 taskType은 'sub'여야 함
     const taskType = 'sub';
@@ -568,7 +612,7 @@ const RequirementsSpecification = () => {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             {/* 디버깅 버튼 */}
-            <button 
+            <button
               className={styles.pdfDownloadWrapper}
               onClick={handleDebugPrint}
               style={{ backgroundColor: '#007bff', color: 'white' }}
@@ -578,9 +622,9 @@ const RequirementsSpecification = () => {
               </svg>
               <div className={styles.pdfText}>디버그</div>
             </button>
-            
+
             {/* 초기화 버튼 */}
-            <button 
+            <button
               className={styles.pdfDownloadWrapper}
               onClick={handleReset}
               style={{ backgroundColor: '#dc3545', color: 'white' }}
@@ -592,7 +636,7 @@ const RequirementsSpecification = () => {
             </button>
 
             {/* PDF 다운로드 버튼 */}
-            <button className={styles.pdfDownloadWrapper}>
+            <button className={styles.pdfDownloadWrapper} onClick={handleDownloadSpecDocument}>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
                 <path d="M21 15.5V19.5C21 20.0304 20.7893 20.5391 20.4142 20.9142C20.0391 21.2893 19.5304 21.5 19 21.5H5C4.46957 21.5 3.96086 21.2893 3.58579 20.9142C3.21071 20.5391 3 20.0304 3 19.5V15.5M7 10.5L12 15.5M12 15.5L17 10.5M12 15.5V3.5" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -615,7 +659,7 @@ const RequirementsSpecification = () => {
                   <span className={styles.itemValue}>{projectId || 'N/A'}</span>
                 </div>
               </div>
-              <div className={styles.overviewItem} style={{borderBottom: 'none'}}>
+              <div className={styles.overviewItem} style={{ borderBottom: 'none' }}>
                 <div className={styles.bullet}>•</div>
                 <div className={styles.itemContent}>
                   <span className={styles.itemLabel}>Spec ID: </span>
@@ -639,10 +683,10 @@ const RequirementsSpecification = () => {
                 <span className={styles.itemValue}>{projectOverview.projectName || 'N/A'}</span>
               </div>
             </div>
-            <div className={styles.overviewItem} style={{borderBottom: 'none'}}>
+            <div className={styles.overviewItem} style={{ borderBottom: 'none' }}>
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
-                <span className={styles.itemLabel} style={{marginBottom: '10px'}}>설명 </span>
+                <span className={styles.itemLabel} style={{ marginBottom: '10px' }}>설명 </span>
                 <span className={styles.itemValue}>{projectOverview.projectDescription || 'N/A'}</span>
               </div>
             </div>
@@ -688,10 +732,10 @@ const RequirementsSpecification = () => {
               <div className={styles.cardTitle}>🔍 Raw Data (디버깅용)</div>
             </div>
             <div className={styles.projectOverview}>
-              <pre style={{ 
-                fontSize: '12px', 
-                backgroundColor: '#f5f5f5', 
-                padding: '10px', 
+              <pre style={{
+                fontSize: '12px',
+                backgroundColor: '#f5f5f5',
+                padding: '10px',
                 borderRadius: '4px',
                 overflow: 'auto',
                 maxHeight: '200px'
