@@ -36,6 +36,7 @@
 
 .filterBtn:hover {
   color: #404040;
+  transform: translateY(-1px);
 }
 
 .filterBtn.active {
@@ -62,11 +63,26 @@
   padding: 25px;
   position: relative;
   cursor: pointer;
+  /* 애니메이션 */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(0);
+}
+
+/* hover 애니메이션 */
+.projectCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: #D4D4D4;
 }
 
 .projectCard.disabled {
   background: rgba(250, 250, 250, 0.40);
   color: #A1A1A1;
+}
+
+.projectCard.disabled:hover {
+  transform: translateY(-4px);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.08);
 }
 
 .projectCard h3 {
@@ -80,6 +96,12 @@
   font-size: 14px;
   color: #737373;
   margin-bottom: 15px;
+  /* 애니메이션 */
+  transition: color 0.2s ease;
+}
+
+.projectCard:hover .projectDuration {
+  color: #5A597D;
 }
 
 .projectCard.disabled h3,
@@ -103,12 +125,22 @@
   border-radius: 4px;
   height: 8px;
   margin-top: 5px;
+  /* overflow: hidden; */
 }
 
 .progress {
   height: 100%;
   background: #9C9BC3;
   border-radius: 4px;
+  /* 애니메이션 */
+  transition: all 0.3s ease;
+}
+
+/* hover 시 진행률 바 애니메이션 */
+.projectCard:hover .progress {
+  background: linear-gradient(90deg, #9C9BC3 0%, #7B7AB8 100%);
+  transform: scaleX(1.02);
+  transform-origin: left;
 }
 
 .projectStack {
@@ -124,6 +156,8 @@
   border-radius: 16px;
   font-size: 13px;
   font-weight: 500;
+  /* 애니메이션 */
+  transition: all 0.2s ease;
 }
 
 .techTagInProcess {
@@ -140,6 +174,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* 애니메이션 */
+  transition: all 0.2s ease;
+}
+
+/* hover 시 기술 스택 태그 애니메이션 */
+.projectCard:hover .techTagInProcess {
+  background: #EEEDFA;
+  color: #5A597D;
+  transform: translateY(-2px);
 }
 
 .noProjectsContainer {
@@ -180,6 +223,16 @@
   font-size: 14px;
   font-weight: 400;
   cursor: pointer;
+  /* 애니메이션 */
+  transition: all 0.2s ease;
+}
+
+.createProjectBtn:hover {
+  background: #5A597D;
+  color: white;
+  border-color: #5A597D;
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 8px rgba(90, 89, 125, 0.3);
 }
 
 /* 우측 상단 삭제, 설정 버튼 영역 - 기본 감춤 */
@@ -189,11 +242,18 @@
   right: 20px;
   display: none;
   gap: 8px;
+  /* 디자인 추가 */
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
 }
 
 /* 카드 hover 시 표시 */
 .projectCard:hover .cardActions {
   display: flex;
+  /* 애니메이션 */
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* 공통 버튼 스타일 */
@@ -220,11 +280,14 @@
   background-repeat: no-repeat;
   background-position: center;
   /* background-color: white; */
+  /* 애니메이션 */
+  transition: all 0.2s ease;
 }
 
 /* 삭제 버튼 hover 스타일, 빨간색 아이콘으로 대체 */
 .iconBtn.deleteBtn:hover {
   background-image: url('../../assets/delete_icon_hover.svg');
+  transform: scale(1.05);
 }
 
 .iconBtn.deleteBtn:focus {
@@ -240,13 +303,21 @@
   background-repeat: no-repeat;
   background-position: center;
   /* background-color: white; */
+  /* 애니메이션 */
+  transition: all 0.2s ease;
 }
 
 /* 설정 버튼 hover 스타일, 보라색 아이콘으로 대체 */
 .iconBtn.settingsBtn:hover {
   background-image: url('../../assets/setting_icon_hover.svg');
+  transform: scale(1.05);
 }
 
 .iconBtn.settingsBtn:focus {
   outline: none;
 }
+
+/* 프로젝트 목록이 로드될 때 순차적으로 나타나는 효과 */
+/* .projectCard {
+  animation: fadeInUp 0.5s ease-out;
+} */

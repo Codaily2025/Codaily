@@ -37,7 +37,8 @@ const ProductivityChart = () => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     return Array.from({ length: daysInMonth }, (_, day) => ({
       day: day + 1,
-      commits: Math.floor(Math.random() * 15) + 1,
+      // commits: Math.floor(Math.random() * 15) + 1,
+      productivityScore: Math.floor(Math.random() * 100) + 1,
       date: `${year}-${String(month + 1).padStart(2, '0')}-${String(day + 1).padStart(2, '0')}`
     }));
   };
@@ -58,7 +59,8 @@ const ProductivityChart = () => {
       date.setDate(monday.getDate() + i);
       return {
         day,
-        commits: Math.floor(Math.random() * 20) + 1,
+        // commits: Math.floor(Math.random() * 20) + 1,
+        productivityScore: Math.floor(Math.random() * 100) + 1,
         // date: date.toISOString().split('T')[0],
         date: formatDate(date),
         fullDay: day
@@ -72,7 +74,7 @@ const ProductivityChart = () => {
   // API 데이터를 차트 형식으로 변환하는 함수
   const transformApiDataToChartData = (data) => {
     // console.log(`[${viewMode}] 변환 시작 - 원본 데이터:`, data);
-    
+
     if (!data) {
       // console.log(`[${viewMode}] 데이터가 null/undefined`);
       return [];
@@ -84,7 +86,8 @@ const ProductivityChart = () => {
         // console.log(`[${viewMode}] 월별 데이터 변환 중:`, data.chartData);
         return data.chartData.map(item => ({
           day: parseInt(item.date), // "1", "2" -> 1, 2
-          commits: item.commits || 0,
+          commits: item.commits ? item.commits : 0,
+          productivityScore: item.productivityScore || 0,
           date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(item.date).padStart(2, '0')}`
         }));
       } else {
@@ -93,12 +96,13 @@ const ProductivityChart = () => {
     } else {
       // 주별 데이터 변환: API response가 배열 형태인 경우
       // console.log(`[${viewMode}] 주별 데이터 확인 - 배열인가?:`, Array.isArray(data));
-      
+
       if (Array.isArray(data)) {
         // console.log(`[${viewMode}] 주별 데이터(배열) 변환 중:`, data);
         return data.map(item => ({
           day: item.day,
-          commits: item.commits || 0,
+          commits: item.commits ? item.commits : 0,
+          productivityScore: item.productivityScore || 0,
           date: item.date,
           fullDay: item.fullDay || item.day
         }));
@@ -107,7 +111,8 @@ const ProductivityChart = () => {
         // console.log(`[${viewMode}] 주별 데이터(객체) 변환 중:`, data.chartData);
         return data.chartData.map(item => ({
           day: item.day || item.date,
-          commits: item.commits || 0,
+          commits: item.commits ? item.commits : 0,
+          productivityScore: item.productivityScore || 0,
           date: item.date,
           fullDay: item.fullDay || item.day
         }));
@@ -126,17 +131,42 @@ const ProductivityChart = () => {
       const transformedData = transformApiDataToChartData(apiData);
       // console.log(`[${viewMode}] API 변환된 chartData (길이: ${transformedData.length}):`, transformedData);
       return transformedData;
+    }
+    // } else {
+    //   // API 데이터가 없을 때 fallback (기존 로직)
+    //   if (viewMode === 'monthly') {
+    //     const fallbackData = generateMonthlyData(currentDate.getFullYear(), currentDate.getMonth());
+    //     // console.log(`[${viewMode}] fallback chartData (길이: ${fallbackData.length}):`, fallbackData);
+    //     return fallbackData;
+    //   } else {
+    //     const fallbackData = generateWeeklyData(getNowWeekStartMonday(currentDate));
+    //     // console.log(`[${viewMode}] fallback chartData (길이: ${fallbackData.length}):`, fallbackData);
+    //     return fallbackData;
+    //   }
+    // }
+    // API 없거나 빈 배열이면 '랜덤' 대신 0으로 채운 스켈레톤
+    if (viewMode === 'monthly') {
+      const y = currentDate.getFullYear();
+      const m = currentDate.getMonth();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+      return Array.from({ length: daysInMonth }, (_, i) => ({
+        day: i + 1,
+        productivityScore: 0,
+        date: `${y}-${String(m + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`,
+      }));
     } else {
-      // API 데이터가 없을 때 fallback (기존 로직)
-      if (viewMode === 'monthly') {
-        const fallbackData = generateMonthlyData(currentDate.getFullYear(), currentDate.getMonth());
-        // console.log(`[${viewMode}] fallback chartData (길이: ${fallbackData.length}):`, fallbackData);
-        return fallbackData;
-      } else {
-        const fallbackData = generateWeeklyData(getNowWeekStartMonday(currentDate));
-        // console.log(`[${viewMode}] fallback chartData (길이: ${fallbackData.length}):`, fallbackData);
-        return fallbackData;
-      }
+      const monday = getNowWeekStartMonday(currentDate);
+      const weekDays = ['월', '화', '수', '목', '금', '토', '일'];
+      return weekDays.map((d, i) => {
+        const dt = new Date(monday);
+        dt.setDate(monday.getDate() + i);
+        return {
+          day: d,
+          fullDay: d,
+          productivityScore: 0,
+          date: formatDate(dt),
+        };
+      });
     }
   }, [viewMode, currentDate, apiData]);
   // 월별 예시
@@ -146,9 +176,9 @@ const ProductivityChart = () => {
   // date: '2025-08-01',
   // day: 1
   // }, {
-    // commits: 10,
-    // date: '2025-08-02',
-    // day: 2
+  // commits: 10,
+  // date: '2025-08-02',
+  // day: 2
   // }, ...]
   // 주별 예시
   // [
@@ -158,12 +188,12 @@ const ProductivityChart = () => {
   // day: "월",
   // fullDay: "월",
   // }, {
-    // commits: 2,
-    // date: '2025-08-05',
-    // day: "화",
-    // fullDay: "화",
+  // commits: 2,
+  // date: '2025-08-05',
+  // day: "화",
+  // fullDay: "화",
   // }, ...]
-  
+
 
   // 네비게이션 함수들은 스토어에서 가져옴
 
@@ -172,7 +202,7 @@ const ProductivityChart = () => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       // console.log(`[Tooltip] viewMode: ${viewMode}, data:`, data, 'label:', label);
-      
+
       let tooltipTitle = '';
       if (viewMode === 'monthly') {
         // 월별: "2025년 1월 15일"
@@ -180,24 +210,24 @@ const ProductivityChart = () => {
       } else {
         // 주별: "2025년 1월 15일 (월)"
         // console.log(`[Tooltip] 주별 - data:`, data);
-        
+
         // currentDate를 기준으로 해당 주의 시작일(월요일) 계산
         const weekStart = getNowWeekStartMonday(currentDate);
         const weekDays = ['월', '화', '수', '목', '금', '토', '일'];
         const dayIndex = weekDays.indexOf(data.day);
-        
+
         // console.log(`[Tooltip] 주별 계산 - weekStart:`, weekStart, `data.day: ${data.day}, dayIndex: ${dayIndex}`);
-        
+
         if (dayIndex !== -1) {
           // 해당 요일의 정확한 날짜 계산
           const targetDate = new Date(weekStart);
           targetDate.setDate(weekStart.getDate() + dayIndex);
-          
+
           const year = targetDate.getFullYear();
           const month = targetDate.getMonth() + 1;
           const day = targetDate.getDate();
           const fullDay = data.fullDay || data.day;
-          
+
           // console.log(`[Tooltip] 계산된 날짜 - year: ${year}, month: ${month}, day: ${day}, fullDay: ${fullDay}`);
           tooltipTitle = `${year}년 ${month}월 ${day}일 ${fullDay}요일`;
         } else {
@@ -206,15 +236,19 @@ const ProductivityChart = () => {
           tooltipTitle = data.fullDay || data.day || '날짜 정보 없음';
         }
       }
-      
+
       return (
         <div className="tooltip">
           {/* <p className="tooltip-title"> */}
-            {/* {viewMode === 'monthly' ? `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월 ${label}일` : data.fullDay} */}
+          {/* {viewMode === 'monthly' ? `${currentDate.getFullYear()}년 ${currentDate.getMonth() + 1}월 ${label}일` : data.fullDay} */}
           {/* </p> */}
           <p className="tooltip-title">{tooltipTitle}</p>
 
-          <p className="tooltip-value">커밋 수: {payload[0].value}</p>
+          {/* 생산성 점수와 커밋 수 보여주기 */}
+          <p className="tooltip-value">생산성 점수: {data.productivityScore}</p>
+          {typeof data.commits === 'number' && (
+            <p className="tooltip-value">커밋 수: {data.commits}</p>
+          )}
         </div>
       );
     }
@@ -283,13 +317,20 @@ const ProductivityChart = () => {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} />
+              {/* <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} /> */}
+              {/* y축은 생산성 점수 범위 0-100 사이로 설정 */}
+              <YAxis 
+                domain={[0, 100]}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: '#6b7280' }}
+              />
               {/* <Tooltip /> */}
               <Tooltip content={<CustomTooltip />} />
               {/* 그래프 외곽선 색 */}
               {/* <Area type="monotone" dataKey="commits" stroke="#A3A1E6" strokeWidth={2} fillOpacity={1} fill="url(#colorCommits)" /> */}
               {/* commits 필드 데이터(커밋 수)를 기반으로 그래프 채우기 */}
-              <Area type="monotone" dataKey="commits" stroke="#B4B3DC" strokeWidth={2} fillOpacity={1} fill="url(#colorCommits)" />
+              <Area type="monotone" dataKey="productivityScore" stroke="#B4B3DC" strokeWidth={2} fillOpacity={1} fill="url(#colorCommits)" />
             </AreaChart>
           </ResponsiveContainer>
         )}
@@ -299,28 +340,27 @@ const ProductivityChart = () => {
         <div className="summary-box purple">
           <p>총 커밋</p>
           <p className="summary-value">
-            {(apiData?.summary?.totalCommits !== undefined) 
+            {/* {(apiData?.summary?.totalCommits !== undefined) 
               ? apiData.summary.totalCommits 
               : chartData.reduce((sum, item) => sum + item.commits, 0)
-            }
+            } */}
+            {apiData?.summary?.totalCommits ?? 0}
           </p>
         </div>
         <div className="summary-box blue">
           <p>평균 커밋</p>
           <p className="summary-value">
-            {(apiData?.summary?.averageCommits !== undefined) 
-              ? Math.round(apiData.summary.averageCommits)
-              : Math.round(chartData.reduce((sum, item) => sum + item.commits, 0) / chartData.length)
-            }
+          {Math.round(apiData?.summary?.averageCommits ?? 0)}
           </p>
         </div>
         <div className="summary-box green">
           <p>최대 커밋</p>
           <p className="summary-value">
-            {(apiData?.summary?.maxCommits !== undefined) 
+            {/* {(apiData?.summary?.maxCommits !== undefined) 
               ? apiData.summary.maxCommits
               : Math.max(...chartData.map(item => item.commits))
-            }
+            } */}
+            {apiData?.summary?.maxCommits ?? 0}
           </p>
         </div>
       </div>
