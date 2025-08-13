@@ -113,7 +113,6 @@ export async function getProfileImage() {
     }
 }
 
-
 // 프로필 정보를 가져오는 함수
 export async function fetchProfile() {
     // 임시로 userId 1을 사용 (실제로는 로그인된 사용자의 ID를 사용해야 함)
