@@ -10,14 +10,14 @@ const userId = 1;
 export async function fetchProductivityGraph(period, startDate, endDate) {
     try {
         console.log('생산성 그래프 조회 파라미터:', period, startDate, endDate);
-        const response = await authInstance.get(`/users/analytics/productivity`, {
+        const response = await authInstance.get(`users/analytics/productivity`, {
             params: {
                 period: period,
                 startDate: startDate,
                 endDate: endDate
             }
         });
-        // console.log('fetchProductivityGraph response:', response.data);
+        console.log('생산성 그래프 조회 성공:', response.data);
         return response.data;
     } catch (error) {
         console.error('생산성 그래프 조회 실패:', error);
