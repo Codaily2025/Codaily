@@ -38,6 +38,7 @@ class CodeReviewState(TypedDict, total=False):
     commit_message: Optional[str]
     force_done: Optional[bool]
     commit_branch: Optional[str]
+    force_done: bool
 
     # diff/전체코드 (dict로 표준화)
     # 예: {"file_path": str, "patch": str, "change_type": "ADDED|MODIFIED|REMOVED"}
@@ -69,3 +70,4 @@ class CodeReviewState(TypedDict, total=False):
     review_files: Annotated[List[Dict[str, Any]], prefer_non_empty]
     review_summary: Optional[str]
     review_summaries: Dict[str, str]
+    code_review_items: List[Dict[str, Any]]

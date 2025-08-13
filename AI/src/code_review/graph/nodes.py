@@ -8,7 +8,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from ..code_review_schema import DiffFile
 from fastapi.encoders import jsonable_encoder
-
+from pydantic import BaseModel
 
 from copy import deepcopy
 
@@ -52,11 +52,11 @@ async def run_feature_inference(state: CodeReviewState) -> CodeReviewState:
         change_type = file.get("change_type", "MODIFIED")
 
         if change_type == "REMOVED":
-            diff_text_parts.append(f"\n📄 {file_path} (삭제됨):\n- 삭제된 파일\n")
+            diff_text_parts.append(f"\n {file_path} (삭제됨):\n- 삭제된 파일\n")
         elif change_type == "ADDED":
-            diff_text_parts.append(f"\n📄 {file_path} (새 파일):\n{patch or '- (패치 정보 없음)'}\n")
+            diff_text_parts.append(f"\n {file_path} (새 파일):\n{patch or '- (패치 정보 없음)'}\n")
         else:
-            diff_text_parts.append(f"\n📄 {file_path}:\n{patch}\n")
+            diff_text_parts.append(f"\n {file_path}:\n{patch}\n")
 
     diff_text = "".join(diff_text_parts)
     formatted_features = ", ".join(available_features)
@@ -80,105 +80,197 @@ async def run_feature_inference(state: CodeReviewState) -> CodeReviewState:
 
 
 # checklist 요청
-async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
-    project_id = state["project_id"]
-    feature_name = state["feature_name"]
+# async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
+#     project_id = state["project_id"]
+#     feature_name = state["feature_name"]
 
-    print(f"\n📡 checklist 요청: project_id={project_id}, feature_name={feature_name}")
-    url = f"http://localhost:8081/api/code-review/project/{project_id}/feature/checklist"
+#     print(f"\n📡 checklist 요청: project_id={project_id}, feature_name={feature_name}")
+#     url = f"http://localhost:8081/api/code-review/project/{project_id}/feature/checklist"
 
-    params = {"featureName": feature_name}
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
+#     params = {"featureName": feature_name}
+#     async with httpx.AsyncClient() as client:
+#         response = await client.get(url, params=params)
 
-    if response.status_code != 200:
-        raise RuntimeError(f"Checklist 조회 실패: {response.status_code} / {response.text}")
+#     if response.status_code != 200:
+#         raise RuntimeError(f"Checklist 조회 실패: {response.status_code} / {response.text}")
 
-    data = response.json()
+#     data = response.json()
 
-    # 새 포맷 (snake_case) + 구 포맷 (camelCase) 모두 허용
-    if isinstance(data, dict):
-        feature_id = data.get("feature_id") or data.get("feature_id")
-        items = data.get("checklist_items") or data.get("checklist_items") or []
-        # 항목 정규화
-        norm_items = []
-        for it in items:
-            if not isinstance(it, dict):
-                continue
-            norm_items.append({
-                "item": it.get("item"),
-                "done": bool(it.get("done")),
-            })
+#     # 새 포맷 (snake_case) + 구 포맷 (camelCase) 모두 허용
+#     if isinstance(data, dict):
+#         feature_id = data.get("feature_id") or data.get("feature_id")
+#         items = data.get("checklist_items") or data.get("checklist_items") or []
+#         # 항목 정규화
+#         norm_items = []
+#         for it in items:
+#             if not isinstance(it, dict):
+#                 continue
+#             norm_items.append({
+#                 "item": it.get("item"),
+#                 "done": bool(it.get("done")),
+#             })
 
-        state["feature_id"] = feature_id   # ★ 중요
-        state["checklist"] = norm_items
-        print(f"checklist 수신 완료: feature_id={feature_id}, 항목수={len(norm_items)}")
+#         state["feature_id"] = feature_id   # ★ 중요
+#         state["checklist"] = norm_items
+#         print(f"checklist 수신 완료: feature_id={feature_id}, 항목수={len(norm_items)}")
 
-    elif isinstance(data, list):
-        # 완전 구포맷: 리스트만 오는 경우
-        state["checklist"] = data
-        print(f"⚠️ 구 포맷 감지(리스트만): 항목수={len(data)}")
+#     elif isinstance(data, list):
+#         # 완전 구포맷: 리스트만 오는 경우
+#         state["checklist"] = data
+#         print(f"구 포맷 감지(리스트만): 항목수={len(data)}")
 
-    else:
-        print(f"⚠️ 알 수 없는 checklist 응답 형식: {type(data)} {data}")
-        state["checklist"] = []
-    print(f"[NODE:run_checklist_fetch] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
+#     else:
+#         print(f"알 수 없는 checklist 응답 형식: {type(data)} {data}")
+#         state["checklist"] = []
+#     print(f"[NODE:run_checklist_fetch] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
 
-    return state
+#     return state
 
 
-# 체크리스트 기반 구현 여부 확인
-async def run_feature_implementation_check(state: CodeReviewState) -> CodeReviewState:
-    feature_name = state["feature_name"]
-    checklist = state["checklist"]
-    diff_files = state["diff_files"]
+# # 체크리스트 기반 구현 여부 확인
+# async def run_feature_implementation_check(state: CodeReviewState) -> CodeReviewState:
+#     feature_name = state["feature_name"]
+#     checklist = state.get("checklist") or []
+#     diff_files = state.get("diff_files") or []
+#     commit_message = state.get("commit_message", "")
+
+#     force_done_request = bool(state.get("force_done"))
+
+#     # 1) 커밋 메시지에서 force_done 신호 추출
+#     result_text = (await ask_str(commit_message_prompt, commit_message=commit_message)).strip()
+#     norm = result_text.strip().lower()
+#     force_done_from_msg = norm in {"완료", "done", "true", "완료됨", "complete"}
+#     force_done = force_done_request or force_done_from_msg
+#     state["force_done"] = force_done
+
+#     print(f"커밋 메시지 분석 → force_done={force_done} (raw={result_text!r})")
+
+#     # 2) 체크리스트 미완료 항목 수집
+#     checklist_items = [item["item"] for item in checklist if not item.get("done", False)]
+
+#     # 3) 사전 판단: 체크리스트 존재 & 미완료 0개 → all_done
+#     has_checklist = len(checklist) > 0
+#     all_done = has_checklist and len(checklist_items) == 0
+
+#     print(f"\n기능 구현 평가 시작: feature_name={feature_name!r}")
+#     print(f"체크리스트: total={len(checklist)}, undone={len(checklist_items)} (all_done={all_done})")
+#     print(f"파일 수: {len(diff_files)}개")
+
+#     # 4) GPT 평가 (항상 실행: extra_implemented 탐지 목적)
+#     raw = await ask_str(
+#         checklist_evaluation_prompt,
+#         feature_name=feature_name,
+#         checklist_items=checklist_items,  # 미완료 항목 목록
+#         diff_files=diff_files,
+#     )
+
+#     try:
+#         parsed = json.loads(raw)
+#     except json.JSONDecodeError:
+#         parsed = {
+#             "implemented": False,
+#             "checklist_evaluation": {},
+#             "extra_implemented": [],
+#             "checklist_file_map": {}
+#         }
+#         print("checklist_evaluation 응답 JSON 파싱 실패. 기본값으로 진행.")
+
+#     # 5) 최종 implemented 판정: force_done ▷ all_done ▷ 모델 응답
+#     implemented_final = bool(force_done or all_done or parsed.get("implemented", False))
+
+#     # 상태 반영 (파이프라인 호환을 위해 둘 다 세팅)
+#     state["implemented"] = implemented_final
+#     state["checklist_evaluation"] = parsed.get("checklist_evaluation", {})
+#     state["extra_implemented"] = parsed.get("extra_implemented", [])
+#     state["checklist_file_map"] = parsed.get("checklist_file_map", {})
+
+#     # 6) 다음 단계 분기 플래그: 구현 완료 + 추가 구현 없음 → 요약으로
+#     go_summary = implemented_final and len(state["extra_implemented"]) == 0
+#     state["go_summary"] = go_summary
+
+#     print("implemented_final:", implemented_final)
+#     print("extra_implemented:", state["extra_implemented"])
+#     print("다음 노드 후보:", "review_summary (요약)" if go_summary else "code_review_details (세부 리뷰)")
+
+#     print("checklist_evaluation :", json.dumps(parsed.get("checklist_evaluation", {}), ensure_ascii=False, indent=2))
+#     print("checklist_file_map :", json.dumps(parsed.get("checklist_file_map", {}), ensure_ascii=False, indent=2))
+#     print("extra_implemented :", parsed.get("extra_implemented", []))
+#     print(f"[NODE:run_feature_implementation_check] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
+
+
+
+#     return state
+
+async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeReviewState":
+    feature_name   = state.get("feature_name", "")
+    checklist      = state.get("checklist") or []                 # [{item: str, done: bool}, ...]
+    diff_files     = state.get("diff_files") or []
     commit_message = state.get("commit_message", "")
 
-    checklist_items = [item["item"] for item in checklist if not item.get("done", False)]
+    # 1) 요청에서 온 force_done 값을 최우선으로 반영
+    force_done_req = bool(state.get("force_done", False))
 
-    result_text = (await ask_str(commit_message_prompt, commit_message=commit_message)).strip()
+    # 2) 커밋 메시지에서 force_done 신호 추출 (예: "완료", "done", "complete"...)
+    try:
+        msg_pred = (await ask_str(commit_message_prompt, commit_message=commit_message)).strip()
+        force_done_msg = msg_pred.strip().lower() in {"완료", "done", "true", "완료됨", "complete"}
+    except Exception:
+        msg_pred = ""
+        force_done_msg = False
 
-    # 결과 문자열 정규화
-    norm = result_text.strip().lower()
-    force_done = norm in {"완료", "done", "true", "완료됨", "complete"}
+    # 3) 체크리스트 미완료 항목 수집
+    # 체크리스트가 있는데 미구현한 항목이 없으면 기능 구현 완료로 간주
+    has_checklist = len(checklist) > 0
+    undone_items  = [it.get("item") for it in checklist if not it.get("done", False)]
+    all_done      = has_checklist and len(undone_items) == 0
 
-    # 상태에 반영
-    state["force_done"] = force_done
+    print(f"\n 기능 구현 평가 시작: {feature_name=}")
+    print(f" 체크리스트: total={len(checklist)}, undone={len(undone_items)} (all_done={all_done})")
+    print(f" commit_message force_done? req={force_done_req} msg={force_done_msg}")
+    print(f" 변경 파일 수: {len(diff_files)}")
 
-    print(f"📝 커밋 메시지 분석 결과 → force_done: {force_done} (raw={result_text!r})")
+    # 4) GPT 평가(항상 실행: extra_implemented 탐지 목적)
+    try:
+        raw = await ask_str(
+            checklist_evaluation_prompt,
+            feature_name=feature_name,
+            checklist_items=undone_items,   # 미완료 항목만 평가 요청
+            diff_files=diff_files,
+        )
+        parsed = json.loads(raw)
+    except Exception as e:
+        print(f" checklist_evaluation 파싱 실패: {e}")
+        parsed = {"implemented": False, "checklist_evaluation": {}, "extra_implemented": [], "checklist_file_map": {}}
 
-    print(f"\n🔍 기능 구현 평가 시작: {feature_name=}")
-    print(f"📋 체크리스트 항목 수: {len(checklist_items)}개")
-    print(f"📦 파일 수: {len(diff_files)}개")
-
-    prompt_input = {
-        "feature_name": feature_name,
-        "checklist_items": checklist_items,
-        "diff_files": diff_files,
-    }
-
-    raw = await ask_str(
-        checklist_evaluation_prompt,
-        feature_name=feature_name,
-        checklist_items=checklist_items,
-        diff_files=diff_files,
+    # 5) 최종 구현 여부 판단
+    implemented_final = bool(
+        force_done_req or
+        force_done_msg or
+        all_done or
+        parsed.get("implemented", False)
     )
-    parsed = json.loads(raw)
 
-    state["implemented"] = parsed["implemented"]
-    state["checklist_evaluation"] = parsed["checklist_evaluation"]
-    state["extra_implemented"] = parsed.get("extra_implemented", [])
-    state["checklist_file_map"] = parsed.get("checklist_file_map", {})
+    state["force_done"] = bool(force_done_req or force_done_msg)
 
-    print("implemented :", parsed.get("implemented"))
+    # 6) 상태 반영 (호환 위해 implemented/implements 모두 세팅)
+    state["implemented"]            = implemented_final
+    state["checklist_evaluation"]   = parsed.get("checklist_evaluation", {})
+    state["extra_implemented"]      = parsed.get("extra_implemented", [])
+    state["checklist_file_map"]     = parsed.get("checklist_file_map", {})
+
+    # 7) 요약 직행 여부(go_summary): 구현 완료 && 추가 구현 없음
+    state["go_summary"] = bool(implemented_final and len(state["extra_implemented"]) == 0)
+
+    print(" implemented_final:", implemented_final)
+    print(" extra_implemented:", state["extra_implemented"])
+    print(" 다음 경로:", "run_code_review_summary (직행)" if state["go_summary"] else "세부 리뷰 경로")
+
     print("checklist_evaluation :", json.dumps(parsed.get("checklist_evaluation", {}), ensure_ascii=False, indent=2))
     print("checklist_file_map :", json.dumps(parsed.get("checklist_file_map", {}), ensure_ascii=False, indent=2))
     print("extra_implemented :", parsed.get("extra_implemented", []))
     print(f"[NODE:run_feature_implementation_check] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
 
-
     return state
-
 
 # checklist 평가 반영
 async def apply_checklist_evaluation(state: CodeReviewState) -> CodeReviewState:
@@ -214,7 +306,7 @@ async def run_code_review_file_fetch(state: CodeReviewState) -> CodeReviewState:
     file_paths = sorted({path for paths in checklist_file_map.values() for path in paths})
 
 
-    print(f"\n📡 코드리뷰용 파일 요청 시작 (총 {len(file_paths)}개)")
+    print(f"\n 코드리뷰용 파일 요청 시작 (총 {len(file_paths)}개)")
     print(f"file_paths : {file_paths}")
     print(f"repo_name : " , commit_info.get("repo_name", ""))
 
@@ -315,7 +407,7 @@ async def run_code_review_file_fetch(state: CodeReviewState) -> CodeReviewState:
     # return state
 
 def _norm_path(p: str) -> str:
-    # 슬래시統一, 앞 슬래시 제거, 공백 제거
+    # 슬래시, 앞 슬래시 제거, 공백 제거
     return (p or "").replace("\\", "/").lstrip("/").strip()
 
 # 코드리뷰 수행
@@ -405,7 +497,7 @@ KOREAN_KEY_MAP = {
 }
 
 KEY_PATTERN = re.compile(
-    r'^\s*[-•]?\s*(summary|quality_score|convention|bug_risk|security_risk|performance|refactoring_suggestion)\s*:\s*(.+)\s*$',
+    r'^\s*[-•]?\s*(summary|quality_score|convention|complexity|bug_risk|security_risk|performance|refactoring_suggestion)\s*:\s*(.+)\s*$',
     re.IGNORECASE
 )
 
@@ -443,45 +535,38 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
     feature_name = state["feature_name"]
 
     print(f"\n 코드리뷰아이템 요청: project_id={project_id}, feature_name={feature_name}")
-    url = f"http://localhost:8081/api/code-review-item/project/{project_id}/feature/{feature_id}"
+    url = f"http://localhost:8081/api/code-review-item/project/{project_id}/feature"
 
     params = {"featureName": feature_name}
 
     async with httpx.AsyncClient() as client:
         response = await client.get(url, params=params)
-
     if response.status_code != 200:
         raise RuntimeError(f"코드리뷰아이템 조회 실패: {response.status_code} / {response.text}")
-
+    
     data = response.json()
+    
+     # 1) 원본 그대로 저장
+    state["code_review_items_grouped"] = data
 
-    # 새 포맷 (snake_case) + 구 포맷 (camelCase) 모두 허용
-    if isinstance(data, dict):
-        feature_id = data.get("feature_id") or data.get("feature_id")
-        items = data.get("checklist_items") or data.get("checklist_items") or []
-        # 항목 정규화
-        norm_items = []
-        for it in items:
-            if not isinstance(it, dict):
-                continue
-            norm_items.append({
-                "item": it.get("item"),
-                "done": bool(it.get("done")),
+    # 2) 평탄화해서 저장
+    flat_items = []
+    for category_block in data:
+        category = category_block.get("category")
+        checklist_item = category_block.get("checklist_item")
+        for item in category_block.get("items", []):
+            flat_items.append({
+                "category": category,
+                "checklist_item": checklist_item,
+                "file_path": item.get("file_path") or item.get("filePath"),
+                "line_range": item.get("line_range") or item.get("lineRange"),
+                "severity": item.get("severity"),
+                "message": item.get("message"),
             })
 
-        state["feature_id"] = feature_id   # ★ 중요
-        state["checklist"] = norm_items
-        print(f"checklist 수신 완료: feature_id={feature_id}, 항목수={len(norm_items)}")
+    state["code_review_items"] = flat_items
 
-    elif isinstance(data, list):
-        # 완전 구포맷: 리스트만 오는 경우
-        state["checklist"] = data
-        print(f"⚠️ 구 포맷 감지(리스트만): 항목수={len(data)}")
-
-    else:
-        print(f"⚠️ 알 수 없는 checklist 응답 형식: {type(data)} {data}")
-        state["checklist"] = []
-    print(f"[NODE:run_checklist_fetch] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
+    print(f"📦 기존 코드리뷰아이템 {len(flat_items)}개 수집 완료.")
 
     return state
 
@@ -1070,4 +1155,55 @@ async def run_parallel_feature_graphs(state: CodeReviewState) -> CodeReviewState
 #         await send_result_to_java(result)
 
 #     await asyncio.gather(*[run_feature(name) for name in feature_names])
+#     return state
+
+
+# async def run_feature_implementation_check(state: CodeReviewState) -> CodeReviewState:
+#     feature_name = state["feature_name"]
+#     checklist = state["checklist"]
+#     diff_files = state["diff_files"]
+#     commit_message = state.get("commit_message", "")
+
+#     if checklist
+#     checklist_items = [item["item"] for item in checklist if not item.get("done", False)]
+
+#     result_text = (await ask_str(commit_message_prompt, commit_message=commit_message)).strip()
+
+#     # 결과 문자열 정규화
+#     norm = result_text.strip().lower()
+#     force_done = norm in {"완료", "done", "true", "완료됨", "complete"}
+
+#     # 상태에 반영
+#     state["force_done"] = force_done
+
+#     print(f"📝 커밋 메시지 분석 결과 → force_done: {force_done} (raw={result_text!r})")
+
+#     print(f"\n🔍 기능 구현 평가 시작: {feature_name=}")
+#     print(f"📋 체크리스트 항목 수: {len(checklist_items)}개")
+#     print(f"📦 파일 수: {len(diff_files)}개")
+
+#     prompt_input = {
+#         "feature_name": feature_name,
+#         "checklist_items": checklist_items,
+#         "diff_files": diff_files,
+#     }
+
+#     raw = await ask_str(
+#         checklist_evaluation_prompt,
+#         feature_name=feature_name,
+#         checklist_items=checklist_items,
+#         diff_files=diff_files,
+#     )
+#     parsed = json.loads(raw)
+
+#     state["implemented"] = parsed["implemented"]
+#     state["checklist_evaluation"] = parsed["checklist_evaluation"]
+#     state["extra_implemented"] = parsed.get("extra_implemented", [])
+#     state["checklist_file_map"] = parsed.get("checklist_file_map", {})
+
+#     print("implemented :", parsed.get("implemented"))
+#     print("checklist_evaluation :", json.dumps(parsed.get("checklist_evaluation", {}), ensure_ascii=False, indent=2))
+#     print("checklist_file_map :", json.dumps(parsed.get("checklist_file_map", {}), ensure_ascii=False, indent=2))
+#     print("extra_implemented :", parsed.get("extra_implemented", []))
+#     print(f"[NODE:run_feature_implementation_check] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
 #     return state
