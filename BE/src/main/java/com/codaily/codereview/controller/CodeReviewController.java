@@ -243,7 +243,7 @@ public class CodeReviewController {
     @GetMapping("/user")
     @Operation(summary = "사용자의 모든 프로젝트 코드리뷰 전체 조회", description = "로그인한 사용자 기준 전체 코드리뷰 조회 가능합니다")
     public ResponseEntity<List<CodeReviewUserAllResponseDto>> getUserAllCodeReviews(@AuthenticationPrincipal PrincipalDetails userDetails) {
-        return ResponseEntity.ok(codeReviewService.getUserAllCodeReviews(2L));
+        return ResponseEntity.ok(codeReviewService.getUserAllCodeReviews(userDetails.getUserId()));
     }
 
 //    @GetMapping("/user/{userId}")
