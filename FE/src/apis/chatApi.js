@@ -100,9 +100,8 @@ export const streamChatResponse = ({
   }
   
   const eventSourceUrl =
-    `http://localhost:8081/api/chat/stream` +
-    `?userId=1` +
-    `&message=${encodeURIComponent(userText)}` +
+    `${import.meta.env.VITE_BASE_URL}chat/stream` +
+    `?message=${encodeURIComponent(userText)}` +
     `&projectId=${encodeURIComponent(projectId)}` +
     `&specId=${encodeURIComponent(projectSpecId)}`;
 

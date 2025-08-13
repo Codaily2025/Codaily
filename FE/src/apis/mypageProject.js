@@ -205,8 +205,8 @@ export const fetchProjectsByUserId = async () => {
 
     return sortProjects(formattedProjects);
   } catch (error) {
-    console.error('Error fetching projects from API:', error);
-    console.log('Using dummy data instead...');
+    console.error('프로젝트 목록 조회 실패:', error);
+    console.log('대신 dummydata 사용...');
     
     // 에러 발생 시 더미 데이터 반환
     return sortProjects(dummyProjects);

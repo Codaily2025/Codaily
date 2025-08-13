@@ -3,8 +3,8 @@ import axios from "axios"
 
 // axios 모듈 수정 금지
 // 주석 처리만 가능
-const BASE_URL = 'http://localhost:8081/api/'
-const GITHUB_API_URL = 'http://localhost:8081/api/oauth/github/'
+const BASE_URL = import.meta.env.VITE_BASE_URL // 로컬에서는 http://localhost:8081/api/
+const GITHUB_API_URL = `${BASE_URL}oauth/github`
 
 const axiosInstance = (url, options) => {
     const instance = axios.create({ baseURL: url, ...options })
