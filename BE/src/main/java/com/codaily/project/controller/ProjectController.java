@@ -1,10 +1,7 @@
 package com.codaily.project.controller;
 
 import com.codaily.auth.config.PrincipalDetails;
-import com.codaily.project.dto.FeatureItemReduceResponse;
-import com.codaily.project.dto.ProjectCreateRequest;
-import com.codaily.project.dto.SpecificationFinalizeResponse;
-import com.codaily.project.dto.ToggleReduceRequest;
+import com.codaily.project.dto.*;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
 import com.codaily.project.service.FeatureItemService;
@@ -349,5 +346,158 @@ public class ProjectController {
     ) {
         SpecificationFinalizeResponse resp = featureItemService.finalizeSpecification(projectId);
         return ResponseEntity.ok(resp);
+    }
+
+    @Operation(
+            summary = "프로젝트 명세 통합 조회",
+            description = """
+            프로젝트 기본 정보(제목/설명/연결된 명세 정보)와
+            해당 프로젝트의 모든 명세 항목(주기능 + 각 주기능의 하위기능)을 반환합니다.
+            
+            - features: 주기능 단위 리스트
+            - features[*].subFeature: 해당 주기능의 하위기능 리스트
+            - features에는 하위기능이 별도 요소로 들어가지 않으며, 항상 주기능만 포함됩니다.
+            """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ProjectSpecOverviewResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "성공 예시(명세 있음)",
+                                            summary = "프로젝트 + 명세 + 주/하위 기능 전체",
+                                            value = """
+                    {
+                      "project": {
+                        "projectTitle": "Codaily",
+                        "projectDescription": "AI 기반 명세/회고 플랫폼",
+                        "specTitle": "v1.0 기능 명세",
+                        "projectId": 3,
+                        "specId": 10
+                      },
+                      "features": [
+                        {
+                          "projectId": 3,
+                          "specId": 10,
+                          "field": "회원",
+                          "isReduced": false,
+                          "mainFeature": {
+                            "id": 101,
+                            "isReduced": false,
+                            "title": "회원 가입",
+                            "description": "이메일/소셜 가입을 지원",
+                            "estimatedTime": 2.5,
+                            "priorityLevel": 1
+                          },
+                          "subFeature": [
+                            {
+                              "id": 201,
+                              "isReduced": false,
+                              "title": "이메일 인증",
+                              "description": "토큰 기반 인증",
+                              "estimatedTime": 0.5,
+                              "priorityLevel": 1
+                            },
+                            {
+                              "id": 202,
+                              "isReduced": false,
+                              "title": "소셜 로그인",
+                              "description": "카카오/네이버/구글 로그인 지원",
+                              "estimatedTime": 1.0,
+                              "priorityLevel": 2
+                            }
+                          ]
+                        },
+                        {
+                          "projectId": 3,
+                          "specId": 10,
+                          "field": "결제",
+                          "isReduced": true,
+                          "mainFeature": {
+                            "id": 102,
+                            "isReduced": true,
+                            "title": "PG 결제 연동",
+                            "description": "정기결제 포함",
+                            "estimatedTime": 3.0,
+                            "priorityLevel": 2
+                          },
+                          "subFeature": [
+                            {
+                              "id": 203,
+                              "isReduced": false,
+                              "title": "카드 결제",
+                              "description": "신용/체크카드 결제 처리",
+                              "estimatedTime": 1.5,
+                              "priorityLevel": 1
+                            },
+                            {
+                              "id": 204,
+                              "isReduced": false,
+                              "title": "간편 결제",
+                              "description": "카카오페이/네이버페이 연동",
+                              "estimatedTime": 1.0,
+                              "priorityLevel": 2
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "성공 예시(명세 없음)",
+                                            summary = "프로젝트는 있지만 spec 연결이 아직 없음 (예시용 subFeature 포함)",
+                                            value = """
+                    {
+                      "project": {
+                        "projectTitle": "Empty Spec Project",
+                        "projectDescription": "명세 미연결 상태",
+                        "specTitle": null,
+                        "projectId": 7,
+                        "specId": null
+                      },
+                      "features": [
+                        {
+                          "projectId": 7,
+                          "specId": null,
+                          "field": "기본",
+                          "isReduced": false,
+                          "mainFeature": {
+                            "id": 301,
+                            "isReduced": false,
+                            "title": "임시 주기능",
+                            "description": "명세 없음 상태의 예시 주기능",
+                            "estimatedTime": 0.0,
+                            "priorityLevel": 1
+                          },
+                          "subFeature": [
+                            {
+                              "id": 401,
+                              "isReduced": false,
+                              "title": "임시 하위기능",
+                              "description": "명세 없음 상태의 예시 하위기능",
+                              "estimatedTime": 0.0,
+                              "priorityLevel": 1
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                    """
+                                    )
+                            }
+                    )
+            )
+    })
+    @GetMapping("/{projectId}/spec")
+    public ResponseEntity<ProjectSpecOverviewResponse> getProjectSpecOverview(
+            @Parameter(description = "조회할 프로젝트 ID", example = "3")
+            @PathVariable Long projectId
+    ) {
+        return ResponseEntity.ok(projectService.getProjectSpecOverview(projectId));
     }
 }
