@@ -125,7 +125,7 @@ const SignupForm = () => {
         
         // 팝업에서 메시지를 받아 GitHub 연동 완료 처리
         const handleMessage = (event) => {
-            if (event.origin !== "http://localhost:8081") return
+            if (event.origin !== import.meta.env.VITE_BASE_URL_3) return
             
             if (event.data.type === 'GITHUB_CONNECTED') {
                 setIsGithubConnected(true)
