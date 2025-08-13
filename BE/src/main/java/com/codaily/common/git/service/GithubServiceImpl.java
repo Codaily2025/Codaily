@@ -1,6 +1,8 @@
 package com.codaily.common.git.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -20,9 +22,13 @@ import java.util.Map;
 
 @Log4j2
 @Service
+@RequiredArgsConstructor
 public class GithubServiceImpl implements GithubService {
 
     private final WebClient webClient = WebClient.create();
+
+    @Value("${app.url.webhook}")
+    private String webhookUrl;
 
     public Mono<String> createRepository(String accessToken, String repoName) {
         return webClient.post()
@@ -78,7 +84,7 @@ public class GithubServiceImpl implements GithubService {
     public void registerWebhook(String owner, String repo, String accessToken) {
         String apiUrl = "https://api.github.com/repos/" + owner + "/" + repo + "/hooks";
         // 도메인 추후 수정 필요
-        String targetUrl = "http://i13a601.p.ssafy.io/api/webhook";
+        String targetUrl = webhookUrl;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
@@ -135,8 +141,6 @@ public class GithubServiceImpl implements GithubService {
             log.error("기타 예외 발생: {}", e.getMessage(), e);
         }
     }
-
-
 
 
     public Mono<Set<String>> getAllTechStack(String accessToken, String username) {
@@ -238,7 +242,8 @@ public class GithubServiceImpl implements GithubService {
                                     "&since=" + since + "&until=" + until)
                             .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                             .retrieve()
-                            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                            .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {
+                            })
                             .onErrorReturn(new ArrayList<>())
                             .flatMapMany(Flux::fromIterable);
                 })

@@ -1,13 +1,13 @@
 package com.codaily.auth.entity;
 
 import com.codaily.project.entity.Project;
-import com.codaily.project.entity.Specification;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,18 +37,18 @@ public class User {
     @Column(length = 255)
     private String password;
 
-    @Column(length = 255)
-    private String githubAccount;
-
-    @Column(columnDefinition = "TEXT")
-    private String githubProfileUrl;
-
-    @Column(columnDefinition = "TEXT")
-    private String githubAccessToken;
-
     private LocalDateTime tokenExpiredAt;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 255, name = "github_account")
+    private String githubAccount;
+
+    @Column(columnDefinition = "TEXT", name = "github_access_token")
+    private String githubAccessToken;
+
+    @Column(columnDefinition = "TEXT", name = "github_profile_url")
+    private String githubProfileUrl;
+
+    @Column(columnDefinition = "TEXT", name = "github_scope")
     private String githubScope;
 
     @Column(nullable = false, updatable = false)
@@ -67,6 +68,13 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<TechStack> techStacks = new ArrayList<>();
+
+    // ====== [소셜 로그인 공통 토큰 저장 필드] ======
+    @Column(columnDefinition = "TEXT")
+    private String socialAccessToken;
+
+    @Column(columnDefinition = "TEXT")
+    private String socialRefreshToken;
 
     @PrePersist
     protected void onCreate() {

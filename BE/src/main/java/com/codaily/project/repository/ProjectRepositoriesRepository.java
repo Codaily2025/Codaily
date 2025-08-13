@@ -1,6 +1,5 @@
 package com.codaily.project.repository;
 
-import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -17,5 +16,7 @@ public interface ProjectRepositoriesRepository extends JpaRepository<ProjectRepo
 
     @Query("SELECT r FROM ProjectRepositories r WHERE r.project.projectId = :projectId")
     List<ProjectRepositories> findByProjectId(@Param("projectId") Long projectId);
+
+    List<ProjectRepositories> findByProject_User_UserId(Long userId);
 }
 
