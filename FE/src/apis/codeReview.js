@@ -8,7 +8,7 @@ export async function fetchCodeReviewList() {
     // 이후에는 로그인한 현재 유저 기반으로 userId를 안 넣어도 될 수 있음
     // 향후 구현 방식에 따라 달라질 것임
     try {
-        const response = await authInstance.get(`code-review/user/${userId}`);
+        const response = await authInstance.get(`code-review/user`);
         console.log('가져온 코드 리뷰 목록:', response.data);
         
         // API 응답이 배열인지 확인하고 처리

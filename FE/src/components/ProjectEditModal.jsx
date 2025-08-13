@@ -4,6 +4,7 @@ import styles from './ProjectEditModal.module.css';
 import { useProjectStore } from '../stores/mypageProjectStore';
 import { useUpdateProjectMutation } from '../queries/useProjectMutation';
 import { useGetProjectDetailMutation } from '../queries/useProjectMutation';
+import { useGithubRepositoriesQuery, useCreateNewGithubRepoMutation, useLinkGithubRepoMutation } from '../queries/useGitHub';
 
 // SVG 아이콘들
 const CloseIcon = () => (
@@ -62,6 +63,17 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
   // 프로젝트 상세 조회 뮤테이션
   const { mutate: fetchProjectDetail } = useGetProjectDetailMutation();
+
+  // GitHub 레포지토리 목록 조회
+  const { data: githubReposData, isLoading: isLoadingRepos } = useGithubRepositoriesQuery();
+  
+  // 새로운 GitHub 레포지토리 생성 뮤테이션
+  const { mutate: createNewRepo, isPending: isCreatingRepo } = useCreateNewGithubRepoMutation((repoName) => {
+    setConnectedRepoName(repoName);
+    setSelectedRepoOption(0); // 현재 레포지토리로 변경
+    setNewRepoName('');
+    alert('새로운 레포지토리가 성공적으로 생성되었습니다.');
+  });
 
   // 프로젝트 상세 조회 뮤테이션 실행 -> projectData가 변경될 때마다 실행
   // 뮤테이션이란? 데이터를 변경하는 함수
@@ -350,6 +362,8 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
         timeByDay: projectDetails.timeByDay,
         // repoUrl은 API 명세에 없으므로 여기서는 제외함
       },
+      // 기존 DB의 schedules 데이터 전달
+      existingSchedules: detailFromStore?.schedules || null,
     }, {
       // API 요청이 성공하면 모달 닫기
       onSuccess: () => {
@@ -359,6 +373,43 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   };
   // Github 저장소 선택
   const [selectedRepoOption, setSelectedRepoOption] = useState(0); // 0: 현재, 1: 새로 만들기, 2: 기존 연결
+  const [newRepoName, setNewRepoName] = useState(''); // 새로운 레포지토리 이름
+  const [selectedExistingRepo, setSelectedExistingRepo] = useState(''); // 선택된 기존 레포지토리
+  const [connectedRepoName, setConnectedRepoName] = useState(''); // 연결된 레포지토리 이름 (성공 후 표시용)
+
+  // 새로운 레포지토리 생성 핸들러
+  const handleCreateNewRepo = () => {
+    if (!newRepoName.trim()) {
+      alert('레포지토리 이름을 입력해주세요.');
+      return;
+    }
+    
+    createNewRepo({
+      projectId: projectData.id,
+      repoName: newRepoName.trim()
+    });
+  };
+
+  // 기존 레포지토리 연결 뮤테이션
+  const { mutate: linkExistingRepo, isPending: isLinkingRepo } = useLinkGithubRepoMutation((repoName) => {
+    setConnectedRepoName(repoName);
+    setSelectedRepoOption(0); // 현재 레포지토리로 변경
+    setSelectedExistingRepo('');
+    alert('기존 레포지토리가 성공적으로 연결되었습니다.');
+  });
+
+  // 기존 레포지토리 연결 핸들러
+  const handleLinkExistingRepo = () => {
+    if (!selectedExistingRepo) {
+      alert('연결할 레포지토리를 선택해주세요.');
+      return;
+    }
+    
+    linkExistingRepo({
+      projectId: projectData.id,
+      repoName: selectedExistingRepo
+    });
+  };
 
   return (
     <>
@@ -524,7 +575,9 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       </div>
                       <div className={styles.repoTextContent}>
                         <div className={`${styles.repoTitle} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>현재 레포지토리</div>
-                        <div className={`${styles.repoUrl} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>{projectData?.repoUrl || ''}</div>
+                        <div className={`${styles.repoUrl} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>
+                          {connectedRepoName || projectData?.repoUrl || '연결된 레포지토리가 없습니다.'}
+                        </div>
                       </div>
                     </div>
                     <div className={`${styles.radioCheckWrapper} ${selectedRepoOption === 0 ? styles.checked : ''}`}>
@@ -546,6 +599,28 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     </div>
                   </div>
 
+                  {/* 새로운 레포지토리 생성 입력 필드 */}
+                  {selectedRepoOption === 1 && (
+                    <div className={styles.repoInputSection}>
+                      <div className={styles.inputWrapper}>
+                        <input
+                          type="text"
+                          placeholder="새로운 레포지토리 이름을 입력하세요"
+                          value={newRepoName}
+                          onChange={(e) => setNewRepoName(e.target.value)}
+                          className={styles.inputText}
+                        />
+                      </div>
+                      <button 
+                        className={`${styles.btn} ${styles.btnPrimary}`}
+                        onClick={handleCreateNewRepo}
+                        disabled={isCreatingRepo}
+                      >
+                        {isCreatingRepo ? '생성 중...' : '레포지토리 생성'}
+                      </button>
+                    </div>
+                  )}
+
                   <div className={`${styles.repoOptionCard} ${selectedRepoOption === 2 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(2)}>
                     <div className={styles.repoOptionContent}>
                       <div className={`${styles.repoIconWrapper} ${styles.repoIcon}`}>
@@ -559,6 +634,53 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       {selectedRepoOption === 2 && <CheckIcon />}
                     </div>
                   </div>
+
+                  {/* 기존 레포지토리 목록 */}
+                  {selectedRepoOption === 2 && (
+                    <div className={styles.repoListSection}>
+                      {isLoadingRepos ? (
+                        <div className={styles.loadingText}>레포지토리 목록을 불러오는 중...</div>
+                      ) : githubReposData?.repositories?.length > 0 ? (
+                        <div className={styles.repoList}>
+                          {githubReposData.repositories.map((repo, index) => (
+                            <div
+                              key={index}
+                              className={`${styles.repoListItem} ${selectedExistingRepo === repo.name ? styles.selected : ''}`}
+                              onClick={() => setSelectedExistingRepo(repo.name)}
+                            >
+                              <div className={styles.repoItemContent}>
+                                <div className={styles.repoItemName}>{repo.name}</div>
+                                <div className={styles.repoItemUrl}>{repo.htmlUrl}</div>
+                                {repo.description && (
+                                  <div className={styles.repoItemDescription}>{repo.description}</div>
+                                )}
+                                <div className={styles.repoItemVisibility}>
+                                  {repo.isPrivate ? 'Private' : 'Public'}
+                                </div>
+                              </div>
+                              {selectedExistingRepo === repo.name && (
+                                <div className={styles.repoItemCheck}>
+                                  <CheckIcon />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={styles.noReposText}>연결 가능한 레포지토리가 없습니다.</div>
+                      )}
+                      
+                                             {selectedExistingRepo && (
+                         <button 
+                           className={`${styles.btn} ${styles.btnPrimary}`}
+                           onClick={handleLinkExistingRepo}
+                           disabled={isLinkingRepo}
+                         >
+                           {isLinkingRepo ? '연결 중...' : '선택한 레포지토리 연결'}
+                         </button>
+                       )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

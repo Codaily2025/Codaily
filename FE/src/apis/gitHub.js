@@ -92,3 +92,15 @@ export const createGithubRepository = async (projectId, repoName) => {
         throw new Error(error.response?.data?.message || '새로운 레포지토리 생성에 실패했습니다.')
     }
 }
+
+// 사용자 GitHub 레포지토리 목록 조회 API
+export const fetchGithubRepositories = async () => {
+    try {
+        const response = await githubInstance.get('repos');
+        console.log('GitHub 레포지토리 목록 조회 완료: ', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('GitHub 레포지토리 목록 조회 실패: ', error);
+        throw new Error(error.response?.data?.message || 'GitHub 레포지토리 목록 조회에 실패했습니다.');
+    }
+};
