@@ -71,7 +71,7 @@ export const streamChatResponse = ({
   // 서버 상태 확인
   const checkServerStatus = async () => {
     try {
-      const response = await fetch('http://localhost:8081/api/chat/stream?userId=1&message=test&projectId=1&specId=1', {
+      const response = await fetch('https://i13a601.p.ssafy.io/api/chat/stream?userId=1&message=test&projectId=1&specId=1', {
         method: 'HEAD'
       });
       console.log('서버 상태 확인:', response.status, response.headers.get('content-type'));
@@ -83,7 +83,7 @@ export const streamChatResponse = ({
   };
   
   // 백엔드 팀원 테스트 코드와 정확히 일치하는 URL 구조로 변경 (8081 포트 사용)
-  const eventSourceUrl = `http://localhost:8081/api/chat/stream?userId=1&message=${encodeURIComponent(userText)}&projectId=${projectId}&specId=${projectSpecId}`;
+  const eventSourceUrl = `'https://i13a601.p.ssafy.io/api/chat/stream?userId=1&message=${encodeURIComponent(userText)}&projectId=${projectId}&specId=${projectSpecId}`;
   console.log('SSE 연결 URL:', eventSourceUrl);
   
   // 서버 상태 확인 (비동기로 실행하되 SSE 연결은 바로 시작)

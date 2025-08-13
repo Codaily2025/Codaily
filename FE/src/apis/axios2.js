@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../stores/authStore';
 
-const BASE_URL = 'http://localhost:8080';  // 프로토콜·포트 확인
+const BASE_URL = 'https://i13a601.p.ssafy.io/api/';  // 프로토콜·포트 확인
 
 // 1) 인증이 필요 없는 기본 인스턴스
 export const defaultInstance = axios.create({

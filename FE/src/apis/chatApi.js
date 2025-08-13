@@ -63,7 +63,7 @@ async function checkServerStatus() {
   try {
     const userId = '1';
     const res = await fetch(
-      `http://localhost:8081/api/chat/stream?userId=${userId}&message=test&projectId=1&specId=1`,
+      `'https://i13a601.p.ssafy.io/api/chat/stream?userId=${userId}&message=test&projectId=1&specId=1`,
       { method: 'HEAD' }
     );
     console.log('서버 상태 확인:', res.status, res.headers.get('content-type'));
@@ -90,7 +90,7 @@ export const streamChatResponse = ({
   onClose,
 }) => {
   const eventSourceUrl =
-    `http://localhost:8081/api/chat/stream` +
+    `https://i13a601.p.ssafy.io/api/chat/stream` +
     `?userId=1` +
     `&message=${encodeURIComponent(userText)}` +
     `&projectId=${encodeURIComponent(projectId)}` +

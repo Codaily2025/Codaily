@@ -161,7 +161,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     const token = localStorage.getItem('authToken') || '';
     console.log('유저의 jwt token: ', token);
 
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=http://localhost:8081/oauth/github/callback`;
+    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=https://i13a601.p.ssafy.io/api/oauth/github/callback`;
     console.log('githubAuthUrl: ', githubAuthUrl);
 
     // GitHub OAuth 페이지로 리다이렉트
