@@ -85,6 +85,7 @@ export const linkGithubRepository = async (projectId, repoName) => {
 export const createGithubRepository = async (projectId, repoName) => {
     try {
         const url = `repo/create?projectId=${projectId}&repoName=${repoName}`
+        console.log('새로운 레포지토리 연동 api url: ', url) //  작성자 : 오서로
         const response = await githubInstance.post(url)
         console.log('새로운 레포지토리 생성 완료: ', response.data)
         return response.data
