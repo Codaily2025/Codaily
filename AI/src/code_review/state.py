@@ -71,3 +71,4 @@ class CodeReviewState(TypedDict, total=False):
     review_summary: Optional[str]
     review_summaries: Dict[str, str]
     code_review_items: List[Dict[str, Any]]
+    code_review_items_java: List[Dict[str, Any]]

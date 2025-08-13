@@ -80,51 +80,51 @@ async def run_feature_inference(state: CodeReviewState) -> CodeReviewState:
 
 
 # checklist 요청
-# async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
-#     project_id = state["project_id"]
-#     feature_name = state["feature_name"]
+async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
+    project_id = state["project_id"]
+    feature_name = state["feature_name"]
 
-#     print(f"\n📡 checklist 요청: project_id={project_id}, feature_name={feature_name}")
-#     url = f"http://localhost:8081/api/code-review/project/{project_id}/feature/checklist"
+    print(f"\n📡 checklist 요청: project_id={project_id}, feature_name={feature_name}")
+    url = f"http://localhost:8081/api/code-review/project/{project_id}/feature/checklist"
 
-#     params = {"featureName": feature_name}
-#     async with httpx.AsyncClient() as client:
-#         response = await client.get(url, params=params)
+    params = {"featureName": feature_name}
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, params=params)
 
-#     if response.status_code != 200:
-#         raise RuntimeError(f"Checklist 조회 실패: {response.status_code} / {response.text}")
+    if response.status_code != 200:
+        raise RuntimeError(f"Checklist 조회 실패: {response.status_code} / {response.text}")
 
-#     data = response.json()
+    data = response.json()
 
-#     # 새 포맷 (snake_case) + 구 포맷 (camelCase) 모두 허용
-#     if isinstance(data, dict):
-#         feature_id = data.get("feature_id") or data.get("feature_id")
-#         items = data.get("checklist_items") or data.get("checklist_items") or []
-#         # 항목 정규화
-#         norm_items = []
-#         for it in items:
-#             if not isinstance(it, dict):
-#                 continue
-#             norm_items.append({
-#                 "item": it.get("item"),
-#                 "done": bool(it.get("done")),
-#             })
+    # 새 포맷 (snake_case) + 구 포맷 (camelCase) 모두 허용
+    if isinstance(data, dict):
+        feature_id = data.get("feature_id") or data.get("feature_id")
+        items = data.get("checklist_items") or data.get("checklist_items") or []
+        # 항목 정규화
+        norm_items = []
+        for it in items:
+            if not isinstance(it, dict):
+                continue
+            norm_items.append({
+                "item": it.get("item"),
+                "done": bool(it.get("done")),
+            })
 
-#         state["feature_id"] = feature_id   # ★ 중요
-#         state["checklist"] = norm_items
-#         print(f"checklist 수신 완료: feature_id={feature_id}, 항목수={len(norm_items)}")
+        state["feature_id"] = feature_id   # ★ 중요
+        state["checklist"] = norm_items
+        print(f"checklist 수신 완료: feature_id={feature_id}, 항목수={len(norm_items)}")
 
-#     elif isinstance(data, list):
-#         # 완전 구포맷: 리스트만 오는 경우
-#         state["checklist"] = data
-#         print(f"구 포맷 감지(리스트만): 항목수={len(data)}")
+    elif isinstance(data, list):
+        # 완전 구포맷: 리스트만 오는 경우
+        state["checklist"] = data
+        print(f"구 포맷 감지(리스트만): 항목수={len(data)}")
 
-#     else:
-#         print(f"알 수 없는 checklist 응답 형식: {type(data)} {data}")
-#         state["checklist"] = []
-#     print(f"[NODE:run_checklist_fetch] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
+    else:
+        print(f"알 수 없는 checklist 응답 형식: {type(data)} {data}")
+        state["checklist"] = []
+    print(f"[NODE:run_checklist_fetch] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
 
-#     return state
+    return state
 
 
 # # 체크리스트 기반 구현 여부 확인
@@ -242,12 +242,15 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
         print(f" checklist_evaluation 파싱 실패: {e}")
         parsed = {"implemented": False, "checklist_evaluation": {}, "extra_implemented": [], "checklist_file_map": {}}
 
+    after_check_undone_items  = [it.get("item") for it in checklist if not it.get("done", False)]
+    implemented_now = len(after_check_undone_items) == 0
+
     # 5) 최종 구현 여부 판단
     implemented_final = bool(
         force_done_req or
         force_done_msg or
         all_done or
-        parsed.get("implemented", False)
+        implemented_now
     )
 
     state["force_done"] = bool(force_done_req or force_done_msg)
@@ -529,9 +532,8 @@ def normalize_summary_text_to_map(text: str) -> Dict[str, str]:
 
 
 # 코드리뷰아이템 가져오기
-async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
+async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
     project_id = state["project_id"]
-    feature_id = state["feature_id"]
     feature_name = state["feature_name"]
 
     print(f"\n 코드리뷰아이템 요청: project_id={project_id}, feature_name={feature_name}")
@@ -545,7 +547,7 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
         raise RuntimeError(f"코드리뷰아이템 조회 실패: {response.status_code} / {response.text}")
     
     data = response.json()
-    
+
      # 1) 원본 그대로 저장
     state["code_review_items_grouped"] = data
 
@@ -564,15 +566,20 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
                 "message": item.get("message"),
             })
 
-    state["code_review_items"] = flat_items
+    state["code_review_items_java"] = flat_items
 
-    print(f"📦 기존 코드리뷰아이템 {len(flat_items)}개 수집 완료.")
+    print(f"기존 코드리뷰아이템 {len(flat_items)}개 수집 완료.")
 
     return state
 
 # 코드리뷰 요약
 async def run_code_review_summary(state: CodeReviewState) -> CodeReviewState:
-    categorized_reviews = build_categorized_reviews(state.get("code_review_items", []))
+    items = state.get("code_review_items", []) + state.get("code_review_items_java", [])
+
+    # set은 순서가 깨지니까, dict.fromkeys로 순서 유지 중복 제거
+    items = list({tuple(sorted(d.items())): d for d in items}.values())
+    
+    categorized_reviews = build_categorized_reviews(items)
     prompt_input = {
         "feature_name": state["feature_name"],
         "categorized_reviews": categorized_reviews,

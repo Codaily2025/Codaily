@@ -135,6 +135,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                     CodeReviewItem entity = CodeReviewItem.builder()
                             .featureItem(featureItem)
                             .featureItemChecklist(fic)
+                            .category(review.getCategory())
                             .filePath(item.getFilePath())
                             .lineRange(item.getLineRange())
                             .severity(item.getSeverity())

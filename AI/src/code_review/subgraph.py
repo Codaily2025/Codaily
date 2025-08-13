@@ -6,10 +6,12 @@ from .graph.nodes import (
     apply_checklist_evaluation,
     run_feature_code_review,
     run_code_review_file_fetch,
+    run_code_review_item_fetch,
     run_code_review_summary,
 )
 
 def create_feature_graph():
+    
     builder = StateGraph(CodeReviewState)
 
     # ── 노드 등록 ─────────────────────────────────────────────
@@ -18,6 +20,7 @@ def create_feature_graph():
     builder.add_node("apply_checklist_evaluation", apply_checklist_evaluation)
     builder.add_node("run_code_review_file_fetch", run_code_review_file_fetch)
     builder.add_node("run_feature_code_review", run_feature_code_review)
+    builder.add_node("run_code_review_item_fetch", run_code_review_item_fetch)
     builder.add_node("run_code_review_summary", run_code_review_summary)
 
     # ── 시작 노드 ─────────────────────────────────────────────
@@ -52,11 +55,12 @@ def create_feature_graph():
         "run_feature_code_review",
         should_run_code_review_summary,
         {
-            True: "run_code_review_summary",
+            True: "run_code_review_item_fetch",
             False: END,
         },
     )
 
+    builder.add_edge("run_code_review_item_fetch", "run_code_review_summary")
     # ── 종료 지점 ──────────────────────────────────────────────
     builder.set_finish_point("run_code_review_summary")
 

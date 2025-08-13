@@ -181,7 +181,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .retrieve()
                 .toBodilessEntity()
                 .doOnSuccess(res -> log.info("✅ Python 서버로 diffFiles 전송 성공"))
-                .doOnError(error -> log.error("❌ 전송 실패", error))
+                .doOnError(error -> log.error("전송 실패", error))
                 .subscribe(); // ✅ 비동기 실행 (subscribe 없으면 실행 안됨)
     }
 
@@ -311,17 +311,17 @@ public class WebhookServiceImpl implements WebhookService {
                 .commitInfoDto(CommitInfoDto.builder().repoName("codailyTest").repoOwner("codailyTest").build())
                 .build();
 
-        log.info("📤 Sending to Python: {}", requestDto);
+        log.info(" Sending to Python: {}", requestDto);
 
         webClient.post()
-                .uri("/api/code-review/feature-inference")
+                .uri("/ai/api/code-review/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()
                 .bodyToMono(Void.class)
 //                .toBodilessEntity()
-                .doOnSuccess(res -> log.info("✅ Python 서버로 diffFiles 전송 성공"))
-                .doOnError(error -> log.error("❌ 전송 실패", error))
+                .doOnSuccess(res -> log.info("Python 서버로 diffFiles 전송 성공"))
+                .doOnError(error -> log.error("전송 실패", error))
                 .subscribe(); // ✅ 비동기 실행 (subscribe 없으면 실행 안됨)
     }
 
