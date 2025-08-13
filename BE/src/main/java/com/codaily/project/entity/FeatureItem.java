@@ -1,5 +1,7 @@
 package com.codaily.project.entity;
 
+import com.codaily.codereview.entity.CodeCommit;
+import com.codaily.codereview.entity.CodeReview;
 import com.codaily.management.entity.FeatureItemSchedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -56,6 +58,12 @@ public class FeatureItem {
     @JsonIgnore
     private Project project;
     private LocalDateTime completedAt;
+
+    @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CodeReview> codeReviews;
+
+    @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CodeCommit> codeCommits;
 
     @JsonProperty("projectId")
     public Long getProjectId(){

@@ -73,47 +73,78 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Project createProject(ProjectCreateRequest request, User user) {
-        Specification spec = specificationRepository.save(
-                Specification.builder()
-                        .title("자동 생성 중")
-                        .content("")
-                        .format("json")
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .build()
-        );
+        if (request.getAvailableDates() == null) {
+            throw new IllegalArgumentException("작업 가능한 날짜 정보가 없습니다.");
+        }
 
-        Project project = Project.builder()
-                .user(user)
-                .title("프로젝트 생성 중")
-                .description("프로젝트 생성 중입니다.")
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .status(Project.ProjectStatus.TODO)
-                .specification(spec)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        if (request.getAvailableDates().isEmpty()) {
+            throw new IllegalArgumentException("최소 하나 이상의 작업 가능한 날짜를 선택해주세요.");
+        }
 
-        Project savedProject = projectRepository.save(project);
+        if (request.getWorkingHours() == null) {
+            throw new IllegalArgumentException("요일별 작업 시간 정보가 없습니다.");
+        }
 
-        List<Schedule> schedules = request.getAvailableDates().stream()
-                .map(date -> Schedule.builder()
-                        .project(savedProject)
-                        .scheduledDate(date)
-                        .build())
-                .toList();
-        scheduleRepository.saveAll(schedules);
+        if (request.getWorkingHours().isEmpty()) {
+            throw new IllegalArgumentException("최소 하나 이상의 요일별 작업 시간을 설정해주세요.");
+        }
 
-        List<DaysOfWeek> days = request.getWorkingHours().entrySet().stream()
-                .map(entry -> DaysOfWeek.builder()
-                        .project(savedProject)
-                        .dateName(entry.getKey())
-                        .hours(entry.getValue())
-                        .build())
-                .toList();
-        daysOfWeekRepository.saveAll(days);
-        return project;
+        boolean hasValidWorkingHours = request.getWorkingHours().values().stream()
+                .anyMatch(hours -> hours != null && hours > 0);
+
+        if (!hasValidWorkingHours) {
+            throw new IllegalArgumentException("최소 하나 이상의 요일에는 작업 시간이 설정되어야 합니다.");
+        }
+
+        try {
+            Specification spec = specificationRepository.save(
+                    Specification.builder()
+                            .title("자동 생성 중")
+                            .content("")
+                            .format("json")
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build()
+            );
+
+            Project project = Project.builder()
+                    .user(user)
+                    .title("프로젝트 생성 중")
+                    .description("프로젝트 생성 중입니다.")
+                    .startDate(request.getStartDate())
+                    .endDate(request.getEndDate())
+                    .status(Project.ProjectStatus.TODO)
+                    .specification(spec)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            Project savedProject = projectRepository.save(project);
+
+            List<Schedule> schedules = request.getAvailableDates().stream()
+                    .map(date -> Schedule.builder()
+                            .project(savedProject)
+                            .scheduledDate(date)
+                            .build())
+                    .toList();
+
+            scheduleRepository.saveAll(schedules);
+
+            List<DaysOfWeek> days = request.getWorkingHours().entrySet().stream()
+                    .map(entry -> DaysOfWeek.builder()
+                            .project(savedProject)
+                            .dateName(entry.getKey())
+                            .hours(entry.getValue())
+                            .build())
+                    .toList();
+
+            daysOfWeekRepository.saveAll(days);
+
+            return savedProject;
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException("프로젝트 생성 중 데이터베이스 오류가 발생했습니다.", e);
+        }
     }
 
     @Override

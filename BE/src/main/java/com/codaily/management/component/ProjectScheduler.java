@@ -25,8 +25,8 @@ public class ProjectScheduler {
     private final ProjectRepository projectRepository;
     private final BatchProcessLogRepository batchLogRepository;
 
-    @Scheduled(cron = "0 */10 0-5 * * *") // 매일 00:00-05:00, 10분마다
-    public void smartDistributedBatchUpdate() {
+    @Scheduled(cron = "0 */10 0-5 * * *")
+    public void DistributedBatchUpdate() {
         LocalDate today = LocalDate.now();
 
         try {
@@ -43,7 +43,7 @@ public class ProjectScheduler {
             log.info("남은 처리 대상: {}개 (완료: {}개)", unprocessedProjects.size(), completedProjects.size());
 
             if (unprocessedProjects.isEmpty()) {
-                log.info("✅ 모든 프로젝트 처리 완료!");
+                log.info("모든 프로젝트 처리 완료!");
                 return;
             }
 
