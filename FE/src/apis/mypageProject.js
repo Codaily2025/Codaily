@@ -218,9 +218,10 @@ export const fetchProjectsByUserId = async () => {
  * @param {object} params - 필요한 파라미터 객체
  * @param {number} params.projectId - 프로젝트 ID
  * @param {object} params.projectData - 프론트엔드 폼 데이터
+ * @param {Array} params.existingSchedules - 기존 DB의 schedules 데이터 (선택적)
  * @returns {Promise<object>} - 수정된 프로젝트 데이터
  */
-export const updateProjectAPI = async ({ projectId, projectData }) => {
+export const updateProjectAPI = async ({ projectId, projectData, existingSchedules = null }) => {
   // console.log('Updating project via API...', { projectId, projectData });
 
   // timeByDay 객체를 안전하게 처리
@@ -244,12 +245,14 @@ export const updateProjectAPI = async ({ projectId, projectData }) => {
       };
     }),
     
-    // scheduledDates 배열 생성
-    scheduledDates: generateScheduledDates(
-      projectData.startDate.replace(/\./g, '-'),
-      projectData.endDate.replace(/\./g, '-'),
-      safeTimeByDay
-    ),
+    // 기존 schedules 데이터가 있으면 사용하고, 없으면 새로 생성
+    scheduledDates: existingSchedules ? 
+      existingSchedules.map(schedule => schedule.scheduledDate) :
+      generateScheduledDates(
+        projectData.startDate.replace(/\./g, '-'),
+        projectData.endDate.replace(/\./g, '-'),
+        safeTimeByDay
+      ),
   };
   
   try {

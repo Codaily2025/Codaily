@@ -1,6 +1,6 @@
 // src/queries/usegitHub.js
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGithubId, disconnectGithub, linkGithubRepository, createGithubRepository } from '../apis/gitHub';
+import { fetchGithubId, disconnectGithub, linkGithubRepository, createGithubRepository, fetchGithubRepositories } from '../apis/gitHub';
 import { syncGithubTechStack } from '../apis/profile';
 
 // 깃허브 아이디 조회 커스텀 훅
@@ -41,6 +41,7 @@ export const useDisconnectGithubMutation = () => {
     });
 };
 
+// 깃허브 기술스택 동기화 뮤테이션
 export function useGithubTechStackSyncMutation() {
     const queryClient = useQueryClient();
 
@@ -61,15 +62,16 @@ export function useGithubTechStackSyncMutation() {
 // 작성자: yeongenn
 // 기존 레포지토리 연동 mutation
 export const useLinkGithubRepoMutation = (onSuccessCallback) => {
-    // const queryClient = useQueryClient()
+    const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: ({ projectId, repoName }) => linkGithubRepository(projectId, repoName),
         onSuccess: (data, variables) => {
             console.log('useLinkGithubRepoMutation 실행: ', variables)
+            // 레포지토리 목록 캐시 무효화
+            queryClient.invalidateQueries({ queryKey: ['githubRepositories'] });
             if (onSuccessCallback) {
-                // console.log(onSuccessCallback)
-                onSuccessCallback(variables.projectId)
+                onSuccessCallback(variables.repoName)
             }
         },
         onError: (error) => {
@@ -97,3 +99,33 @@ export const useCreateGithubRepoMutation = (onSuccessCallback) => {
         }
     })
 }
+
+// GitHub 레포지토리 목록 조회 쿼리
+export const useGithubRepositoriesQuery = () => {
+    return useQuery({
+        queryKey: ['githubRepositories'],
+        queryFn: fetchGithubRepositories,
+        staleTime: 5 * 60 * 1000, // 5분
+        cacheTime: 10 * 60 * 1000, // 10분
+    });
+};
+
+// 새로운 레포지토리 생성 뮤테이션 (프로젝트 설정 모달용)
+export const useCreateNewGithubRepoMutation = (onSuccessCallback) => {
+    const queryClient = useQueryClient();
+    
+    return useMutation({
+        mutationFn: ({ projectId, repoName }) => createGithubRepository(projectId, repoName),
+        onSuccess: (data, variables) => {
+            console.log('새로운 GitHub 레포지토리 생성 성공: ', variables);
+            // 레포지토리 목록 캐시 무효화
+            queryClient.invalidateQueries({ queryKey: ['githubRepositories'] });
+            if (onSuccessCallback) {
+                onSuccessCallback(variables.repoName);
+            }
+        },
+        onError: (error) => {
+            console.error('새로운 GitHub 레포지토리 생성 실패: ', error);
+        }
+    });
+};

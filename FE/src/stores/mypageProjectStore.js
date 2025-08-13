@@ -99,7 +99,7 @@ export const useProjectStore = create((set, get) => ({
       timeByDay: convertDaysOfWeeksToTimeByDay(apiResponse.daysOfWeeks),
       // repositories 정보
       repositories: apiResponse.repositories || [],
-      // 작업 가능한 날짜
+      // 작업 가능한 날짜 (기존 DB 데이터 그대로 사용)
       schedules: apiResponse.schedules || []
     };
 
