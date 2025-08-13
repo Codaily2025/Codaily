@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -18,7 +19,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"project", "specification", "parentFeature", "childFeatures"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class FeatureItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
