@@ -3,6 +3,7 @@ package com.codaily.codereview.entity;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.scheduling.config.Task;
@@ -26,6 +27,7 @@ public class CodeReview {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feature_id")
+    @JsonIgnore
     private FeatureItem featureItem;
 
     @ManyToOne(fetch = FetchType.LAZY)

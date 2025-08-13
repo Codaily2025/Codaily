@@ -60,9 +60,11 @@ public class FeatureItem {
     private LocalDateTime completedAt;
 
     @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<CodeReview> codeReviews;
 
     @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<CodeCommit> codeCommits;
 
     @JsonProperty("projectId")

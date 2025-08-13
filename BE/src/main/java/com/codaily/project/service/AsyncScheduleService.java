@@ -6,6 +6,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.codaily.project.entity.FeatureItem;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j

@@ -11,6 +11,7 @@ import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.entity.Specification;
 import com.codaily.project.repository.*;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,8 @@ public class ProjectServiceImpl implements ProjectService {
     private final SpecificationRepository specificationRepository;
     private final FeatureItemRepository featureItemRepository;
     private final AsyncScheduleService asyncScheduleService;
+
+    private final EntityManager entityManager;
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();
@@ -242,6 +245,7 @@ public class ProjectServiceImpl implements ProjectService {
             updateDaysOfWeek(project, request.getDaysOfWeek());
         }
         if (scheduleChanged || daysOfWeekChanged || dateChanged) {
+            entityManager.flush();
             asyncScheduleService.rescheduleProjectAsync(projectId);
         }
     }
@@ -295,8 +299,6 @@ public class ProjectServiceImpl implements ProjectService {
 
         try {
             scheduleRepository.deleteByProject(project);
-            scheduleRepository.flush();
-
             // 새로운 스케줄 생성
             List<Schedule> newSchedules = scheduledDates.stream()
                     .map(date -> Schedule.builder()

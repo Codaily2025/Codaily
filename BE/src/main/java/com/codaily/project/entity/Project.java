@@ -37,6 +37,7 @@ public class Project {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "spec_id")
+    @JsonIgnore
     private Specification specification;
 
     @Column(nullable = false, length = 100)
