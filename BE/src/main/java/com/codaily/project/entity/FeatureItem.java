@@ -81,6 +81,7 @@ public class FeatureItem {
     private FeatureItem parentFeature;
 
     @OneToMany(mappedBy = "parentFeature", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("priorityLevel ASC, estimatedTime ASC, featureId ASC")
     @JsonIgnore
     private List<FeatureItem> childFeatures = new ArrayList<>();
 

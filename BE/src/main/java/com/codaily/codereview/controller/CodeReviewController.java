@@ -240,16 +240,17 @@ public class CodeReviewController {
         return ResponseEntity.ok(codeReviewService.getCodeReviewsAllSummary(projectId));
     }
 
-//    @GetMapping("/user")
-//    public ResponseEntity<List<CodeReviewAllResponseDto>> getUserAllCodeReviews(@AuthenticationPrincipal PrincipalDetails userDetails) {
-//        return ResponseEntity.ok(codeReviewService.getCodeReviewsAllSummary(userDetails.getUserId()));
-//    }
-
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "사용자의 모든 프로젝트 코드리뷰 조회", description = "userId 기준 기능별 전체 코드리뷰 조회 가능합니다 \n 현재는 로그인한 유저의 프로젝트를 조회할 수 없어 userId 값을 넣어주어야 합니다")
-    public ResponseEntity<List<CodeReviewUserAllResponseDto>> getUserAllCodeReviews(@PathVariable Long userId) {
-        return ResponseEntity.ok(codeReviewService.getUserAllCodeReviews(userId));
+    @GetMapping("/user")
+    @Operation(summary = "사용자의 모든 프로젝트 코드리뷰 전체 조회", description = "로그인한 사용자 기준 전체 코드리뷰 조회 가능합니다")
+    public ResponseEntity<List<CodeReviewUserAllResponseDto>> getUserAllCodeReviews(@AuthenticationPrincipal PrincipalDetails userDetails) {
+        return ResponseEntity.ok(codeReviewService.getUserAllCodeReviews(userDetails.getUserId()));
     }
+
+//    @GetMapping("/user/{userId}")
+//    @Operation(summary = "사용자의 모든 프로젝트 코드리뷰 조회", description = "userId 기준 기능별 전체 코드리뷰 조회 가능합니다 \n 현재는 로그인한 유저의 프로젝트를 조회할 수 없어 userId 값을 넣어주어야 합니다")
+//    public ResponseEntity<List<CodeReviewUserAllResponseDto>> getUserAllCodeReviews(@PathVariable Long userId) {
+//        return ResponseEntity.ok(codeReviewService.getUserAllCodeReviews(userId));
+//    }
 }
 
 

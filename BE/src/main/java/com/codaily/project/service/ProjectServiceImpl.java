@@ -5,10 +5,7 @@ import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.management.entity.Schedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.mypage.dto.ProjectUpdateRequest;
-import com.codaily.project.dto.FeatureItemReduceItem;
-import com.codaily.project.dto.FeatureItemReduceResponse;
-import com.codaily.project.dto.ProjectCreateRequest;
-import com.codaily.project.dto.ProjectRepositoryResponse;
+import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
@@ -316,7 +313,6 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
 
-
     private boolean isDateChanged(Project project, ProjectUpdateRequest request) {
         boolean startDateChanged = false;
         boolean endDateChanged = false;
@@ -409,5 +405,67 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public boolean isProjectOwner(Long userId, Long projectId) {
         return projectRepository.existsByProjectIdAndUser_UserId(projectId, userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProjectSpecOverviewResponse getProjectSpecOverview(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다. projectId=" + projectId));
+
+        Long specId = project.getSpecification() != null ? project.getSpecification().getSpecId() : null;
+        String specTitle = project.getSpecification() != null ? project.getSpecification().getTitle() : null;
+
+        ProjectSummaryContent summary = ProjectSummaryContent.builder()
+                .projectId(project.getProjectId())
+                .projectTitle(project.getTitle())
+                .projectDescription(project.getDescription())
+                .specId(specId)
+                .specTitle(specTitle)
+                .build();
+
+        if (specId == null) {
+            return ProjectSpecOverviewResponse.builder()
+                    .project(summary)
+                    .features(Collections.emptyList())
+                    .build();
+        }
+
+        List<FeatureSaveContent> features =
+                featureItemRepository.findMainWithChildrenBySpecId(specId)
+                        .stream()
+                        .map(main -> FeatureSaveContent.builder()
+                                .projectId(project.getProjectId())
+                                .specId(specId)
+                                .field(main.getField())
+                                .isReduced(main.getIsReduced())
+                                .mainFeature(FeatureSaveItem.builder()
+                                        .id(main.getFeatureId())
+                                        .title(main.getTitle())
+                                        .description(main.getDescription())
+                                        .priorityLevel(main.getPriorityLevel())
+                                        .estimatedTime(main.getEstimatedTime())
+                                        .isReduced(main.getIsReduced())
+                                        .build())
+                                .subFeature(
+                                        (main.getChildFeatures() == null ? Collections.<FeatureItem>emptyList() : main.getChildFeatures())
+                                                .stream()
+                                                .map(sub -> FeatureSaveItem.builder()
+                                                        .id(sub.getFeatureId())
+                                                        .title(sub.getTitle())
+                                                        .description(sub.getDescription())
+                                                        .priorityLevel(sub.getPriorityLevel())
+                                                        .estimatedTime(sub.getEstimatedTime())
+                                                        .isReduced(sub.getIsReduced())
+                                                        .build())
+                                                .toList()
+                                )
+                                .build())
+                        .toList();
+
+        return ProjectSpecOverviewResponse.builder()
+                .project(summary)
+                .features(features)
+                .build();
     }
 }

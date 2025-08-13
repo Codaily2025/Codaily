@@ -11,7 +11,7 @@ import { useGetProfileImageQuery } from '../../queries/useProfile';
 import useModalStore from '../../store/modalStore';
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 import { useGithubIdQuery, useGithubTechStackSyncMutation } from '../../queries/useGitHub';
-import {User} from 'lucide-react';
+import { User } from 'lucide-react';
 
 const Mypage = () => {
   const { isOpen, modalType, openModal, closeModal } = useModalStore()

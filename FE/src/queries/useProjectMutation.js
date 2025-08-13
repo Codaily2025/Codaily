@@ -1,7 +1,8 @@
 // src/queries/useProjectMutation.js
 // 프로젝트 설정 수정 위해 생성
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateProjectAPI, deleteProjectAPI } from '../apis/mypageProject';
+import { updateProjectAPI, deleteProjectAPI, getProjectDetailAPI } from '../apis/mypageProject';
+import { useProjectStore } from '../stores/mypageProjectStore';
 
 // 프로젝트 업데이트 뮤테이션
 export const useUpdateProjectMutation = () => {
@@ -13,7 +14,7 @@ export const useUpdateProjectMutation = () => {
     
     // onSuccess: mutation이 성공했을 때 실행할 콜백
     onSuccess: () => {
-      console.log('Mutation successful, invalidating projects query...');
+      // console.log('뮤테이션 성공, 프로젝트 목록 쿼리 무효화...');
       // 프로젝트 목록 쿼리를 무효화하여 최신 데이터를 다시 가져오도록 합니다.
       // ['projects']는 useProjectsQuery에서 사용한 queryKey와 일치해야 합니다.
       queryClient.invalidateQueries({ queryKey: ['projects'] });
@@ -48,6 +49,25 @@ export const useDeleteProjectMutation = () => {
     onError: (error) => {
       console.error('Delete mutation failed:', error);
       // 여기에 사용자에게 에러를 알리는 로직을 추가할 수 있습니다. (e.g., toast 알림)
+    },
+  });
+};
+
+// 프로젝트 상세 조회 뮤테이션
+export const useGetProjectDetailMutation = () => {
+  const queryClient = useQueryClient();
+  const { setProjectDetail } = useProjectStore();
+  
+  return useMutation({
+    mutationFn: getProjectDetailAPI,
+    onSuccess: (data) => {
+      console.log('프로젝트 상세 정보 조회 성공, 프로젝트 상세 조회 쿼리 무효화...');
+      // 스토어에 상세 정보 저장
+      setProjectDetail(data);
+      queryClient.invalidateQueries({ queryKey: ['projects', 'detail'] });
+    },
+    onError: (error) => {
+      console.error('프로젝트 상세 정보 조회 실패:', error);
     },
   });
 };
