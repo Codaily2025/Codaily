@@ -237,10 +237,10 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     }
 
     // 이메일 인증 여부 확인
-    if (!isEmailVerified) {
-      setFormError('email', '이메일 인증이 필요합니다');
-      return; // 저장 안 하고 리턴
-    }
+    // if (!isEmailVerified) {
+    //   setFormError('email', '이메일 인증이 필요합니다');
+    //   return; // 저장 안 하고 리턴
+    // }
 
     // 닉네임이 변경되었는지 확인
     if (editFormData.nickname !== profileData?.nickname) {
@@ -358,7 +358,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
           </div>
 
           {/* 이메일 */}
-          <div className={styles.formGroup}>
+          {/* <div className={styles.formGroup}>
             <label className={styles.formLabel}>이메일*</label>
             <div className={styles.inputGroup}>
               <div className={styles.inputWrapper}>
@@ -391,7 +391,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 <p>{formErrors.email}</p>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* 깃허브 연동 */}
           <div className={styles.formGroup}>
