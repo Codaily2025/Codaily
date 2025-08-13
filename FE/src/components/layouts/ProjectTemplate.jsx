@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import Calendar from '../organisms/Calendar'
+import ProjectCalendar from '../organisms/ProjectCalendar'
 import TaskCard from '@/components/molecules/TaskCard'
 import KanbanBoard from '@/components/organisms/KanbanBoard'
 import Sidebar from '@/components/organisms/Sidebar'
@@ -80,7 +80,7 @@ const ProjectTemplate = ({ currentProject, projects = [] }) => {
           minHeight: '400px'
         }}>
           {/* 달력 렌더링 */}
-          <Calendar />
+          <ProjectCalendar />
         </div>
 
         {/* 두 번째 영역 - 오늘 할 일 */}

@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { getUserSchedule } from '../apis/scheduleApi'
+import { getUserSchedule, getProjectSchedule } from '../apis/scheduleApi'
 
 // query keys
 export const SCHEDULE_QUERY_KEYS = {
     all: ['schedules'],
     monthly: () => [...SCHEDULE_QUERY_KEYS.all, 'monthly'],
     byMonth: (year, month) => [...SCHEDULE_QUERY_KEYS.monthly(), { year, month }],
+    project: () => [...SCHEDULE_QUERY_KEYS.all, 'project'],
+    projectByMonth: (projectId, year, month) => [...SCHEDULE_QUERY_KEYS.project(), { projectId, year, month }],
 }
 
 // staleTime 설정
@@ -43,6 +45,22 @@ export const useUserScheduleByMonth = (year, month) => {
         refetchOnWindowFocus: false,
         onError: (error) => {
             console.error('useUserScheduleByMonth Error:', error)
+        }
+    })
+}
+
+// 특정 프로젝트 일정 조회 (월별)
+export const useProjectScheduleByMonth = (projectId, year, month) => {
+    return useQuery({
+        queryKey: SCHEDULE_QUERY_KEYS.projectByMonth(projectId, year, month),
+        queryFn: () => getProjectSchedule({ projectId, year, month }),
+        enabled: !!projectId,       // projectId가 없을 때 쿼리 방지
+        staleTime: STALE_TIME,
+        cacheTime: STALE_TIME * 2, // 2시간 캐시
+        retry: 2,
+        refetchOnWindowFocus: false,
+        onError: (error) => {
+            console.error('useProjectScheduleByMonth Error:', error)
         }
     })
 }

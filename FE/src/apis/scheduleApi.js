@@ -7,16 +7,26 @@ import { defaultInstance, authInstance } from './axios'
 export const getUserSchedule = async ({ year, month }) => {
     try {
         // 실제 서버 연동 시
-        const userId = 3                                                                    // TODO: 로그인한 유저 id로 대체 예정
         const yearMonth = `${year}-${month.padStart(2, '0')}`
         console.log(`yearMonth: `, yearMonth)
-        const response = await authInstance.get(`/calendar`, { params: { yearMonth } })        // JWT 구현 후
-        // const response = await defaultInstance.get(`/users/${userId}/calendar`, { params: { yearMonth } })      // JWT 구현 전
+        const response = await authInstance.get(`/calendar`, { params: { yearMonth } })
         return response.data
 
     } catch (error) {
         console.error('getUserSchedule Error:', error)
         throw new Error(error.response?.data?.message || '사용자 일정 목록을 불러오는데 실패했습니다.')
+    }
+}
+
+// 개별 프로젝트 일정 가져오기
+export const getProjectSchedule = async ({ projectId, year, month }) => {
+    try {
+        const yearMonth = `${year}-${month.padStart(2, '0')}`;
+        const response = await authInstance.get(`/projects/${projectId}/calendar`, { params: { yearMonth } })
+        return response.data
+    } catch (error) {
+        console.error('getProjectSchedule Error:', error)
+        throw new Error(error.response?.data?.message || '프로젝트 일정 목록을 불러오는데 실패했습니다. ID: ', projectId)
     }
 }
 
