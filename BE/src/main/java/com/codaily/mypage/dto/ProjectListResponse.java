@@ -1,5 +1,7 @@
 package com.codaily.mypage.dto;
 
+import com.codaily.management.entity.DaysOfWeek;
+import com.codaily.management.entity.Schedule;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,4 +18,6 @@ public class ProjectListResponse {
     private String status;
     private int progressRate;
     private List<String> techStacks;
+    private List<DaysOfWeekResponse> daysOfWeeks;
+    private List<ScheduleResponse> schedules;
 }

@@ -24,8 +24,11 @@ public class User {
     @Column(nullable = false, length = 20)
     private String socialProvider;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = true, length = 255)
     private String email;
+
+    @Column(length = 255)
+    private String socialId;
 
     @Column(nullable = false, length = 50)
     private String nickname;
@@ -77,8 +80,12 @@ public class User {
         USER, ADMIN
     }
 
+    // 작성자: yeongenn - 최초 로그인인지 판별하는 메서드 (추가 정보 입력이 필요한지 확인)
     @Transient
-    public boolean needsGithubConnection() {
-        return this.githubAccount == null || this.githubAccount.trim().isEmpty();
+    public boolean isFirstLogin() {
+        // githubAccount가 null이거나 비어있는경우 최초 로그인으로 판단
+        boolean hasNoGithubAccount = this.githubAccount == null || this.githubAccount.trim().isEmpty();
+
+        return hasNoGithubAccount;
     }
 }

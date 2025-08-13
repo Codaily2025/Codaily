@@ -5,6 +5,7 @@ import KanbanBoard from '@/components/organisms/KanbanBoard'
 import Sidebar from '@/components/organisms/Sidebar'
 import Badge from '@/components/atoms/Badge'
 import { Menu } from 'lucide-react'
+import styles from './ProjectTemplate.module.css'
 
 const ProjectTemplate = ({ currentProject, projects = [] }) => {
   // 사이드바 
@@ -49,7 +50,7 @@ const ProjectTemplate = ({ currentProject, projects = [] }) => {
   return (
     <div className='project-template'>
       <button
-        className='menu-button'
+        className={styles.menuButton}
         onClick={() => setSidebarOpen(true)}
       >
         <Menu size={20} />
@@ -59,6 +60,7 @@ const ProjectTemplate = ({ currentProject, projects = [] }) => {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         projects={projects}     // TODO: props가 아니라 전역에서 가져오기
+        currentProjectId={currentProject?.projectId}
         isLoading={false}
       />
 

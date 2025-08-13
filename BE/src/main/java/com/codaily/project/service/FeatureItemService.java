@@ -4,8 +4,6 @@ import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
 
 import java.util.List;
-import com.codaily.project.dto.FeatureSaveRequest;
-import com.codaily.project.dto.FeatureSaveResponse;
 
 
 public interface FeatureItemService {
@@ -40,4 +38,14 @@ public interface FeatureItemService {
     void generateFeatureItemChecklist(Long projectId);
 
     boolean generateExtraFeatureItemChecklist(Long featureId);
+
+    ParentFeatureListResponse getParentFeatures(Long projectId);
+
+    Long getSpecIdByFeatureId(Long featureId);
+
+    void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced);
+
+    boolean existsActive(Long specId);
+
+    SpecificationFinalizeResponse finalizeSpecification(Long projectId);
 }

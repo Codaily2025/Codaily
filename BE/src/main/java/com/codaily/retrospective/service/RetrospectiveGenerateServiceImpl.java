@@ -23,8 +23,8 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
     private final RetrospectiveService retrospectiveService;
 
     @Override
-    public CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project) {
-        final LocalDate today = LocalDate.now(ZoneId.of("Asia/Seoul"));
+    public CompletableFuture<RetrospectiveGenerateResponse> generateProjectDailyRetrospective(Project project, RetrospectiveTriggerType type) {
+        LocalDate today = type == RetrospectiveTriggerType.AUTO ? LocalDate.now(ZoneId.of("Asia/Seoul")) : LocalDate.now(ZoneId.of("Asia/Seoul")).minusDays(1);
 
         return Mono.fromCallable(() -> {
                     // 1) 이미 오늘 회고가 있으면 → DTO만 반환(저장 금지)
@@ -36,7 +36,7 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
                     // 2) 신규 생성 필요 → 재료 수집
                     final Long userId = project.getUserId();
                     RetrospectiveGenerateRequest payload =
-                            retrospectiveService.collectRetrospectiveData(project, userId, RetrospectiveTriggerType.AUTO);
+                            retrospectiveService.collectRetrospectiveData(project, userId, type);
 
                     // 3) 재료가 전무하면 생성 스킵
                     boolean noCompleted = payload.getCompletedFeatures() == null || payload.getCompletedFeatures().isEmpty();
@@ -65,15 +65,14 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
                     // 신규 생성: LLM 서버 호출
                     RetrospectiveGenerateRequest payload = (RetrospectiveGenerateRequest) obj;
                     return langchainWebClient.post()
-                            .uri("/api/retrospective/generate")
+                            .uri("ai/api/retrospective/generate")
                             .bodyValue(payload)
                             .retrieve()
                             .bodyToMono(RetrospectiveGenerateResponse.class)
-                            // ★★★ 저장은 오직 "신규 생성 브랜치" 안에서만 수행
                             .publishOn(Schedulers.boundedElastic())
                             .flatMap(resp -> Mono.fromRunnable(() ->
                                             retrospectiveService.saveRetrospective(
-                                                    project, resp, today, RetrospectiveTriggerType.AUTO))
+                                                    project, resp, today, type))
                                     .thenReturn(resp));
                 })
                 .toFuture();

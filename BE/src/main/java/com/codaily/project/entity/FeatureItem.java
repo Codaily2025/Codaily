@@ -1,9 +1,13 @@
 package com.codaily.project.entity;
 
+import com.codaily.codereview.entity.CodeCommit;
+import com.codaily.codereview.entity.CodeReview;
+import com.codaily.management.entity.FeatureItemSchedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -15,7 +19,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"project", "specification", "parentFeature", "childFeatures"})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class FeatureItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +60,14 @@ public class FeatureItem {
     private Project project;
     private LocalDateTime completedAt;
 
+    @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<CodeReview> codeReviews;
+
+    @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<CodeCommit> codeCommits;
+
     @JsonProperty("projectId")
     public Long getProjectId(){
         return project != null ? project.getProjectId() : null;
@@ -72,8 +84,13 @@ public class FeatureItem {
     private FeatureItem parentFeature;
 
     @OneToMany(mappedBy = "parentFeature", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OrderBy("priorityLevel ASC, estimatedTime ASC, featureId ASC")
     @JsonIgnore
     private List<FeatureItem> childFeatures = new ArrayList<>();
+
+    @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<FeatureItemSchedule> schedules = new ArrayList<>();
 
     @Column(name = "remaining_time")
     private Double remainingTime;

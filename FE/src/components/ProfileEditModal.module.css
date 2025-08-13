@@ -169,6 +169,14 @@
     margin-bottom: 0px;
     color: #737373;
   }
+
+  .uploadStatus {
+    margin-top: 0.5rem; /* mt-2 */
+    font-size: 0.875rem; /* text-sm */
+    color: #059669; /* text-green-600 */
+    text-align: center;
+    font-weight: 500;
+  }
   
   /* 폼 스타일 */
   .formGroup {

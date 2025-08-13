@@ -38,6 +38,16 @@ public class MyPageController {
         return ResponseEntity.ok(projects);
     }
 
+    @GetMapping("/projects/{projectId}")
+    @Operation(summary = "프로젝트 상세 조회", description = "프로젝트 제목, 기간, 요일별 작업 가능 시간, 작업 가능 날짜, 연결된 레포지토리를 보여줍니다.")
+    public ResponseEntity<ProjectDetailResponse> getProjectDetail(
+            @AuthenticationPrincipal PrincipalDetails userDetails,
+            @PathVariable Long projectId
+    ){
+        ProjectDetailResponse project = myPageService.getProjectDetail(projectId);
+        return ResponseEntity.ok(project);
+    }
+
     @DeleteMapping("/projects/{projectId}")
     @Operation(summary ="프로젝트 삭제")
     public ResponseEntity<Void> deleteProject(
@@ -138,6 +148,21 @@ public class MyPageController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/profile-image")
+    @Operation(summary = "프로필 사진 조회", description = "현재 로그인한 사용자의 프로필 사진 URL을 조회합니다.")
+    public ResponseEntity<ProfileImageResponse> getProfileImage(
+            @AuthenticationPrincipal PrincipalDetails principalDetails) {
+
+        String imageUrl = myPageService.getProfileImage(
+                principalDetails.getUser().getUserId());
+
+        ProfileImageResponse response = ProfileImageResponse.builder()
+                .imageUrl(imageUrl)
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/profile-image")
     @Operation(summary = "프로필 이미지 삭제")
     public ResponseEntity<Map<String, String>> deleteProfileImage(
@@ -148,6 +173,69 @@ public class MyPageController {
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "프로필 이미지가 삭제되었습니다.");
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/github-account")
+    @Operation(summary = "등록된 깃허브 아이디 조회")
+    public ResponseEntity<GithubAccountResponse> getGithubAccount(
+            @AuthenticationPrincipal PrincipalDetails principalDetails
+    ) {
+        myPageService.getGithubAccount(principalDetails.getUser().getUserId());
+
+        GithubAccountResponse response = GithubAccountResponse.builder()
+                .githubId(principalDetails.getUser().getGithubAccount())
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    // 작성자: yeongenn - 최초 로그인 시 추가 정보 입력 API
+    @PutMapping("/user/additional-info")
+    @Operation(summary = "사용자 추가 정보 업데이트",
+            description = "최초 로그인 후 닉네임, GitHub 계정, 프로필 이미지를 한 번에 업데이트")
+    public ResponseEntity<Map<String, String>> updateAdditionalInfo(
+            @AuthenticationPrincipal PrincipalDetails principalDetails,
+            @RequestParam("nickname") String nickname,
+//            @RequestParam("githubAccount") String githubAccount,
+            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        Long userId = principalDetails.getUser().getUserId();
+
+        try {
+            // 닉네임 업데이트
+            userService.updateUserNickname(userId, nickname);
+
+            // GitHub 계정 업데이트
+//            myPageService.updateGithubAccount(userId, githubAccount);
+
+            // 프로필 이미지 업로드 (있는 경우에만)
+            if (profileImage != null && !profileImage.isEmpty()) {
+                myPageService.uploadProfileImage(userId, profileImage);
+            }
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "추가 정보가 성공적으로 업데이트되었습니다.");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "추가 정보 업데이트 중 오류가 발생했습니다: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    @DeleteMapping("/user")
+    @Operation(summary = "회원 탈퇴")
+    public ResponseEntity<Map<String, String>> deleteUser(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ){
+        userService.deleteUser(userDetails.getUser().getUserId());
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "회원 탈퇴가 완료되었습니다.");
 
         return ResponseEntity.ok(response);
     }

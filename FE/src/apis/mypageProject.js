@@ -53,6 +53,44 @@ const convertKoreanDayToEnglish = (koreanDay) => {
 };
 
 /**
+ * 헬퍼 함수: 영문 요일명을 한글로 변환
+ * @param {string} englishDay - 영문 요일명 (MONDAY, TUESDAY, ...)
+ * @returns {string} - 한글 요일명 (월, 화, 수, 목, 금, 토, 일)
+ */
+const convertEnglishDayToKorean = (englishDay) => {
+  const dayMap = {
+    'MONDAY': '월',
+    'TUESDAY': '화', 
+    'WEDNESDAY': '수',
+    'THURSDAY': '목',
+    'FRIDAY': '금',
+    'SATURDAY': '토',
+    'SUNDAY': '일'
+  };
+  return dayMap[englishDay] || englishDay;
+};
+
+/**
+ * 헬퍼 함수: API 응답의 daysOfWeeks를 프론트엔드 timeByDay 형식으로 변환
+ * @param {Array} daysOfWeeks - API 응답의 daysOfWeeks 배열
+ * @returns {object} - { 월: 8, 화: 0, ... } 형식의 요일별 작업 시간 객체
+ */
+const convertDaysOfWeeksToTimeByDay = (daysOfWeeks) => {
+  const timeByDay = {
+    '월': 0, '화': 0, '수': 0, '목': 0, '금': 0, '토': 0, '일': 0
+  };
+  
+  if (daysOfWeeks && Array.isArray(daysOfWeeks)) {
+    daysOfWeeks.forEach(day => {
+      const koreanDay = convertEnglishDayToKorean(day.dateName);
+      timeByDay[koreanDay] = day.hours || 0;
+    });
+  }
+  
+  return timeByDay;
+};
+
+/**
  * 헬퍼 함수: 시작일, 종료일, 활성화된 요일을 기반으로 실제 작업 날짜 목록을 생성합니다.
  * @param {string} startDate - 'YYYY-MM-DD' 형식의 시작일
  * @param {string} endDate - 'YYYY-MM-DD' 형식의 종료일
@@ -147,12 +185,11 @@ const dummyProjects = [
 
 /**
  * 사용자의 프로젝트 목록을 조회하는 API
- * @param {number} userId - 사용자 ID
  * @returns {Promise<Array>} - 프로젝트 목록
  */
-export const fetchProjectsByUserId = async (userId) => {
+export const fetchProjectsByUserId = async () => {
   try {
-    const response = await authInstance.get(`/users/${userId}`);
+    const response = await authInstance.get(`projects`);
     const projectsFromApi = response.data;
 
     // 백엔드 데이터를 프론트엔드 형식으로 변환
@@ -168,8 +205,8 @@ export const fetchProjectsByUserId = async (userId) => {
 
     return sortProjects(formattedProjects);
   } catch (error) {
-    console.error('Error fetching projects from API:', error);
-    console.log('Using dummy data instead...');
+    console.error('프로젝트 목록 조회 실패:', error);
+    console.log('대신 dummydata 사용...');
     
     // 에러 발생 시 더미 데이터 반환
     return sortProjects(dummyProjects);
@@ -179,13 +216,13 @@ export const fetchProjectsByUserId = async (userId) => {
 /**
  * 프로젝트 정보를 수정하는 API
  * @param {object} params - 필요한 파라미터 객체
- * @param {number} params.userId - 사용자 ID
  * @param {number} params.projectId - 프로젝트 ID
  * @param {object} params.projectData - 프론트엔드 폼 데이터
+ * @param {Array} params.existingSchedules - 기존 DB의 schedules 데이터 (선택적)
  * @returns {Promise<object>} - 수정된 프로젝트 데이터
  */
-export const updateProjectAPI = async ({ userId, projectId, projectData }) => {
-  console.log('Updating project via API...', { userId, projectId, projectData });
+export const updateProjectAPI = async ({ projectId, projectData, existingSchedules = null }) => {
+  // console.log('Updating project via API...', { projectId, projectData });
 
   // timeByDay 객체를 안전하게 처리
   const safeTimeByDay = {};
@@ -208,16 +245,19 @@ export const updateProjectAPI = async ({ userId, projectId, projectData }) => {
       };
     }),
     
-    // scheduledDates 배열 생성
-    scheduledDates: generateScheduledDates(
-      projectData.startDate.replace(/\./g, '-'),
-      projectData.endDate.replace(/\./g, '-'),
-      safeTimeByDay
-    ),
+    // 기존 schedules 데이터가 있으면 사용하고, 없으면 새로 생성
+    scheduledDates: existingSchedules ? 
+      existingSchedules.map(schedule => schedule.scheduledDate) :
+      generateScheduledDates(
+        projectData.startDate.replace(/\./g, '-'),
+        projectData.endDate.replace(/\./g, '-'),
+        safeTimeByDay
+      ),
   };
   
   try {
-    const response = await authInstance.patch(`/users/${userId}/${projectId}`, transformedData, {
+    console.log('수정 요청 데이터:', transformedData)
+    const response = await authInstance.patch(`projects/${projectId}`, transformedData, {
       headers: {
         'Content-Type': 'application/json'
       }
@@ -233,15 +273,14 @@ export const updateProjectAPI = async ({ userId, projectId, projectData }) => {
 
 /**
  * 프로젝트를 삭제하는 API
- * @param {number} userId - 사용자 ID
  * @param {number} projectId - 프로젝트 ID
  * @returns {Promise<void>}
  */
 
-/* http://localhost:8081/{userId}/projects/{projectId} */
-export const deleteProjectAPI = async (userId, projectId) => {
+/* http://localhost:8081/api/projects/{projectId} */
+export const deleteProjectAPI = async (projectId) => {
   try {
-    const response = await authInstance.delete(`/users/${userId}/projects/${projectId}`);
+    const response = await authInstance.delete(`projects/${projectId}`);
     console.log('프로젝트 삭제 성공', response.data);
     return response.data;
   } catch (error) {
@@ -249,3 +288,47 @@ export const deleteProjectAPI = async (userId, projectId) => {
     throw error;
   }
 };
+
+// 프로젝트 상세 조회 GET API
+// /api/projects/{projectId}
+export const getProjectDetailAPI = async (projectId) => {
+  try {
+    const response = await authInstance.get(`projects/${projectId}`);
+    console.log('프로젝트 상세 조회 성공', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('프로젝트 상세 조회 실패:', error);
+    throw error;
+  }
+};
+
+// 응답 예시
+// {
+//   "projectId": 0,
+//   "title": "string",
+//   "description": "string",
+//   "startDate": "2025-08-13",
+//   "endDate": "2025-08-13",
+//   "status": "string",
+//   "daysOfWeeks": [
+//     {
+//       "dayId": 0,
+//       "dateName": "string",
+//       "hours": 0
+//     }
+//   ],
+//   "schedules": [
+//     {
+//       "scheduleId": 0,
+//       "scheduledDate": "2025-08-13"
+//     }
+//   ],
+//   "repositories": [
+//     {
+//       "repoId": 0,
+//       "repoName": "string",
+//       "repoUrl": "string",
+//       "createdAt": "2025-08-13T00:59:09.511Z"
+//     }
+//   ]
+// }

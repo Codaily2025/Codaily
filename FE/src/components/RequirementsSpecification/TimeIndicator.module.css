@@ -2,9 +2,10 @@
 /* 시간 표시 스타일 */
 .timeIndicator {
     /* justify-content: flex-start; */
-    justify-content: flex-start;
+    justify-content: flex-end;
     align-items: center;
     gap: 6px;
+    min-width: 70px;
     display: flex;
   }
   

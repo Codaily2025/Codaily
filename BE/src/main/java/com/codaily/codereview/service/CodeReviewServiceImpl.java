@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -177,34 +176,6 @@ public class CodeReviewServiceImpl implements CodeReviewService {
     }
 
 
-//    @Override
-//    @Transactional
-//    public void updateChecklistEvaluation(Long featureId, Map<String, Boolean> checklistEvaluation,
-//                                          List<String> extraImplemented) {
-//        for(Map.Entry<String, Boolean> entry : checklistEvaluation.entrySet()) {
-//            String item = entry.getKey();
-//            boolean isDone = entry.getValue();
-//            FeatureItemChecklist featureItemChecklist = featureItemChecklistService.findByFeatureItem_FeatureIdAndItem(featureId, item);
-//            featureItemChecklist.updateDone(isDone);
-//        }
-//
-//        // 추가 구현 항목 처리
-//        for(String extra : extraImplemented) {
-//            boolean exists = featureItemChecklistService.existsByFeatureItem_FeatureIdAndItem(featureId, extra);
-//            FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
-//
-//            if(!exists) {
-//                FeatureItemChecklist checklist = FeatureItemChecklist.builder()
-//                        .featureItem(featureItem)
-//                        .item(extra)
-//                        .description(extra)
-//                        .done(true)
-//                        .build();
-//
-//                featureItemChecklistRepository.save(checklist);
-//            }
-//        }
-//    }
 
     @Override
     @Transactional
@@ -418,11 +389,10 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
         // 3) 모든 프로젝트의 기능들 모아서 요약 생성
         return projects.stream()
-                .flatMap(project -> {
-                    List<FeatureItem> features = featureItemRepository.findByProject_ProjectId(project.getProjectId());
-                    return features.stream();
-                })
-                .map(feature -> {
+                .flatMap(project -> featureItemRepository.findByProject_ProjectId(project.getProjectId()).stream())
+                .flatMap(feature ->
+                        codeReviewRepository.findByFeatureItem_FeatureId(feature.getFeatureId()).stream()
+                .map(codeReview -> {
                     Long featureId = feature.getFeatureId();
 
                     // 점수 (리뷰 없을 수도 있으니 NPE/예외 방지)
@@ -430,10 +400,6 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
                     // severity 합산(카테고리 무시, severity만 집계)
                     Map<String, Integer> severityCount = getSeverityCount(featureId);
-
-                    // createdAt
-                    CodeReview codeReview = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
-                            .orElseThrow(null);
 
                     int commitCounts = codeCommitService.findByFeature_FeatureIdOrderByCommittedAtDesc(featureId).size();
 
@@ -449,6 +415,7 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                             .severityCount(severityCount)
                             .build();
                 })
+        )
                 .collect(java.util.stream.Collectors.toList());
     }
 

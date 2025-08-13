@@ -5,16 +5,15 @@ import com.codaily.management.entity.DaysOfWeek;
 import com.codaily.management.entity.Schedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.mypage.dto.ProjectUpdateRequest;
-import com.codaily.project.dto.FeatureItemReduceItem;
-import com.codaily.project.dto.FeatureItemReduceResponse;
-import com.codaily.project.dto.ProjectCreateRequest;
-import com.codaily.project.dto.ProjectRepositoryResponse;
+import com.codaily.project.dto.*;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.entity.Specification;
 import com.codaily.project.repository.*;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +34,9 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepositoriesRepository repository;
     private final SpecificationRepository specificationRepository;
     private final FeatureItemRepository featureItemRepository;
-    private final ScheduleService scheduleService;
+    private final AsyncScheduleService asyncScheduleService;
+
+    private final EntityManager entityManager;
 
     public void saveRepositoryForProject(Long projectId, String repoName, String repoUrl) {
         ProjectRepositories entity = new ProjectRepositories();
@@ -72,47 +73,78 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Project createProject(ProjectCreateRequest request, User user) {
-        Specification spec = specificationRepository.save(
-                Specification.builder()
-                        .title("자동 생성 중")
-                        .content("")
-                        .format("json")
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
-                        .build()
-        );
+        if (request.getAvailableDates() == null) {
+            throw new IllegalArgumentException("작업 가능한 날짜 정보가 없습니다.");
+        }
 
-        Project project = Project.builder()
-                .user(user)
-                .title("프로젝트 생성 중")
-                .description("프로젝트 생성 중입니다.")
-                .startDate(request.getStartDate())
-                .endDate(request.getEndDate())
-                .status(Project.ProjectStatus.TODO)
-                .specification(spec)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        if (request.getAvailableDates().isEmpty()) {
+            throw new IllegalArgumentException("최소 하나 이상의 작업 가능한 날짜를 선택해주세요.");
+        }
 
-        Project savedProject = projectRepository.save(project);
+        if (request.getWorkingHours() == null) {
+            throw new IllegalArgumentException("요일별 작업 시간 정보가 없습니다.");
+        }
 
-        List<Schedule> schedules = request.getAvailableDates().stream()
-                .map(date -> Schedule.builder()
-                        .project(savedProject)
-                        .scheduledDate(date)
-                        .build())
-                .toList();
-        scheduleRepository.saveAll(schedules);
+        if (request.getWorkingHours().isEmpty()) {
+            throw new IllegalArgumentException("최소 하나 이상의 요일별 작업 시간을 설정해주세요.");
+        }
 
-        List<DaysOfWeek> days = request.getWorkingHours().entrySet().stream()
-                .map(entry -> DaysOfWeek.builder()
-                        .project(savedProject)
-                        .dateName(entry.getKey())
-                        .hours(entry.getValue())
-                        .build())
-                .toList();
-        daysOfWeekRepository.saveAll(days);
-        return project;
+        boolean hasValidWorkingHours = request.getWorkingHours().values().stream()
+                .anyMatch(hours -> hours != null && hours > 0);
+
+        if (!hasValidWorkingHours) {
+            throw new IllegalArgumentException("최소 하나 이상의 요일에는 작업 시간이 설정되어야 합니다.");
+        }
+
+        try {
+            Specification spec = specificationRepository.save(
+                    Specification.builder()
+                            .title("자동 생성 중")
+                            .content("")
+                            .format("json")
+                            .createdAt(LocalDateTime.now())
+                            .updatedAt(LocalDateTime.now())
+                            .build()
+            );
+
+            Project project = Project.builder()
+                    .user(user)
+                    .title("프로젝트 생성 중")
+                    .description("프로젝트 생성 중입니다.")
+                    .startDate(request.getStartDate())
+                    .endDate(request.getEndDate())
+                    .status(Project.ProjectStatus.TODO)
+                    .specification(spec)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            Project savedProject = projectRepository.save(project);
+
+            List<Schedule> schedules = request.getAvailableDates().stream()
+                    .map(date -> Schedule.builder()
+                            .project(savedProject)
+                            .scheduledDate(date)
+                            .build())
+                    .toList();
+
+            scheduleRepository.saveAll(schedules);
+
+            List<DaysOfWeek> days = request.getWorkingHours().entrySet().stream()
+                    .map(entry -> DaysOfWeek.builder()
+                            .project(savedProject)
+                            .dateName(entry.getKey())
+                            .hours(entry.getValue())
+                            .build())
+                    .toList();
+
+            daysOfWeekRepository.saveAll(days);
+
+            return savedProject;
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException("프로젝트 생성 중 데이터베이스 오류가 발생했습니다.", e);
+        }
     }
 
     @Override
@@ -212,42 +244,75 @@ public class ProjectServiceImpl implements ProjectService {
         if (request.getDaysOfWeek() != null) {
             updateDaysOfWeek(project, request.getDaysOfWeek());
         }
-        // 임시로 rescheduleProject 호출을 비활성화 (테스트용)
         if (scheduleChanged || daysOfWeekChanged || dateChanged) {
-            scheduleService.rescheduleProject(projectId);
+            entityManager.flush();
+            asyncScheduleService.rescheduleProjectAsync(projectId);
         }
     }
 
     private void updateDaysOfWeek(Project project, List<ProjectUpdateRequest.DaysOfWeekRequest> daysOfWeek) {
-        daysOfWeekRepository.deleteByProject(project);
 
-        // 새로운 요일별 시간 생성
-        List<DaysOfWeek> newDaysOfWeek = daysOfWeek.stream()
-                .map(request -> DaysOfWeek.builder()
-                        .project(project)
-                        .dateName(request.getDateName())
-                        .hours(request.getHours())
-                        .build())
-                .collect(Collectors.toList());
+        if (daysOfWeek == null) {
+            throw new IllegalArgumentException("요일별 시간 정보가 없습니다.");
+        }
 
-        daysOfWeekRepository.saveAll(newDaysOfWeek);
+        for (ProjectUpdateRequest.DaysOfWeekRequest request : daysOfWeek) {
+            if (request.getHours() == null) {
+                throw new IllegalArgumentException("작업 시간이 입력되지 않았습니다.");
+            }
+
+            if (request.getHours() < 0) {
+                throw new IllegalArgumentException("올바르지 않은 시간 정보가 포함되어 있습니다.");
+            }
+        }
+
+        boolean hasValidWorkingHours = daysOfWeek.stream()
+                .anyMatch(request -> request.getHours() > 0);
+
+        if (!hasValidWorkingHours) {
+            throw new IllegalArgumentException("최소 하나 이상의 요일에는 작업 시간이 설정되어야 합니다.");
+        }
+
+        try {
+            daysOfWeekRepository.deleteByProject(project);
+
+            // 새로운 요일별 시간 생성
+            List<DaysOfWeek> newDaysOfWeek = daysOfWeek.stream()
+                    .map(request -> DaysOfWeek.builder()
+                            .project(project)
+                            .dateName(request.getDateName().trim())
+                            .hours(request.getHours())
+                            .build())
+                    .collect(Collectors.toList());
+
+            daysOfWeekRepository.saveAll(newDaysOfWeek);
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException("요일별 시간 업데이트 중 데이터베이스 오류가 발생했습니다.", e);
+        }
     }
 
     private void updateSchedules(Project project, List<LocalDate> scheduledDates) {
-        scheduleRepository.deleteByProject(project);
-        scheduleRepository.flush();
+        if (scheduledDates.isEmpty()) {
+            throw new IllegalArgumentException("최소 하나 이상의 스케줄 날짜를 입력해주세요.");
+        }
 
-        // 새로운 스케줄 생성
-        List<Schedule> newSchedules = scheduledDates.stream()
-                .map(date -> Schedule.builder()
-                        .project(project)
-                        .scheduledDate(date)
-                        .build())
-                .collect(Collectors.toList());
+        try {
+            scheduleRepository.deleteByProject(project);
+            // 새로운 스케줄 생성
+            List<Schedule> newSchedules = scheduledDates.stream()
+                    .map(date -> Schedule.builder()
+                            .project(project)
+                            .scheduledDate(date)
+                            .build())
+                    .collect(Collectors.toList());
 
-        scheduleRepository.saveAll(newSchedules);
+            scheduleRepository.saveAll(newSchedules);
+
+        } catch (DataAccessException e) {
+            throw new RuntimeException("스케줄 업데이트 중 데이터베이스 오류가 발생했습니다.", e);
+        }
     }
-
 
 
     private boolean isDateChanged(Project project, ProjectUpdateRequest request) {
@@ -342,5 +407,67 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public boolean isProjectOwner(Long userId, Long projectId) {
         return projectRepository.existsByProjectIdAndUser_UserId(projectId, userId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ProjectSpecOverviewResponse getProjectSpecOverview(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다. projectId=" + projectId));
+
+        Long specId = project.getSpecification() != null ? project.getSpecification().getSpecId() : null;
+        String specTitle = project.getSpecification() != null ? project.getSpecification().getTitle() : null;
+
+        ProjectSummaryContent summary = ProjectSummaryContent.builder()
+                .projectId(project.getProjectId())
+                .projectTitle(project.getTitle())
+                .projectDescription(project.getDescription())
+                .specId(specId)
+                .specTitle(specTitle)
+                .build();
+
+        if (specId == null) {
+            return ProjectSpecOverviewResponse.builder()
+                    .project(summary)
+                    .features(Collections.emptyList())
+                    .build();
+        }
+
+        List<FeatureSaveContent> features =
+                featureItemRepository.findMainWithChildrenBySpecId(specId)
+                        .stream()
+                        .map(main -> FeatureSaveContent.builder()
+                                .projectId(project.getProjectId())
+                                .specId(specId)
+                                .field(main.getField())
+                                .isReduced(main.getIsReduced())
+                                .mainFeature(FeatureSaveItem.builder()
+                                        .id(main.getFeatureId())
+                                        .title(main.getTitle())
+                                        .description(main.getDescription())
+                                        .priorityLevel(main.getPriorityLevel())
+                                        .estimatedTime(main.getEstimatedTime())
+                                        .isReduced(main.getIsReduced())
+                                        .build())
+                                .subFeature(
+                                        (main.getChildFeatures() == null ? Collections.<FeatureItem>emptyList() : main.getChildFeatures())
+                                                .stream()
+                                                .map(sub -> FeatureSaveItem.builder()
+                                                        .id(sub.getFeatureId())
+                                                        .title(sub.getTitle())
+                                                        .description(sub.getDescription())
+                                                        .priorityLevel(sub.getPriorityLevel())
+                                                        .estimatedTime(sub.getEstimatedTime())
+                                                        .isReduced(sub.getIsReduced())
+                                                        .build())
+                                                .toList()
+                                )
+                                .build())
+                        .toList();
+
+        return ProjectSpecOverviewResponse.builder()
+                .project(summary)
+                .features(features)
+                .build();
     }
 }

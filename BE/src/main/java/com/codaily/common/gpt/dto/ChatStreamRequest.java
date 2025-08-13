@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ChatStreamRequest {
     private String intent;
-    private String userId;
     private String message;
     private Long projectId;
     private Long specId;

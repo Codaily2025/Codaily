@@ -6,6 +6,7 @@ import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.TechStackRepository;
 import com.codaily.auth.repository.UserRepository;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -94,7 +95,6 @@ public class UserServiceImpl implements UserService {
                 techStackRepository.save(techStack);
             }
         }
-
     }
 
     @Override
@@ -121,6 +121,7 @@ public class UserServiceImpl implements UserService {
 
         user.setGithubAccessToken(null);
         user.setGithubAccount(null);
+        user.setGithubProfileUrl(null);
 
         userRepository.save(user);
     }
@@ -154,4 +155,12 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        userRepository.delete(user);
+    }
 }

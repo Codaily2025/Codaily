@@ -3,12 +3,14 @@ package com.codaily.project.repository;
 import com.codaily.project.entity.FeatureItem;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,14 +19,20 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     // ===== 기본 조회 메서드들 =====
     Optional<FeatureItem> findByProject_ProjectIdAndFeatureId(Long projectId, Long featureId);
+
     Optional<FeatureItem> findByProject_ProjectIdAndTitle(Long projectId, String featureTitle);
+
     List<FeatureItem> findByProject_ProjectId(Long projectId);
+
     Optional<FeatureItem> findByFeatureId(Long featureId);
+
     List<FeatureItem> findByParentFeature(FeatureItem parentFeature);
 
     // ===== 명세서 관련 =====
     void deleteBySpecification_SpecId(Long specId);
+
     List<FeatureItem> findBySpecification_SpecId(Long specId);
+
     List<FeatureItem> findAllBySpecification_SpecId(Long specId);
 
     @Query("SELECT SUM(f.estimatedTime) FROM FeatureItem f WHERE f.specification.specId = :specId AND f.parentFeature IS NULL")
@@ -34,7 +42,7 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT DISTINCT f.field FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.field")
     List<String> findDistinctFieldsByProjectId(Long projectId);
 
-//    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
+    //    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
     @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field ORDER BY f.priorityLevel")
     List<FeatureItem> findByProjectIdAndField(Long projectId, String field);
 
@@ -133,4 +141,84 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
     @Query("SELECT f FROM FeatureItem f WHERE f.featureId = :featureId")
     FeatureItem getFeatureItemByFeatureId(@Param("featureId") Long featureId);
 
+    // ===== 배치 상태 업데이트 ===
+    @Modifying
+    @Query("UPDATE FeatureItem f SET f.status = :status WHERE f.featureId IN :featureIds")
+    int updateStatusBatch(List<Long> featureIds, String status);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE FeatureItem f SET f.status = 'IN_PROGRESS' " +
+            "WHERE f.project.projectId = :projectId AND f.status = 'TODO' " +
+            "AND EXISTS (SELECT 1 FROM FeatureItemSchedule s " +
+            "           WHERE s.featureItem = f AND s.scheduleDate = :today)")
+    int updateTodayFeaturesToInProgress(@Param("projectId") Long projectId, @Param("today") LocalDate today);
+
+    // 추천 작업 후보 조회 (Pageable 사용)
+    @Query("SELECT f FROM FeatureItem f " +
+            "WHERE f.project.projectId = :projectId " +
+            "AND f.status = 'TODO' " +
+            "AND f.priorityLevel IS NOT NULL " +
+            "ORDER BY f.priorityLevel DESC, f.estimatedTime ASC, f.createdAt ASC")
+    List<FeatureItem> findCandidateTasksForRecommendation(
+            @Param("projectId") Long projectId,
+            Pageable pageable
+    );
+
+    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.createdAt ASC")
+    List<FeatureItem> findParentFeaturesByProject(@Param("projectId") Long projectId);
+
+    @Query("select f.specification.specId from FeatureItem f where f.featureId = :featureId")
+    Long findSpecIdByFeatureId(@Param("featureId") Long featureId);
+
+    boolean existsBySpecification_SpecId(Long specId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           update FeatureItem f
+              set f.isReduced = :isReduced
+            where f.specification.specId = :specId
+              and f.field = :field
+           """)
+    int bulkUpdateIsReducedByField(Long specId, String field, Boolean isReduced);
+
+    @Query("""
+           select f.featureId
+             from FeatureItem f
+            where f.parentFeature.featureId = :parentId
+           """)
+    List<Long> findChildIds(@Param("parentId") Long parentId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+           update FeatureItem f
+              set f.isReduced = :isReduced
+            where f.featureId in :ids
+           """)
+    int bulkUpdateIsReducedByIds(@Param("ids") Collection<Long> ids,
+                                 @Param("isReduced") Boolean isReduced);
+
+    @Query("""
+           select count(f) > 0
+             from FeatureItem f
+            where f.featureId = :featureId
+              and f.project.projectId = :projectId
+           """)
+    boolean existsByFeatureIdAndProjectId(@Param("featureId") Long featureId,
+                                          @Param("projectId") Long projectId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from FeatureItem f " +
+            "where f.specification.specId = :specId and f.isReduced = true")
+    int deleteReducedBySpecId(@Param("specId") Long specId);
+
+    @Query("""
+           select distinct f
+           from FeatureItem f
+           left join fetch f.childFeatures
+           where f.specification.specId = :specId
+             and f.parentFeature is null
+           order by f.featureId
+           """)
+    List<FeatureItem> findMainWithChildrenBySpecId(@Param("specId") Long specId);
 }

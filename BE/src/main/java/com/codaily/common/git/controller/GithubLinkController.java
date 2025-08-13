@@ -3,12 +3,16 @@ package com.codaily.common.git.controller;
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.service.UserService;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
+import com.codaily.common.git.dto.GithubRepositoriesResponse;
+import com.codaily.common.git.dto.GithubRepositoryResponse;
 import com.codaily.common.git.service.GithubService;
-import com.codaily.common.git.service.WebhookService;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,11 +30,12 @@ import reactor.core.publisher.Mono;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Log4j2
 @RestController
-@RequestMapping("/oauth/github")
+@RequestMapping("/api/oauth/github")
 @RequiredArgsConstructor
 @Tag(name = "Github Link API", description = "GitHub OAuth 및 리포지토리 연동 기능 제공")
 public class GithubLinkController {
@@ -59,19 +64,72 @@ public class GithubLinkController {
 //            @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @GetMapping("/callback")
-    public Mono<ResponseEntity<Void>> githubCallback(
+    public Mono<ResponseEntity<String>> githubCallback(
             @Parameter(description = "GitHub로부터 받은 인가 코드") @RequestParam("code") String code,
             @AuthenticationPrincipal PrincipalDetails userDetails
     ) {
         log.info("code: {}", code);
+        log.info("실제 사용되는 redirect-uri: {}", redirectUri);
         return fetchAccessToken(code)
                 .flatMap(accessToken ->
                         fetchGithubProfile(accessToken)
-                                .doOnNext(profile ->
-                                        userService.linkGithub(userDetails.getUserId(), profile, accessToken)
+                                .doOnNext(profile ->{
+//                                        log.info("doOnNext accessToken: {}", accessToken);
+                                        userService.linkGithub(userDetails.getUserId(), profile, accessToken);}
                                 )
-                                .thenReturn(ResponseEntity.noContent().build())
-                );
+                                .thenReturn(createSuccessResponse())
+                )
+                .onErrorReturn(createErrorResponse());
+    }
+
+    private ResponseEntity<String> createSuccessResponse() {
+        String html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>GitHub 연동 완료</title>
+            </head>
+            <body>
+                <script>
+                    window.opener.postMessage({
+                        type: 'GITHUB_CONNECTED',
+                        success: true
+                    }, 'http://localhost:5173');
+                    window.close();
+                </script>
+                <p>GitHub 연동이 완료되었습니다. 창이 자동으로 닫힙니다.</p>
+            </body>
+            </html>
+            """;
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(html);
+    }
+
+    private ResponseEntity<String> createErrorResponse() {
+        String html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>GitHub 연동 실패</title>
+            </head>
+            <body>
+                <script>
+                    window.opener.postMessage({
+                        type: 'GITHUB_ERROR',
+                        success: false
+                    }, 'http://localhost:5173');
+                    window.close();
+                </script>
+                <p>GitHub 연동에 실패했습니다. 창이 자동으로 닫힙니다.</p>
+            </body>
+            </html>
+            """;
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(html);
     }
 
     @Operation(summary = "새 GitHub 리포지토리 생성", description = "새 GitHub 리포지토리를 생성하고 프로젝트에 연결")
@@ -91,16 +149,87 @@ public class GithubLinkController {
     ) {
         String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
         String repoOwner = userService.getGithubUsername(userDetails.getUserId());
-//        githubService.registerWebhook(repoOwner, repoName, accessToken);
 
         return githubService.createRepository(accessToken, repoName)
-                .doOnNext(repoUrl ->
-                        projectService.saveRepositoryForProject(projectId, repoName, repoUrl)
-                )
+                .doOnNext(repoUrl -> {
+                    // 작성자: yeongenn - 리포지토리 생성 완료 후 웹훅 등록
+                    githubService.registerWebhook(repoOwner, repoName, accessToken);
+                    projectService.saveRepositoryForProject(projectId, repoName, repoUrl);
+                })
                 .map(repoUrl -> ResponseEntity
                         .created(URI.create(repoUrl))
                         .build()
                 );
+    }
+
+    @Operation(
+            summary = "사용자 GitHub 리포지토리 목록 조회",
+            description = "연동된 GitHub 계정의 리포지토리 목록을 DTO 형식으로 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "리포지토리 목록 조회 성공",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = GithubRepositoriesResponse.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "success",
+                                            summary = "정상 응답",
+                                            value =
+                                                    """
+                                                    {
+                                                      "repositories": [
+                                                        {
+                                                          "name": "codaily",
+                                                          "htmlUrl": "https://github.com/yourname/codaily",
+                                                          "description": "Project management platform",
+                                                          "isPrivate": false
+                                                        },
+                                                        {
+                                                          "name": "pathfindservice",
+                                                          "htmlUrl": "https://github.com/yourname/pathfindservice",
+                                                          "description": "Real-time pathfinding service",
+                                                          "isPrivate": true
+                                                        }
+                                                      ]
+                                                    }
+                                                    """
+                                    ),
+                                    @ExampleObject(
+                                            name = "empty",
+                                            summary = "리포지토리가 없을 때",
+                                            value = "{ \"repositories\": [] }"
+                                    )
+                            }
+                    )
+            )
+    })
+    @GetMapping("/repos")
+    public Mono<ResponseEntity<GithubRepositoriesResponse>> getUserRepositories(
+            @AuthenticationPrincipal PrincipalDetails userDetails
+    ) {
+        Long userId = userDetails.getUserId();
+        String accessToken = userService.getGithubAccessToken(userId);
+
+        return githubService.getUserRepositories(accessToken)
+                .map(list -> {
+                    List<GithubRepositoryResponse> repoList = list.stream()
+                            .map(repo -> GithubRepositoryResponse.builder()
+                                    .name((String) repo.get("name"))
+                                    .htmlUrl((String) repo.get("html_url"))
+                                    .description((String) repo.get("description"))
+                                    .isPrivate(Boolean.TRUE.equals(repo.get("private")))
+                                    .build()
+                            )
+                            .toList();
+
+                    return GithubRepositoriesResponse.builder()
+                            .repositories(repoList)
+                            .build();
+                })
+                .map(ResponseEntity::ok);
     }
 
     @Operation(summary = "기존 GitHub 리포지토리 연결", description = "이미 존재하는 리포지토리를 프로젝트에 연결")
@@ -114,12 +243,17 @@ public class GithubLinkController {
     @PostMapping("/repo/link")
     public Mono<ResponseEntity<Void>> linkExistingRepository(
             @AuthenticationPrincipal PrincipalDetails userDetails,
-            @Parameter(description = "리포지토리 소유자 (owner)") @RequestParam String owner,
+//            @Parameter(description = "리포지토리 소유자 (owner)") @RequestParam String owner,
             @Parameter(description = "리포지토리 이름") @RequestParam String repoName,
             @Parameter(description = "연결할 프로젝트 ID") @RequestParam Long projectId
     ) {
-        String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
-//        githubService.registerWebhook(owner, repoName, accessToken);
+        // 작성자: yeongenn
+        Long userId = userDetails.getUserId();
+        String owner = userService.getGithubUsername(userId);
+        String accessToken = userService.getGithubAccessToken(userId);
+
+        // String accessToken = userService.getGithubAccessToken(userDetails.getUserId());
+        githubService.registerWebhook(owner, repoName, accessToken);
 
         return githubService.getRepositoryInfo(accessToken, owner, repoName)
                 .doOnNext(repo -> {
@@ -154,6 +288,7 @@ public class GithubLinkController {
     }
 
     private Mono<String> fetchAccessToken(String code) {
+//        log.info("feathcAccessToken...");
         return webClient.post()
                 .uri(tokenUri)
                 .header(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
@@ -168,8 +303,9 @@ public class GithubLinkController {
                 })
                 .map(body -> {
                     String token = (String) body.get("access_token");
+                    log.info("token: {}", token);
                     if (token == null) {
-                        log.error("GitHub에서 access_token을 가져오지 못했습니다. 응답 body: {}", body);
+//                        log.error("GitHub에서 access_token을 가져오지 못했습니다. 응답 body: {}", body);
                         throw new RuntimeException("GitHub access token null");
                     }
                     return token;

@@ -1,4 +1,3 @@
-/* SignupForm.module.css */
 .container {
     width: 550px;
     min-height: 100vh;
@@ -15,21 +14,45 @@
     border-radius: 16px;
     padding: 30px;
     box-shadow: 2px 2px 2px rgba(0,0,0,0.1);
+    box-sizing: border-box;
+    width: 480px;
+    min-height: 600px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.headerSection {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.formTitle {
+    color: #404040;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.formSubtitle {
+    color: #6C6B93;
+    font-size: 14px;
+    margin-bottom: 0;
 }
 
 .profileAvatarSection {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100px;
-    margin: 15px 0px 30px 0px;
+    height: 130px;
+    margin: 30px 0px 30px 0px;
 }
 
 .profileAvatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100px;
+    width: 130px;
     height: 100%;
     border-radius: 50%;
     background: #D6D5EB;
@@ -56,7 +79,7 @@
 .formRow {
     display: flex;
     gap: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 28px;
 }
 
 .formGroup {
@@ -84,6 +107,7 @@
     font-size: 14px;
     background: #F3F2FA;
     transition: all 0.2s;
+    box-sizing: border-box; /* 패딩과 보더를 너비에 포함 */
 }
 
 .formInput:focus {
@@ -104,12 +128,12 @@
     margin-bottom: 20px;
 }
 
-.formActions {
-    display: flex;
-    /* justify-content: flex-end; */
-    justify-content: center;
-    margin-top: 30px;
-    padding-top: 20px;
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 30px;
 }
 
 .nicknameInputContainer {

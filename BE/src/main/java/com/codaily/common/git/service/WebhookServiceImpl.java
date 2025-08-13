@@ -53,6 +53,9 @@ public class WebhookServiceImpl implements WebhookService {
     @Value("${github.api-url}")
     private String githubApiUrl;
 
+    @Value("${app.url.ai}")
+    private String aiUrl;
+
     @Override
     public void handlePushEvent(WebhookPayload payload, Long userId) {
         List<WebhookPayload.Commit> commits = payload.getCommits();
@@ -150,7 +153,7 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitBranch) {
 
         WebClient webClient = WebClient.builder()
-                .baseUrl("http://localhost:8000") // Python 서버 전용
+                .baseUrl(aiUrl) // Python 서버 전용
                 .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
@@ -172,7 +175,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .build();
 
         webClient.post()
-                .uri("/api/code-review/feature-inference")
+                .uri("ai/api/code-review/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()

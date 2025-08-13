@@ -1,7 +1,6 @@
 import React from 'react'
 import FieldLabel from '@/components/atoms/FieldLabel'
 import TextInput from '@/components/atoms/TextInput'
-import NicknameCheckButton from '@/components/atoms/NicknameCheckButton'
 
 const NicknameInputGroup = ({ 
     fieldName, 
@@ -11,7 +10,8 @@ const NicknameInputGroup = ({
     labelClassName = '',
     inputClassName = '',
     value,
-    onChange
+    onChange,
+    error
 }) => {
     const inputId = `input-${fieldName}`
 
@@ -34,8 +34,17 @@ const NicknameInputGroup = ({
                     className={inputClassName}
                     style={{ flex: 1 }}
                 />
-                <NicknameCheckButton onClick={onNicknameCheck} />
+                {/* <NicknameCheckButton onClick={onNicknameCheck} /> */}
             </div>
+            {error && (
+                <div style={{
+                    color: '#ef4444',
+                    fontSize: '12px',
+                    marginTop: '4px'
+                }}>
+                    {error}
+                </div>
+            )}
         </div>
     )
 }

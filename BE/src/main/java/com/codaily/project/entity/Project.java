@@ -1,6 +1,8 @@
 package com.codaily.project.entity;
 
 import com.codaily.auth.entity.User;
+import com.codaily.management.entity.DaysOfWeek;
+import com.codaily.management.entity.Schedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -35,6 +37,7 @@ public class Project {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "spec_id")
+    @JsonIgnore
     private Specification specification;
 
     @Column(nullable = false, length = 100)
@@ -59,6 +62,13 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectRepositories> projectRepositories = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<DaysOfWeek> daysOfWeek = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Schedule> schedules = new ArrayList<>();
 
     @PrePersist
     protected void onCreated() {

@@ -28,4 +28,6 @@ public interface UserService {
     String getUserNickname(Long userId);
 
     void updateUserNickname(Long userId, String newNickname);
+
+    void deleteUser(Long userId);
 }

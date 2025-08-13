@@ -1,7 +1,7 @@
 // src/queries/useProfile.js
 // React Query 훅 정의
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchProfile, updateProfile, fetchNickname, updateNickname, fetchTechStack } from '../apis/profile';
+import { fetchProfile, updateProfile, fetchNickname, updateNickname, fetchTechStack, uploadProfileImage, getProfileImage } from '../apis/profile';
 
 // 프로필 조회용 커스텀 훅
 // 캐시 키 : ['profile']
@@ -14,12 +14,12 @@ export function useProfileQuery() {
 }
 
 // 닉네임 조회용 커스텀 훅
-// 캐시 키 : ['nickname', userId]
-export function useNicknameQuery(userId) {
+// 캐시 키 : ['nickname']
+export function useNicknameQuery() {
   return useQuery({
-    queryKey: ['nickname', userId],
-    queryFn: () => fetchNickname(userId),
-    enabled: !!userId, // userId가 있을 때만 실행
+    queryKey: ['nickname'],
+    queryFn: () => fetchNickname(),
+    // enabled: !!userId, // userId가 있을 때만 실행
   });
 }
 
@@ -49,7 +49,7 @@ export function useUpdateProfileMutation() {
 export function useUpdateNicknameMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ userId, nickname }) => updateNickname(userId, nickname),
+    mutationFn: ({ nickname }) => updateNickname(nickname),
     onSuccess: (updated, variables) => {
       // 프로필 캐시 업데이트
       queryClient.setQueryData(['profile'], (oldData) => ({
@@ -57,7 +57,30 @@ export function useUpdateNicknameMutation() {
         nickname: variables.nickname
       }));
       // 닉네임 캐시 업데이트
-      queryClient.setQueryData(['nickname', variables.userId], { nickname: variables.nickname });
+      queryClient.setQueryData(['nickname'], { nickname: variables.nickname });
     },
+  });
+}
+
+// 프로필 이미지 업로드용 커스텀 훅
+export function useUploadProfileImageMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: uploadProfileImage,
+    onSuccess: (response) => {
+      // 프로필 캐시 업데이트
+      queryClient.setQueryData(['profile'], (oldData) => ({
+        ...oldData,
+        profileImage: response.imageUrl
+      }));
+    },
+  });
+}
+
+// 프로필 이미지 조회용 커스텀 훅
+export function useGetProfileImageQuery() {
+  return useQuery({
+    queryKey: ['profileImage'],
+    queryFn: getProfileImage,
   });
 }

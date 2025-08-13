@@ -4,7 +4,7 @@ import { authInstance } from './axios';
 // 코드 리뷰 목록조회 API
 // http://localhost:8081/api/code-review/user/{userId}
 export async function fetchCodeReviewList() {
-    const userId = 2; // 현재 테스트 용으로 임시로 userId 1로 설정
+    const userId = 16; // 현재 테스트 용으로 임시로 userId 1로 설정
     // 이후에는 로그인한 현재 유저 기반으로 userId를 안 넣어도 될 수 있음
     // 향후 구현 방식에 따라 달라질 것임
     try {
@@ -20,10 +20,20 @@ export async function fetchCodeReviewList() {
                 text: (severity==='high' ? '높음' : severity==='medium' ? '중간' : '낮음') + ' ' + count, // 예: high 8
                 type: severity,
             })) : [];
-            
+            // 현재 createdAt 예시 : 2025-08-09T21:00:33.408579
+            // 원하는 형식 : 2025/08/09 21:00
+            const apiDate = item.createdAt.split('T')[0];
+            const apiTime = item.createdAt.split('T')[1].slice(0, 5);
+            const reviewDate = apiDate.replace(/-/g, '/');
+            // 리뷰 날짜와 커밋 수 표시
+            const details = `${reviewDate} ${apiTime} · 커밋 ${item.commitCounts}번`;
             return {
+                details: details,
                 projectId: item.projectId,
+                projectName: item.projectName,
                 id: item.featureId,
+                // reviewId: item.reviewId,
+                // featureId: item.featureId,
                 category: item.featureField,
                 title: item.featureName,
                 score: item.qualityScore,
@@ -83,7 +93,7 @@ export function generateProjectOptions(codeReviewData) {
         if (!projectMap.has(projectId)) {
             projectMap.set(projectId, {
                 id: projectId,
-                name: `프로젝트${projectId}`,
+                name: `${item.projectName}`,
                 features: ['전체']
             });
         }
@@ -117,9 +127,14 @@ export function generateProjectOptions(codeReviewData) {
 }
 
 // 특정 리뷰의 상세 정보를 가져오는 함수
+// http://localhost:8081/api/code-review/{reviewId}/detail
 export async function fetchCodeReviewDetail(reviewId) {
     try {
         const response = await authInstance.get(`/code-review/${reviewId}/detail`);
+        const reviewDay = response.data.reviewDate.split('T')[0].replace(/-/g, '/');
+        const reviewTime = response.data.reviewDate.split('T')[1].slice(0, 5);
+        response.data.reviewDate = `${reviewDay} ${reviewTime}`;
+        // response.data['filesChanged'] = response.data.commitCounts;
         console.log('가져온 코드 리뷰 상세 정보:', response.data);
         return response.data;
     }

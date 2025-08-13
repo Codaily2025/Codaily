@@ -1,12 +1,16 @@
 spring:
   application:
     name: Codaily
-
-  datasource:
-    driver-class-name: org.postgresql.Driver
+  spring:
+    jackson:
+      serialization:
+        fail-on-empty-beans: false
 
   profiles:
     include: secret
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
 
   servlet:
     multipart:
@@ -27,31 +31,38 @@ spring:
     oauth2:
       client:
         registration:
-          #          github:
-          #            client-id: ${GITHUB.CLIENT_ID}
-          #            client-secret: ${GITHUB.CLIENT_SECRET}
-          #            redirect-uri: http://localhost:8080/oauth/github/callback
+          github:
+            client-id: ${GITHUB.CLIENT_ID}
+            client-secret: ${GITHUB.CLIENT_SECRET}
+            redirect-uri: ${app.url.backend}/api/oauth/github/callback
           #            token-uri: https://github.com/login/oauth/access_token
           #            user-uri: https://api.github.com/user
+            scope:
+              - user
+              - repo
           google:
             client-id: ${GOOGLE.CLIENT_ID}
             client-secret: ${GOOGLE.CLIENT_SECRET}
             scope:
               - profile
               - email
-            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+            redirect-uri: "{baseUrl}/api/login/oauth2/code/google"
           naver:
             client-id: ${NAVER.CLIENT_ID}
             client-secret: ${NAVER.CLIENT_SECRET}
             authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/naver"
+            redirect-uri: "{baseUrl}/api/login/oauth2/code/naver"
           kakao:
             client-id: ${KAKAO_REST_API_KEY}
-            redirect-uri: http://localhost:8081/login/oauth2/code/kakao
+            redirect-uri: "{baseUrl}/api/login/oauth2/code/kakao"
             authorization-grant-type: authorization_code
             scope: profile_nickname
             client-name: Kakao
         provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
           naver:
             authorization-uri: https://nid.naver.com/oauth2.0/authorize
             token-uri: https://nid.naver.com/oauth2.0/token
@@ -66,20 +77,20 @@ spring:
 github:
   client-id: ${GITHUB.CLIENT_ID}
   client-secret: ${GITHUB.CLIENT_SECRET}
-  redirect-uri: http://localhost:8081/oauth/github/callback
+  redirect-uri: ${app.url.backend}/api/oauth/github/callback
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
   api-url: https://api.github.com
 
 gpt:
   api:
-    feature-inference-url: http://localhost:8000/api/feature-inference
-    generate-checklist-url: http://localhost:8000/api/generate-checklist
+    feature-inference-url: ${app.url.ai}/api/feature-inference
+    generate-checklist-url: ${app.url.ai}/api/generate-checklist
 
 file:
   upload:
     dir: uploads
-    base-url: http://localhost:8081
+    base-url: ${app.url.backend}
 
 springdoc:
   api-docs:
@@ -96,8 +107,3 @@ springdoc:
 
 server:
   port: 8081
-
-logging:
-  level:
-    root: INFO
-    com.codaily: INFO

@@ -32,6 +32,7 @@ public interface CodeReviewService {
     List<Map<String, Object>> getAllCodeReviews(Long projectId);
 
     List<CodeReviewAllResponseDto> getCodeReviewsAllSummary(Long userId);
+
     public List<CodeReviewUserAllResponseDto> getUserAllCodeReviews(Long userId);
 
     public List<CodeReviewItemDto> getCodeReviewItemsAll(Long projectId, String featureName);

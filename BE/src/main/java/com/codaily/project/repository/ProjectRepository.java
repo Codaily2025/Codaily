@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     boolean existsByProjectId(Long projectId);
@@ -24,6 +25,31 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     long countActiveProjects();
 
     List<Project> findByUser_UserId(Long userId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.daysOfWeek " +
+            "WHERE p.user.userId = :userId")
+    List<Project> findByUserIdWithDays(Long userId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.schedules " +
+            "WHERE p.user.userId = :userId")
+    List<Project> findByUserIdWithSchedules(Long userId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.daysOfWeek " +
+            "WHERE p.projectId = :projectId")
+    Optional<Project> findByIdWithDays(@Param("projectId") Long projectId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.schedules " +
+            "WHERE p.projectId = :projectId")
+    Optional<Project> findByIdWithSchedules(@Param("projectId") Long projectId);
+
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.projectRepositories pr " +
+            "WHERE p.projectId = :projectId")
+    Optional<Project> findByIdWithRepositories(Long projectId);
 
     List<Project> findByUser_UserIdAndStatus(Long userId, Enum<Project.ProjectStatus> status);
 
@@ -48,4 +74,27 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findById(Long projectId);
 
     Boolean existsByProjectIdAndUser_UserId(Long projectId, Long userId);
+
+    @Query("SELECT DISTINCT p.projectId FROM Project p " +
+            "JOIN FeatureItem f ON f.project = p " +
+            "JOIN FeatureItemSchedule s ON s.featureItem = f " +
+            "WHERE p.status = 'IN_PROGRESS' " +
+            "AND f.status IN ('TODO', 'IN_PROGRESS') " +
+            "AND s.scheduleDate <= :yesterday " +
+            "AND s.withinProjectPeriod = true")
+    List<Long> findProjectsWithOverdueFeatures(@Param("yesterday") LocalDate yesterday);
+
+    @Query("SELECT DISTINCT p.projectId FROM Project p " +
+            "JOIN FeatureItem f ON f.project = p " +
+            "JOIN FeatureItemSchedule s ON s.featureItem = f " +
+            "WHERE p.status = 'IN_PROGRESS' " +
+            "AND f.status = 'TODO' " +
+            "AND s.scheduleDate = :today")
+    List<Long> findProjectsWithTodayFeatures(@Param("today") LocalDate today);
+
+    @Query("SELECT DISTINCT p.projectId FROM Project p " +
+            "JOIN FeatureItem f ON f.project = p " +
+            "WHERE p.status = 'IN_PROGRESS' " +
+            "AND f.status = 'IN_PROGRESS'")
+    List<Long> findProjectsWithInProgressFeatures();
 }
