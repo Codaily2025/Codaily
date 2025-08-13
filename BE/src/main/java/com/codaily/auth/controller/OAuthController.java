@@ -20,7 +20,7 @@ public class OAuthController {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    @GetMapping("/login/oauth2/code/google")
+    @GetMapping("/api/login/oauth2/code/google")
     public void handleGoogleOAuthCallback(
             @RequestParam("code") String code,
             @RequestParam("state") String state,
@@ -40,7 +40,7 @@ public class OAuthController {
         }
     }
 
-    @GetMapping("/login/oauth2/code/naver")
+    @GetMapping("/api/login/oauth2/code/naver")
     public void handleNaverOAuthCallback(
             @RequestParam("code") String code,
             @RequestParam("state") String state,
