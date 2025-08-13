@@ -49,6 +49,134 @@ const RepoIcon = () => (
     </defs>
   </svg>
 );
+
+const AdjustmentIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 48 48" fill="none">
+    <path d="M8 42V28M8 20V6M24 42V24M24 16V6M40 42V32M40 24V6M2 28H14M18 16H30M34 32H46" stroke="#737373" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+
+// 캘린더 컴포넌트
+const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedDate, selectedDates = null, isWorkDayAdjustment = false }) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+
+    const days = [];
+    for (let i = 0; i < startingDay; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const days = getDaysInMonth(currentMonth);
+  const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const handleDayClick = (day) => {
+    if (day) {
+      // 작업 가능 날짜 캘린더인 경우, 다른 달의 날짜를 클릭해도 현재 달을 유지
+      if (isWorkDayAdjustment) {
+        // 현재 표시된 달의 날짜인지 확인
+        const currentYear = currentMonth.getFullYear();
+        const currentMonthNum = currentMonth.getMonth();
+        const dayYear = day.getFullYear();
+        const dayMonth = day.getMonth();
+
+        // 다른 달의 날짜를 클릭한 경우 무시
+        if (dayYear !== currentYear || dayMonth !== currentMonthNum) {
+          return;
+        }
+      }
+
+      onDateSelect(day);
+      // 작업 가능 날짜 캘린더가 아닌 경우에만 캘린더 닫기
+      if (!isWorkDayAdjustment) {
+        onClose();
+      }
+    }
+  };
+
+  return (
+    <div className={styles.calendarOverlay} onClick={onClose}>
+      <div className={styles.calendarContainer} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.calendarHeader}>
+          <button onClick={prevMonth}>&lt;</button>
+          <span>{currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월</span>
+          <button onClick={nextMonth}>&gt;</button>
+        </div>
+        <div className={styles.calendarWeekdays}>
+          {weekDays.map(day => (
+            <div key={day} className={styles.calendarWeekday}>{day}</div>
+          ))}
+        </div>
+        <div className={styles.calendarDays}>
+          {days.map((day, index) => {
+            if (!day) {
+              return <div key={index} className={`${styles.calendarDay} ${styles.empty}`}></div>;
+            }
+
+            // 시간대 문제를 해결하기 위해 로컬 날짜 형식 사용
+            const year = day.getFullYear();
+            const month = String(day.getMonth() + 1).padStart(2, '0');
+            const dayOfMonth = String(day.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${dayOfMonth}`;
+
+            const isSelected = selectedDate && day.toDateString() === selectedDate.toDateString();
+            const isWorkDaySelected = selectedDates && selectedDates.has(dateString);
+
+            let className = styles.calendarDay;
+            if (isSelected) {
+              className += ` ${styles.selected}`;
+            }
+            if (isWorkDaySelected) {
+              className += ` ${styles.workDaySelected}`;
+            }
+
+            return (
+              <div
+                key={index}
+                className={className}
+                onClick={() => handleDayClick(day)}
+              >
+                {day.getDate()}
+              </div>
+            );
+          })}
+        </div>
+        {isWorkDayAdjustment && (
+          <div className={styles.calendarFooter}>
+            <button
+              className={styles.btn}
+              onClick={onClose}
+              style={{ marginTop: '10px', padding: '8px 16px' }}
+            >
+              완료
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
 const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('project:', data?.title)
 
@@ -89,6 +217,9 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
   // 스토어에서 상세 정보 가져오기
   const detailFromStore = getProjectDetail();
+
+  // 작업 가능 날짜 관리 상태 추가
+  const [selectedDates, setSelectedDates] = useState(new Set());
 
   // project가 없을 때 기본값 처리
   if (!projectData) {
@@ -155,7 +286,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('현재프로젝트 정보:', projectDetails)
   console.log('스토어에서 가져온 상세 정보:', detailFromStore)
 
-  // 상세 정보가 업데이트될 때마다 컴포넌트 상태 업데이트
+  // 상세 정보가 업데이트될 때 컴포넌트 상태 업데이트
   useEffect(() => {
     if (detailFromStore) {
       const finalStartDate = detailFromStore.startDate?.replace(/-/g, '.') || initialStartDate;
@@ -168,16 +299,35 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
         startDate: finalStartDate,
         endDate: finalEndDate,
         timeByDay: finalTimeByDay,
+        // schedules는 projectDetails에서 제거하고 selectedDates로만 관리
       }));
+
+      // 기존 schedules 데이터를 selectedDates에 설정
+      if (detailFromStore.schedules && Array.isArray(detailFromStore.schedules)) {
+        const existingDates = new Set();
+        detailFromStore.schedules.forEach(schedule => {
+          if (schedule.scheduledDate) {
+            existingDates.add(schedule.scheduledDate);
+          }
+        });
+        setSelectedDates(existingDates);
+        // console.log('기존 schedules에서 selectedDates 설정:', Array.from(existingDates)); // 디버깅용
+      } else {
+        // schedules가 없으면 빈 Set으로 초기화
+        setSelectedDates(new Set());
+        // console.log('schedules가 없어서 빈 Set으로 초기화'); // 디버깅용
+      }
     }
   }, [detailFromStore, initialStartDate, initialEndDate]);
 
   // 에러 상태 관리
-  const [errors, setErrors] = useState({ projectName: false });
+  const [errors, setErrors] = useState({ projectName: false, timeByDay: false });
 
   // 날짜 선택 관련 상태
   const [showStartCalendar, setShowStartCalendar] = useState(false);
   const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [showWorkDayAdjustment, setShowWorkDayAdjustment] = useState(false);
+  const investmentSectionRef = useRef(null); // 요일별 투자 시간 에러 위해 참조
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -196,75 +346,30 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     if (type === 'start') {
       setProjectDetails(prev => ({ ...prev, startDate: formattedDate }));
       setShowStartCalendar(false);
-    } else {
+    } else if (type === 'end') {
       setProjectDetails(prev => ({ ...prev, endDate: formattedDate }));
       setShowEndCalendar(false);
+    } else if (type === 'workDayAdjustment') {
+      // 작업 가능 날짜 선택/해제
+      // 시간대 문제를 해결하기 위해 로컬 날짜 형식 사용
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`; // YYYY-MM-DD 형식
+
+      setSelectedDates(prev => {
+        const newSelectedDates = new Set(prev);
+        if (newSelectedDates.has(dateString)) {
+          newSelectedDates.delete(dateString);
+          // console.log('날짜 제거:', dateString, '현재 선택된 날짜들:', Array.from(newSelectedDates));
+        } else {
+          newSelectedDates.add(dateString);
+          // console.log('날짜 추가:', dateString, '현재 선택된 날짜들:', Array.from(newSelectedDates));
+        }
+        return newSelectedDates;
+      });
     }
   };
-
-  // 캘린더 컴포넌트
-  const Calendar = ({ onDateSelect, onClose, selectedDate }) => {
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-
-    const getDaysInMonth = (date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const daysInMonth = lastDay.getDate();
-      const startingDay = firstDay.getDay();
-
-      const days = [];
-      for (let i = 0; i < startingDay; i++) {
-        days.push(null);
-      }
-      for (let i = 1; i <= daysInMonth; i++) {
-        days.push(new Date(year, month, i));
-      }
-      return days;
-    };
-
-    const days = getDaysInMonth(currentMonth);
-    const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
-
-    const prevMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-    };
-
-    const nextMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-    };
-
-    return (
-      <div className={styles.calendarOverlay} onClick={onClose}>
-        <div className={styles.calendarContainer} onClick={(e) => e.stopPropagation()}>
-          <div className={styles.calendarHeader}>
-            <button onClick={prevMonth}>&lt;</button>
-            <span>{currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월</span>
-            <button onClick={nextMonth}>&gt;</button>
-          </div>
-          <div className={styles.calendarWeekdays}>
-            {weekDays.map(day => (
-              <div key={day} className={styles.calendarWeekday}>{day}</div>
-            ))}
-          </div>
-          <div className={styles.calendarDays}>
-            {days.map((day, index) => (
-              <div
-                key={index}
-                className={`${styles.calendarDay} ${!day ? styles.empty : ''} ${selectedDate && day && day.toDateString() === selectedDate.toDateString() ? styles.selected : ''}`}
-                onClick={() => day && onDateSelect(day)}
-              >
-                {day ? day.getDate() : ''}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-
 
   const days = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -337,20 +442,23 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       return;
     }
 
-    // 시작일과 종료일을 하나의 문자열로 결합
-    // const duration = formData.startDate && formData.endDate 
-    //   ? `${formData.startDate.replace(/\./g, '-')} ~ ${formData.endDate.replace(/\./g, '-')}`
-    //   : '';
+    // 모든 요일별 투자 시간이 0시간인지 검사
+    const isAllZero =
+      Object.values(projectDetails.timeByDay || {}).every(v => Number(v) === 0);
+    if (isAllZero) {
+      setErrors(prev => ({ ...prev, timeByDay: true }));
+      // 에러 위치로 스크롤
+      investmentSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
-    // if (typeof onSave === 'function') {
-    //   onSave({
-    //     ...(projectData || {}),
-    //     title: formData.projectName,
-    //     duration: duration,
-    //     timeByDay: timeByDay,
-    //     repoUrl: formData.repoUrl
-    //   });
-    // }
+    // selectedDates를 schedules 형식으로 변환 (선택된 날짜만 포함)
+    const updatedSchedules = Array.from(selectedDates).map((date, index) => ({
+      scheduleId: index + 1, // 임시 ID (실제로는 백엔드에서 관리)
+      scheduledDate: date
+    }));
+
+    // console.log('저장할 schedules:', updatedSchedules); // 디버깅용
 
     // mutate 함수를 호출하여 API 요청 실행
     mutate({
@@ -361,6 +469,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
         startDate: projectDetails.startDate,
         endDate: projectDetails.endDate,
         timeByDay: projectDetails.timeByDay,
+        schedules: updatedSchedules, // 수정된 schedules 데이터 (선택된 날짜만)
         // repoUrl은 API 명세에 없으므로 여기서는 제외함
       },
       // 기존 DB의 schedules 데이터 전달
@@ -411,7 +520,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       repoName: selectedExistingRepo
     });
   };
-  
+
   // 기존 레포지토리 연결하기 버튼 클릭 시 최하단으로 스크롤
   const bodyRef = useRef(null);
   useEffect(() => {
@@ -422,6 +531,19 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       });
     }
   }, [selectedRepoOption]);
+
+  // console.log('projectDetails.schedules: ', projectDetails.schedules)
+  // 응답 형태
+  // [
+  //   {
+  //     "scheduleId": 1,
+  //     "scheduledDate": "2025-08-01"
+  //   },
+  //   {
+  //     "scheduleId": 2,
+  //     "scheduledDate": "2025-08-02"
+  //   }
+  // ]
 
   return (
     <>
@@ -465,7 +587,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
               <div className={styles.formSection}>
                 <label className={styles.formLabel}>기간*</label>
                 <div className={styles.dateRangeWrapper}>
-                  <div className={`${styles.inputWrapper} ${styles.dateInput}`}>
+                  <div className={`${styles.inputWrapper} ${styles.dateInput}`} style={{ width: '161px' }}>
                     <div className={styles.inputWithIcon}>
                       <CalendarIcon />
                       <input
@@ -488,7 +610,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     </div>
                   </div>
                   <div className={styles.dateRangeSeparator}>~</div>
-                  <div className={`${styles.inputWrapper} ${styles.dateInput}`}>
+                  <div className={`${styles.inputWrapper} ${styles.dateInput}`} style={{ width: '161px' }}>
                     <div className={styles.inputWithIcon}>
                       <CalendarIcon />
                       <input
@@ -510,10 +632,14 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       )}
                     </div>
                   </div>
+                  <div className={styles.adjustmentIconWrapper} onClick={() => setShowWorkDayAdjustment(true)} style={{ cursor: 'pointer' }}>
+                    <AdjustmentIcon />
+                  </div>
                 </div>
               </div>
 
-              <div className={`${styles.formSection} ${styles.investmentSection}`}>
+              <div className={`${styles.formSection} ${styles.investmentSection}`}
+                ref={investmentSectionRef}>
                 <label className={styles.formLabel}>요일별 투자 시간*</label>
                 <div className={styles.daySelector}>
                   {days.map((day) => {
@@ -575,6 +701,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                   <div className={styles.sliderText}>{formatTime(step)}</div>
                   {/* <div className="slider-text-subtext">총 투자 시간</div> */}
                 </div>
+                {errors.timeByDay && <div style={{ color: '#FB2C36', fontSize: '12px', marginTop: '4px' }}>요일별 투자 시간에서 하루 이상 값을 설정해주세요.</div>}
               </div>
 
               <div className={styles.formSection}>
@@ -712,6 +839,16 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
           </div>
         </div>
       </div>
+
+      {/* 작업 가능 날짜 캘린더 - 모달 레벨에서 렌더링 */}
+      {showWorkDayAdjustment && (
+        <Calendar
+          onDateSelect={(date) => handleDateSelect(date, 'workDayAdjustment')}
+          onClose={() => setShowWorkDayAdjustment(false)}
+          selectedDates={selectedDates}
+          isWorkDayAdjustment={true}
+        />
+      )}
     </>
   );
 };
