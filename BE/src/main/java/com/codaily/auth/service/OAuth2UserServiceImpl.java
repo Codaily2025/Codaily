@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) {
         OAuth2User oAuth2User = super.loadUser(request); // provider로부터 사용자 정보 획득
+        OAuth2AccessToken access = request.getAccessToken();
 
         String registrationId = request.getClientRegistration().getRegistrationId(); // ex: google, github, naver
         Map<String, Object> attributes = oAuth2User.getAttributes();
@@ -80,6 +82,7 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
                     .role(User.Role.USER)
                     .socialProvider(provider)
                     .socialId(providerId)
+                    .socialAccessToken(access.getTokenValue())
                     .githubAccount(provider.equals("github") ? socialUser.getProviderId() : null)
                     .githubProfileUrl(provider.equals("github") ? (String) attributes.get("avatar_url") : null)
                     .githubAccessToken(provider.equals("github") ? request.getAccessToken().getTokenValue() : null)
@@ -90,6 +93,7 @@ public class OAuth2UserServiceImpl extends DefaultOAuth2UserService {
         } else if (existingUser.get().getSocialProvider().equals(provider)) {
             log.info("이미 {} 계정으로 로그인한 이력이 있습니다.", provider);
             user = existingUser.get();
+            user.setSocialAccessToken(access.getTokenValue());
         } else {
             log.warn("같은 이메일이 다른 플랫폼({})으로 가입되어 있음", existingUser.get().getSocialProvider());
             throw new OAuth2AuthenticationException("이미 다른 플랫폼으로 가입된 이메일입니다.");

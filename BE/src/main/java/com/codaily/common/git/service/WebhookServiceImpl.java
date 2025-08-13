@@ -1,7 +1,11 @@
 package com.codaily.common.git.service;
 
-import com.codaily.auth.service.UserService;
-import com.codaily.codereview.dto.*;
+import com.codaily.auth.entity.User;
+import com.codaily.auth.repository.UserRepository;
+import com.codaily.codereview.dto.CommitInfoDto;
+import com.codaily.codereview.dto.DiffFile;
+import com.codaily.codereview.dto.FeatureInferenceRequestDto;
+import com.codaily.codereview.dto.FullFile;
 import com.codaily.codereview.entity.ChangeType;
 import com.codaily.codereview.entity.CodeCommit;
 import com.codaily.codereview.repository.CodeCommitRepository;
@@ -19,6 +23,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -36,16 +41,18 @@ import java.util.stream.Collectors;
 public class WebhookServiceImpl implements WebhookService {
 
     private final FeatureItemRepository featureItemRepository;
-    private final UserService userService;
     private final ProjectRepositoriesRepository projectRepositoriesRepository;
     private final WebClient webClient;
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepositoriesService projectRepositoriesService;
-
+    private final UserRepository userRepository;
 
 
     @Value("${github.api-url}")
     private String githubApiUrl;
+
+    @Value("${app.url.webhook}")
+    private String webhookUrl;
 
     @Value("${app.url.ai}")
     private String aiUrl;
@@ -54,7 +61,9 @@ public class WebhookServiceImpl implements WebhookService {
     public void handlePushEvent(WebhookPayload payload, Long userId) {
         List<WebhookPayload.Commit> commits = payload.getCommits();
         String repo = payload.getRepository().getFull_name();
-        String accessToken = userService.getGithubAccessToken(userId);
+        String accessToken = userRepository.findById(userId)
+                .map(User::getGithubAccessToken)
+                .orElse(null);
 
         for (WebhookPayload.Commit commit : commits) {
             log.info("🧾 커밋: {}", commit.getId());
@@ -145,7 +154,9 @@ public class WebhookServiceImpl implements WebhookService {
                 .commitMessage(commitMessage)
                 .diffFiles(diffFiles)
                 .availableFeatures(availableFeatures)
-                .jwtToken(userService.getGithubAccessToken(userId))
+                .jwtToken(userRepository.findById(userId)
+                        .map(User::getGithubAccessToken)
+                        .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다.")))
                 .commitInfoDto(commitInfoDto)
                 .build();
 
@@ -162,7 +173,9 @@ public class WebhookServiceImpl implements WebhookService {
 
     @Override
     public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName) {
-        String token = userService.getGithubAccessToken(userId);
+        String token = userRepository.findById(userId)
+                .map(User::getGithubAccessToken)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
 
         String commitUrl = String.format("%s/repos/%s/%s/commits/%s", githubApiUrl, repoOwner, repoName, commitHash);
         Mono<Map<String, Object>> responseMono = webClient.get()
@@ -211,5 +224,74 @@ public class WebhookServiceImpl implements WebhookService {
         return allFiles.stream()
                 .filter(file -> filePaths.contains(file.getFilePath()))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 유저가 연결해둔 모든 리포에서 우리 콜백 URL로 등록된 웹훅을 제거한다.
+     * 리포/커밋은 유지, 훅만 제거.
+     */
+    @Override
+    @Transactional
+    public void removeAllHooksForUser(Long userId) {
+        String token = userRepository.findById(userId)
+                .map(User::getGithubAccessToken)
+                .orElse(null);
+        String repoOwner = userRepository.findById(userId)
+                .map(User::getGithubAccount)
+                .orElse(null);
+        if (token == null || token.isBlank()) return; // 토큰 없으면 패스
+
+        // 유저가 연결해둔 리포 목록
+        List<ProjectRepositories> links =
+                projectRepositoriesRepository.findByProject_User_UserId(userId);
+
+        for (ProjectRepositories link : links) {
+            String repo  = link.getRepoName();    // 엔티티에 맞게 필드명 조정
+
+            try {
+                // 1) 훅 목록 조회
+                List<Map<String, Object>> hooks = webClient.get()
+                        .uri("{api}/repos/{owner}/{repo}/hooks",
+                                Map.of("api", githubApiUrl, "owner", repoOwner, "repo", repo))
+                        .headers(h -> {
+                            h.setBearerAuth(token);
+                            h.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+                        })
+                        .retrieve()
+                        .bodyToMono(new ParameterizedTypeReference<List<Map<String, Object>>>() {})
+                        .block();
+
+                if (hooks == null) continue;
+
+                // 2) 우리 콜백 URL과 매칭되는 훅만 삭제
+                for (Map<String, Object> hook : hooks) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> config = (Map<String, Object>) hook.get("config");
+
+                    String url = config != null ? String.valueOf(config.get("url")) : null;
+                    if (url == null) continue;
+
+                    // 정확 일치 또는 startsWith 등 필요에 맞게 비교
+                    if (url.equals(webhookUrl) || url.startsWith(webhookUrl)) {
+                        Object idObj = hook.get("id");
+                        if (idObj == null) continue;
+                        long hookId = (idObj instanceof Number) ? ((Number) idObj).longValue()
+                                : Long.parseLong(String.valueOf(idObj));
+
+                        webClient.delete()
+                                .uri("{api}/repos/{owner}/{repo}/hooks/{id}",
+                                        Map.of("api", githubApiUrl, "owner", repoOwner, "repo", repo, "id", hookId))
+                                .headers(h -> h.setBearerAuth(token))
+                                .retrieve()
+                                .toBodilessEntity()
+                                .block();
+
+                        log.info("웹훅 삭제 완료: {}/{} (hookId={})", repoOwner, repo, hookId);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("웹훅 삭제 실패: {}/{} userId={}", repoOwner, repo, userId, e);
+            }
+        }
     }
 }

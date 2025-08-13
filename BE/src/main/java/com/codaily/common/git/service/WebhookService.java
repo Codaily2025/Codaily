@@ -8,17 +8,20 @@ import java.util.List;
 public interface WebhookService {
     void handlePushEvent(WebhookPayload payload, Long userId);
 
-    public List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken);
+    List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken);
 
-    public void sendDiffFilesToPython(Long projectId,
-                                      Long commitId,
-                                      String commitHash,
-                                      String commitMessage,
-                                      List<DiffFile> diffFiles,
-                                      Long userId,
-                                      CommitInfoDto commitInfoDto);
+    void sendDiffFilesToPython(Long projectId,
+                               Long commitId,
+                               String commitHash,
+                               String commitMessage,
+                               List<DiffFile> diffFiles,
+                               Long userId,
+                               CommitInfoDto commitInfoDto);
 
-    public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName);
-    public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths, String repoOwner, String repoName);
+    List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName);
 
-    }
+    List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths, String repoOwner, String repoName);
+
+    void removeAllHooksForUser(Long userId);
+
+}

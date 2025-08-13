@@ -35,7 +35,7 @@ public class Project {
         return user != null ? user.getUserId() : null;
     }
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "spec_id")
     @JsonIgnore
     private Specification specification;
