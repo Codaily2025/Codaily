@@ -162,6 +162,14 @@
   gap: 8px;
 }
 
+.adjustmentIconWrapper {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .inputText {
   flex: 1 1 0;
   color: #737373;
@@ -185,7 +193,8 @@
 }
 
 .dateRangeWrapper {
-  align-self: stretch;
+  /* align-self: stretch; */
+  width: 415px;
   display: inline-flex;
   justify-content: flex-start;
   align-items: center;
@@ -583,8 +592,44 @@
   color: white;
 }
 
+.calendarDay.workDaySelected {
+  background: #9C9BC3;
+  color: white;
+  position: relative;
+}
+
+/* .calendarDay.workDaySelected::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: #FFD700;
+  border-radius: 50%;
+} */
+
 .calendarDay.empty {
   cursor: default;
+}
+
+.calendarFooter {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  border-top: 1px solid #E5E5E5;
+  margin-top: 8px;
+}
+
+.calendarFooter .btn {
+  transition: all 0.2s ease;
+}
+
+.calendarFooter .btn:hover {
+  background-color: #9C9BC3;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* GitHub 레포지토리 관련 스타일 */
