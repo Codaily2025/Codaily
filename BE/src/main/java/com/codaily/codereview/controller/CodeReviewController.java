@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -47,6 +48,17 @@ public class CodeReviewController {
                 .checklistItems(list.stream()
                                 .map(item -> new ChecklistItemDto(item.getItem(), item.isDone()))
                                 .collect(Collectors.toList())).build();
+    }
+
+    // 코드리뷰 아이템 전달
+    @GetMapping("/project/{projectId}/feature")
+    public ResponseEntity<List<CodeReviewItemDto>> getALlCodeReviewItems(@PathVariable Long projectId, @RequestParam String featureName) {
+        FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
+        if(featureItem == null) {
+            return ResponseEntity.noContent().build();
+        }
+        List<CodeReviewItemDto> codeReviewItems = codeReviewService.getCodeReviewItemsAll(projectId, featureName);
+        return ResponseEntity.ok(codeReviewItems);
     }
 
 

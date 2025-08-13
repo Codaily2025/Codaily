@@ -24,5 +24,6 @@ public class FeatureInferenceRequestDto {
     private String commitMessage;
 
     private CommitInfoDto commitInfoDto;
+    private boolean forceDone;
 }
 

@@ -34,6 +34,8 @@ public interface CodeReviewService {
     List<CodeReviewAllResponseDto> getCodeReviewsAllSummary(Long userId);
     public List<CodeReviewUserAllResponseDto> getUserAllCodeReviews(Long userId);
 
+    public List<CodeReviewItemDto> getCodeReviewItemsAll(Long projectId, String featureName);
+
 //    public void handleReview(CodeReviewResultRequest p);
 
 

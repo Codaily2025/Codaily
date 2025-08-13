@@ -60,11 +60,11 @@ public class WebhookServiceImpl implements WebhookService {
         String accessToken = userService.getGithubAccessToken(userId);
 
         for (WebhookPayload.Commit commit : commits) {
-            log.info("🧾 커밋: {}", commit.getId());
-            log.info("📄 메시지: {}", commit.getMessage());
-            log.info("➕ 추가된 파일: {}", commit.getAdded());
-            log.info("📝 수정된 파일: {}", commit.getModified());
-            log.info("➖ 삭제된 파일: {}", commit.getRemoved());
+            log.info("커밋: {}", commit.getId());
+            log.info("메시지: {}", commit.getMessage());
+            log.info("추가된 파일: {}", commit.getAdded());
+            log.info("수정된 파일: {}", commit.getModified());
+            log.info("삭제된 파일: {}", commit.getRemoved());
 
             List<DiffFile> diffFiles = getDiffFilesFromCommit(commit,accessToken);
 
@@ -97,7 +97,7 @@ public class WebhookServiceImpl implements WebhookService {
 
     @Override
     public List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken) {
-        String commitUrl = commit.getUrl(); // payload에 포함된 URL
+        String commitUrl = commit.getUrl();
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
@@ -108,19 +108,34 @@ public class WebhookServiceImpl implements WebhookService {
 
         List<DiffFile> diffFiles = new ArrayList<>();
 
-        if (response.getStatusCode().is2xxSuccessful()) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             JsonNode filesNode = response.getBody().get("files");
+
+            // 제외할 경로/패턴 목록
+            List<String> excludedPatterns = List.of(
+                    ".idea/", ".vscode/", "node_modules/", "build/", "target/",
+                    ".gradle/", ".git/", ".github/", ".DS_Store"
+            );
+
             for (JsonNode file : filesNode) {
                 String filename = file.get("filename").asText();
+
+                // 제외 패턴 필터링
+                if (excludedPatterns.stream().anyMatch(filename::startsWith)) {
+                    continue;
+                }
+
                 String patch = file.has("patch") ? file.get("patch").asText() : "";
-                String status = file.has("status") ? file.get("status").asText() : "modified"; // "added", "removed", "modified"
+                String status = file.has("status") ? file.get("status").asText() : "modified";
                 ChangeType changeType = ChangeType.fromString(status);
+
                 diffFiles.add(new DiffFile(filename, patch, changeType));
             }
         }
 
         return diffFiles;
     }
+
 
 
     @Override
@@ -153,6 +168,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .availableFeatures(availableFeatures)
                 .jwtToken(userService.getGithubAccessToken(userId))
                 .commitInfoDto(commitInfoDto)
+                .forceDone(false)
                 .build();
 
         webClient.post()

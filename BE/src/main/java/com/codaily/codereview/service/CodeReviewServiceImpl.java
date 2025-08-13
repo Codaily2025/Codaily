@@ -45,8 +45,20 @@ public class CodeReviewServiceImpl implements CodeReviewService {
 
 
     @Override
+    @Transactional
     public void saveCodeReviewResult(CodeReviewResultRequest request) {
         Map<String, String> summary = request.getReviewSummaries();
+
+        // 이미 생성된 코드리뷰가 있다면, 삭제 후 저장
+        Long projectId = request.getProjectId();
+        String featureName = request.getFeatureName();
+        Long featureId = featureItemService.findByProjectIdAndTitle(projectId, featureName).getFeatureId();
+
+        if(codeReviewRepository.existsByFeatureItem_FeatureId(featureId)) {
+            CodeReview codeReview = codeReviewRepository.findByFeatureItem_FeatureId(featureId)
+                            .orElseThrow(() -> new IllegalArgumentException(featureId + "의 코드리뷰를 찾을 수 없습니다."));
+            codeReviewRepository.delete(codeReview);
+        }
 
         CodeReview review = CodeReview.builder()
                 .featureItem(featureItemRepository.getReferenceById(request.getFeatureId()))
@@ -439,6 +451,40 @@ public class CodeReviewServiceImpl implements CodeReviewService {
                 })
                 .collect(java.util.stream.Collectors.toList());
     }
+
+    @Override
+    public List<CodeReviewItemDto> getCodeReviewItemsAll(Long projectId, String featureName) {
+        // 1) FeatureItem 찾기
+        FeatureItem featureItem = featureItemRepository
+                .findByProject_ProjectIdAndTitle(projectId, featureName)
+                .orElseThrow(() -> new IllegalArgumentException("해당 기능을 찾을 수 없습니다."));
+
+        Long featureId = featureItem.getFeatureId();
+
+        // 2) CodeReviewItem 조회
+        List<CodeReviewItem> entities = codeReviewItemRepository.findByFeatureItem_FeatureId(featureId);
+
+        // 3) DTO 변환 (category + checklist_item 기준 그룹핑)
+        Map<String, CodeReviewItemDto> grouped = new LinkedHashMap<>();
+        for (CodeReviewItem entity : entities) {
+            String key = entity.getCategory() + "::" + entity.getFeatureItemChecklist().getItem();
+            grouped.computeIfAbsent(key, k -> CodeReviewItemDto.builder()
+                    .category(entity.getCategory())
+                    .checklistItem(entity.getFeatureItemChecklist().getItem())
+                    .items(new ArrayList<>())
+                    .build()
+            ).getItems().add(
+                    ReviewItemDto.builder()
+                            .filePath(entity.getFilePath())
+                            .lineRange(entity.getLineRange())
+                            .severity(entity.getSeverity())
+                            .message(entity.getMessage())
+                            .build()
+            );
+        }
+        return new ArrayList<>(grouped.values());
+    }
+
 
 
     /** 리뷰가 없으면 null 점수로 처리 */
