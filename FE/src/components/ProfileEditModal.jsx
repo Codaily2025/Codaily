@@ -333,9 +333,9 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
     if (window.confirm('정말 회원 탈퇴하시겠습니까?')) {
       try {
         // 깃허브 연동 해제 (현재 연동되어 있는 경우에만)
-        if (githubId?.githubId) {
-          await disconnectGithubMutation.mutateAsync();
-        }
+        // if (githubId?.githubId) {
+        //   await disconnectGithubMutation.mutateAsync();
+        // }
 
         // 회원 탈퇴 API 호출
         await deleteUserMutation.mutateAsync();
