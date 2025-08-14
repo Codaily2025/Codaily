@@ -85,10 +85,8 @@ const KanbanBoard = memo(() => {
     { id: 'completed', title: 'Completed', color: '#8483AB', cards: kanbanData.completed }
   ], [kanbanData])
 
-  // 칸반 칼럼 타이틀 내 '+' 버튼 클릭
-  const handleAddCard = useCallback((columnId) => {
-    console.log(`Add kanban card to ${columnId}`)
-    
+  // 기능 추가 버튼 클릭 핸들러
+  const handleAddFeature = useCallback(() => {
     openModal('ADD_FEATURE', {
       initialData: null
     })
@@ -179,12 +177,6 @@ const KanbanBoard = memo(() => {
                   <span className={styles.kanbanColumnCount}>{column.cards.length}</span>
                   <span className={styles.kanbanColumnTitle}>{column.title}</span>
                 </div>
-                <button
-                  className={styles.kanbanAddBtn}
-                  onClick={() => handleAddCard(column.id)}
-                >
-                  +
-                </button>
               </div>
               <DropZone 
                 status={column.id === 'todo' ? 'TODO' : column.id === 'inProgress' ? 'IN_PROGRESS' : 'DONE'}
@@ -225,6 +217,15 @@ const KanbanBoard = memo(() => {
             </div>
           ))}
         </div>
+        
+        {/* 플로팅 기능 추가 버튼 */}
+        <button 
+          className={styles.floatingAddBtn}
+          onClick={handleAddFeature}
+          title="새 기능 추가"
+        >
+          +
+        </button>
       </div>
     </DndProvider>
   )
