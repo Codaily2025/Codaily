@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 
 // priorityLevel을 priority로 변환하는 헬퍼 함수
-const convertNumberToPriority  = (priorityLevel) => {
+const convertNumberToPriority = (priorityLevel) => {
   if (priorityLevel === null || priorityLevel === undefined) return 'Normal';
   if (priorityLevel < 3) return 'High';
   if (priorityLevel < 7) return 'Normal';
@@ -18,7 +18,7 @@ const initialState = {
   },
   mainFeatures: [], // { id, name, description, subTasks: [...] }
   techStack: [],
-  showSidebar: false, // 요구사항 명세서 사이드바 표시 여부
+  isSidebarVisible: false, // 요구사항 명세서 사이드바 표시 여부
   rawData: null, // 디버깅용 raw data
   projectId: null,
   specId: null,
@@ -41,13 +41,20 @@ const specInitialData = {
 
 export const useSpecificationStore = create((set, get) => ({
   ...initialState,
-  
+
+  // --- 폴링 제어 상태 ---
+  isSpecPolling: false,
+  _pollingTimer: null,
+
   // 명세서 초기화
   resetSpecification: () => set(specInitialData),
-  
+
   // 프로젝트 정보 설정
   setProjectInfo: (projectId, specId) => set({ projectId, specId }),
-  
+
+  setProjectId: (projectId) => set({ projectId }),
+  setSpecId: (specId) => set({ specId }),
+
   // 명세서 요약 정보 설정 (project:summarization)
   setProjectSummary: (summary) => set((state) => ({
     ...state,
@@ -62,7 +69,7 @@ export const useSpecificationStore = create((set, get) => ({
 
   // 명세서 전체 또는 필드 단위로 기능 추가/업데이트
   setFeatures: (features) => set({ mainFeatures: features }),
-  
+
   // 기능의 isOpen 상태 토글
   toggleFeatureOpen: (taskId) => set((state) => {
     const toggleOpen = (tasks) => {
@@ -76,16 +83,16 @@ export const useSpecificationStore = create((set, get) => ({
         return task;
       });
     };
-    
+
     return {
       mainFeatures: toggleOpen(state.mainFeatures)
     };
   }),
-  
+
   // API 응답 데이터 처리 - 모든 spec 관련 타입 처리
   processSpecData: (data) => set((state) => {
     console.log('요구사항 명세서 데이터 처리 중:', data);
-    
+
     // project:summarization 처리
     if (data.projectTitle || data.specTitle || data.projectDescription) {
       return {
@@ -100,14 +107,14 @@ export const useSpecificationStore = create((set, get) => ({
         rawData: data
       };
     }
-    
-      // spec, spec:regenerate, spec:add:field 처리
-      if (data.field && data.mainFeature && data.subFeature) {
-        // field를 최상위 기능으로, mainFeature를 subTask로, subFeature를 secondSubTask로 매핑
-        const newFeature = {
-          id: `field_${data.field}`, // field는 이름 기반 ID 사용 (DB에서 field는 이름으로 식별)
-          name: data.field, // field를 최상위 기능명으로 사용
-          description: data.field, // field를 description으로도 사용
+
+    // spec, spec:regenerate, spec:add:field 처리
+    if (data.field && data.mainFeature && data.subFeature) {
+      // field를 최상위 기능으로, mainFeature를 subTask로, subFeature를 secondSubTask로 매핑
+      const newFeature = {
+        id: `field_${data.field}`, // field는 이름 기반 ID 사용 (DB에서 field는 이름으로 식별)
+        name: data.field, // field를 최상위 기능명으로 사용
+        description: data.field, // field를 description으로도 사용
         hours: (data.mainFeature.estimatedTime || 0) + data.subFeature.reduce((sum, sub) => sum + (sub.estimatedTime || 0), 0), // 전체 시간 합계
         priority: convertNumberToPriority(data.mainFeature.priorityLevel),
         isOpen: true,
@@ -134,11 +141,11 @@ export const useSpecificationStore = create((set, get) => ({
           }
         ],
       };
-      
+
       // 기존에 같은 field명이 있는지 확인하고 있으면 업데이트, 없으면 추가
       const existingIndex = state.mainFeatures.findIndex(f => f.name === data.field);
       let newMainFeatures;
-      
+
       if (existingIndex >= 0) {
         // 기존 기능 업데이트
         newMainFeatures = [...state.mainFeatures];
@@ -147,13 +154,13 @@ export const useSpecificationStore = create((set, get) => ({
         // 새 기능 추가
         newMainFeatures = [...state.mainFeatures, newFeature];
       }
-      
-      return { 
+
+      return {
         mainFeatures: newMainFeatures,
         rawData: data // 디버깅용
       };
     }
-    
+
     // spec:add:feature:sub 처리 (상세 기능 추가)
     if (data.parentFeatureId && data.featureSaveItem) {
       const newSubFeature = {
@@ -166,7 +173,7 @@ export const useSpecificationStore = create((set, get) => ({
         isOpen: false,
         subTasks: [],
       };
-      
+
       // parentFeatureId로 해당 기능을 찾아서 subTasks에 추가
       const newMainFeatures = state.mainFeatures.map(feature => {
         // 최상위 기능에서 찾기
@@ -176,7 +183,7 @@ export const useSpecificationStore = create((set, get) => ({
             subTasks: [...feature.subTasks, newSubFeature]
           };
         }
-        
+
         // subTasks에서 찾기
         const updatedSubTasks = feature.subTasks.map(subTask => {
           if (subTask.id === data.parentFeatureId) {
@@ -187,14 +194,14 @@ export const useSpecificationStore = create((set, get) => ({
           }
           return subTask;
         });
-        
+
         return {
           ...feature,
           subTasks: updatedSubTasks
         };
       });
 
-      return { 
+      return {
         mainFeatures: newMainFeatures,
         rawData: data
       };
@@ -212,7 +219,7 @@ export const useSpecificationStore = create((set, get) => ({
         isOpen: false,
         subTasks: [],
       };
-      
+
       // field 이름으로 해당 필드를 찾아서 subTasks에 추가
       const newMainFeatures = state.mainFeatures.map(feature => {
         if (feature.name === data.field) {
@@ -224,12 +231,12 @@ export const useSpecificationStore = create((set, get) => ({
         return feature;
       });
 
-      return { 
+      return {
         mainFeatures: newMainFeatures,
         rawData: data
       };
     }
-    
+
     return { ...state, rawData: data };
   }),
 
@@ -248,16 +255,9 @@ export const useSpecificationStore = create((set, get) => ({
     }
   })),
 
-  // 사이드바 표시/숨김 제어
-  showSidebar: () => {
-    console.log('showSidebar 함수 호출됨');
-    set({ showSidebar: true });
-  },
-  hideSidebar: () => {
-    console.log('hideSidebar 함수 호출됨');
-    set({ showSidebar: false });
-  },
-  toggleSidebar: () => set((state) => ({ showSidebar: !state.showSidebar })),
+  openSidebar: () => set({ isSidebarVisible: true }),
+  closeSidebar: () => set({ isSidebarVisible: false }),
+  toggleSidebar: () => set((s) => ({ isSidebarVisible: !s.isSidebarVisible })),
 
   // 디버깅용: 현재 명세서 상태 출력
   debugPrintSpecification: () => {
@@ -295,7 +295,7 @@ export const useSpecificationStore = create((set, get) => ({
   // 필드 이름 기반으로 주 기능 추가 (필드 안의 subTasks에 추가)
   addMainFeatureToField: (fieldName, featureData) => set((state) => {
     console.log('addMainFeatureToField 호출됨:', { fieldName, featureData });
-    
+
     const newSubFeature = {
       id: featureData.id || Date.now(), // API 응답에서 받은 featureId 사용
       name: featureData.title,
@@ -331,7 +331,7 @@ export const useSpecificationStore = create((set, get) => ({
   // 수동으로 상세 기능 추가, 페이지에서는 secondSubTask로 추가
   addSubFeatureManually: (parentFeatureId, featureData) => set((state) => {
     console.log('addSubFeatureManually 호출됨:', { parentFeatureId, featureData });
-    
+
     const newSubFeature = {
       id: featureData.id || Date.now(), // API 응답에서 받은 featureId 사용
       name: featureData.title,
@@ -355,14 +355,14 @@ export const useSpecificationStore = create((set, get) => ({
             subTasks: [...feature.subTasks, newSubFeature]
           };
         }
-        
+
         if (feature.subTasks && feature.subTasks.length > 0) {
           return {
             ...feature,
             subTasks: addToFeature(feature.subTasks, targetId)
           };
         }
-        
+
         return feature;
       });
     };
@@ -382,14 +382,14 @@ export const useSpecificationStore = create((set, get) => ({
         if (feature.id === tempId) {
           return { ...feature, id: realId };
         }
-        
+
         if (feature.subTasks && feature.subTasks.length > 0) {
           return {
             ...feature,
             subTasks: updateIdRecursive(feature.subTasks)
           };
         }
-        
+
         return feature;
       });
     };
@@ -402,13 +402,13 @@ export const useSpecificationStore = create((set, get) => ({
   // 특정 기능을 ID로 찾기 (부모-자식 관계 확인용)
   findFeatureById: (featureId) => {
     const state = get();
-    
+
     const searchFeature = (features, targetId, parentId = null) => {
       for (const feature of features) {
         if (feature.id === targetId) {
           return { feature, parentId };
         }
-        
+
         if (feature.subTasks && feature.subTasks.length > 0) {
           const result = searchFeature(feature.subTasks, targetId, feature.id);
           if (result) {
@@ -430,27 +430,27 @@ export const useSpecificationStore = create((set, get) => ({
           return {
             ...feature,
             checked: newChecked,
-            subTasks: feature.subTasks?.map(st => ({ 
-              ...st, 
-              checked: newChecked, 
-              subTasks: st.subTasks ? st.subTasks.map(sst => ({ ...sst, checked: newChecked })) : [] 
+            subTasks: feature.subTasks?.map(st => ({
+              ...st,
+              checked: newChecked,
+              subTasks: st.subTasks ? st.subTasks.map(sst => ({ ...sst, checked: newChecked })) : []
             })) ?? []
           };
         }
-        
+
         if (feature.subTasks && feature.subTasks.length > 0) {
           return {
             ...feature,
             subTasks: updateFeatureRecursive(feature.subTasks)
           };
         }
-        
+
         return feature;
       });
     };
 
     const updatedFeatures = updateFeatureRecursive(state.mainFeatures);
-    
+
     // 부모 체크 상태 업데이트 (모든 자식이 체크되어야 부모도 체크)
     const updateParents = (features) => {
       return features.map(feature => {
@@ -478,5 +478,24 @@ export const useSpecificationStore = create((set, get) => ({
   getSpecificationCount: () => {
     const state = get();
     return state.mainFeatures ? state.mainFeatures.length : 0;
+  },
+
+  // --- 폴링 제어 함수 ---
+  startSpecPolling: (ms = 20000) => {
+    const { _pollingTimer } = get();
+    if (_pollingTimer) clearTimeout(_pollingTimer);
+    const timer = setTimeout(() => {
+      set({ isSpecPolling: false, _pollingTimer: null });
+    }, ms);
+    set({ isSpecPolling: true, _pollingTimer: timer });
+  },
+  extendSpecPolling: (ms = 20000) => {
+    // 실행 중이면 남은 시간을 리셋(연장)
+    get().startSpecPolling(ms);
+  },
+  stopSpecPolling: () => {
+    const { _pollingTimer } = get();
+    if (_pollingTimer) clearTimeout(_pollingTimer);
+    set({ isSpecPolling: false, _pollingTimer: null });
   },
 }));
