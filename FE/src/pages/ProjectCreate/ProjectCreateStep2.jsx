@@ -110,7 +110,10 @@ const ProjectCreateStep2 = () => {
       return;
     }
     // setIsSplitView(true); // 수동으로 분할 화면 활성화
-    navigate('/project/create/step4')
+    // navigate('/project/create/step4')
+
+    // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
+    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)       
   };
 
   const {

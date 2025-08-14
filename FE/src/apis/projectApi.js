@@ -103,3 +103,29 @@ export const addFeaturesManually = async (projectId, formData) => {
         throw new Error(error.response?.data?.message || '수동 기능 추가에 실패했습니다.')
     }
 }
+
+// 프로젝트 초기 일정 설정
+export const createProjectInitialSchedule = async (projectId) => {
+    try {
+        // projects/{projectId}/features/schedule
+        const url = `projects/${projectId}/features/schedule`
+        const response = await authInstance.post(url)
+        return response.data
+    } catch (error) {
+        console.error('addFeaturesManually Error: ', error)
+        throw new Error(error.response?.data?.message || '수동 기능 추가에 실패했습니다.')
+    }
+}
+
+// 프로젝트 생성 시 체크리스트 생성
+export const createCheckList = async (projectId) => {
+    try {
+        // feature-checklist/{projectId}/generate
+        const url = `feature-checklist/${projectId}/generate`
+        const response = await authInstance.get(url)
+        return response.data
+    } catch (error) {
+        console.error('addFeaturesManually Error: ', error)
+        throw new Error(error.response?.data?.message || '수동 기능 추가에 실패했습니다.')
+    }
+}
