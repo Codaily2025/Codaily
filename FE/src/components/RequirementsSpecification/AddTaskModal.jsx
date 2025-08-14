@@ -147,7 +147,9 @@ const AddTaskModal = ({
             <span className={styles.parentTaskLabel}>
               {taskType === 'main' ? '필드:' : '상위 작업:'}
             </span>
-            <span className={styles.parentTaskName}>{parentTask.name}</span>
+            <span className={styles.parentTaskName}>
+              {taskType === 'main' ? parentTask.field : parentTask.name}
+            </span>
           </div>
         )}
 
