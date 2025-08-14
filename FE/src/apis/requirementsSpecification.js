@@ -42,12 +42,13 @@ export async function toggleReduceFlag(projectId, field, featureId, isReduced) {
             params.featureId = featureId;
         }
         console.log('프로젝트 체크박스 토글 패치 요청:', params, requestData);
-        // console.log('요청 URL:', url);
-        // console.log('요청 파라미터:', params);
-        // console.log('요청 본문:', requestData);
+        console.log('요청 URL:', url);
+        console.log('요청 파라미터:', params);
+        console.log('요청 본문:', requestData);
         const response = await authInstance.patch(url, requestData, {
             params: params
         });
+        console.log('API 응답:', response);
         
         return response.data;
     } catch (error) {
@@ -56,6 +57,19 @@ export async function toggleReduceFlag(projectId, field, featureId, isReduced) {
     }
 }
 
+// 요구사항 명세서 조회 API
+// /api/projects/{projectId}/spec
+export async function fetchSpec(projectId) {
+    try {
+        // console.log('요구사항 명세서 조회 api에서 받은 projectId:', projectId)
+        const response = await authInstance.get(`projects/${projectId}/spec`);
+        // console.log('요구사항 명세서 조회 응답:', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('요구사항 명세서 조회 실패:', error);
+        throw error;
+    }
+}
 
 
 
