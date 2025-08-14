@@ -22,8 +22,8 @@ public class ChatServiceImpl implements ChatService {
     private final WebClient langchainWebClient;
     private final FeatureItemService featureItemService;
 
-    public Flux<String> streamChat(String intent, Long projectId, String message, Long featureId, String field) {
-        log.info("streamChat param: {}, {}, {}, {}, {}",intent, projectId, message,featureId, field);
+    public Flux<String> streamChat(String intent, Long projectId, String message, Long featureId, String field, Integer time) {
+        log.info("streamChat param: {}, {}, {}, {}, {}, {}",intent, projectId, message,featureId, field, time);
         return langchainWebClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder
@@ -31,7 +31,8 @@ public class ChatServiceImpl implements ChatService {
                             .queryParam("intent", intent)
                             .queryParam("project_id", projectId)
                             .queryParam("message", message)
-                            .queryParam("field", field);
+                            .queryParam("field", field)
+                            .queryParam("time", time);
 
                     if (featureId != null) {
                         uriBuilder.queryParam("feature_id", featureId);
