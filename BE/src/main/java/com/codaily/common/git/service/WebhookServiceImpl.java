@@ -4,9 +4,12 @@ import com.codaily.auth.service.UserService;
 import com.codaily.codereview.dto.*;
 import com.codaily.codereview.entity.ChangeType;
 import com.codaily.codereview.entity.CodeCommit;
+import com.codaily.codereview.entity.CodeReviewItem;
 import com.codaily.codereview.repository.CodeCommitRepository;
+import com.codaily.codereview.repository.CodeReviewItemRepository;
 import com.codaily.common.git.WebhookPayload;
 import com.codaily.project.entity.FeatureItem;
+import com.codaily.project.entity.Project;
 import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepositoriesRepository;
@@ -15,6 +18,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.apache.bcel.classfile.Code;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -47,7 +51,8 @@ public class WebhookServiceImpl implements WebhookService {
     private final WebClient githubWebClient;
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepositoriesService projectRepositoriesService;
-
+    private final CodeReviewItemRepository codeReviewItemRepository;
+    record Key(String category, String checklistItem) {}
 
 
     @Value("${github.api-url}")
@@ -78,7 +83,7 @@ public class WebhookServiceImpl implements WebhookService {
             ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repo);
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
-                            .author(commit.getAuthor().getName())
+                            .author(payload.getSender().getLogin())
                             .project(repositories.getProject())
                             .message(commit.getMessage())
                             .committedAt(LocalDateTime.parse(commit.getTimestamp())).build();
@@ -169,7 +174,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .commitMessage(commitMessage)
                 .diffFiles(diffFiles)
                 .availableFeatures(availableFeatures)
-                .jwtToken(userService.getGithubAccessToken(userId))
+                .accessToken(userService.getGithubAccessToken(userId))
                 .commitInfoDto(commitInfoDto)
                 .forceDone(false)
                 .build();
@@ -180,9 +185,60 @@ public class WebhookServiceImpl implements WebhookService {
                 .bodyValue(requestDto)
                 .retrieve()
                 .toBodilessEntity()
-                .doOnSuccess(res -> log.info("✅ Python 서버로 diffFiles 전송 성공"))
+                .doOnSuccess(res -> log.info("Python 서버로 diffFiles 전송 성공"))
                 .doOnError(error -> log.error("전송 실패", error))
-                .subscribe(); // ✅ 비동기 실행 (subscribe 없으면 실행 안됨)
+                .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
+    }
+
+    @Override
+    public void sendManualCompleteToPython(Long projectId, Long userId, Long featureId) {
+        WebClient webClient = WebClient.builder()
+                .baseUrl(aiUrl) // Python 서버 전용
+                .build();
+        FeatureItem featureItem = featureItemRepository.getFeatureItemByFeatureId(featureId);
+
+        // 그냥 코드리뷰아이템들 불러와서 요약만 요청하는 걸로
+        List<CodeReviewItemDto> codeReviewItems =
+                codeReviewItemRepository.findByFeatureItem_FeatureId(featureId)
+                        .stream()
+                        // (선택) NPE 방지: checklist 없으면 스킵
+                        .filter(cri -> cri.getFeatureItemChecklist() != null)
+                        // 1) 카테고리 + 체크리스트 아이템으로 그룹핑
+                        .collect(Collectors.groupingBy(
+                                cri -> new Key(cri.getCategory(), cri.getFeatureItemChecklist().getItem()),
+                                // 2) 각 그룹에 ReviewItemDto 리스트로 매핑
+                                Collectors.mapping(
+                                        cri -> new ReviewItemDto(
+                                                cri.getFilePath(),
+                                                cri.getLineRange(),
+                                                cri.getSeverity(),
+                                                cri.getMessage()
+                                        ),
+                                        Collectors.toList()
+                                )
+                        ))
+                        // 3) 그룹 → CodeReviewItemDto로 변환
+                        .entrySet().stream()
+                        .map(e -> CodeReviewItemDto.builder()
+                                .category(e.getKey().category())
+                                .checklistItem(e.getKey().checklistItem())
+                                .items(e.getValue())
+                                .build()
+                        )
+                        .toList();
+
+        ManualCodeReviewRequestDto requestDto = ManualCodeReviewRequestDto.builder()
+                .projectId(projectId).featureName(featureItem.getTitle()).items(codeReviewItems).build();
+
+        webClient.post()
+                .uri("ai/api/code-review/feature-inference")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .retrieve()
+                .toBodilessEntity()
+                .doOnSuccess(res -> log.info(" Python 서버로 코드리뷰 요청 전송 성공"))
+                .doOnError(error -> log.error("전송 실패", error))
+                .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
     }
 
     @Override
@@ -307,7 +363,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .commitMessage("feat: user 클래스 만드는 중")
                 .diffFiles(getDiffFilesFromCommitTest("https://api.github.com/repos/codailyTest/codailyTest/commits/1b49de6aed12f7ea2fb354333f442dcd64643144", "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"))
                 .availableFeatures(availableFeatures)
-                .jwtToken("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")
+                .accessToken("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")
                 .commitInfoDto(CommitInfoDto.builder().repoName("codailyTest").repoOwner("codailyTest").build())
                 .build();
 

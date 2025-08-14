@@ -85,6 +85,12 @@ public class CodeReviewServiceImpl implements CodeReviewService {
             featureItem.getParentFeature().setStatus("DONE");
         }
 
+        // 코드리뷰 주입
+        List<CodeReviewItem> codeReviewItems = codeReviewItemRepository.findByFeatureItem_FeatureId(featureId);
+        for(CodeReviewItem item : codeReviewItems) {
+            item.addCodeReview(review);
+        }
+
     }
 
     // 체크리스트 항목 코드리뷰 저장
@@ -167,12 +173,14 @@ public class CodeReviewServiceImpl implements CodeReviewService {
     @Override
     public void saveFeatureName(Long projectId, String featureName, Long commitId) {
         CodeCommit commit = codeCommitService.findById(commitId);
-
+        log.info(commitId + " 에 저장 중");
             if(!commit.getFeatureNames().contains(featureName)) {
+                log.info(featureName + " 에 해당하는 기능명 아직 없음");
                 commit.addFeatureName(featureName);
 
                 FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
                 commit.addFeatureItem(featureItem);
+                log.info(commit.getFeatureItem().getFeatureId() + " db 에 기능명 저장 완료");
             }
     }
 

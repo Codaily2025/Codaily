@@ -20,6 +20,9 @@ public interface WebhookService {
                                       CommitInfoDto commitInfoDto,
                                       String commitBranch);
 
+    public void sendManualCompleteToPython(Long projectId, Long userId,
+                                           Long featureId);
+
     public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName);
     public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths, String repoOwner, String repoName);
 

@@ -13,6 +13,7 @@ import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.parameters.P;
@@ -52,38 +53,26 @@ public class CodeReviewController {
 
     // 코드리뷰 아이템 전달
     @GetMapping("/project/{projectId}/feature")
-    public ResponseEntity<List<CodeReviewItemDto>> getALlCodeReviewItems(@PathVariable Long projectId, @RequestParam String featureName) {
+    public ResponseEntity<List<CodeReviewItemDto>> getALlCodeReviewItems(
+            @PathVariable Long projectId,
+            @RequestParam String featureName
+    ) {
         FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
-        if(featureItem == null) {
-            return ResponseEntity.noContent().build();
+        if (featureItem == null) {
+            // 204 대신 200 + 빈 배열
+            return ResponseEntity.ok(java.util.Collections.emptyList());
         }
-        List<CodeReviewItemDto> codeReviewItems = codeReviewService.getCodeReviewItemsAll(projectId, featureName);
+
+        List<CodeReviewItemDto> codeReviewItems =
+                codeReviewService.getCodeReviewItemsAll(projectId, featureName);
+
+        // NPE 방지: null이면 빈 배열로
+        if (codeReviewItems == null) {
+            codeReviewItems = java.util.Collections.emptyList();
+        }
+
         return ResponseEntity.ok(codeReviewItems);
     }
-
-
-//    @PostMapping("/project/{projectId}/commit/{commitHash}/files")
-//    @Operation(summary = "백엔드용")
-//    public List<FullFileDto> getFullFilesByPaths(@PathVariable Long projectId, @PathVariable String commitHash,
-//                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto,
-//                                                 @AuthenticationPrincipal PrincipalDetails userDetails){
-//        List<String> paths = fileFetchRequestDto.getFilePaths();
-//        String repoName = fileFetchRequestDto.getRepoName();
-//        String repoOwner = fileFetchRequestDto.getRepoOwner();
-//
-//        Project project = projectService.findById(projectId);
-//        Long userId = project.getUser().getUserId();
-//        Long loginUserId = userDetails.getUser().getUserId();
-//
-//        if(userId != loginUserId) {
-//            log.info("해당 프로젝트에 접근할 권한이 없습니다.");
-//        }
-//        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
-//
-//        return fullFiles.stream()
-//                .map(file -> new FullFileDto(file.getFilePath(), file.getContent()))
-//                .collect(Collectors.toList());
-//    }
 
     @PostMapping("/project/{projectId}/commit/{commitHash}/files")
     @Operation(summary = "백엔드용")
@@ -126,6 +115,15 @@ public class CodeReviewController {
         return ref;
     }
 
+    @PostMapping("/feature-inference")
+    public ResponseEntity<?> requestCodeReviewToPython(@RequestBody ManualCompleteFeatureInferenceRequestDto request) {
+        if(projectService.isProjectOwner(request.getProjectId(), request.getUserId())) {
+            log.error("본인의 프로젝트만 구현 완료할 수 있습니다.");
+            return ResponseEntity.noContent().build();
+        }
+        webhookService.sendManualCompleteToPython(request.getProjectId(), request.getUserId(), request.getFeatureId());
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping("/result")
     @Operation(summary = "백엔드용")
@@ -155,7 +153,7 @@ public class CodeReviewController {
             log.info("체크리스트 코드 리뷰 저장 시도 완료");
         }
 
-        if (request.getReviewSummaries() != null) {
+        if (request.getReviewSummaries() != null && !request.getReviewSummaries().isEmpty()) {
             codeReviewService.saveCodeReviewResult(request);
             log.info("기능 구현 완료 -> 코드 리뷰(CodeReview) 생성");
         }

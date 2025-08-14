@@ -26,24 +26,24 @@ def create_feature_graph():
     # ── 시작 노드 ─────────────────────────────────────────────
     builder.set_entry_point("run_checklist_fetch")
     builder.add_edge("run_checklist_fetch", "run_feature_implementation_check")
+    builder.add_edge("run_feature_implementation_check", "apply_checklist_evaluation")
 
     # ── 분기 1: 구현 체크 결과에 따른 요약 직행 vs 세부 코드리뷰 ──
     # state["go_summary"] 가 True → 바로 요약 노드로
     # False → 체크리스트 평가 적용 → 파일 매핑 → 코드리뷰
-    def route_after_impl_check(state: CodeReviewState) -> str:
-        return "to_summary" if bool(state.get("go_summary")) else "to_detail"
+    def route_after_checklist_apply(state: CodeReviewState) -> str:
+        return "to_summary" if bool(state.get("no_code_review_file_patch")) else "to_detail"
 
     builder.add_conditional_edges(
-        "run_feature_implementation_check",
-        route_after_impl_check,
+        "apply_checklist_evaluation",
+        route_after_checklist_apply,
         {
             "to_summary": "run_code_review_summary",
-            "to_detail": "apply_checklist_evaluation",
+            "to_detail": "run_code_review_file_fetch",
         },
     )
 
     # 세부 리뷰 경로
-    builder.add_edge("apply_checklist_evaluation", "run_code_review_file_fetch")
     builder.add_edge("run_code_review_file_fetch", "run_feature_code_review")
 
     # ── 분기 2: 세부 리뷰 이후 최종 요약 여부 ──────────────────

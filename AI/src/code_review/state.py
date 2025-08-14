@@ -1,6 +1,7 @@
 # src/code_review/state_schema.py
 from typing import TypedDict, List, Dict, Optional, Any, Annotated
 from pydantic import BaseModel
+from .code_review_schema import CodeReviewItem
 
 
 class CommitInfoDict(TypedDict, total=False):
@@ -29,7 +30,7 @@ def prefer_non_null(old, new):
 
 class CodeReviewState(TypedDict, total=False):
     # 인증
-    jwt_token: Optional[str]
+    access_token: Optional[str]
 
     # 자바 → 파이썬 입력
     project_id: Optional[int]
@@ -65,6 +66,7 @@ class CodeReviewState(TypedDict, total=False):
     checklist_evaluation: Dict[str, bool]        # {"항목명": true/false}
     extra_implemented: List[str]
     checklist_file_map: Dict[str, List[str]]     # {"항목명": ["a.java","b.java"]}
+    no_code_review_file_patch: bool
 
     # 코드리뷰 결과
     review_files: Annotated[List[Dict[str, Any]], prefer_non_empty]
@@ -72,3 +74,10 @@ class CodeReviewState(TypedDict, total=False):
     review_summaries: Dict[str, str]
     code_review_items: List[Dict[str, Any]]
     code_review_items_java: List[Dict[str, Any]]
+
+# 임의 코드리뷰 요청
+class ManualSummaryState(TypedDict):
+    project_id: int
+    feature_name: str
+    items: List[CodeReviewItem]
+    summary: str    

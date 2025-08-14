@@ -1,7 +1,8 @@
 import re, json
 from fastapi import APIRouter, HTTPException, Depends, Request
-from .code_review_schema import FeatureInferenceRequest
-from .state import CodeReviewState
+from .code_review_schema import FeatureInferenceRequest, ManualCodeReviewRequest
+from .state import CodeReviewState, ManualSummaryState
+from .graph.nodes import run_code_review_summary
 from .code_review_graph import code_review_graph
 from fastapi.encoders import jsonable_encoder
 
@@ -92,13 +93,11 @@ async def start_feature_inference(
         "commit_hash": req.commit_hash,
         "commit_message": req.commit_message,
         "available_features": req.available_features,
-        "jwt_token": req.jwt_token,
+        "access_token": req.access_token,
         "diff_files": [df.dict() for df in req.diff_files],
-        "commit_info": req.commit_info.dict() if req.commit_info else None,
-        "commit_branch": req.commit_branch,
-        "force_done": bool(req.force_done),
         "commit_info": req.commit_info.dict() if req.commit_info else {},
-
+        "commit_branch": req.commit_branch,
+        "force_done": bool(req.force_done)
     }
 
     initial_state = jsonable_encoder(state)
@@ -107,4 +106,20 @@ async def start_feature_inference(
     return {
         "status": "ok",
         "diff_files": jsonable_encoder(final_state.get("diff_files", [])),
+    }
+
+
+@router.post("/code-review/manual")
+async def run_manual_summary(req: ManualCodeReviewRequest):
+    # run_code_review_summary에서 쓰는 필드 맞춰서 state 구성
+    state: CodeReviewState = {
+        "feature_name": req.feature_name,
+        "code_review_items": [i.model_dump() for i in req.items],  # ★ dict로 변환
+        "code_review_items_java": [],    # 없으니 빈 리스트
+    }
+
+    final_state = await run_code_review_summary(state)
+    return {
+        "summary": final_state.get("review_summaries"),
+        "quality_score": final_state.get("quality_score", 0)
     }

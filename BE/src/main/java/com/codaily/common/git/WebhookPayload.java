@@ -15,6 +15,8 @@ public class WebhookPayload {
     private String after;
     private Repository repository;
     private List<Commit> commits;
+    private Pusher pusher;
+    private Sender sender;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -43,5 +45,23 @@ public class WebhookPayload {
         private String name;
         private String email;
     }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Pusher {
+        private String name;           // 일반적으로 깃허브 username (push 이벤트 전송 주체)
+        private String email;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Sender {
+        private String login;          // 깃허브 username (가장 신뢰)
+        private Long id;
+        private String avatar_url;
+        private String html_url;
+    }
+
+
 }
 

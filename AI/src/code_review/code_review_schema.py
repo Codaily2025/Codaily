@@ -60,7 +60,7 @@ class FeatureInferenceRequest(BaseModel):
     commit_message: str = ""
     diff_files: List[DiffFile] = []
     available_features: List[str]
-    jwt_token: str
+    access_token: str
     commit_info: Optional[CommitInfo] = Field(
         default=None,
         validation_alias=AliasChoices("commit_info", "commitInfo"),
@@ -74,8 +74,13 @@ class ReviewItem(BaseModel):
     line_range: str
     severity: str
     message: str
-    
+
 class CodeReviewItem(BaseModel):
     category: str
     checklist_item: str
     items: List[ReviewItem]
+
+class ManualCodeReviewRequest(BaseModel):
+    project_id: int
+    feature_name: str
+    items: List[CodeReviewItem]

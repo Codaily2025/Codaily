@@ -40,7 +40,7 @@ public class CodeReviewItem {
     @JoinColumn(name = "feature_id")
     private FeatureItem featureItem;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_id")
     private CodeReview codeReview;
 
@@ -61,5 +61,9 @@ public class CodeReviewItem {
                 .severity(severity)
                 .message(message)
                 .build();
+    }
+
+    public void addCodeReview(CodeReview codeReview) {
+        this.codeReview = codeReview;
     }
 }
