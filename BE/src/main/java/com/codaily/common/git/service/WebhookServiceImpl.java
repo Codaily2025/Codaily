@@ -81,12 +81,6 @@ public class WebhookServiceImpl implements WebhookService {
             log.info("수정된 파일: {}", commit.getModified());
             log.info("삭제된 파일: {}", commit.getRemoved());
 
-            List<DiffFile> diffFiles = getDiffFilesFromCommit(commit,accessToken);
-
-            if(diffFiles.isEmpty()) {
-                log.info("변경된 파일이 없습니다. 코드리뷰를 생략합니다.");
-                continue;
-            }
             ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repo);
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
@@ -106,20 +100,32 @@ public class WebhookServiceImpl implements WebhookService {
 
             Long projectId = repositories.getProject().getProjectId();
 
+            List<DiffFile> diffFiles = getDiffFilesFromCommit(repoOwner, repoName, commit.getId(), accessToken);
+
+            if(diffFiles.isEmpty()) {
+                log.info("변경된 파일이 없습니다. 코드리뷰를 생략합니다.");
+                continue;
+            }
+
             sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId, commitInfoDto, commitBranch);
         }
     }
 
     @Override
-    public List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken) {
-        String commitUrl = commit.getUrl();
-        HttpHeaders headers = new HttpHeaders();
+    public List<DiffFile> getDiffFilesFromCommit(String repoOwner, String repoName, String commitHash, String accessToken) {
+        String apiUrl = String.format(
+                "https://api.github.com/repos/%s/%s/commits/%s",
+                repoOwner, repoName, commitHash
+        );        HttpHeaders headers = new HttpHeaders();
+        log.info("Webhook commit.url = {}", apiUrl);
+
         headers.set("Authorization", "token " + accessToken);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.set("Accept", "application/vnd.github+json");
+        headers.set("User-Agent", "codaily-bot");
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<JsonNode> response = restTemplate.exchange(commitUrl, HttpMethod.GET, entity, JsonNode.class);
+        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, JsonNode.class);
 
         List<DiffFile> diffFiles = new ArrayList<>();
 
@@ -252,7 +258,7 @@ public class WebhookServiceImpl implements WebhookService {
 
     @Override
     public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName) {
-        String token = userRepository.findById(userId)
+        String accessToken = userRepository.findById(userId)
                 .map(User::getGithubAccessToken)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
 
@@ -260,7 +266,7 @@ public class WebhookServiceImpl implements WebhookService {
         Mono<Map<String, Object>> responseMono = githubWebClient.get()
                 .uri(commitUrl)
                 .headers(h -> {
-                    h.setBearerAuth(token);
+                    h.set("Authorization", "token " + accessToken);
                     h.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
                 })
                 .retrieve()
@@ -279,7 +285,7 @@ public class WebhookServiceImpl implements WebhookService {
             String content = githubWebClient.get()
                     .uri(contentUrl)
                     .headers(h -> {
-                        h.setBearerAuth(token);
+                        h.set("Authorization", "token " + accessToken);
                         h.set(HttpHeaders.ACCEPT, "application/vnd.github.v3.raw");
                     })
                     .retrieve()
