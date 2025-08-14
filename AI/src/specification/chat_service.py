@@ -196,7 +196,7 @@ async def add_main_feature(
             "sub_feature": sub_features,
         },
     }
-    print("wrapper: ", wrapper)
+    # print("wrapper: ", wrapper)
     yield f"data: {json.dumps(wrapper, ensure_ascii=False)}\n\n"
     history.add_ai_message(f"주 기능이 생성되었습니다: {main_feature['title']}")
 

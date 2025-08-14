@@ -62,7 +62,17 @@ async def chat_stream(
                 media_type="text/event-stream",
             )
 
-        case ChatIntent.SPEC | ChatIntent.SPEC_REGENERATE:
+        case ChatIntent.SPEC:
+            formatted_text = format_history_to_text(history.messages)
+            return StreamingResponse(
+                gen_spec(formatted_text=formatted_text, wrapper_type=intent, time=time),
+                media_type="text/event-stream",
+            )
+
+        case ChatIntent.SPEC_REGENERATE:
+            user_histories[project_id] = ChatMessageHistory()
+            history = user_histories.setdefault(project_id, ChatMessageHistory())
+            history.add_user_message(message)
             formatted_text = format_history_to_text(history.messages)
             return StreamingResponse(
                 gen_spec(formatted_text=formatted_text, wrapper_type=intent, time=time),
