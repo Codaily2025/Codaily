@@ -39,10 +39,10 @@ const ProjectCalendar = () => {
   } = useProjectScheduleByMonth(projectId, currentYear.toString(), currentMonth.toString())
 
   // API 데이터를 FullCalendar events 형식으로 변환
-  console.log(`원본 schedules 데이터: `, schedules)
+  // console.log(`원본 schedules 데이터: `, schedules)
   const events = transformSchedulesToEvents(schedules)
-  console.log(`Fullcalendar events 형식으로 변환: `, events)
-  console.log(`events 타입: `, typeof events, `isArray: `, Array.isArray(events))
+  // console.log(`Fullcalendar events 형식으로 변환: `, events)
+  // console.log(`events 타입: `, typeof events, `isArray: `, Array.isArray(events))
   
   // 날짜별 이벤트 그룹핑 (dot 표시 및 툴팁용)
   const eventsByDate = {}
@@ -67,7 +67,7 @@ const ProjectCalendar = () => {
     })
   }
   
-  console.log(`날짜별 이벤트 그룹핑: `, eventsByDate)
+  // console.log(`날짜별 이벤트 그룹핑: `, eventsByDate)
 
   // 달력 렌더링 후 커스텀 dot 추가 및 이벤트 핸들러 설정
   useEffect(() => {
@@ -77,7 +77,7 @@ const ProjectCalendar = () => {
       const calendarEl = calendarRef.current.elRef.current
       if (!calendarEl) return
 
-      console.log('Adding dots for dates:', Object.keys(eventsByDate))
+      // console.log('Adding dots for dates:', Object.keys(eventsByDate))
 
       // 기존 dot들과 이벤트 리스너 제거
       const existingDots = calendarEl.querySelectorAll('.event-dot')
@@ -86,7 +86,7 @@ const ProjectCalendar = () => {
       // 각 날짜 셀에 dot 추가
       Object.keys(eventsByDate).forEach(dateKey => {
         const dayEl = calendarEl.querySelector(`[data-date="${dateKey}"]`)
-        console.log(`Looking for date ${dateKey}, found element:`, dayEl)
+        // console.log(`Looking for date ${dateKey}, found element:`, dayEl)
         
         if (dayEl) {
           // 날짜 번호 요소를 찾아서 그 부모에 dot 추가
@@ -113,7 +113,7 @@ const ProjectCalendar = () => {
               z-index: 2;
             `
             dayNumberEl.appendChild(dot)
-            console.log(`Added dot to ${dateKey}`)
+            // console.log(`Added dot to ${dateKey}`)
           }
         }
       })

@@ -15,7 +15,7 @@ const STALE_TIME = 60 * 60 * 1000
 
 // API 응답 데이터를 FullCalendar events 형식으로 변환
 export const transformSchedulesToEvents = (schedules) => {
-    console.log(`transformSchedulesToEvents 호출, schedules: `, schedules)
+    // console.log(`transformSchedulesToEvents 호출, schedules: `, schedules)
     if (!schedules) return []
     
     return schedules.events?.map(event => ({

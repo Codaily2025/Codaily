@@ -5,12 +5,12 @@ import KanbanCard from '@/components/molecules/KanbanCard'
 import KanbanTabs from '@/components/molecules/KanbanTabs'
 import useModalStore from '@/store/modalStore'
 import useProjectStore from '@/stores/projectStore'
-import { useKanbanTabFields, useFeaturesByField, useUpdateFeatureItemStatus } from '@/hooks/useProjects'
+import { useKanbanTabFields, useFeaturesByField, useUpdateFeatureItemStatus, useParentFeatures } from '@/hooks/useProjects'
 import styles from './KanbanBoard.module.css'
 
 const KanbanBoard = memo(() => {
   const { openModal } = useModalStore()
-  const { currentProject } = useProjectStore()
+  const { currentProject, setParentFeatures } = useProjectStore()
   const updateStatusMutation = useUpdateFeatureItemStatus()
 
   // currentProject에서 projectId 추출
@@ -33,12 +33,26 @@ const KanbanBoard = memo(() => {
     error: featuresByFieldError
   } = useFeaturesByField(projectId, activeTab)
 
+  // currentProject의 최상단(부모) 기능 리스트
+  const {
+    data: parentFeaturesList,
+    isLoading: isParentFeatureLoading,
+    error: parentFeaturesError
+  } = useParentFeatures(projectId)
+
   // 첫 번째 탭을 기본으로 설정
   React.useEffect(() => {
     if (kanbanTabFields && kanbanTabFields.length > 0 && !activeTab) {
       setActiveTab(kanbanTabFields[0])
     }
   }, [kanbanTabFields, activeTab])
+
+  // parentFeaturesList를 스토어에 저장
+  React.useEffect(() => {
+    if (parentFeaturesList) {
+      setParentFeatures(parentFeaturesList.parentFeatures)
+    }
+  }, [parentFeaturesList, setParentFeatures])
 
   // 콘솔 디버깅 (필요시 주석 해제)
   // console.log('KanbanBoard - projectId (extracted):', projectId)
@@ -74,7 +88,11 @@ const KanbanBoard = memo(() => {
   // 칸반 칼럼 타이틀 내 '+' 버튼 클릭
   const handleAddCard = useCallback((columnId) => {
     console.log(`Add kanban card to ${columnId}`)
-  }, [])
+    
+    openModal('ADD_FEATURE', {
+      initialData: null
+    })
+  }, [openModal])
 
   // 탭 변경 핸들러
   const handleTabChange = useCallback((tab) => {
