@@ -230,14 +230,15 @@ const ProjectCreateStep2 = () => {
       // 확정 처리 실행
       await handleFinalizeSpecification();
       
-      // 확정 성공 시 다음 단계로 이동
-      navigate('/project/create/step4');
-      
-    } catch (error) {
-      console.error('요구사항 명세서 확정 실패:', error);
-      alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
-    }
-  };
+    // 확정 성공 시 다음 단계로 이동
+    // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
+    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)
+    
+  } catch (error) {
+    console.error('요구사항 명세서 확정 실패:', error);
+    alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
+};
 
   const {
     data: specData,
