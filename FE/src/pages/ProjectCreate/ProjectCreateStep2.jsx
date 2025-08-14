@@ -108,7 +108,7 @@ const ProjectCreateStep2 = () => {
       return;
     }
     // setIsSplitView(true); // 수동으로 분할 화면 활성화
-    navigate('/project/create/step4')
+    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)
   };
 
   // projectId나 specId가 없으면 로딩 표시
