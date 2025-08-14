@@ -71,5 +71,22 @@ export async function fetchSpec(projectId) {
     }
 }
 
+export const finalizeSpecification = async (projectId) => {
+  try {
+    console.log('요구사항 명세서 확정 요청:', { projectId });
+    console.log('백엔드에서 isReduced=true인 모든 기능을 삭제합니다.');
+    
+    const response = await authInstance.post(
+      `projects/${projectId}/specification/finalize`
+    );
+    
+    console.log('요구사항 명세서 확정 응답:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('요구사항 명세서 확정 실패:', error);
+    console.error('요구사항 명세서 확정 실패 응답:', error.response?.data);
+    throw error;
+  }
+};
 
 
