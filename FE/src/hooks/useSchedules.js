@@ -15,12 +15,13 @@ const STALE_TIME = 60 * 60 * 1000
 
 // API 응답 데이터를 FullCalendar events 형식으로 변환
 export const transformSchedulesToEvents = (schedules) => {
-    // console.log(`transformSchedulesToEvents 호출, schedules: `, schedules)
+    console.log(`transformSchedulesToEvents 호출, schedules: `, schedules)
     if (!schedules) return []
     
     return schedules.events?.map(event => ({
         title: event.featureTitle,
-        date: event.scheduleDate,
+        start: event.scheduleDate, // FullCalendar는 'start' 속성을 사용
+        date: event.scheduleDate,  // 호환성을 위해 둘 다 포함
         extendedProps: {
             scheduleId: event.scheduleId,
             featureId: event.featureId,
