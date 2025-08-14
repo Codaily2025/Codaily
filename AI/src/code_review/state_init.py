@@ -11,13 +11,13 @@ def init_state_from_request(req: FeatureInferenceRequest) -> Dict[str, Any]:
 
     state: Dict[str, Any] = {
         "project_id": req.project_id,
-        "commit_id": req.commit_id,
+        "commit_id": req.commit_id or "",
         "commit_hash": req.commit_hash or "",
         "commit_message": req.commit_message or "",
         "commit_branch": req.commit_branch or "",
-        "available_features": req.available_features,
-        "diff_files": diffs,
-        "jwt_token": req.jwt_token,
+        "available_features": req.available_features or [],
+        "diff_files": diffs or [],
+        "access_token": req.access_token,
         "commit_info": req.commit_info.model_dump() if req.commit_info else None,
 
         # 파이프라인 공통 키(초기값)
@@ -31,6 +31,7 @@ def init_state_from_request(req: FeatureInferenceRequest) -> Dict[str, Any]:
         "implemented": False,
         "go_summary": False,              # 구현판단 후 분기에서 설정
         "force_done": bool(req.force_done),
+        "review_summaries": [],
 
         # (선택) 이전 상태 대비 증분 판단용: 이후 DB에서 로드
         "prev_checklist_eval": {},
