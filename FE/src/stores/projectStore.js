@@ -9,6 +9,9 @@ const useProjectStore = create((set, get) => ({
   
   // 현재 화면에 렌더링 중인 프로젝트 (상세 정보 포함 여부는 아직 미정)
   currentProject: null,
+
+  // (현재 프로젝트) 부모 기능 리스트
+  parentFeatures: [],
   
   // activeProjects 설정
   setActiveProjects: (projects) => set({ activeProjects: projects }),
@@ -18,6 +21,9 @@ const useProjectStore = create((set, get) => ({
   
   // currentProject 설정
   setCurrentProject: (project) => set({ currentProject: project }),
+
+  // parentFeatures 설정
+  setParentFeatures: (parentFeaturesList) =>  set({ parentFeatures: parentFeaturesList }),
       
   // activeProjects에서 가장 최근에 작업한 프로젝트를 lastWorkedProject로 설정
   updateLastWorkedProject: () => {
