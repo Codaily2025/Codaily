@@ -245,7 +245,8 @@ const ProjectCreateStep2 = () => {
     await handleFinalizeSpecification();
     
     // 확정 성공 시 다음 단계로 이동
-    navigate('/project/create/step4');
+    // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
+    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)
     
   } catch (error) {
     console.error('요구사항 명세서 확정 실패:', error);
