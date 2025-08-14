@@ -164,8 +164,10 @@ const ProjectCreateStep2 = () => {
       // mainFeature 체크
       if (mainFeature) {
         if (mainFeature.isReduced) {
+          // isReduced=true 면 체크 해제된 상태
           uncheckedFeatureIds.push(mainFeature.id);
         } else {
+          // isReduced=false 면 체크된 상태
           checkedFeatureIds.push(mainFeature.id);
         }
       }
@@ -174,39 +176,42 @@ const ProjectCreateStep2 = () => {
       if (subFeature && subFeature.length > 0) {
         subFeature.forEach(sub => {
           if (sub.isReduced) {
+            // isReduced=true 면 체크 해제된 상태
             uncheckedFeatureIds.push(sub.id);
           } else {
+            // isReduced=false 면 체크된 상태
             checkedFeatureIds.push(sub.id);
           }
         });
       }
     });
     
-    console.log('API 데이터 기반 체크 해제된 기능 ID들 (isReduced=true):', uncheckedFeatureIds);
-    console.log('API 데이터 기반 체크된 기능 ID들 (isReduced=false):', checkedFeatureIds);
+    console.log('체크된 기능 ID들 (isReduced=false):', checkedFeatureIds);
+    console.log('체크 해제된 기능 ID들 (isReduced=true):', uncheckedFeatureIds);
     
+    // 🔥 핵심: 체크된 기능이 하나도 없으면 오류
     if (checkedFeatureIds.length === 0) {
       throw new Error('선택된 기능이 없습니다. 최소 하나 이상의 기능을 선택해주세요.');
     }
   
     try {
-      // 1. 체크 해제된 기능들을 isReduced=true로 설정
+      // 1. 체크 해제된 기능들을 isReduced=true로 설정 (이미 true이지만 확실히 하기 위해)
       console.log('=== 체크 해제된 기능들을 isReduced=true로 설정 ===');
       for (const featureId of uncheckedFeatureIds) {
         try {
           console.log(`기능 ${featureId}를 isReduced=true로 설정`);
-          await toggleReduceFlag(projectId, null, featureId, true);
+          await toggleReduceFlag(projectId, null, featureId, true, false); // cascade=false로 개별 업데이트
         } catch (error) {
           console.error(`기능 ${featureId} 업데이트 실패:`, error);
         }
       }
   
-      // 2. 체크된 기능들을 isReduced=false로 설정 (필요한 경우)
+      // 2. 체크된 기능들을 isReduced=false로 설정 (이미 false이지만 확실히 하기 위해)
       console.log('=== 체크된 기능들을 isReduced=false로 설정 ===');
       for (const featureId of checkedFeatureIds) {
         try {
           console.log(`기능 ${featureId}를 isReduced=false로 설정`);
-          await toggleReduceFlag(projectId, null, featureId, false);
+          await toggleReduceFlag(projectId, null, featureId, false, false); // cascade=false로 개별 업데이트
         } catch (error) {
           console.error(`기능 ${featureId} 업데이트 실패:`, error);
         }
@@ -228,7 +233,6 @@ const ProjectCreateStep2 = () => {
       throw error;
     }
   };
-
   // 다음으로 버튼 클릭 핸들러
   const handleNextClick = async () => {
   // 요구사항 명세서가 없으면 클릭 무시

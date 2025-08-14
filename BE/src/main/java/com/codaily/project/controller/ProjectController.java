@@ -259,9 +259,10 @@ public class ProjectController {
             @PathVariable Long projectId,
             @RequestParam(required = false) String field,
             @RequestParam(required = false) Long featureId,
+            @RequestParam(required = false, defaultValue = "true") Boolean cascadeChildren,
             @org.springframework.web.bind.annotation.RequestBody ToggleReduceRequest body
     ) {
-        featureItemService.updateIsReduced(projectId, field, featureId, body.getIsReduced());
+        featureItemService.updateIsReduced(projectId, field, featureId, body.getIsReduced(), cascadeChildren);
         return ResponseEntity.noContent().build();
     }
 

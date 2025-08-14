@@ -645,6 +645,7 @@ const RequirementsSpecification = () => {
   }
 
  // 체크 상태를 토글하는 함수
+// 체크 상태를 토글하는 함수 (완전한 버전)
 const handleToggleChecked = useCallback(async (taskId) => {
   console.log('=== 체크박스 토글 시작 ===');
   console.log('토글 호출, taskId:', taskId);
@@ -654,7 +655,7 @@ const handleToggleChecked = useCallback(async (taskId) => {
     return;
   }
 
-  // 새로운 데이터 구조에서 task 찾기
+  // 새로운 데이터 구조에서 task 찾기 (기존 코드 그대로)
   const findTask = (features, targetId) => {
     console.log('findTask 시작 - targetId:', targetId);
 
@@ -704,23 +705,19 @@ const handleToggleChecked = useCallback(async (taskId) => {
   const newIsReduced = !currentTask.isReduced;
   const newChecked = !newIsReduced; // checked = !isReduced
 
-  // 사용자 해제 목록 업데이트 (처음 코드 방식)
+  // 사용자 해제 목록 업데이트 (기존 로직 유지)
   console.log('=== 사용자 해제 목록 업데이트 ===');
   
-  // 스토어에서 현재 userUncheckedIds 가져오기
   const currentUserUncheckedIds = useSpecificationStore.getState().userUncheckedIds;
   const newUserUncheckedIds = new Set(currentUserUncheckedIds);
   
-  // 1. 사용자가 직접 클릭한 기능 처리 (field가 아닌 실제 기능 ID만 추적)
-  const isUserAction = true; // 사용자가 직접 클릭
+  const isUserAction = true;
   if (isUserAction && !taskId.toString().startsWith('field_')) {
     if (newChecked) {
-      // 체크 시: 해제 목록에서 제거
       console.log(`사용자 해제 목록에서 제거 시도: ${taskId}`);
       const deleted = newUserUncheckedIds.delete(taskId);
       console.log(`제거 성공: ${deleted}`);
     } else {
-      // 해제 시: 해제 목록에 추가
       console.log(`사용자 해제 목록에 추가: ${taskId}`);
       newUserUncheckedIds.add(taskId);
     }
@@ -733,50 +730,32 @@ const handleToggleChecked = useCallback(async (taskId) => {
     const apiCalls = [];
 
     if (level === 'field') {
-      // 최상위 필드 토글
+      // 최상위 필드 토글 - 항상 cascade
       const field = currentTask.field;
       console.log('최상위 기능 토글 - field:', field, 'newIsReduced:', newIsReduced);
 
-      // 상위 항목을 먼저 토글
       apiCalls.push(toggleReduceFlag(projectId, field, null, newIsReduced));
 
-      // 상위 항목을 해제하면 모든 하위 항목도 해제
+      // 상위 항목을 해제하면 모든 하위 항목도 해제 (사용자 해제 목록에서 제거)
       if (newIsReduced) {
-        // 모든 하위 항목들을 해제하고 사용자 해제 목록에서도 제거 (부모에 의한 자동 해제)
         if (fieldData.mainFeature) {
           for (const mainFeature of fieldData.mainFeature) {
-            if (!mainFeature.isReduced) {
-              apiCalls.push(toggleReduceFlag(projectId, null, mainFeature.id, true));
-              // 부모에 의한 자동 해제이므로 사용자 해제 목록에서 제거
-              newUserUncheckedIds.delete(mainFeature.id);
-            }
+            newUserUncheckedIds.delete(mainFeature.id);
             if (mainFeature.subFeature) {
               for (const subFeature of mainFeature.subFeature) {
-                if (!subFeature.isReduced) {
-                  apiCalls.push(toggleReduceFlag(projectId, null, subFeature.id, true));
-                  // 부모에 의한 자동 해제이므로 사용자 해제 목록에서 제거
-                  newUserUncheckedIds.delete(subFeature.id);
-                }
+                newUserUncheckedIds.delete(subFeature.id);
               }
             }
           }
         }
       } else {
-        // 상위 항목을 선택하면 모든 하위 항목도 선택
+        // 상위 항목을 선택하면 모든 하위 항목도 선택 (사용자 해제 목록에서 제거)
         if (fieldData.mainFeature) {
           for (const mainFeature of fieldData.mainFeature) {
-            if (mainFeature.isReduced) {
-              apiCalls.push(toggleReduceFlag(projectId, null, mainFeature.id, false));
-              // 부모에 의한 자동 선택이므로 사용자 해제 목록에서 제거
-              newUserUncheckedIds.delete(mainFeature.id);
-            }
+            newUserUncheckedIds.delete(mainFeature.id);
             if (mainFeature.subFeature) {
               for (const subFeature of mainFeature.subFeature) {
-                if (subFeature.isReduced) {
-                  apiCalls.push(toggleReduceFlag(projectId, null, subFeature.id, false));
-                  // 부모에 의한 자동 선택이므로 사용자 해제 목록에서 제거
-                  newUserUncheckedIds.delete(subFeature.id);
-                }
+                newUserUncheckedIds.delete(subFeature.id);
               }
             }
           }
@@ -784,26 +763,27 @@ const handleToggleChecked = useCallback(async (taskId) => {
       }
 
     } else if (level === 'mainFeature') {
-      // 주 기능 토글 - 같은 계층의 다른 기능들에게는 영향 없음
+      // 주 기능 토글 - cascade로 하위 기능들도 함께 변경
       const featureId = taskId;
       console.log('주 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
 
-      // 주 기능 토글
-      apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced));
+      apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, true));
 
-      // 주 기능을 해제하면 모든 하위 기능도 해제
+      // 주 기능을 해제하면 모든 하위 기능도 해제 (사용자 해제 목록에서 제거)
       if (newIsReduced) {
         if (currentTask.subFeature) {
           for (const subFeature of currentTask.subFeature) {
-            if (!subFeature.isReduced) {
-              apiCalls.push(toggleReduceFlag(projectId, null, subFeature.id, true));
-              // 부모에 의한 자동 해제이므로 사용자 해제 목록에서 제거
-              newUserUncheckedIds.delete(subFeature.id);
-            }
+            newUserUncheckedIds.delete(subFeature.id);
+          }
+        }
+      } else {
+        // 주 기능을 선택하면 모든 하위 기능도 선택 (사용자 해제 목록에서 제거)
+        if (currentTask.subFeature) {
+          for (const subFeature of currentTask.subFeature) {
+            newUserUncheckedIds.delete(subFeature.id);
           }
         }
       }
-      // 주 기능을 선택할 때는 하위 기능들을 자동으로 선택하지 않음
 
       // 주 기능 상태에 따라 상위 필드 상태 조정
       const shouldFieldBeChecked = !newIsReduced ||
@@ -813,28 +793,27 @@ const handleToggleChecked = useCallback(async (taskId) => {
 
       if (fieldData.isReduced !== !shouldFieldBeChecked) {
         apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
-        // 필드는 추적하지 않음 (field는 이름 기반이므로)
       }
 
     } else if (level === 'subFeature') {
-      // 상세 기능 토글 - 개별 상세 기능만 변경
+      // 🔥 핵심: 상세 기능은 개별 업데이트 (cascade=false)
       const featureId = taskId;
       console.log('상세 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
 
       // 해당 상세 기능만 토글 (다른 상세 기능들은 건드리지 않음)
-      apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced));
+      apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, false));
 
-      // 🔥 중요: 상세 기능 상태에 따라 상위 주 기능 상태 조정 + 주 기능도 해제 목록에 추가
+      // 🔥 중요: 상세 기능 상태에 따라 상위 주 기능 상태 조정
       const shouldMainFeatureBeChecked = !newIsReduced ||
         (mainFeatureData.subFeature && mainFeatureData.subFeature.some(sf =>
           sf.id !== featureId && !sf.isReduced
         ));
 
-      // 부모 주기능 상태 조정 (필요한 경우에만)
+      // 부모 주기능 상태 조정 (필요한 경우에만, 개별 업데이트로)
       if (mainFeatureData.isReduced !== !shouldMainFeatureBeChecked) {
-        apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, !shouldMainFeatureBeChecked));
+        apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, !shouldMainFeatureBeChecked, false));
         
-        // 🔥 주 기능이 자동으로 해제되는 경우
+        // 주 기능이 자동으로 해제되는 경우
         if (!shouldMainFeatureBeChecked) {
           console.log(`주 기능 ${mainFeatureData.id}(${mainFeatureData.title})가 자동으로 해제됨 - 해제 목록에 추가`);
           newUserUncheckedIds.add(mainFeatureData.id);
@@ -854,7 +833,6 @@ const handleToggleChecked = useCallback(async (taskId) => {
       // 필드 상태 조정 (필요한 경우에만)
       if (fieldData.isReduced !== !shouldFieldBeChecked) {
         apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
-        // 필드는 추적하지 않음 (field는 이름 기반이므로)
       }
     }
 
@@ -870,7 +848,7 @@ const handleToggleChecked = useCallback(async (taskId) => {
     // API 성공 후 데이터 새로고침
     await refetchRequirementsSpecification();
 
-    // 새로고침 후 현재 상태 로그 출력
+    // 새로고침 후 현재 상태 로그 출력 (기존 로직 유지)
     setTimeout(() => {
       const processRequirementsSpecification = (data) => {
         if (!data || !data.features) return [];
@@ -926,7 +904,7 @@ const handleToggleChecked = useCallback(async (taskId) => {
       console.log('사용자 해제 목록:', Array.from(newUserUncheckedIds));
       console.log('=====================');
       
-    }, 200); // 데이터 새로고침 완료를 위한 약간의 지연
+    }, 200);
 
   } catch (error) {
     console.error('체크박스 토글 API 호출 실패:', error);
@@ -937,7 +915,6 @@ const handleToggleChecked = useCallback(async (taskId) => {
   console.log('=== 체크박스 토글 완료 ===');
 
 }, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification, requirementsSpecification]);
-
   // 하위 작업 추가 핸들러
   const handleAddSubTask = (parentTask) => {
     // 이 함수는 "상세 기능 추가" 버튼을 클릭할 때만 호출됨
