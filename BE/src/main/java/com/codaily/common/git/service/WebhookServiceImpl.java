@@ -114,7 +114,7 @@ public class WebhookServiceImpl implements WebhookService {
     public List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken) {
         String commitUrl = commit.getUrl();
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
+        headers.set("Authorization", "token " + accessToken);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
