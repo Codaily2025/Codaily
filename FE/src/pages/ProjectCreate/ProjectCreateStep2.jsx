@@ -139,30 +139,27 @@ const ProjectCreateStep2 = () => {
     if (!specExists) {
       throw new Error('확정할 요구사항 명세서가 없습니다.');
     }
-
+  
     console.log('=== 확정 처리 시작 ===');
     console.log('확정 전 최신 데이터 가져오기...');
-    await refetchRequirementsSpecification();
     
-    // 잠시 기다려서 상태 업데이트 완료 보장
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const currentData = specData; // refetch 후 최신 specData 사용
+    // refetch를 기다리고 반환된 데이터를 직접 사용
+    const { data: freshData } = await refetchRequirementsSpecification();
     
     console.log('=== 최신 데이터 확인 ===');
-    console.log('currentData:', currentData);
-    console.log('currentData.features:', currentData?.features);
-    console.log('currentData.features 길이:', currentData?.features?.length);
+    console.log('freshData:', freshData);
+    console.log('freshData.features:', freshData?.features);
+    console.log('freshData.features 길이:', freshData?.features?.length);
     
-    if (!currentData || !currentData.features) {
+    if (!freshData || !freshData.features) {
       throw new Error('명세서 데이터가 없습니다.');
     }
-
+  
     const checkedFeatureIds = [];
     const uncheckedFeatureIds = [];
     
-    // 각 feature 분석
-    currentData.features.forEach((feature, index) => {
+    // 각 feature 분석 (freshData 사용)
+    freshData.features.forEach((feature, index) => {
       console.log(`=== Feature ${index} 분석 ===`);
       console.log('feature.field:', feature.field);
       console.log('feature.mainFeature:', feature.mainFeature);
@@ -202,7 +199,7 @@ const ProjectCreateStep2 = () => {
       console.error('=== 오류: 선택된 기능이 없음 ===');
       throw new Error('선택된 기능이 없습니다. 최소 하나 이상의 기능을 선택해주세요.');
     }
-
+  
     try {
       console.log('=== 현재 상태 그대로 확정 API 호출 ===');
       console.log(`체크된 기능 ${checkedFeatureIds.length}개, 해제된 기능 ${uncheckedFeatureIds.length}개로 확정 진행`);
