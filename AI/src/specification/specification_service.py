@@ -11,13 +11,13 @@ from src.specification.specification_prompts import *
 
 
 MIN_FIELDS = 0
-MAX_FIELDS = 2
+MAX_FIELDS = 5
 
 MIN_MAIN_FUNCTIONS = 0
-MAX_MAIN_FUNCTIONS = 2
+MAX_MAIN_FUNCTIONS = 5
 
 MIN_SUB_FUNCTIONS = 0
-MAX_SUB_FUNCTIONS = 2
+MAX_SUB_FUNCTIONS = 5
 
 
 # 1. 환경 변수 로드

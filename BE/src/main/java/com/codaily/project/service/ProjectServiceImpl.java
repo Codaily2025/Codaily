@@ -188,6 +188,7 @@ public class ProjectServiceImpl implements ProjectService {
         int reducedCount = 0, keptCount = 0;
 
         for (FeatureItem item : sorted) {
+            if(item.getIsReduced()) continue;
             boolean reduced;
             if (accumulated + item.getEstimatedTime() <= totalAvailable) {
                 reduced = false;
