@@ -1,8 +1,8 @@
 package com.codaily.common.git.controller;
 
-import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.UserRepository;
+import com.codaily.auth.service.UserService;
 import com.codaily.common.git.WebhookPayload;
 import com.codaily.common.git.service.GithubService;
 import com.codaily.common.git.service.WebhookService;
@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,6 +21,7 @@ public class WebhookController {
 
     private final WebhookService webhookService;
     private final GithubService githubService;
+    private final UserService userService;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
@@ -45,11 +45,10 @@ public class WebhookController {
             String fullName = payload.getRepository().getFull_name(); // "owner/repo"
             String owner = fullName.split("/")[0];
 
-            Long userId = userRepository.findByGithubAccount(owner)
-                    .map(User::getUserId)
-                    .orElseThrow(() -> new IllegalArgumentException("Github 사용자를 찾을 수 없습니다. owner=" + owner));
+            User user = userRepository.findByGithubAccount(payload.getSender().getLogin())
+                            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 
-            webhookService.handlePushEvent(payload, userId);
+            webhookService.handlePushEvent(payload, user.getUserId());
             return ResponseEntity.ok().build();
 
         } catch (Exception e) {

@@ -20,7 +20,7 @@ public class WebClientConfig {
                 .build();
     }
 
-    @Bean
+    @Bean(name = "githubWebClient")
     public WebClient githubWebClient(WebClient.Builder builder) {
         return builder
                 .baseUrl("https://api.github.com") // ★ 반드시 절대 URL

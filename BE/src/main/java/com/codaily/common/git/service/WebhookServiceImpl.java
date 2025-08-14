@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -31,11 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,7 +48,8 @@ public class WebhookServiceImpl implements WebhookService {
 
     private final FeatureItemRepository featureItemRepository;
     private final ProjectRepositoriesRepository projectRepositoriesRepository;
-    private final WebClient webClient;
+    @Qualifier("githubWebCLient")
+    private final WebClient githubWebClient;
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepositoriesService projectRepositoriesService;
     private final UserRepository userRepository;
@@ -258,7 +257,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
 
         String commitUrl = String.format("%s/repos/%s/%s/commits/%s", githubApiUrl, repoOwner, repoName, commitHash);
-        Mono<Map<String, Object>> responseMono = webClient.get()
+        Mono<Map<String, Object>> responseMono = githubWebClient.get()
                 .uri(commitUrl)
                 .headers(h -> {
                     h.setBearerAuth(token);
@@ -277,7 +276,7 @@ public class WebhookServiceImpl implements WebhookService {
             String filePath = (String) file.get("filename");
             String contentUrl = String.format("%s/repos/%s/%s/contents/%s?ref=%s", githubApiUrl, repoOwner, repoName, filePath, commitHash);
 
-            String content = webClient.get()
+            String content = githubWebClient.get()
                     .uri(contentUrl)
                     .headers(h -> {
                         h.setBearerAuth(token);
@@ -326,7 +325,7 @@ public class WebhookServiceImpl implements WebhookService {
 
             try {
                 // 1) 훅 목록 조회
-                List<Map<String, Object>> hooks = webClient.get()
+                List<Map<String, Object>> hooks = githubWebClient.get()
                         .uri("{api}/repos/{owner}/{repo}/hooks",
                                 Map.of("api", githubApiUrl, "owner", repoOwner, "repo", repo))
                         .headers(h -> {
@@ -354,7 +353,7 @@ public class WebhookServiceImpl implements WebhookService {
                         long hookId = (idObj instanceof Number) ? ((Number) idObj).longValue()
                                 : Long.parseLong(String.valueOf(idObj));
 
-                        webClient.delete()
+                        githubWebClient.delete()
                                 .uri("{api}/repos/{owner}/{repo}/hooks/{id}",
                                         Map.of("api", githubApiUrl, "owner", repoOwner, "repo", repo, "id", hookId))
                                 .headers(h -> h.setBearerAuth(token))
@@ -377,7 +376,7 @@ public class WebhookServiceImpl implements WebhookService {
         // 1) 경로 정규화: 백슬래시 → 슬래시, 앞쪽 슬래시 제거
         String normalized = path.replace('\\', '/').replaceAll("^/+", "");
 
-        return webClient.get()
+        return githubWebClient.get()
                 .uri(uriBuilder -> {
                     // githubApiUrl 이 "https://api.github.com" 라고 가정
                     // base 는 WebClient 생성 시 baseUrl 로 놔도 되고, 여기선 pathSegment만 안전하게 쌓음
