@@ -9,6 +9,8 @@ import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
 import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest, buildMainFeatureToFieldRequest } from '../../apis/chatApi';
 import { downloadSpecDocument, toggleReduceFlag } from '../../apis/requirementsSpecification';
+import { useGetRequirementsSpecification } from '../../queries/useRequirementsSpecification';
+import { useSearchParams } from 'react-router-dom';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -102,7 +104,13 @@ const AddNewTaskButton = ({ onClick, text = "새 작업 추가" }) => (
   </div>
 );
 
-const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, parentId }) => {
+const ConvertPriorityNumberToString = (priorityLevel) => {
+  if (priorityLevel < 4) return 'High';
+  else if (priorityLevel > 3 && priorityLevel < 7) return 'Normal';
+  else return 'Low';
+}
+
+const SecondSubTaskItem = ({ task, onToggleChecked, level = 0, parentId }) => {
   return (
     /* 클릭했을 때 상위 task의 드롭다운이 닫히면 안됨, 이벤트 막기 */
     <div className={styles.expandedSectionItem} onClick={(e) => {
@@ -111,26 +119,28 @@ const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, par
     }}>
       <div className={styles.subTaskLeft}>
         <Checkbox
-          checked={task.checked}
+          checked={!task.isReduced}
           onChange={(e) => {
             e.stopPropagation();
             onToggleChecked(task.id);
           }} />
         <div className={styles.subTaskNameContainer}>
-          <div className={styles.subTaskName}>{task.name}</div>
+          <div className={styles.subTaskName}>{task.title}</div>
         </div>
-        <PriorityBadge level={task.priority} />
+        {task.priorityLevel && <PriorityBadge level={ConvertPriorityNumberToString(task.priorityLevel)} />}
       </div>
       <div className={styles.subTaskRight} style={{ marginRight: '12px' }}>
         <div className={styles.subTaskActions}>
-          <TimeIndicator hours={task.hours} />
+          {task.estimatedTime && <TimeIndicator hours={task.estimatedTime} />}
         </div>
       </div>
     </div>
   );
 };
 
-const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level = 0 }) => {
+const SubTaskItem = ({ task, onToggleChecked, onAddSubTask, level = 0 }) => {
+  const [isOpen, setIsOpen] = useState(false); // 로컬 상태로 isOpen 관리
+  // console.log('주 기능(mainFeature):', task)
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
     <div className={styles.expandIconContainer} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
@@ -139,40 +149,45 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
       </svg>
     </div>
   );
-  const hasSecondSubTasks = task.subTasks && task.subTasks.length > 0;
+  
+  const hasSecondSubTasks = task.subFeature && task.subFeature.length > 0;
+  
+  // 카드 클릭 시 열림/닫힘 토글
+  const handleCardClick = () => {
+    if (hasSecondSubTasks) {
+      setIsOpen(!isOpen);
+    }
+  };
+  
   return (
     <>
-      {hasSecondSubTasks && task.isOpen ? (
-        <div className={styles.expandedSection} onClick={() => onToggleOpen(task.id)}>
+      {hasSecondSubTasks && isOpen ? (
+        <div className={styles.expandedSection} onClick={handleCardClick}>
           <div className={styles.expandedSectionHeader}>
             <div className={styles.expandedSectionHeaderInner}>
               <div className={styles.subTaskLeft}>
                 <Checkbox
-                  checked={task.checked}
+                  checked={!task.isReduced}
                   onChange={(e) => {
                     e.stopPropagation();
                     onToggleChecked(task.id);
                   }}
                 />
                 <div className={styles.subTaskNameContainer}>
-                  <div className={styles.subTaskName}>{task.name}</div>
+                  <div className={styles.subTaskName}>{task.title}</div>
                 </div>
-                <PriorityBadge level={task.priority} />
+                {task.priorityLevel && <PriorityBadge level={ConvertPriorityNumberToString(task.priorityLevel)} />}
               </div>
               <div className={styles.mainFeatureHeaderRight}>
-                <TimeIndicator hours={task.hours} />
-                <div className={styles.expandIconContainer} style={{ transform: task.isOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>
-                  <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 13L10 8L5 13" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
+                {task.estimatedTime && <TimeIndicator hours={task.estimatedTime} />}
+                <ExpandIcon isOpen={isOpen} />
               </div>
             </div>
           </div>
           <div className={styles.expandedSectionBody}>
             <div className={styles.expandedSectionItems}>
-              {task.subTasks.map(subTask => (
-                <SecondSubTaskItem key={subTask.id} task={subTask} onToggleOpen={onToggleOpen} onToggleChecked={onToggleChecked} level={level + 1} parentId={task.id}
+              {task.subFeature.map(subTask => (
+                <SecondSubTaskItem key={subTask.id} task={subTask} onToggleChecked={onToggleChecked} level={level + 1} parentId={task.id}
                 />
               ))}
               {/* 상세 기능 추가 버튼 */}
@@ -187,32 +202,28 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
           </div>
         </div>
       ) : (
-        <div className={styles.subTaskItem} onClick={() => onToggleOpen(task.id)}>
+        <div className={styles.subTaskItem} onClick={handleCardClick}>
           <div className={styles.subTaskLeft}>
             <Checkbox
-              checked={task.checked}
+              checked={!task.isReduced}
               onChange={(e) => {
                 e.stopPropagation();
                 onToggleChecked(task.id);
               }} />
             <div className={styles.subTaskNameContainer}>
-              <div className={styles.subTaskName}>{task.name}</div>
+              <div className={styles.subTaskName}>{task.title}</div>
             </div>
-            <PriorityBadge level={task.priority} />
+            {task.priorityLevel && <PriorityBadge level={ConvertPriorityNumberToString(task.priorityLevel)} />}
           </div>
           {hasSecondSubTasks ? (
             <div className={styles.mainFeatureHeaderRight}>
-              <TimeIndicator hours={task.hours} />
-              <div className={styles.expandIconContainer} style={{ transform: task.isOpen ? 'rotate(0deg)' : 'rotate(180deg)', transition: 'transform 0.2s' }}>
-                <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 13L10 8L5 13" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+              {task.estimatedTime && <TimeIndicator hours={task.estimatedTime} />}
+              <ExpandIcon isOpen={isOpen} />
             </div>
           ) : (
             <div className={styles.subTaskRight}>
               <div className={styles.subTaskActions}>
-                <TimeIndicator hours={task.hours} />
+                {task.estimatedTime && <TimeIndicator hours={task.estimatedTime} />}
               </div>
             </div>
           )}
@@ -223,9 +234,11 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
 };
 
 // 작업을 렌더링하는 컴포넌트
-const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenModal, level = 0 }) => {
-  const hasSubTasks = task.subTasks && task.subTasks.length > 0;
-
+const TaskItem = ({ task, onToggleChecked, onAddSubTask, onOpenModal, level = 0 }) => {
+  const [isOpen, setIsOpen] = useState(false); // 로컬 상태로 isOpen 관리
+  const hasSubTasks = task.mainFeature && task.mainFeature.length > 0;
+  // console.log('필드:', task)
+  
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
     <div className={styles.expandIconContainer} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
@@ -235,36 +248,43 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
     </div>
   );
 
+  // 카드 클릭 시 열림/닫힘 토글
+  const handleCardClick = () => {
+    if (hasSubTasks) {
+      setIsOpen(!isOpen);
+    }
+  };
+
+  const priorityStringLevel = ConvertPriorityNumberToString(task.priorityLevel);
 
   return (
     <div className={level === 0 ? styles.mainFeatureCard : styles.subTaskItem}>
-      <div className={styles.mainFeatureHeader} onClick={() => hasSubTasks && onToggleOpen(task.id)}>
+      <div className={styles.mainFeatureHeader} onClick={handleCardClick}>
         <div className={styles.mainFeatureHeaderLeft}>
           <Checkbox
-            checked={task.checked}
+            checked={!task.isReduced} // isReduced가 true면 체크 박스 해제
             onChange={(e) => {
               e.stopPropagation();
-              onToggleChecked(task.id);
+              onToggleChecked(task.field);
             }} />
-          <div className={styles.mainFeatureName}>{task.name}</div>
-          <PriorityBadge level={task.priority} />
+          <div className={styles.mainFeatureName}>{task.field}</div>
+          {task.priorityLevel && <PriorityBadge level={priorityStringLevel} />}
         </div>
         <div className={styles.mainFeatureHeaderRight}>
-          <TimeIndicator hours={task.hours} />
-          {hasSubTasks && <ExpandIcon isOpen={task.isOpen} />}
+          {task.estimatedTime && <TimeIndicator hours={task.estimatedTime} />}
+          {hasSubTasks && <ExpandIcon isOpen={isOpen} />} 
         </div>
       </div>
-      {hasSubTasks && task.isOpen && (
+      {hasSubTasks && isOpen && (
         <div className={styles.mainFeatureContent}>
           <div className={styles.mainFeatureItems}>
-            {task.subTasks.map(subTask => (
+            {task.mainFeature.map(mainFeature => (
               <SubTaskItem
-                key={subTask.id}
-                task={subTask}
-                onToggleOpen={onToggleOpen}
+                key={mainFeature.id}
+                task={mainFeature}
                 onToggleChecked={onToggleChecked}
                 level={level + 1}
-                parentId={task.id}
+                parentId={task.field}
                 onAddSubTask={onAddSubTask}
               />
             ))}
@@ -295,8 +315,176 @@ const RequirementsSpecification = () => {
     addSubFeatureManually,
     addMainFeatureToField,
     toggleFeatureChecked,
-    toggleFeatureOpen
+    toggleFeatureOpen,
+    setProjectId,
+    setSpecId
   } = useSpecificationStore();
+
+  const [search] = useSearchParams();
+  
+  // if (!projectId) {
+  //   return <div>프로젝트 ID가 없습니다.</div>;
+  // }
+  
+  useEffect(() => {
+    if (!projectId) {
+      const pid = search.get('projectId');
+      if (pid) setProjectId(Number(pid));
+    }
+    if (!specId) {
+      const sid = search.get('specId');
+      if (sid) setSpecId(Number(sid));
+    }
+  }, [projectId, specId, search, setProjectId, setSpecId]);
+
+  // const { data: requirementsSpecification, isLoading: isLoadingRequirementsSpecification, isError: isErrorRequirementsSpecification, refetch: refetchRequirementsSpecification } = useGetRequirementsSpecification(projectId);
+  // 요구사항 명세서가 만들어지기 전에는 데이터가 없음
+  // console.log('GET으로 페이지에 가져온 요구사항 명세서 데이터:', requirementsSpecification);
+  const isSpecPolling = useSpecificationStore(s => s.isSpecPolling);
+  const {
+    data: requirementsSpecification,
+    isLoading: isLoadingRequirementsSpecification,
+    isError: isErrorRequirementsSpecification,
+    refetch: refetchRequirementsSpecification
+  } = useGetRequirementsSpecification(projectId, {
+    polling: isSpecPolling,
+    intervalMs: 1800 + Math.floor(Math.random() * 600), // 1.8초~2.4초 간격
+  });
+  // 출력 결과 예시
+  //   "project": {
+  //     "projectTitle": "Codaily",
+  //     "projectDescription": "AI 기반 명세/회고 플랫폼",
+  //     "specTitle": "v1.0 기능 명세",
+  //     "projectId": 3,
+  //     "specId": 10
+  //   },
+  //   "features": [
+  //     {
+  //       "projectId": 3,
+  //       "specId": 10,
+  //       "field": "회원",
+  //       "isReduced": false, // 필드(회원)의 체크 박스 선택 여부
+  //       "mainFeature": {
+  //         "id": 101,
+  //         "isReduced": false, // 주 기능(회원 가입)의 체크 박스 선택 여부
+  //         "title": "회원 가입",
+  //         "description": "이메일/소셜 가입을 지원",
+  //         "estimatedTime": 2.5,
+  //         "priorityLevel": 1
+  //       },
+  //       "subFeature": [
+  //         {
+  //           "id": 201,
+  //           "isReduced": false, // 상세 기능(이메일 인증)의 체크 박스 선택 여부
+  //           "title": "이메일 인증",
+  //           "description": "토큰 기반 인증",
+  //           "estimatedTime": 0.5,
+  //           "priorityLevel": 1
+  //         },
+  //         {
+  //           "id": 202,
+  //           "isReduced": false,
+  //           "title": "소셜 로그인",
+  //           "description": "카카오/네이버/구글 로그인 지원",
+  //           "estimatedTime": 1,
+  //           "priorityLevel": 2
+  //         }
+  //       ]
+  //     },
+  //     {
+  //       "projectId": 3,
+  //       "specId": 10,
+  //       "field": "사용자 간 화상 채팅 및 오디오 통신",
+  //       "isReduced": false,
+  //       "mainFeature": {
+  //         "id": 102,
+  //         "isReduced": false,
+  //         "title": "화상 채팅 시작",
+  //         "description": "사용자가 실시간으로 화상 채팅을 시작할 수 있음",
+  //         "estimatedTime": 3,
+  //         "priorityLevel": 2
+  //       },
+  //       "subFeature": [
+  //         {
+  //           "id": 203,
+  //           "isReduced": false,
+  //           "title": "WebRTC 연결 요청 전송",
+  //           "description": "사용자가 화상 채팅 시작 시 서버에 연결 요청을 전달",
+  //           "estimatedTime": 1.5,
+  //           "priorityLevel": 1
+  //         },
+  //         {
+  //           "id": 204,
+  //           "isReduced": false,
+  //           "title": "화상 채팅 시작 버튼 활성화",
+  //           "description": "사용자가 화상 채팅을 시작하도록 버튼을 클릭할 수 있게 함",
+  //           "estimatedTime": 1,
+  //           "priorityLevel": 2
+  //         }
+  //       ]
+  //     },
+  //     {
+  //       "projectId": 3,
+  //       "specId": 10,
+  //       "field": "사용자 간 화상 채팅 및 오디오 통신",
+  //       "isReduced": true,
+  //       "mainFeature": {
+  //         "id": 2496,
+  //         "isReduced": false,
+  //         "title": "화상 채팅 시작",
+  //         "description": "사용자가 실시간으로 화상 채팅을 시작할 수 있음",
+  //         "estimatedTime": 3,
+  //         "priorityLevel": 2
+  //       },
+  //       ... 생략 ...
+  //     }
+  //   ]
+  // }
+
+  // 데이터 가공 로직
+  const processRequirementsSpecification = (data) => {
+    if (!data || !data.features) return [];
+
+    // console.log('원본 API 데이터:', data);
+    // console.log('원본 features:', data.features);
+
+    const fieldMap = new Map();
+
+    data.features.forEach((feature, index) => {
+      // console.log(`처리 중인 feature ${index}:`, feature);
+      const { field, isReduced, projectId, specId, mainFeature, subFeature, estimatedTime } = feature;
+
+      if (!fieldMap.has(field)) {
+        // 새로운 필드인 경우 초기화
+        fieldMap.set(field, {
+          field,
+          isReduced,
+          projectId,
+          specId,
+          estimatedTime,
+          mainFeature: []
+        });
+      }
+
+      // mainFeature를 배열에 추가하고 subFeature를 포함
+      const processedMainFeature = {
+        ...mainFeature,
+        // estimatedTime: mainFeature.estimatedTime || 0,
+        subFeature: subFeature || []
+      };
+
+      fieldMap.get(field).mainFeature.push(processedMainFeature);
+    });
+
+    const result = Array.from(fieldMap.values());
+    // console.log('가공된 데이터 구조:', result);
+    return result;
+  };
+
+  // 가공된 데이터
+  const refinedFeaturesStructure = processRequirementsSpecification(requirementsSpecification);
+  console.log('가공된 요구사항 명세서 주요 기능 데이터:', refinedFeaturesStructure);
+  
 
   const [specDocument, setSpecDocument] = useState(null); // pdf 다운로드 받기 위한 변수
 
@@ -312,30 +500,30 @@ const RequirementsSpecification = () => {
       const response = await downloadSpecDocument(projectId);
 
       // 서버가 에러를 JSON으로 보낸 경우(예: 200인데 실제는 에러 바디)
-    const ct = response.headers['content-type'] || '';
-    if (ct.includes('application/json')) {
-      const text = await response.data.text?.(); // blob → text
-      console.error('서버 에러 바디:', text);
-      alert('문서 생성 중 오류가 발생했습니다.');
-      return;
-    }
-    
-    const blob = new Blob([response.data], { type: ct || 'application/pdf' });
-    setSpecDocument(blob);
+      const ct = response.headers['content-type'] || '';
+      if (ct.includes('application/json')) {
+        const text = await response.data.text?.(); // blob → text
+        console.error('서버 에러 바디:', text);
+        alert('문서 생성 중 오류가 발생했습니다.');
+        return;
+      }
 
-    const url = URL.createObjectURL(blob);
+      const blob = new Blob([response.data], { type: ct || 'application/pdf' });
+      setSpecDocument(blob);
 
-    const a = document.createElement('a');
-    a.href = url;
-    const cd = response.headers['content-disposition'];
-    a.download = getFileName(cd) || `specification_${projectId}.pdf`;
+      const url = URL.createObjectURL(blob);
 
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+      const a = document.createElement('a');
+      a.href = url;
+      const cd = response.headers['content-disposition'];
+      a.download = getFileName(cd) || `specification_${projectId}.pdf`;
 
-    URL.revokeObjectURL(url);
-    console.log('프로젝트 요구사항 명세서 다운로드 성공');
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+      console.log('프로젝트 요구사항 명세서 다운로드 성공');
     } catch (error) {
       console.error('프로젝트 요구사항 명세서 다운로드 실패:', error);
     }
@@ -344,7 +532,7 @@ const RequirementsSpecification = () => {
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
   // mainFeatures가 있으면 사용하고, 없으면 초기 데이터 사용
-  const features = mainFeatures && mainFeatures.length > 0 ? mainFeatures : initialRequirementsData[0].mainFeatures;
+  const features = refinedFeaturesStructure && refinedFeaturesStructure.length > 0 ? refinedFeaturesStructure : initialRequirementsData[0].mainFeatures;
 
   // 모달 상태 관리 -> 상세 기능 추가 모달 열기 위해 필요
   const [modalState, setModalState] = useState({
@@ -352,6 +540,8 @@ const RequirementsSpecification = () => {
     taskType: null,
     parentTask: null
   });
+
+  const extendSpecPolling = useSpecificationStore(s => s.extendSpecPolling);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
 
   const handleAddTask = async (taskData) => {
@@ -369,7 +559,7 @@ const RequirementsSpecification = () => {
 
       if (modalState.taskType === 'main') {
         // 주 기능 추가 - 필드 이름을 사용하여 해당 필드 안에 추가
-        const fieldName = modalState.parentTask ? modalState.parentTask.name : 'Custom Feature';
+        const fieldName = modalState.parentTask ? modalState.parentTask.field : 'Custom Feature';
         console.log('주 기능 추가 - fieldName:', fieldName);
         requestData = buildMainFeatureToFieldRequest(taskData, projectId, fieldName);
         console.log('주 기능 추가 API 요청 데이터:', requestData);
@@ -398,6 +588,7 @@ const RequirementsSpecification = () => {
       console.log('작업 추가 성공:', requestData);
       console.log('API 응답:', response);
       closeModal();
+      extendSpecPolling(10000); // 10초 연장
     } catch (error) {
       console.error('수동 기능 추가 실패:', error);
     }
@@ -526,71 +717,100 @@ const RequirementsSpecification = () => {
       parentTask: null
     });
   }
-  // 열림/닫힘 상태를 토글하는 함수
-  const handleToggleOpen = useCallback((taskId) => {
-    toggleFeatureOpen(taskId);
-  }, [toggleFeatureOpen]);
 
   // 체크 상태를 토글하는 함수
   const handleToggleChecked = useCallback(async (taskId) => {
+    console.log('=== 체크박스 토글 시작 ===');
     console.log('토글 호출, taskId:', taskId);
-    
+    console.log('현재 refinedFeaturesStructure:', refinedFeaturesStructure);
+
     if (!projectId) {
       console.error('프로젝트 ID가 없습니다.');
       return;
     }
 
-    // 현재 상태에서 해당 task 찾기
-    const findTask = (tasks, targetId) => {
-      for (const task of tasks) {
-        if (task.id === targetId) {
-          return task;
+    // 새로운 데이터 구조에서 task 찾기
+    const findTask = (features, targetId) => {
+      console.log('findTask 시작 - targetId:', targetId);
+      console.log('검색할 features:', features);
+      
+      for (const field of features) {
+        console.log('검색 중인 field:', field);
+        
+        // field 레벨 체크
+        if (field.field === targetId) {
+          console.log('field 레벨에서 찾음:', field);
+          return { task: field, level: 'field' };
         }
-        if (task.subTasks) {
-          const found = findTask(task.subTasks, targetId);
-          if (found) return found;
+        
+        // mainFeature 레벨 체크
+        if (field.mainFeature) {
+          for (const mainFeature of field.mainFeature) {
+            console.log('검색 중인 mainFeature:', mainFeature);
+            if (mainFeature.id === targetId) {
+              console.log('mainFeature 레벨에서 찾음:', mainFeature);
+              return { task: mainFeature, level: 'mainFeature' };
+            }
+            
+            // subFeature 레벨 체크
+            if (mainFeature.subFeature) {
+              for (const subFeature of mainFeature.subFeature) {
+                console.log('검색 중인 subFeature:', subFeature);
+                if (subFeature.id === targetId) {
+                  console.log('subFeature 레벨에서 찾음:', subFeature);
+                  return { task: subFeature, level: 'subFeature' };
+                }
+              }
+            }
+          }
         }
       }
+      console.log('Task를 찾지 못함');
       return null;
     };
 
-    const currentTask = findTask(features, taskId);
-    if (!currentTask) {
+    const result = findTask(refinedFeaturesStructure, taskId);
+    if (!result) {
       console.error('Task를 찾을 수 없습니다:', taskId);
       return;
     }
 
-    const newChecked = !currentTask.checked;
-    const isReduced = !newChecked; // 체크 해제 시 isReduced=true, 체크 시 isReduced=false
+    const { task: currentTask, level } = result;
+    console.log('찾은 task:', currentTask);
+    console.log('task level:', level);
+    console.log('현재 isReduced 상태:', currentTask.isReduced);
+    // isReduced가 true면 체크 해제된 상태, false면 체크된 상태
+    // 토글하려면 현재 isReduced 값을 반전시켜야 함
+    const newIsReduced = !currentTask.isReduced;
 
     try {
       // API 호출
       let field = null;
       let featureId = null;
 
-      // 최상위 기능(field)인지 확인 - ID가 'field_'로 시작하는지 확인
-      const isTopLevel = taskId.toString().startsWith('field_');
-      if (isTopLevel) {
-        field = currentTask.name; // field는 이름으로 전달
-        console.log('최상위 기능 토글 - field:', field, 'taskId:', taskId);
+      if (level === 'field') {
+        field = currentTask.field; // field는 필드명으로 전달
+        console.log('최상위 기능 토글 - field:', field, 'taskId:', taskId, 'newIsReduced:', newIsReduced);
       } else {
-        featureId = taskId; // subTask나 secondSubTask는 ID로 전달
-        console.log('하위 기능 토글 - featureId:', featureId, 'taskId:', taskId);
+        featureId = taskId; // mainFeature나 subFeature는 ID로 전달
+        console.log('하위 기능 토글 - featureId:', featureId, 'taskId:', taskId, 'newIsReduced:', newIsReduced);
       }
 
-      console.log('API 호출 파라미터:', { projectId, field, featureId, isReduced });
-      await toggleReduceFlag(projectId, field, featureId, isReduced);
+      console.log('API 호출 파라미터:', { projectId, field, featureId, isReduced: newIsReduced });
+      await toggleReduceFlag(projectId, field, featureId, newIsReduced);
       console.log('체크박스 토글 API 호출 성공');
 
-      // 스토어를 통해 UI 상태 업데이트
-      toggleFeatureChecked(taskId, newChecked);
+      // API 성공 후 데이터 새로고침
+      await refetchRequirementsSpecification();
 
     } catch (error) {
       console.error('체크박스 토글 API 호출 실패:', error);
-      // 에러 발생 시 UI 상태를 원래대로 되돌리지 않음 (사용자가 다시 시도할 수 있도록)
+      // 에러 발생 시 사용자에게 알림
+      alert('체크박스 상태 변경에 실패했습니다. 다시 시도해주세요.');
     }
+    extendSpecPolling(6000); // 6초 연장
 
-  }, [features, projectId]);
+  }, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification]);
 
   // 하위 작업 추가 핸들러
   const handleAddSubTask = (parentTask) => {
@@ -611,6 +831,17 @@ const RequirementsSpecification = () => {
     resetSpecification();
   };
 
+  // 새로고침 버튼 클릭 핸들러
+  const handleRefresh = async () => {
+    try {
+      console.log('명세서 정보 새로고침 시작...');
+      await refetchRequirementsSpecification();
+      console.log('명세서 정보 새로고침 완료');
+    } catch (error) {
+      console.error('명세서 정보 새로고침 실패:', error);
+    }
+  };
+
   return (
     <div className={styles.requirementsSidebar}>
       <div className={styles.container}>
@@ -620,6 +851,21 @@ const RequirementsSpecification = () => {
             <div className={styles.title}>요구사항 명세서</div>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
+            {/* 새로고침 버튼 */}
+            <button
+              className={styles.pdfDownloadWrapper}
+              onClick={handleRefresh}
+              style={{ backgroundColor: '#28a745', color: 'white' }}
+              disabled={isLoadingRequirementsSpecification}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3V1L3 6L8 11V9C11.866 9 15 12.134 15 16C15 12.134 11.866 9 8 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div className={styles.pdfText}>
+                {isLoadingRequirementsSpecification ? '로딩중...' : '새로고침'}
+              </div>
+            </button>
+
             {/* 디버깅 버튼 */}
             <button
               className={styles.pdfDownloadWrapper}
@@ -689,14 +935,14 @@ const RequirementsSpecification = () => {
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel}>프로젝트명: </span>
-                <span className={styles.itemValue}>{projectOverview.projectName || 'N/A'}</span>
+                <span className={styles.itemValue}>{requirementsSpecification?.project?.projectTitle || '값을 불러오지 못했어요'}</span>
               </div>
             </div>
             <div className={styles.overviewItem} style={{ borderBottom: 'none' }}>
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
                 <span className={styles.itemLabel} style={{ marginBottom: '10px' }}>설명 </span>
-                <span className={styles.itemValue}>{projectOverview.projectDescription || 'N/A'}</span>
+                <span className={styles.itemValue}>{requirementsSpecification?.project?.projectDescription || '값을 불러오지 못했어요'}</span>
               </div>
             </div>
           </div>
@@ -708,12 +954,11 @@ const RequirementsSpecification = () => {
             <div className={styles.mainFeaturesTitle}>주요 기능</div>
           </div>
           <div className={styles.mainFeaturesList}>
-            {features?.length > 0 ? (
-              features.map(feature => (
+            {refinedFeaturesStructure && refinedFeaturesStructure.length > 0 ? (
+              refinedFeaturesStructure.map(feature => (
                 <TaskItem
-                  key={feature.id}
+                  key={feature.field} // 필드는 id 값이 없음, 필드 이름으로 구분
                   task={feature}
-                  onToggleOpen={handleToggleOpen}
                   onToggleChecked={handleToggleChecked}
                   onAddSubTask={handleAddSubTask}
                   // onOpenModal={(type, parentTask = null) => openModal(type, parentTask)}
@@ -735,7 +980,7 @@ const RequirementsSpecification = () => {
         </div>
 
         {/* 디버깅용 Raw Data 표시 */}
-        {rawData && (
+        {/* {rawData && (
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div className={styles.cardTitle}>🔍 Raw Data (디버깅용)</div>
@@ -753,7 +998,7 @@ const RequirementsSpecification = () => {
               </pre>
             </div>
           </div>
-        )}
+        )} */}
       </div>
       <AddTaskModal
         isOpen={modalState.isOpen}

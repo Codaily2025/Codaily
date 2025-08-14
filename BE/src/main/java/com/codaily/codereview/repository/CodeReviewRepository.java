@@ -1,6 +1,7 @@
 package com.codaily.codereview.repository;
 
 import com.codaily.codereview.entity.CodeReview;
+import com.codaily.codereview.entity.CodeReviewItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,4 +36,7 @@ public interface CodeReviewRepository extends JpaRepository<CodeReview, Long> {
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end
     );
+
+    boolean existsByFeatureItem_FeatureId(Long featureId);
+
 }

@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query(value="select * from users where user_id=:id", nativeQuery=true)
     User findNativeAsEntity(@Param("id") Long userId);
+
+    Optional<User> findByGithubAccount(String githubAccount);
 }

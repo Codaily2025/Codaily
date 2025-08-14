@@ -6,9 +6,13 @@ import com.codaily.codereview.dto.CommitInfoDto;
 import com.codaily.codereview.dto.DiffFile;
 import com.codaily.codereview.dto.FeatureInferenceRequestDto;
 import com.codaily.codereview.dto.FullFile;
+import com.codaily.codereview.dto.ManualCodeReviewRequestDto;
 import com.codaily.codereview.entity.ChangeType;
 import com.codaily.codereview.entity.CodeCommit;
+import com.codaily.codereview.dto.CodeReviewItemDto;
+import com.codaily.codereview.dto.ReviewItemDto;
 import com.codaily.codereview.repository.CodeCommitRepository;
+import com.codaily.codereview.repository.CodeReviewItemRepository;
 import com.codaily.common.git.WebhookPayload;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.ProjectRepositories;
@@ -16,8 +20,10 @@ import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepositoriesRepository;
 import com.codaily.project.service.ProjectRepositoriesService;
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -42,10 +48,13 @@ public class WebhookServiceImpl implements WebhookService {
 
     private final FeatureItemRepository featureItemRepository;
     private final ProjectRepositoriesRepository projectRepositoriesRepository;
-    private final WebClient webClient;
+    @Qualifier("githubWebCLient")
+    private final WebClient githubWebClient;
     private final CodeCommitRepository codeCommitRepository;
     private final ProjectRepositoriesService projectRepositoriesService;
     private final UserRepository userRepository;
+    private final CodeReviewItemRepository codeReviewItemRepository;
+    record Key(String category, String checklistItem) {}
 
 
     @Value("${github.api-url}")
@@ -66,11 +75,11 @@ public class WebhookServiceImpl implements WebhookService {
                 .orElse(null);
 
         for (WebhookPayload.Commit commit : commits) {
-            log.info("🧾 커밋: {}", commit.getId());
-            log.info("📄 메시지: {}", commit.getMessage());
-            log.info("➕ 추가된 파일: {}", commit.getAdded());
-            log.info("📝 수정된 파일: {}", commit.getModified());
-            log.info("➖ 삭제된 파일: {}", commit.getRemoved());
+            log.info("커밋: {}", commit.getId());
+            log.info("메시지: {}", commit.getMessage());
+            log.info("추가된 파일: {}", commit.getAdded());
+            log.info("수정된 파일: {}", commit.getModified());
+            log.info("삭제된 파일: {}", commit.getRemoved());
 
             List<DiffFile> diffFiles = getDiffFilesFromCommit(commit,accessToken);
 
@@ -81,7 +90,7 @@ public class WebhookServiceImpl implements WebhookService {
             ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repo);
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
-                            .author(commit.getAuthor().getName())
+                            .author(payload.getSender().getLogin())
                             .project(repositories.getProject())
                             .message(commit.getMessage())
                             .committedAt(LocalDateTime.parse(commit.getTimestamp())).build();
@@ -91,20 +100,21 @@ public class WebhookServiceImpl implements WebhookService {
             String[] parts = fullName.split("/");
             String repoOwner = parts[0];
             String repoName = parts[1];
+            String commitBranch = payload.getRef().replace("refs/heads/", "");
 
             CommitInfoDto commitInfoDto = CommitInfoDto.builder().repoName(repoName).repoOwner(repoOwner).build();
 
             Long projectId = repositories.getProject().getProjectId();
 
-            sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId, commitInfoDto);
+            sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId, commitInfoDto, commitBranch);
         }
     }
 
     @Override
     public List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken) {
-        String commitUrl = commit.getUrl(); // payload에 포함된 URL
+        String commitUrl = commit.getUrl();
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
+        headers.set("Authorization", "token " + accessToken);
         headers.setAccept(List.of(MediaType.APPLICATION_JSON));
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
@@ -113,19 +123,34 @@ public class WebhookServiceImpl implements WebhookService {
 
         List<DiffFile> diffFiles = new ArrayList<>();
 
-        if (response.getStatusCode().is2xxSuccessful()) {
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
             JsonNode filesNode = response.getBody().get("files");
+
+            // 제외할 경로/패턴 목록
+            List<String> excludedPatterns = List.of(
+                    ".idea/", ".vscode/", "node_modules/", "build/", "target/",
+                    ".gradle/", ".git/", ".github/", ".DS_Store"
+            );
+
             for (JsonNode file : filesNode) {
                 String filename = file.get("filename").asText();
+
+                // 제외 패턴 필터링
+                if (excludedPatterns.stream().anyMatch(filename::startsWith)) {
+                    continue;
+                }
+
                 String patch = file.has("patch") ? file.get("patch").asText() : "";
-                String status = file.has("status") ? file.get("status").asText() : "modified"; // "added", "removed", "modified"
+                String status = file.has("status") ? file.get("status").asText() : "modified";
                 ChangeType changeType = ChangeType.fromString(status);
+
                 diffFiles.add(new DiffFile(filename, patch, changeType));
             }
         }
 
         return diffFiles;
     }
+
 
 
     @Override
@@ -136,7 +161,8 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitMessage,
                                       List<DiffFile> diffFiles,
                                       Long userId,
-                                      CommitInfoDto commitInfoDto) {
+                                      CommitInfoDto commitInfoDto,
+                                      String commitBranch) {
 
         WebClient webClient = WebClient.builder()
                 .baseUrl(aiUrl) // Python 서버 전용
@@ -144,6 +170,7 @@ public class WebhookServiceImpl implements WebhookService {
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
         List<String> availableFeatures = featureItems.stream()
+                .filter(featureItem -> featureItem.getParentFeature() != null)
                 .map(FeatureItem::getTitle)
                 .toList();
 
@@ -154,10 +181,11 @@ public class WebhookServiceImpl implements WebhookService {
                 .commitMessage(commitMessage)
                 .diffFiles(diffFiles)
                 .availableFeatures(availableFeatures)
-                .jwtToken(userRepository.findById(userId)
+                .accessToken(userRepository.findById(userId)
                         .map(User::getGithubAccessToken)
                         .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다.")))
                 .commitInfoDto(commitInfoDto)
+                .forceDone(false)
                 .build();
 
         webClient.post()
@@ -166,9 +194,60 @@ public class WebhookServiceImpl implements WebhookService {
                 .bodyValue(requestDto)
                 .retrieve()
                 .toBodilessEntity()
-                .doOnSuccess(res -> log.info("✅ Python 서버로 diffFiles 전송 성공"))
-                .doOnError(error -> log.error("❌ 전송 실패", error))
-                .subscribe(); // ✅ 비동기 실행 (subscribe 없으면 실행 안됨)
+                .doOnSuccess(res -> log.info("Python 서버로 diffFiles 전송 성공"))
+                .doOnError(error -> log.error("전송 실패", error))
+                .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
+    }
+
+    @Override
+    public void sendManualCompleteToPython(Long projectId, Long userId, Long featureId) {
+        WebClient webClient = WebClient.builder()
+                .baseUrl(aiUrl) // Python 서버 전용
+                .build();
+        FeatureItem featureItem = featureItemRepository.getFeatureItemByFeatureId(featureId);
+
+        // 그냥 코드리뷰아이템들 불러와서 요약만 요청하는 걸로
+        List<CodeReviewItemDto> codeReviewItems =
+                codeReviewItemRepository.findByFeatureItem_FeatureId(featureId)
+                        .stream()
+                        // (선택) NPE 방지: checklist 없으면 스킵
+                        .filter(cri -> cri.getFeatureItemChecklist() != null)
+                        // 1) 카테고리 + 체크리스트 아이템으로 그룹핑
+                        .collect(Collectors.groupingBy(
+                                cri -> new Key(cri.getCategory(), cri.getFeatureItemChecklist().getItem()),
+                                // 2) 각 그룹에 ReviewItemDto 리스트로 매핑
+                                Collectors.mapping(
+                                        cri -> new ReviewItemDto(
+                                                cri.getFilePath(),
+                                                cri.getLineRange(),
+                                                cri.getSeverity(),
+                                                cri.getMessage()
+                                        ),
+                                        Collectors.toList()
+                                )
+                        ))
+                        // 3) 그룹 → CodeReviewItemDto로 변환
+                        .entrySet().stream()
+                        .map(e -> CodeReviewItemDto.builder()
+                                .category(e.getKey().category())
+                                .checklistItem(e.getKey().checklistItem())
+                                .items(e.getValue())
+                                .build()
+                        )
+                        .toList();
+
+        ManualCodeReviewRequestDto requestDto = ManualCodeReviewRequestDto.builder()
+                .projectId(projectId).featureName(featureItem.getTitle()).items(codeReviewItems).build();
+
+        webClient.post()
+                .uri("ai/api/code-review/feature-inference")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(requestDto)
+                .retrieve()
+                .toBodilessEntity()
+                .doOnSuccess(res -> log.info(" Python 서버로 코드리뷰 요청 전송 성공"))
+                .doOnError(error -> log.error("전송 실패", error))
+                .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
     }
 
     @Override
@@ -178,7 +257,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
 
         String commitUrl = String.format("%s/repos/%s/%s/commits/%s", githubApiUrl, repoOwner, repoName, commitHash);
-        Mono<Map<String, Object>> responseMono = webClient.get()
+        Mono<Map<String, Object>> responseMono = githubWebClient.get()
                 .uri(commitUrl)
                 .headers(h -> {
                     h.setBearerAuth(token);
@@ -197,7 +276,7 @@ public class WebhookServiceImpl implements WebhookService {
             String filePath = (String) file.get("filename");
             String contentUrl = String.format("%s/repos/%s/%s/contents/%s?ref=%s", githubApiUrl, repoOwner, repoName, filePath, commitHash);
 
-            String content = webClient.get()
+            String content = githubWebClient.get()
                     .uri(contentUrl)
                     .headers(h -> {
                         h.setBearerAuth(token);
@@ -226,10 +305,6 @@ public class WebhookServiceImpl implements WebhookService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 유저가 연결해둔 모든 리포에서 우리 콜백 URL로 등록된 웹훅을 제거한다.
-     * 리포/커밋은 유지, 훅만 제거.
-     */
     @Override
     @Transactional
     public void removeAllHooksForUser(Long userId) {
@@ -250,7 +325,7 @@ public class WebhookServiceImpl implements WebhookService {
 
             try {
                 // 1) 훅 목록 조회
-                List<Map<String, Object>> hooks = webClient.get()
+                List<Map<String, Object>> hooks = githubWebClient.get()
                         .uri("{api}/repos/{owner}/{repo}/hooks",
                                 Map.of("api", githubApiUrl, "owner", repoOwner, "repo", repo))
                         .headers(h -> {
@@ -278,7 +353,7 @@ public class WebhookServiceImpl implements WebhookService {
                         long hookId = (idObj instanceof Number) ? ((Number) idObj).longValue()
                                 : Long.parseLong(String.valueOf(idObj));
 
-                        webClient.delete()
+                        githubWebClient.delete()
                                 .uri("{api}/repos/{owner}/{repo}/hooks/{id}",
                                         Map.of("api", githubApiUrl, "owner", repoOwner, "repo", repo, "id", hookId))
                                 .headers(h -> h.setBearerAuth(token))
@@ -294,4 +369,58 @@ public class WebhookServiceImpl implements WebhookService {
             }
         }
     }
+
+
+
+    private String getFileFromRepoPath(String token, String owner, String repo, String path, @Nullable String ref) {
+        // 1) 경로 정규화: 백슬래시 → 슬래시, 앞쪽 슬래시 제거
+        String normalized = path.replace('\\', '/').replaceAll("^/+", "");
+
+        return githubWebClient.get()
+                .uri(uriBuilder -> {
+                    // githubApiUrl 이 "https://api.github.com" 라고 가정
+                    // base 는 WebClient 생성 시 baseUrl 로 놔도 되고, 여기선 pathSegment만 안전하게 쌓음
+                    var ub = uriBuilder
+                            .pathSegment("repos", owner, repo, "contents");
+
+                    // 2) 디렉터리/파일 세그먼트를 분리해서 각각 pathSegment 로 추가(슬래시는 구분자로만 사용)
+                    for (String seg : normalized.split("/")) {
+                        if (!seg.isBlank()) ub = ub.pathSegment(seg);
+                    }
+
+                    // 3) ref 가 있으면 쿼리로 추가(브랜치/태그/커밋 SHA)
+                    if (ref != null && !ref.isBlank()) {
+                        ub = ub.queryParam("ref", ref);
+                    }
+                    return ub.build();
+                })
+                .headers(h -> {
+                    h.setBearerAuth(token);
+                    // RAW 로 받아 base64 디코딩 불필요
+                    h.set(HttpHeaders.ACCEPT, "application/vnd.github.v3.raw");
+                })
+                .retrieve()
+                // 404(경로 없음) → 빈 문자열로
+                .bodyToMono(String.class)
+                .onErrorReturn("")
+                .block();
+    }
+
+    /** 레포지토리의 특정 ref(없으면 기본 브랜치) 기준으로, 주어진 경로 리스트의 파일 본문 전부 가져오기 */
+    public List<FullFile> getFilesFromRepoPaths(Long userId, String owner, String repo, List<String> filePaths, @Nullable String ref) {
+        String token = userRepository.findById(userId)
+                .map(User::getGithubAccessToken)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
+
+        List<FullFile> result = new ArrayList<>();
+        for (String path : filePaths) {
+            String content = getFileFromRepoPath(token, owner, repo, path, ref);
+            result.add(FullFile.builder()
+                    .filePath(path)
+                    .content(content) // 없거나 바이너리면 빈 문자열일 수 있음
+                    .build());
+        }
+        return result;
+    }
 }
+

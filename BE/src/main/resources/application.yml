@@ -6,6 +6,9 @@ spring:
       serialization:
         fail-on-empty-beans: false
 
+  profiles:
+    include: secret
+
   datasource:
     driver-class-name: org.postgresql.Driver
 

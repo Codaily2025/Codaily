@@ -1,16 +1,22 @@
 package com.codaily.codereview.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CodeReviewResultRequest {
 
     @JsonProperty("project_id")
@@ -19,8 +25,11 @@ public class CodeReviewResultRequest {
     @JsonProperty("commit_id")
     private Long commitId;
 
+    @JsonProperty("commit_hash")
+    private String commitHash;
+
     @JsonProperty("feature_name")
-    private List<String> featureNames; // nullable
+    private String featureName; // nullable
 
     @JsonProperty("feature_id")
     private Long featureId;
@@ -37,11 +46,11 @@ public class CodeReviewResultRequest {
     @JsonProperty("code_review_items")
     private List<CodeReviewItemDto> codeReviewItems; // nullable
 
-    @JsonProperty("review_summary")
-    private Map<String, String> reviewSummary; // nullable
-
     @JsonProperty("review_summaries")
-    private List<String> reviewSummaries; // nullable
+    private Map<String, String> reviewSummaries; // nullable
+
+    @JsonProperty("review_summary")
+    private String reviewSummary; // nullable
 
     @JsonProperty("force_done")
     private boolean forceDone;

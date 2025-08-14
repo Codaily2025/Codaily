@@ -5,11 +5,18 @@ import com.codaily.codereview.dto.FeatureChecklistRequestDto;
 import com.codaily.codereview.dto.FeatureChecklistResponseDto;
 import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.codereview.repository.FeatureItemChecklistRepository;
+import com.codaily.codereview.dto.*;
 import com.codaily.global.exception.ProjectNotFoundException;
 import com.codaily.management.entity.FeatureItemSchedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.project.dto.*;
+import com.codaily.codereview.entity.FeatureItemChecklist;
+import com.codaily.codereview.repository.FeatureItemChecklistRepository;
+import com.codaily.project.dto.FeatureSaveContent;
+import com.codaily.project.dto.FeatureSaveItem;
+import com.codaily.project.dto.FeatureSaveRequest;
+import com.codaily.project.dto.FeatureSaveResponse;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
@@ -20,6 +27,8 @@ import com.codaily.project.repository.ScheduleRepository;
 import com.codaily.project.repository.SpecificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -44,6 +53,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     private final DaysOfWeekRepository daysOfWeekRepository;
     private final ScheduleRepository scheduleRepository;
     private final FeatureItemChecklistRepository checklistRepository;
+    @Qualifier("langchainWebClient")   // ★ LangChain(FastAPI) 호출용
     private final WebClient langchainWebClient;
     private final AsyncScheduleService asyncScheduleService;
     private final FeatureItemSchedulesRepository featureItemSchedulesRepository;
@@ -314,7 +324,6 @@ public class FeatureItemServiceImpl implements FeatureItemService {
                 .subFeature(subFeatureDtos)
                 .build();
 
-//        generateFeatureItemChecklist(projectId);
 
         return FeatureSaveResponse.builder()
                 .type(type)
@@ -429,20 +438,14 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     public void generateFeatureItemChecklist(Long projectId) {
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
 
-        Map<Long, List<String>> checklistMap = new HashMap<>();
+        // 중복 방지: List -> Set
+        Map<Long, java.util.LinkedHashSet<String>> checklistMap = new HashMap<>();
 
-        // 1) parentFeature == null → 바로 checklist 생성
-        featureItems.stream()
-                .filter(item -> item.getParentFeature() == null)
-                .forEach(item -> checklistMap.put(item.getFeatureId(), List.of(item.getTitle())));
-
-        // 2) parentFeature != null → GPT 요청
         List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
                 .filter(item -> item.getParentFeature() != null)
                 .map(item -> new FeatureChecklistFeatureDto(
                         item.getFeatureId(),
-                        item.getTitle(),
-                        item.getDescription()))
+                        item.getTitle()))
                 .toList();
 
         if (!dtoList.isEmpty()) {
@@ -461,113 +464,74 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
                 if (response != null && response.getChecklistMap() != null) {
                     response.getChecklistMap().forEach((featureIdStr, items) -> {
-                        checklistMap.put(Long.parseLong(featureIdStr), items);
+                        Long fid = Long.parseLong(featureIdStr);
+                        checklistMap
+                                .computeIfAbsent(fid, k -> new java.util.LinkedHashSet<>())
+                                .addAll(items); // Set으로 중복 자동 제거
                     });
                 }
             } catch (Exception e) {
                 log.error("Checklist 생성 실패", e);
             }
-
         }
 
-        // 3) checklistMap 저장
+        // 3) 저장 (선택) 존재 여부 체크로 중복 방지 2중 안전장치
         checklistMap.forEach((featureId, items) -> {
             FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
             items.forEach(content -> {
-                FeatureItemChecklist checklist = FeatureItemChecklist.builder()
-                        .featureItem(featureItem)
-                        .item(content)
-                        .done(false)
-                        .build();
-                featureItemChecklistRepository.save(checklist);
+                    FeatureItemChecklist checklist = FeatureItemChecklist.builder()
+                            .featureItem(featureItem)
+                            .item(content)
+                            .done(false)
+                            .build();
+                    featureItemChecklistRepository.save(checklist);
+
             });
         });
-
+        log.info("체크리스트 저장 완료");
     }
 
-// checklistMap 에 parentFeature null인 애들 + GPT 응답 결과 다 합쳐짐
-
-
-//        List<FeatureChecklistFeatureDto> dtoList = featureItems.stream()
-//                .filter(item -> item.getParentFeature() != null)
-//                .map(item -> new FeatureChecklistFeatureDto(
-//                        item.getFeatureId(),
-//                        item.getTitle(),
-//                        item.getDescription()))
-//                .toList();
-//
-//        FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder().features(dtoList).build();
-//
-//        try {
-//            FeatureChecklistResponseDto response = webClient
-//                    .post()
-//                    .uri("ai/api/generate-checklist")
-//                    .bodyValue(request)
-//                    .retrieve()
-//                    .bodyToMono(FeatureChecklistResponseDto.class)
-//                    .block();
-//
-//            Map<String, List<String>> checklistMap = response.getChecklistMap();
-//
-//            if (checklistMap == null) {
-//                log.warn("Checklist 응답이 비어있습니다.");
-//                return;
-//            }
-//
-//            // ✅ checklist 저장
-//            checklistMap.forEach((featureIdStr, checklistItems) -> {
-//                Long featureId = Long.parseLong(featureIdStr);
-//                FeatureItem featureItem = featureItemRepository.getReferenceById(featureId);
-//                List<FeatureItemChecklist> checklistList = checklistItems.stream()
-//                        .map(item -> FeatureItemChecklist.builder()
-//                                .featureItem(featureItem).item(item).done(false).build())
-//                        .toList();
-//
-//                featureItemChecklistRepository.saveAll(checklistList);
-//            });
-//
-//            log.info("Checklist 생성 및 저장 완료");
-//
-//        } catch (WebClientResponseException e) {
-//            log.error("Checklist 생성 실패: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-//        } catch (Exception e) {
-//            log.error("Checklist 생성 중 예외 발생", e);
-//        }
 
 
     @Override
-    public void generateExtraFeatureItemChecklist(Long featureId) {
+    public boolean generateExtraFeatureItemChecklist(Long featureId) {
         FeatureItem featureItem = featureItemRepository.getFeatureItemByFeatureId(featureId);
+        Project project = projectRepository.getProjectByProjectId(featureItem.getProjectId());
 
         // 주 기능이면 return
         if (featureItem.getParentFeature() == null) {
-            log.warn("루트 기능은 추가 checklist 생성 대상이 아닙니다. featureId = {}", featureId);
-            return;
+            log.warn("해당 기능은 주기능. featureId = {}", featureId);
+            return false;
         }
         FeatureChecklistFeatureDto dto = FeatureChecklistFeatureDto.builder()
                 .featureId(featureId)
                 .title(featureItem.getTitle())
-                .description(featureItem.getDescription())
                 .build();
 
-        FeatureChecklistRequestDto request = FeatureChecklistRequestDto.builder()
+        FeatureChecklistExtraRequestDto request = FeatureChecklistExtraRequestDto.builder()
                 .features(List.of(dto))
+                .projectName(project.getTitle())
                 .build();
 
         try {
-            FeatureChecklistResponseDto response = langchainWebClient
+            FeatureChecklistExtraResponseDto response = langchainWebClient
                     .post()
                     .uri("ai/api/generate-checklist")
                     .bodyValue(request)
                     .retrieve()
-                    .bodyToMono(FeatureChecklistResponseDto.class)
+                    .bodyToMono(FeatureChecklistExtraResponseDto.class)
                     .block();
 
             Map<String, List<String>> checklistMap = response.getChecklistMap();
+            Boolean valid = response.isValid();
+
+            if(!valid) {
+                return false;
+            }
 
             if (checklistMap == null) {
                 log.warn("Checklist 응답이 비어있습니다.");
-                return;
+                return false;
             }
 
             // checklist 저장
@@ -581,12 +545,12 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             });
 
             log.info("Checklist 생성 및 저장 완료");
-
         } catch (WebClientResponseException e) {
             log.error("Checklist 생성 실패: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error("Checklist 생성 중 예외 발생", e);
         }
+        return true;
     }
 
     @Override

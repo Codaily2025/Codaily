@@ -44,7 +44,10 @@ export const useSendUserMessage = (projectId, specId) => {
   const { addMessage, removeMessage, appendLastMessageContent } = useChatStore((state) => state); // 메세지 추가
   const { 
     processSpecData,
-    showSidebar
+    // showSidebar
+    openSidebar,
+    startSpecPolling,
+    extendSpecPolling 
   } = useSpecificationStore((state) => state);
 
   return useMutation({
@@ -64,6 +67,7 @@ export const useSendUserMessage = (projectId, specId) => {
           projectSpecId: specId,
           onOpen: () => {
             // 스트림이 시작되면 빈 봇 메시지를 추가
+            startSpecPolling(20000);
             addMessage({
               id: `bot-${Date.now()}`,
               sender: 'bot',
@@ -85,8 +89,11 @@ export const useSendUserMessage = (projectId, specId) => {
               case 'spec:add:feature:sub':
                 // 모든 명세서 관련 데이터는 processSpecData로 통합 처리
                 processSpecData(data.content);
-                console.log('showSidebar 호출 - 명세서 데이터 수신:', data.type);
-                showSidebar(); // 요구사항 명세서 사이드바 표시
+                // console.log('showSidebar 호출 - 명세서 데이터 수신:', data.type);
+                // showSidebar(); // 요구사항 명세서 사이드바 표시
+                openSidebar();
+                // spec 관련 청크가 들어올 때마다 폴링 연장
+                extendSpecPolling(20000);
                 break;
               default:
                 console.warn("Unknown SSE event type:", data.type);
@@ -96,15 +103,18 @@ export const useSendUserMessage = (projectId, specId) => {
             // 명세서 데이터 처리 콜백
             console.log('명세서 데이터 처리:', specData);
             processSpecData(specData.content);
-            showSidebar();
+            openSidebar();
+            extendSpecPolling(20000);
           },
           onShowSidebar: () => {
             // 사이드바 표시 콜백 - 파싱 전에 호출됨
             console.log('onShowSidebar 호출 - 사이드바 표시');
-            showSidebar();
+            openSidebar();
+            // extendSpecPolling(20000);
           },
           onClose: () => {
             console.log("SSE stream closed.");
+            extendSpecPolling(4000);
             resolve(); // Promise를 resolve하여 mutation을 성공 상태로 만듦
           },
           onError: (error) => {

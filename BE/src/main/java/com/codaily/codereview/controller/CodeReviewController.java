@@ -17,9 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,54 +43,115 @@ public class CodeReviewController {
     private ProductivityEventService productivityEventService;
 
     // 체크리스트 전달
-    @GetMapping("/project/{projectId}/feature/{featureName}/checklist")
+    @GetMapping("/project/{projectId}/feature/checklist")
     @Operation(summary = "백엔드용")
-    public List<ChecklistItemDto> getChecklistItems(@PathVariable Long projectId, @PathVariable String featureName) {
+    public ChecklistItemResultDto getChecklistItems(@PathVariable Long projectId, @RequestParam String featureName) {
         FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
 
         List<FeatureItemChecklist> list = featureItemChecklistService.findByFeatureItem_FeatureId(featureItem.getFeatureId());
 
-        return list.stream()
-                .map(item -> new ChecklistItemDto(item.getItem(), item.isDone()))
-                .collect(Collectors.toList());
+        return ChecklistItemResultDto.builder().featureId(featureItem.getFeatureId())
+                .checklistItems(list.stream()
+                                .map(item -> new ChecklistItemDto(item.getItem(), item.isDone()))
+                                .collect(Collectors.toList())).build();
+    }
+
+    // 코드리뷰 아이템 전달
+    @GetMapping("/project/{projectId}/feature")
+    public ResponseEntity<List<CodeReviewItemDto>> getALlCodeReviewItems(
+            @PathVariable Long projectId,
+            @RequestParam String featureName
+    ) {
+        FeatureItem featureItem = featureItemService.findByProjectIdAndTitle(projectId, featureName);
+        if (featureItem == null) {
+            // 204 대신 200 + 빈 배열
+            return ResponseEntity.ok(java.util.Collections.emptyList());
+        }
+
+        List<CodeReviewItemDto> codeReviewItems =
+                codeReviewService.getCodeReviewItemsAll(projectId, featureName);
+
+        // NPE 방지: null이면 빈 배열로
+        if (codeReviewItems == null) {
+            codeReviewItems = java.util.Collections.emptyList();
+        }
+
+        return ResponseEntity.ok(codeReviewItems);
     }
 
     @PostMapping("/project/{projectId}/commit/{commitHash}/files")
     @Operation(summary = "백엔드용")
     public List<FullFileDto> getFullFilesByPaths(@PathVariable Long projectId, @PathVariable String commitHash,
-                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto,
-                                                 @AuthenticationPrincipal PrincipalDetails userDetails){
+                                                 @RequestBody FileFetchRequestDto fileFetchRequestDto){
+
         List<String> paths = fileFetchRequestDto.getFilePaths();
         String repoName = fileFetchRequestDto.getRepoName();
         String repoOwner = fileFetchRequestDto.getRepoOwner();
+        String commitBranch = normalizeRef(fileFetchRequestDto.getCommitBranch());;
 
         Project project = projectService.findById(projectId);
         Long userId = project.getUser().getUserId();
-        Long loginUserId = userDetails.getUser().getUserId();
 
-        if(userId != loginUserId) {
-            log.info("해당 프로젝트에 접근할 권한이 없습니다.");
+        // paths가 있으면: 레포 경로 기반으로 해당 파일들만 조회
+        if (!paths.isEmpty()) {
+            List<FullFile> files = webhookService.getFilesFromRepoPaths(
+                    userId, repoOwner, repoName, paths, commitBranch
+            );
+            return files.stream()
+                    .map(f -> new FullFileDto(f.getFilePath(), f.getContent()))
+                    .collect(Collectors.toList());
         }
-        List<FullFile> fullFiles = webhookService.getFullFilesByPaths(commitHash, projectId, userId, paths, repoOwner, repoName);
 
-        return fullFiles.stream()
-                .map(file -> new FullFileDto(file.getFilePath(), file.getContent()))
+        // paths가 없으면: 커밋 변경 파일 조회(기존 동작)
+        List<FullFile> files = webhookService.getFullFilesFromCommit(
+                commitHash, projectId, userId, repoOwner, repoName
+        );
+        return files.stream()
+                .map(f -> new FullFileDto(f.getFilePath(), f.getContent()))
                 .collect(Collectors.toList());
     }
 
-    @PostMapping("/code-review/result")
+    /** "refs/heads/main" → "main", "refs/tags/v1.0.0" → "v1.0.0" */
+    private static String normalizeRef(String ref) {
+        if (ref == null || ref.isBlank()) return null;
+        if (ref.startsWith("refs/heads/")) return ref.substring("refs/heads/".length());
+        if (ref.startsWith("refs/tags/"))  return ref.substring("refs/tags/".length());
+        return ref;
+    }
+
+    @PostMapping("/feature-inference")
+    public ResponseEntity<?> requestCodeReviewToPython(@RequestBody ManualCompleteFeatureInferenceRequestDto request) {
+        if(projectService.isProjectOwner(request.getProjectId(), request.getUserId())) {
+            log.error("본인의 프로젝트만 구현 완료할 수 있습니다.");
+            return ResponseEntity.noContent().build();
+        }
+        webhookService.sendManualCompleteToPython(request.getProjectId(), request.getUserId(), request.getFeatureId());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/result")
     @Operation(summary = "백엔드용")
     public ResponseEntity<?> receiveCodeReviewResult(@RequestBody CodeReviewResultRequest request) {
-        if(request.getFeatureNames() != null && !request.getFeatureNames().isEmpty()) {
-            codeReviewService.saveFeatureName(request.getProjectId(), request.getFeatureNames(), request.getCommitId());
+        if(request.getFeatureName() != null && !request.getFeatureName().isEmpty()) {
+            codeReviewService.saveFeatureName(request.getProjectId(), request.getFeatureName(), request.getCommitId());
             log.info("기능명 저장 완료");
         }
         // 체크리스트 구현 여부 변경 or 커밋 메시지 구현 완료 or 사용자가 작업완료 버튼 클릭
         if((request.getChecklistFileMap() != null && !request.getChecklistFileMap().isEmpty()) || request.isForceDone()) {
-            codeReviewService.updateChecklistEvaluation(request.getFeatureId(), request.getChecklistEvaluation(), request.getExtraImplemented());
+            codeReviewService.updateChecklistEvaluation(request.getProjectId(), request.getChecklistEvaluation(), request.getExtraImplemented(),
+                    request.getFeatureName());
             log.info("체크리스트 구현 여부 업데이트");
         }
-        if (request.getReviewSummary() != null) {
+
+        if(request.getReviewSummary() != null) {
+            log.info("체크리스트 코드 리뷰 요청 수신: featureId={}, items={}",
+                    request.getFeatureId(),
+                    request.getCodeReviewItems() == null ? 0 : request.getCodeReviewItems().size());
+            codeReviewService.saveChecklistReviewItems(request);
+            log.info("체크리스트 코드 리뷰 저장 시도 완료");
+        }
+
+        if (request.getReviewSummaries() != null && !request.getReviewSummaries().isEmpty()) {
             codeReviewService.saveCodeReviewResult(request);
             //생산성 즉시 업데이트
             Project project = projectService.findById(request.getProjectId());
@@ -101,6 +164,7 @@ public class CodeReviewController {
         } else {
             codeReviewService.saveChecklistReviewItems(request);
             log.info("기능 미구현, 체크리스트 코드 리뷰 생성");
+            log.info("기능 구현 완료 -> 코드 리뷰(CodeReview) 생성");
         }
         return ResponseEntity.ok().build();
 
@@ -151,7 +215,8 @@ public class CodeReviewController {
     @GetMapping("/{featureId}/items")
     @Operation(summary = "코드 리뷰 항목별 조회", description = "featureId 기준 코드리뷰 항목(카테고리)별 조회용")
     public ResponseEntity<List<CodeReviewItemResponseDto>> getCodeReviewItems(@PathVariable Long featureId) {
-        return ResponseEntity.ok(codeReviewService.getCodeReviewItems(featureId));
+        List<CodeReviewItemResponseDto> result = codeReviewService.getCodeReviewItems(featureId);
+        return (result == null || result.isEmpty()) ? ResponseEntity.noContent().build() : ResponseEntity.ok(result);
     }
 
     /*
@@ -183,7 +248,8 @@ public class CodeReviewController {
     @GetMapping("{featureId}/checklist/status")
     @Operation(summary = "체크리스트 구현 상태", description = "featureId 기준 체크리스트 구현 여부 확인용")
     public ResponseEntity<ChecklistStatusResponseDto> getChecklistStatus(@PathVariable Long featureId) {
-        return ResponseEntity.ok(codeReviewService.getChecklistStatus(featureId));
+        ChecklistStatusResponseDto dto = codeReviewService.getChecklistStatus(featureId);
+        return (dto == null) ? ResponseEntity.noContent().build() : ResponseEntity.ok(codeReviewService.getChecklistStatus(featureId));
     }
 
     /*
@@ -211,7 +277,8 @@ public class CodeReviewController {
     @GetMapping("{featureId}/score")
     @Operation(summary = "코드 리뷰 점수", description = "featureId 기준 코드 리뷰 점수 반환")
     public ResponseEntity<CodeReviewScoreResponseDto> getCodeReviewScore(@PathVariable Long featureId) {
-        return ResponseEntity.ok(codeReviewService.getQualityScore(featureId));
+        CodeReviewScoreResponseDto dto = codeReviewService.getQualityScore(featureId);
+        return (dto == null) ? ResponseEntity.noContent().build() : ResponseEntity.ok(codeReviewService.getQualityScore(featureId));
     }
 
     /*

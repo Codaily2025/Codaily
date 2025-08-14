@@ -1,9 +1,12 @@
 package com.codaily.codereview.repository;
 
 import com.codaily.codereview.entity.CodeCommit;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -67,4 +70,20 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
     // 특정 프로젝트의 최근 커밋들 조회 (개수 제한)
     @Query("SELECT cc FROM CodeCommit cc JOIN cc.featureItem f WHERE f.project.projectId = :projectId ORDER BY cc.committedAt DESC LIMIT :limit")
     List<CodeCommit> findRecentCommitsByProject_ProjectId(@Param("projectId") Long projectId, @Param("limit") int limit);
+
+    // 1) author + featureName 으로 전부 가져오기
+    @Query("select distinct c " +
+            "from CodeCommit c join c.featureNames f " +
+            "where c.author = :author and f = :featureName")
+    List<CodeCommit> findByAuthorAndFeatureName(@Param("author") String author,
+                                                @Param("featureName") String featureName);
+
+    // 2) 가장 최근 1건만 가져오기 (committedAt 기준)
+    @Query("select c " +
+            "from CodeCommit c join c.featureNames f " +
+            "where c.author = :author and f = :featureName " +
+            "order by c.committedAt desc")
+    List<CodeCommit> findLatestByAuthorAndFeatureName(@Param("author") String author,
+                                                      @Param("featureName") String featureName,
+                                                      Pageable pageable);
 }

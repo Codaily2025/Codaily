@@ -2,6 +2,7 @@ package com.codaily.common.git.service;
 
 import com.codaily.codereview.dto.*;
 import com.codaily.common.git.WebhookPayload;
+import jakarta.annotation.Nullable;
 
 import java.util.List;
 
@@ -11,12 +12,16 @@ public interface WebhookService {
     List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken);
 
     void sendDiffFilesToPython(Long projectId,
-                               Long commitId,
-                               String commitHash,
-                               String commitMessage,
-                               List<DiffFile> diffFiles,
-                               Long userId,
-                               CommitInfoDto commitInfoDto);
+                                      Long commitId,
+                                      String commitHash,
+                                      String commitMessage,
+                                      List<DiffFile> diffFiles,
+                                      Long userId,
+                                      CommitInfoDto commitInfoDto,
+                                      String commitBranch);
+
+    void sendManualCompleteToPython(Long projectId, Long userId,
+                                           Long featureId);
 
     List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName);
 
@@ -24,4 +29,5 @@ public interface WebhookService {
 
     void removeAllHooksForUser(Long userId);
 
+    List<FullFile> getFilesFromRepoPaths(Long userId, String owner, String repo, List<String> filePaths, @Nullable String ref);
 }

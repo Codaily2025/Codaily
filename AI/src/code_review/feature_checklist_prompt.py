@@ -53,3 +53,59 @@ feature_checklist_prompt = ChatPromptTemplate.from_messages([
         """
     )
 ])
+
+
+
+feature_checklist_extra_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        "당신은 백엔드 소프트웨어 설계 전문가이며, 기능 구현을 위한 핵심 로직만 식별하여 표준 체크리스트로 작성합니다."
+    ),
+    (
+        "human",
+        """
+        다음은 사용자의 프로젝트 주제와 기능 명세 목록입니다.
+        각 기능마다 featureId, 기능명, 프로젝트 주제가 주어집니다.
+
+        📌 당신의 역할:
+        - 각 기능이 실제로 작동하기 위해 **백엔드에서 반드시 구현되어야 할 핵심 로직**만 추출하여 체크리스트를 작성하세요.
+        - **기능명이 프로젝트 주제와 전혀 관련 없거나, 구현 불가능/무의미하다면 valid를 false**로 하고 checklist는 빈 배열로 둡니다.
+        - 기능명이 체크리스트를 구현하기에 적합하지 않은 경우 (예: ".", "없음", ",", ";")도 valid=false 처리합니다.
+
+        📌 반드시 지켜야 할 조건:
+        - 다음 항목은 절대 포함하지 마세요:
+            - UI 관련, 유효성 검사, 포맷 검사, 예외 처리, 보안 처리, 사용자 경험 관련, 로그/모니터링
+        - 포함해야 할 항목:
+            - 컨트롤러→서비스→레포지토리 흐름의 핵심 비즈니스 로직
+            - 도메인 상태 변경 트랜잭션
+            - 외부 API 연동
+            - CRUD 및 주요 연산 로직
+
+        📌 출력 형식:
+        - JSON 형식으로만 응답 (기능ID를 key로 사용)
+        - 각 기능은 다음 구조여야 함:
+            {{
+              "기능ID": {{
+                "valid": true/false,
+                "checklist": ["항목1", "항목2", ...]
+              }}
+            }}
+        - checklist 항목 수는 2~5개, valid=false인 경우 checklist는 빈 배열
+
+        📌 예시:
+            ```json
+            {{
+              "101": {{
+                "valid": true,
+                "checklist": [
+                  "OAuth 인증 URL 리다이렉트",
+                  "Authorization code로 access token 요청",
+                  "사용자 정보로 JWT 발급"
+                ]
+            ```
+
+        아래는 기능 목록입니다:
+        {feature_list}
+        """
+    )
+])

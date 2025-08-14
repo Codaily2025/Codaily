@@ -87,7 +87,7 @@ public class GithubServiceImpl implements GithubService {
         String targetUrl = webhookUrl;
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
+        headers.set("Authorization", "token " + accessToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Accept", "application/vnd.github+json");
 

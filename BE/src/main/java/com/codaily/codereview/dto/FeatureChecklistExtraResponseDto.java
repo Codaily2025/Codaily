@@ -12,6 +12,7 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FeatureChecklistResponseDto {
+public class FeatureChecklistExtraResponseDto {
     private Map<String, List<String>> checklistMap;// featureId -> checklist 항목들
+    private boolean valid;
 }
