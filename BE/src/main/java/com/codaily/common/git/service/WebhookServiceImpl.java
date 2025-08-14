@@ -69,7 +69,6 @@ public class WebhookServiceImpl implements WebhookService {
     @Override
     public void handlePushEvent(WebhookPayload payload, Long userId) {
         List<WebhookPayload.Commit> commits = payload.getCommits();
-        String repo = payload.getRepository().getFull_name();
         String accessToken = userRepository.findById(userId)
                 .map(User::getGithubAccessToken)
                 .orElse(null);
@@ -81,7 +80,12 @@ public class WebhookServiceImpl implements WebhookService {
             log.info("수정된 파일: {}", commit.getModified());
             log.info("삭제된 파일: {}", commit.getRemoved());
 
-            ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repo);
+            String fullName = payload.getRepository().getFull_name();
+            String[] parts = fullName.split("/");
+            String repoOwner = parts[0];
+            String repoName = parts[1];
+
+            ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repoOwner);
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
                             .author(payload.getSender().getLogin())
@@ -90,10 +94,7 @@ public class WebhookServiceImpl implements WebhookService {
                             .committedAt(LocalDateTime.parse(commit.getTimestamp())).build();
 
             Long commitId = codeCommitRepository.save(entity).getCommitId();
-            String fullName = payload.getRepository().getFull_name();
-            String[] parts = fullName.split("/");
-            String repoOwner = parts[0];
-            String repoName = parts[1];
+
             String commitBranch = payload.getRef().replace("refs/heads/", "");
 
             CommitInfoDto commitInfoDto = CommitInfoDto.builder().repoName(repoName).repoOwner(repoOwner).build();
@@ -116,7 +117,8 @@ public class WebhookServiceImpl implements WebhookService {
         String apiUrl = String.format(
                 "https://api.github.com/repos/%s/%s/commits/%s",
                 repoOwner, repoName, commitHash
-        );        HttpHeaders headers = new HttpHeaders();
+        );
+        HttpHeaders headers = new HttpHeaders();
         log.info("Webhook commit.url = {}", apiUrl);
 
         headers.set("Authorization", "token " + accessToken);
