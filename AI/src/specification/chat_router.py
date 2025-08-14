@@ -32,6 +32,7 @@ async def chat_stream(
     intent: ChatIntent,
     project_id: int,
     message: str,
+    time: int,
     feature_id: int = None,
     title: str = None,
     field: str = None,
@@ -64,7 +65,7 @@ async def chat_stream(
         case ChatIntent.SPEC | ChatIntent.SPEC_REGENERATE:
             formatted_text = format_history_to_text(history.messages)
             return StreamingResponse(
-                gen_spec(formatted_text=formatted_text, wrapper_type=intent),
+                gen_spec(formatted_text=formatted_text, wrapper_type=intent, time=time),
                 media_type="text/event-stream",
             )
 
