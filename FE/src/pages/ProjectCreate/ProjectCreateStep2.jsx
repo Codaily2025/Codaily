@@ -7,6 +7,7 @@ import { useChatStore } from '../../stores/chatStore';
 import { useSpecificationStore } from '../../stores/specificationStore';
 import { useChatHistoryQuery, useSendUserMessage } from '../../queries/useChat';
 import { useGetRequirementsSpecification } from '../../queries/useRequirementsSpecification';
+import { finalizeSpecification, toggleReduceFlag } from '../../apis/requirementsSpecification';
 
 import ChatProgressBar from '../../components/ChatProgressBar/ChatProgressBar';
 import ChatbotMessage from '../../components/ChatbotMessage/ChatbotMessage';
@@ -21,7 +22,7 @@ const ProjectCreateStep2 = () => {
   // URL 파라미터에서 projectId와 specId 가져오기
   const projectId = searchParams.get('projectId');
   const specId = searchParams.get('specId');
-
+  
   // const [isSplitView, setIsSplitView] = useState(false); // 분할 화면 상태
   // zustand 스토어의 showSidebar 상태 가져오기
   const isSidebarVisible = useSpecificationStore((s) => s.isSidebarVisible);
@@ -38,6 +39,8 @@ const ProjectCreateStep2 = () => {
   const setProjectSummary = useSpecificationStore((state) => state.setProjectSummary);
   const hasSpecification = useSpecificationStore((s) => s.hasSpecification);
 
+  const finalizeSpecificationStore = useSpecificationStore((state) => state.finalizeSpecification);
+  
   // 사이드바 표시 조건: isSidebarVisible이 true이거나 mainFeatures가 있을 때
   const shouldShowSidebar = isSidebarVisible || (mainFeatures && mainFeatures.length > 0);
  const specExists = hasSpecification();
@@ -103,18 +106,153 @@ const ProjectCreateStep2 = () => {
   // 사용자 메세지 전송 훅 - projectId와 specId 전달
   const sendUserMessage = useSendUserMessage(projectId, specId);
 
-  // 다음으로 버튼 클릭 핸들러
-  const handleNextClick = () => {
-    // 요구사항 명세서가 없으면 클릭 무시
-    if (!specExists) {
-      return;
-    }
-    // setIsSplitView(true); // 수동으로 분할 화면 활성화
-    // navigate('/project/create/step4')
-
-    // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
-    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)       
+  const processRequirementsSpecification = (data) => {
+    if (!data || !data.features) return [];
+  
+    const fieldMap = new Map();
+  
+    data.features.forEach((feature) => {
+      const { field, isReduced, projectId, specId, mainFeature, subFeature, estimatedTime } = feature;
+  
+      if (!fieldMap.has(field)) {
+        fieldMap.set(field, {
+          field,
+          isReduced: true, // 기본값을 true로 설정하고, 나중에 계산
+          projectId,
+          specId,
+          estimatedTime,
+          mainFeature: []
+        });
+      }
+  
+      const processedMainFeature = {
+        ...mainFeature,
+        subFeature: subFeature || []
+      };
+  
+      fieldMap.get(field).mainFeature.push(processedMainFeature);
+    });
+  
+    // 각 field의 isReduced 상태를 계산
+    fieldMap.forEach((fieldData, fieldName) => {
+      const allMainFeaturesReduced = fieldData.mainFeature.every(mf => mf.isReduced);
+      fieldData.isReduced = allMainFeaturesReduced;
+    });
+  
+    return Array.from(fieldMap.values());
   };
+  
+  const handleFinalizeSpecification = async () => {
+    if (!specExists) {
+      throw new Error('확정할 요구사항 명세서가 없습니다.');
+    }
+  
+    console.log('=== 확정 처리 시작 ===');
+    
+    // 현재 API 데이터에서 직접 체크/해제 상태 추출
+    if (!specData || !specData.features) {
+      throw new Error('명세서 데이터가 없습니다.');
+    }
+  
+    const uncheckedFeatureIds = [];
+    const checkedFeatureIds = [];
+    
+    // API 데이터에서 직접 추출
+    specData.features.forEach(feature => {
+      const { mainFeature, subFeature } = feature;
+      
+      // mainFeature 체크
+      if (mainFeature) {
+        if (mainFeature.isReduced) {
+          // isReduced=true 면 체크 해제된 상태
+          uncheckedFeatureIds.push(mainFeature.id);
+        } else {
+          // isReduced=false 면 체크된 상태
+          checkedFeatureIds.push(mainFeature.id);
+        }
+      }
+      
+      // subFeature들 체크
+      if (subFeature && subFeature.length > 0) {
+        subFeature.forEach(sub => {
+          if (sub.isReduced) {
+            // isReduced=true 면 체크 해제된 상태
+            uncheckedFeatureIds.push(sub.id);
+          } else {
+            // isReduced=false 면 체크된 상태
+            checkedFeatureIds.push(sub.id);
+          }
+        });
+      }
+    });
+    
+    console.log('체크된 기능 ID들 (isReduced=false):', checkedFeatureIds);
+    console.log('체크 해제된 기능 ID들 (isReduced=true):', uncheckedFeatureIds);
+    
+    // 🔥 핵심: 체크된 기능이 하나도 없으면 오류
+    if (checkedFeatureIds.length === 0) {
+      throw new Error('선택된 기능이 없습니다. 최소 하나 이상의 기능을 선택해주세요.');
+    }
+  
+    try {
+      // 1. 체크 해제된 기능들을 isReduced=true로 설정 (이미 true이지만 확실히 하기 위해)
+      console.log('=== 체크 해제된 기능들을 isReduced=true로 설정 ===');
+      for (const featureId of uncheckedFeatureIds) {
+        try {
+          console.log(`기능 ${featureId}를 isReduced=true로 설정`);
+          await toggleReduceFlag(projectId, null, featureId, true, false); // cascade=false로 개별 업데이트
+        } catch (error) {
+          console.error(`기능 ${featureId} 업데이트 실패:`, error);
+        }
+      }
+  
+      // 2. 체크된 기능들을 isReduced=false로 설정 (이미 false이지만 확실히 하기 위해)
+      console.log('=== 체크된 기능들을 isReduced=false로 설정 ===');
+      for (const featureId of checkedFeatureIds) {
+        try {
+          console.log(`기능 ${featureId}를 isReduced=false로 설정`);
+          await toggleReduceFlag(projectId, null, featureId, false, false); // cascade=false로 개별 업데이트
+        } catch (error) {
+          console.error(`기능 ${featureId} 업데이트 실패:`, error);
+        }
+      }
+  
+      // 3. 최종 확정 API 호출 (isReduced=true인 기능들 삭제)
+      console.log('=== 최종 확정 API 호출 ===');
+      console.log('백엔드에서 isReduced=true인 모든 기능을 삭제합니다.');
+      await finalizeSpecification(projectId);
+  
+      // 4. 스토어에 확정 상태 저장
+      finalizeSpecificationStore();
+      
+      console.log('요구사항 명세서 확정 완료');
+      console.log('=== 확정 처리 완료 ===');
+      
+    } catch (error) {
+      console.error('확정 처리 중 오류 발생:', error);
+      throw error;
+    }
+  };
+  // 다음으로 버튼 클릭 핸들러
+  const handleNextClick = async () => {
+  // 요구사항 명세서가 없으면 클릭 무시
+  if (!specExists) {
+    return;
+  }
+  
+  try {
+    // 확정 처리 실행
+    await handleFinalizeSpecification();
+    
+    // 확정 성공 시 다음 단계로 이동
+    // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
+    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)
+    
+  } catch (error) {
+    console.error('요구사항 명세서 확정 실패:', error);
+    alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
+};
 
   const {
     data: specData,
