@@ -16,6 +16,10 @@
   align-items: center;
 }
 
+.calendarContainer :global(.fc-scrollgrid-section-sticky) {
+  background-color: #FFFFFF00;
+}
+
 /* 타이틀 가운데 정렬 */
 .calendarContainer :global(.fc-toolbar-title) {
   position: absolute;
@@ -101,6 +105,8 @@
 
 .calendarContainer :global(.fc-scrollgrid-section-header) {
   margin-bottom: 20px;
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 .calendarContainer :global(.fc-scrollgrid-section tbody td) {
@@ -109,7 +115,8 @@
 
 .calendarContainer :global(.fc-scrollgrid-section thead th) {
   border: none;
-  background-color: #ffffff00;
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 .calendarContainer :global(.fc-daygrid-day) {
@@ -169,6 +176,8 @@
 /* 요일 헤더 스타일 */
 .calendarContainer :global(.fc-col-header-cell) {
   padding: 8px;
+  background-color: transparent !important;
+  background: transparent !important;
 }
 
 /* 일요일(Sun) 빨간색 */
