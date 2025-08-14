@@ -644,278 +644,171 @@ const RequirementsSpecification = () => {
     });
   }
 
- // 체크 상태를 토글하는 함수
-// 체크 상태를 토글하는 함수 (완전한 버전)
-const handleToggleChecked = useCallback(async (taskId) => {
-  console.log('=== 체크박스 토글 시작 ===');
-  console.log('토글 호출, taskId:', taskId);
-
-  if (!projectId) {
-    console.error('프로젝트 ID가 없습니다.');
-    return;
-  }
-
-  // 새로운 데이터 구조에서 task 찾기 (기존 코드 그대로)
-  const findTask = (features, targetId) => {
-    console.log('findTask 시작 - targetId:', targetId);
-
-    for (const field of features) {
-      console.log('field.field:', field.field, 'targetId:', targetId, '일치?', field.field === targetId);
-
-      // field 레벨 체크
-      if (field.field === targetId) {
-        console.log('field 레벨에서 찾음:', field);
-        return { task: field, level: 'field', fieldData: field };
-      }
-
-      // mainFeature 레벨 체크
-      if (field.mainFeature) {
-        for (const mainFeature of field.mainFeature) {
-          if (mainFeature.id === targetId) {
-            console.log('mainFeature 레벨에서 찾음:', mainFeature);
-            return { task: mainFeature, level: 'mainFeature', fieldData: field };
-          }
-
-          // subFeature 레벨 체크
-          if (mainFeature.subFeature) {
-            for (const subFeature of mainFeature.subFeature) {
-              if (subFeature.id === targetId) {
-                console.log('subFeature 레벨에서 찾음:', subFeature);
-                return { task: subFeature, level: 'subFeature', fieldData: field, mainFeatureData: mainFeature };
-              }
-            }
-          }
-        }
-      }
+  const handleToggleChecked = useCallback(async (taskId) => {
+    console.log('=== 체크박스 토글 시작 ===');
+    console.log('토글 호출, taskId:', taskId);
+  
+    if (!projectId) {
+      console.error('프로젝트 ID가 없습니다.');
+      return;
     }
-    console.log('Task를 찾지 못함');
-    return null;
-  };
-
-  const result = findTask(refinedFeaturesStructure, taskId);
-  if (!result) {
-    console.error('Task를 찾을 수 없습니다:', taskId);
-    return;
-  }
-
-  const { task: currentTask, level, fieldData, mainFeatureData } = result;
-  console.log('현재 isReduced 상태:', currentTask.isReduced);
-
-  // isReduced가 true면 체크 해제된 상태, false면 체크된 상태
-  const newIsReduced = !currentTask.isReduced;
-  const newChecked = !newIsReduced; // checked = !isReduced
-
-  // 사용자 해제 목록 업데이트 (기존 로직 유지)
-  console.log('=== 사용자 해제 목록 업데이트 ===');
   
-  const currentUserUncheckedIds = useSpecificationStore.getState().userUncheckedIds;
-  const newUserUncheckedIds = new Set(currentUserUncheckedIds);
-  
-  const isUserAction = true;
-  if (isUserAction && !taskId.toString().startsWith('field_')) {
-    if (newChecked) {
-      console.log(`사용자 해제 목록에서 제거 시도: ${taskId}`);
-      const deleted = newUserUncheckedIds.delete(taskId);
-      console.log(`제거 성공: ${deleted}`);
-    } else {
-      console.log(`사용자 해제 목록에 추가: ${taskId}`);
-      newUserUncheckedIds.add(taskId);
-    }
-  }
-  
-  console.log('업데이트된 사용자 해제 목록:', Array.from(newUserUncheckedIds));
-
-  try {
-    // API 호출을 위한 배열 준비
-    const apiCalls = [];
-
-    if (level === 'field') {
-      // 최상위 필드 토글 - 항상 cascade
-      const field = currentTask.field;
-      console.log('최상위 기능 토글 - field:', field, 'newIsReduced:', newIsReduced);
-
-      apiCalls.push(toggleReduceFlag(projectId, field, null, newIsReduced));
-
-      // 상위 항목을 해제하면 모든 하위 항목도 해제 (사용자 해제 목록에서 제거)
-      if (newIsReduced) {
-        if (fieldData.mainFeature) {
-          for (const mainFeature of fieldData.mainFeature) {
-            newUserUncheckedIds.delete(mainFeature.id);
-            if (mainFeature.subFeature) {
-              for (const subFeature of mainFeature.subFeature) {
-                newUserUncheckedIds.delete(subFeature.id);
-              }
-            }
-          }
+    // task 찾기 (기존과 동일)
+    const findTask = (features, targetId) => {
+      for (const field of features) {
+        if (field.field === targetId) {
+          return { 
+            task: field, 
+            level: 'field', 
+            fieldData: field 
+          };
         }
-      } else {
-        // 상위 항목을 선택하면 모든 하위 항목도 선택 (사용자 해제 목록에서 제거)
-        if (fieldData.mainFeature) {
-          for (const mainFeature of fieldData.mainFeature) {
-            newUserUncheckedIds.delete(mainFeature.id);
-            if (mainFeature.subFeature) {
-              for (const subFeature of mainFeature.subFeature) {
-                newUserUncheckedIds.delete(subFeature.id);
-              }
-            }
-          }
-        }
-      }
-
-    } else if (level === 'mainFeature') {
-      // 주 기능 토글 - cascade로 하위 기능들도 함께 변경
-      const featureId = taskId;
-      console.log('주 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
-
-      apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, true));
-
-      // 주 기능을 해제하면 모든 하위 기능도 해제 (사용자 해제 목록에서 제거)
-      if (newIsReduced) {
-        if (currentTask.subFeature) {
-          for (const subFeature of currentTask.subFeature) {
-            newUserUncheckedIds.delete(subFeature.id);
-          }
-        }
-      } else {
-        // 주 기능을 선택하면 모든 하위 기능도 선택 (사용자 해제 목록에서 제거)
-        if (currentTask.subFeature) {
-          for (const subFeature of currentTask.subFeature) {
-            newUserUncheckedIds.delete(subFeature.id);
-          }
-        }
-      }
-
-      // 주 기능 상태에 따라 상위 필드 상태 조정
-      const shouldFieldBeChecked = !newIsReduced ||
-        (fieldData.mainFeature && fieldData.mainFeature.some(mf =>
-          mf.id !== featureId && !mf.isReduced
-        ));
-
-      if (fieldData.isReduced !== !shouldFieldBeChecked) {
-        apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
-      }
-
-    } else if (level === 'subFeature') {
-      // 🔥 핵심: 상세 기능은 개별 업데이트 (cascade=false)
-      const featureId = taskId;
-      console.log('상세 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
-
-      // 해당 상세 기능만 토글 (다른 상세 기능들은 건드리지 않음)
-      apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, false));
-
-      // 🔥 중요: 상세 기능 상태에 따라 상위 주 기능 상태 조정
-      const shouldMainFeatureBeChecked = !newIsReduced ||
-        (mainFeatureData.subFeature && mainFeatureData.subFeature.some(sf =>
-          sf.id !== featureId && !sf.isReduced
-        ));
-
-      // 부모 주기능 상태 조정 (필요한 경우에만, 개별 업데이트로)
-      if (mainFeatureData.isReduced !== !shouldMainFeatureBeChecked) {
-        apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, !shouldMainFeatureBeChecked, false));
         
-        // 주 기능이 자동으로 해제되는 경우
-        if (!shouldMainFeatureBeChecked) {
-          console.log(`주 기능 ${mainFeatureData.id}(${mainFeatureData.title})가 자동으로 해제됨 - 해제 목록에 추가`);
-          newUserUncheckedIds.add(mainFeatureData.id);
-        } else {
-          // 주 기능이 자동으로 체크되는 경우 - 해제 목록에서 제거
-          console.log(`주 기능 ${mainFeatureData.id}(${mainFeatureData.title})가 자동으로 체크됨 - 해제 목록에서 제거`);
-          newUserUncheckedIds.delete(mainFeatureData.id);
+        if (field.mainFeature) {
+          for (const mainFeature of field.mainFeature) {
+            if (mainFeature.id === targetId) {
+              return { 
+                task: mainFeature, 
+                level: 'mainFeature', 
+                fieldData: field,
+                mainFeatureData: mainFeature
+              };
+            }
+            
+            if (mainFeature.subFeature) {
+              for (const subFeature of mainFeature.subFeature) {
+                if (subFeature.id === targetId) {
+                  return { 
+                    task: subFeature, 
+                    level: 'subFeature', 
+                    fieldData: field,
+                    mainFeatureData: mainFeature,
+                    subFeatureData: subFeature
+                  };
+                }
+              }
+            }
+          }
         }
       }
-
-      // 🔥 중요: 주 기능 상태에 따라 상위 필드 상태 조정
-      const shouldFieldBeChecked = shouldMainFeatureBeChecked ||
-        (fieldData.mainFeature && fieldData.mainFeature.some(mf =>
-          mf.id !== mainFeatureData.id && !mf.isReduced
-        ));
-
-      // 필드 상태 조정 (필요한 경우에만)
-      if (fieldData.isReduced !== !shouldFieldBeChecked) {
-        apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
+      return null;
+    };
+  
+    const result = findTask(refinedFeaturesStructure, taskId);
+    if (!result) {
+      console.error('Task를 찾을 수 없습니다:', taskId);
+      return;
+    }
+  
+    const { task: currentTask, level, fieldData, mainFeatureData } = result;
+    console.log('찾은 task:', currentTask);
+    console.log('현재 isReduced 상태:', currentTask.isReduced);
+  
+    const newIsReduced = !currentTask.isReduced;
+  
+    try {
+      // 🔥 실제로 변경이 필요한 API 호출만 수집
+      const apiCalls = [];
+  
+      if (level === 'field') {
+        // 필드 토글 - 현재 상태와 다르면 호출
+        if (fieldData.isReduced !== newIsReduced) {
+          console.log(`필드 토글 필요: ${fieldData.field} (${fieldData.isReduced} → ${newIsReduced})`);
+          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, newIsReduced));
+        } else {
+          console.log(`필드 토글 불필요: ${fieldData.field} (이미 ${newIsReduced} 상태)`);
+        }
+  
+      } else if (level === 'mainFeature') {
+        // 주 기능 토글 - 현재 상태와 다르면 호출 (cascade=true)
+        if (mainFeatureData.isReduced !== newIsReduced) {
+          console.log(`주 기능 토글 필요: ${mainFeatureData.id} (${mainFeatureData.isReduced} → ${newIsReduced}) cascade=true`);
+          apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, newIsReduced, true));
+        } else {
+          console.log(`주 기능 토글 불필요: ${mainFeatureData.id} (이미 ${newIsReduced} 상태)`);
+        }
+  
+        // 🔥 상위 필드 상태 확인 후 필요하면 조정
+        const shouldFieldBeChecked = !newIsReduced || 
+          (fieldData.mainFeature && fieldData.mainFeature.some(mf => 
+            mf.id !== mainFeatureData.id && !mf.isReduced
+          ));
+        const shouldFieldBeReduced = !shouldFieldBeChecked;
+  
+        if (fieldData.isReduced !== shouldFieldBeReduced) {
+          console.log(`상위 필드 조정 필요: ${fieldData.field} (${fieldData.isReduced} → ${shouldFieldBeReduced})`);
+          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, shouldFieldBeReduced));
+        } else {
+          console.log(`상위 필드 조정 불필요: ${fieldData.field} (이미 ${shouldFieldBeReduced} 상태)`);
+        }
+  
+      } else if (level === 'subFeature') {
+        // 🔥 상세 기능 토글 - 현재 상태와 다르면 호출 (cascade=false)
+        const subFeatureData = result.subFeatureData;
+        if (subFeatureData.isReduced !== newIsReduced) {
+          console.log(`상세 기능 토글 필요: ${subFeatureData.id} (${subFeatureData.isReduced} → ${newIsReduced}) cascade=false`);
+          apiCalls.push(toggleReduceFlag(projectId, null, subFeatureData.id, newIsReduced, false));
+        } else {
+          console.log(`상세 기능 토글 불필요: ${subFeatureData.id} (이미 ${newIsReduced} 상태)`);
+        }
+  
+        // 🔥 상위 주 기능 상태 확인 후 필요하면 조정
+        const shouldMainFeatureBeChecked = !newIsReduced || 
+          (mainFeatureData.subFeature && mainFeatureData.subFeature.some(sf => 
+            sf.id !== subFeatureData.id && !sf.isReduced
+          ));
+        const shouldMainFeatureBeReduced = !shouldMainFeatureBeChecked;
+  
+        if (mainFeatureData.isReduced !== shouldMainFeatureBeReduced) {
+          console.log(`상위 주 기능 조정 필요: ${mainFeatureData.id} (${mainFeatureData.isReduced} → ${shouldMainFeatureBeReduced}) cascade=false`);
+          apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, shouldMainFeatureBeReduced, false));
+        } else {
+          console.log(`상위 주 기능 조정 불필요: ${mainFeatureData.id} (이미 ${shouldMainFeatureBeReduced} 상태)`);
+        }
+  
+        // 🔥 상위 필드 상태 확인 후 필요하면 조정
+        const shouldFieldBeChecked = shouldMainFeatureBeChecked || 
+          (fieldData.mainFeature && fieldData.mainFeature.some(mf => 
+            mf.id !== mainFeatureData.id && !mf.isReduced
+          ));
+        const shouldFieldBeReduced = !shouldFieldBeChecked;
+  
+        if (fieldData.isReduced !== shouldFieldBeReduced) {
+          console.log(`상위 필드 조정 필요: ${fieldData.field} (${fieldData.isReduced} → ${shouldFieldBeReduced})`);
+          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, shouldFieldBeReduced));
+        } else {
+          console.log(`상위 필드 조정 불필요: ${fieldData.field} (이미 ${shouldFieldBeReduced} 상태)`);
+        }
+      }
+  
+      // 🔥 실제로 필요한 API 호출만 실행
+      if (apiCalls.length > 0) {
+        console.log(`실제 필요한 API 호출 개수: ${apiCalls.length}`);
+        await Promise.all(apiCalls);
+        console.log('필요한 API 호출만 완료 ✅');
+  
+        // API 호출이 있었으면 데이터 새로고침
+        await refetchRequirementsSpecification();
+        console.log('데이터 새로고침 완료 ✅');
+      } else {
+        console.log('변경이 필요한 항목이 없어 API 호출 생략 ⚡');
+      }
+  
+    } catch (error) {
+      console.error('체크박스 토글 API 호출 실패 ❌:', error);
+      alert('체크박스 상태 변경에 실패했습니다. 다시 시도해주세요.');
+      
+      try {
+        await refetchRequirementsSpecification();
+      } catch (refreshError) {
+        console.error('데이터 새로고침도 실패:', refreshError);
       }
     }
-
-    // 최종 userUncheckedIds 업데이트
-    useSpecificationStore.setState({ userUncheckedIds: newUserUncheckedIds });
-    console.log('최종 사용자 해제 목록:', Array.from(newUserUncheckedIds));
-
-    // 모든 API 호출 실행
-    console.log('API 호출 개수:', apiCalls.length);
-    await Promise.all(apiCalls);
-    console.log('체크박스 토글 API 호출 성공');
-
-    // API 성공 후 데이터 새로고침
-    await refetchRequirementsSpecification();
-
-    // 새로고침 후 현재 상태 로그 출력 (기존 로직 유지)
-    setTimeout(() => {
-      const processRequirementsSpecification = (data) => {
-        if (!data || !data.features) return [];
-        const fieldMap = new Map();
-        data.features.forEach((feature) => {
-          const { field, mainFeature, subFeature } = feature;
-          if (!fieldMap.has(field)) {
-            fieldMap.set(field, { field, mainFeature: [] });
-          }
-          fieldMap.get(field).mainFeature.push({
-            ...mainFeature,
-            subFeature: subFeature || []
-          });
-        });
-        return Array.from(fieldMap.values());
-      };
-
-      const updatedData = processRequirementsSpecification(requirementsSpecification);
-      
-      const checkedFeatureIds = [];
-      const uncheckedFeatureIds = [];
-      const checkedFeatureNames = [];
-      const uncheckedFeatureNames = [];
-      
-      updatedData.forEach(field => {
-        field.mainFeature?.forEach(main => {
-          if (main.isReduced) {
-            uncheckedFeatureIds.push(main.id);
-            uncheckedFeatureNames.push(main.title);
-          } else {
-            checkedFeatureIds.push(main.id);
-            checkedFeatureNames.push(main.title);
-          }
-          
-          main.subFeature?.forEach(sub => {
-            if (sub.isReduced) {
-              uncheckedFeatureIds.push(sub.id);
-              uncheckedFeatureNames.push(sub.title);
-            } else {
-              checkedFeatureIds.push(sub.id);
-              checkedFeatureNames.push(sub.title);
-            }
-          });
-        });
-      });
-      
-      console.log('=== 현재 체크 상태 ===');
-      console.log('체크된 기능 ID들:', checkedFeatureIds);
-      console.log('체크된 기능 이름들:', checkedFeatureNames);
-      console.log('체크 해제된 기능 ID들:', uncheckedFeatureIds);
-      console.log('체크 해제된 기능 이름들:', uncheckedFeatureNames);
-      console.log('=== 사용자가 직접 해제한 기능들 + 자동 해제된 부모들 ===');
-      console.log('사용자 해제 목록:', Array.from(newUserUncheckedIds));
-      console.log('=====================');
-      
-    }, 200);
-
-  } catch (error) {
-    console.error('체크박스 토글 API 호출 실패:', error);
-    alert('체크박스 상태 변경에 실패했습니다. 다시 시도해주세요.');
-  }
+    
+    extendSpecPolling(6000);
+    console.log('=== 체크박스 토글 완료 ===');
   
-  extendSpecPolling(6000);
-  console.log('=== 체크박스 토글 완료 ===');
-
-}, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification, requirementsSpecification]);
-  // 하위 작업 추가 핸들러
+  }, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification]);
   const handleAddSubTask = (parentTask) => {
     // 이 함수는 "상세 기능 추가" 버튼을 클릭할 때만 호출됨
     // 따라서 항상 taskType은 'sub'여야 함

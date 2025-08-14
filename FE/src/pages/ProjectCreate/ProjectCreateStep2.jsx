@@ -23,7 +23,6 @@ const ProjectCreateStep2 = () => {
   const projectId = searchParams.get('projectId');
   const specId = searchParams.get('specId');
   
-  // const [isSplitView, setIsSplitView] = useState(false); // 분할 화면 상태
   // zustand 스토어의 showSidebar 상태 가져오기
   const isSidebarVisible = useSpecificationStore((s) => s.isSidebarVisible);
   const isSpecPolling    = useSpecificationStore((s) => s.isSpecPolling);
@@ -38,19 +37,19 @@ const ProjectCreateStep2 = () => {
   const setProjectInfo = useSpecificationStore((state) => state.setProjectInfo);
   const setProjectSummary = useSpecificationStore((state) => state.setProjectSummary);
   const hasSpecification = useSpecificationStore((s) => s.hasSpecification);
+  const extendSpecPolling = useSpecificationStore(s => s.extendSpecPolling);
 
   const finalizeSpecificationStore = useSpecificationStore((state) => state.finalizeSpecification);
   
   // 사이드바 표시 조건: isSidebarVisible이 true이거나 mainFeatures가 있을 때
   const shouldShowSidebar = isSidebarVisible || (mainFeatures && mainFeatures.length > 0);
- const specExists = hasSpecification();
+  const specExists = hasSpecification();
 
   // 디버깅을 위한 로그 추가
   useEffect(() => {
     console.log('isSidebarVisible 상태 변경:', isSidebarVisible);
     console.log('mainFeatures 상태:', mainFeatures);
     console.log('hasSpecification:', specExists);
-    // console.log('shouldShowSidebar:', shouldShowSidebar);
   }, [projectId, specId, isSidebarVisible, mainFeatures, shouldShowSidebar, specExists]);
 
   console.log('ProjectCreateStep2 진입 - projectId:', projectId, 'specId:', specId);
@@ -82,12 +81,6 @@ const ProjectCreateStep2 = () => {
 
   // 백엔드 (또는 dummy data) 채팅 기록 로드
   const { data, isLoading, isError } = useChatHistoryQuery()
-  // const { isLoading: isHistoryLoading, isError, error } = useChatHistoryQuery();
-  // 디버깅을 위한 로그 추가
-  // console.log('ProjectCreateStep2 - useChatHistoryQuery 결과:', {
-  //   data,
-  //   messages
-  // });
 
   useEffect(() => {
     if (data) {
@@ -141,129 +134,128 @@ const ProjectCreateStep2 = () => {
   
     return Array.from(fieldMap.values());
   };
-  
+
   const handleFinalizeSpecification = async () => {
     if (!specExists) {
       throw new Error('확정할 요구사항 명세서가 없습니다.');
     }
-  
+
     console.log('=== 확정 처리 시작 ===');
+    console.log('확정 전 최신 데이터 가져오기...');
+    await refetchRequirementsSpecification();
     
-    // 현재 API 데이터에서 직접 체크/해제 상태 추출
-    if (!specData || !specData.features) {
+    // 잠시 기다려서 상태 업데이트 완료 보장
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const currentData = specData; // refetch 후 최신 specData 사용
+    
+    console.log('=== 최신 데이터 확인 ===');
+    console.log('currentData:', currentData);
+    console.log('currentData.features:', currentData?.features);
+    console.log('currentData.features 길이:', currentData?.features?.length);
+    
+    if (!currentData || !currentData.features) {
       throw new Error('명세서 데이터가 없습니다.');
     }
-  
-    const uncheckedFeatureIds = [];
+
     const checkedFeatureIds = [];
+    const uncheckedFeatureIds = [];
     
-    // API 데이터에서 직접 추출
-    specData.features.forEach(feature => {
+    // 각 feature 분석
+    currentData.features.forEach((feature, index) => {
+      console.log(`=== Feature ${index} 분석 ===`);
+      console.log('feature.field:', feature.field);
+      console.log('feature.mainFeature:', feature.mainFeature);
+      console.log('feature.subFeature:', feature.subFeature);
+      
       const { mainFeature, subFeature } = feature;
       
-      // mainFeature 체크
+      // mainFeature 확인
       if (mainFeature) {
-        if (mainFeature.isReduced) {
-          // isReduced=true 면 체크 해제된 상태
+        console.log(`MainFeature: ${mainFeature.title} (${mainFeature.id}) - isReduced: ${mainFeature.isReduced}`);
+        if (mainFeature.isReduced === true) {
           uncheckedFeatureIds.push(mainFeature.id);
-        } else {
-          // isReduced=false 면 체크된 상태
+        } else if (mainFeature.isReduced === false) {
           checkedFeatureIds.push(mainFeature.id);
         }
       }
       
-      // subFeature들 체크
-      if (subFeature && subFeature.length > 0) {
-        subFeature.forEach(sub => {
-          if (sub.isReduced) {
-            // isReduced=true 면 체크 해제된 상태
+      // subFeature 확인
+      if (subFeature && Array.isArray(subFeature) && subFeature.length > 0) {
+        subFeature.forEach((sub, subIndex) => {
+          console.log(`  SubFeature: ${sub.title} (${sub.id}) - isReduced: ${sub.isReduced}`);
+          if (sub.isReduced === true) {
             uncheckedFeatureIds.push(sub.id);
-          } else {
-            // isReduced=false 면 체크된 상태
+          } else if (sub.isReduced === false) {
             checkedFeatureIds.push(sub.id);
           }
         });
       }
     });
     
+    console.log('=== 최종 결과 ===');
     console.log('체크된 기능 ID들 (isReduced=false):', checkedFeatureIds);
     console.log('체크 해제된 기능 ID들 (isReduced=true):', uncheckedFeatureIds);
+    console.log('체크된 기능 개수:', checkedFeatureIds.length);
     
-    // 🔥 핵심: 체크된 기능이 하나도 없으면 오류
     if (checkedFeatureIds.length === 0) {
+      console.error('=== 오류: 선택된 기능이 없음 ===');
       throw new Error('선택된 기능이 없습니다. 최소 하나 이상의 기능을 선택해주세요.');
     }
-  
+
     try {
-      // 1. 체크 해제된 기능들을 isReduced=true로 설정 (이미 true이지만 확실히 하기 위해)
-      console.log('=== 체크 해제된 기능들을 isReduced=true로 설정 ===');
-      for (const featureId of uncheckedFeatureIds) {
-        try {
-          console.log(`기능 ${featureId}를 isReduced=true로 설정`);
-          await toggleReduceFlag(projectId, null, featureId, true, false); // cascade=false로 개별 업데이트
-        } catch (error) {
-          console.error(`기능 ${featureId} 업데이트 실패:`, error);
-        }
-      }
-  
-      // 2. 체크된 기능들을 isReduced=false로 설정 (이미 false이지만 확실히 하기 위해)
-      console.log('=== 체크된 기능들을 isReduced=false로 설정 ===');
-      for (const featureId of checkedFeatureIds) {
-        try {
-          console.log(`기능 ${featureId}를 isReduced=false로 설정`);
-          await toggleReduceFlag(projectId, null, featureId, false, false); // cascade=false로 개별 업데이트
-        } catch (error) {
-          console.error(`기능 ${featureId} 업데이트 실패:`, error);
-        }
-      }
-  
-      // 3. 최종 확정 API 호출 (isReduced=true인 기능들 삭제)
-      console.log('=== 최종 확정 API 호출 ===');
-      console.log('백엔드에서 isReduced=true인 모든 기능을 삭제합니다.');
+      console.log('=== 현재 상태 그대로 확정 API 호출 ===');
+      console.log(`체크된 기능 ${checkedFeatureIds.length}개, 해제된 기능 ${uncheckedFeatureIds.length}개로 확정 진행`);
+      
       await finalizeSpecification(projectId);
-  
-      // 4. 스토어에 확정 상태 저장
       finalizeSpecificationStore();
       
-      console.log('요구사항 명세서 확정 완료');
+      console.log('요구사항 명세서 확정 완료 ✅');
       console.log('=== 확정 처리 완료 ===');
       
     } catch (error) {
-      console.error('확정 처리 중 오류 발생:', error);
+      console.error('확정 처리 중 오류 발생 ❌:', error);
       throw error;
     }
   };
+
   // 다음으로 버튼 클릭 핸들러
   const handleNextClick = async () => {
-  // 요구사항 명세서가 없으면 클릭 무시
-  if (!specExists) {
-    return;
-  }
-  
-  try {
-    // 확정 처리 실행
-    await handleFinalizeSpecification();
+    // 요구사항 명세서가 없으면 클릭 무시
+    if (!specExists) {
+      return;
+    }
     
-    // 확정 성공 시 다음 단계로 이동
-    navigate('/project/create/step4');
-    
-  } catch (error) {
-    console.error('요구사항 명세서 확정 실패:', error);
-    alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
-  }
-};
+    try {
+      // 확정 처리 실행
+      await handleFinalizeSpecification();
+      
+      // 확정 성공 시 다음 단계로 이동
+      navigate('/project/create/step4');
+      
+    } catch (error) {
+      console.error('요구사항 명세서 확정 실패:', error);
+      alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
 
   const {
     data: specData,
     isLoading: specLoading,
     isError: specError,
+    refetch: refetchRequirementsSpecification,
   } = useGetRequirementsSpecification(projectId,
     {
       // 사이드바가 아직 안 보일 때만 Step2가 폴링 담당
       polling: isSpecPolling && !shouldShowSidebar,
       intervalMs: 1800 + Math.floor(Math.random() * 600), // 1.8초~2.4초 간격
     }
-  ); // enabled 가드는 훅 내부에서 처리했다고 가정
+  );
+
+  // 가공된 데이터
+  const refinedFeaturesStructure = processRequirementsSpecification(specData);
+  // requirementsSpecification은 specData와 동일하게 설정
+  const requirementsSpecification = specData;
 
   // 우선순위 변환 (스토어 함수와 동일 로직의 지역 헬퍼)
   const convertNumberToPriority = (priorityLevel) => {
@@ -385,9 +377,6 @@ const ProjectCreateStep2 = () => {
   return (
     <div className="chat-page-container">
       {/* 스텝바 */}
-      {/* <ChatProgressBar /> */}
-
-      {/* 수정자: yeongenn - 현재 스텝 인덱스를 props로 넘기기 */}
       <ChatProgressBar currentStep={1} />
 
       {/* 채팅 영역 */}
@@ -413,11 +402,9 @@ const ProjectCreateStep2 = () => {
                 ))}
               </div>
             </div>
-
           </div>
 
           {/* 채팅 입력창 */}
-          {/* <ChatInputBar /> */}
           <ChatInputBar
             onSend={text => sendUserMessage.mutate(text)} // 사용자 메세지 전송 함수 호출
             isSending={sendUserMessage.isLoading} // 메세지 전송 중인지 표시
