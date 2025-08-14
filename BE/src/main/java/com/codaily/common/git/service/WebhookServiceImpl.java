@@ -85,7 +85,7 @@ public class WebhookServiceImpl implements WebhookService {
             String repoOwner = parts[0];
             String repoName = parts[1];
 
-            ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repoOwner);
+            ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repoName);
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
                             .author(payload.getSender().getLogin())
