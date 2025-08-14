@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -44,12 +44,8 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .exceptionHandling(h -> h.authenticationEntryPoint((req, res, ex) -> {
-                    // API에서 미인증이면 401로 응답 (리다이렉트 금지)
-                    res.setStatus(401);
-                    res.setContentType("application/json");
-                    res.getWriter().write("{\"message\":\"unauthenticated\"}");
-                }))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/api/**", "/api/login", "/oauth/**", "/public/**").permitAll()
                         .requestMatchers("/login/oauth2/code/**").permitAll()
@@ -58,8 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-resources/**", "/webjars/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(form -> form.disable())
                 .oauth2Login(oauth -> oauth
                         .successHandler(loginSuccessHandler)
                         .authorizationEndpoint(auth -> auth
@@ -71,7 +66,7 @@ public class SecurityConfig {
                         .logoutUrl("/api/logout")
                         .logoutSuccessHandler(logoutSuccessHandler)
                 )
-                .addFilterAt(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilter(jwtAuthenticationFilter)
                 .addFilterBefore(
                         new JwtAuthorizationFilter(jwtTokenProvider, customUserDetailsService),
                         UsernamePasswordAuthenticationFilter.class
@@ -92,7 +87,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(Arrays.asList("Authorization"));
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

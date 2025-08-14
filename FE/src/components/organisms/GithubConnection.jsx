@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import Title from '@/components/atoms/Title'
 import Button from '@/components/atoms/Button'
 import RepositoryOptionCard from '@/components/molecules/RepositoryOptionCard'
@@ -13,6 +13,7 @@ const GithubConnection = () => {
     const [newRepositoryUrl, setNewRepositoryUrl] = useState('')                    // 마찬가지
     
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     
     // github 연동 후 해당 프로젝트 페이지로 네비게이션
     const handleNavigateToProject = (projectId) => {
@@ -29,9 +30,8 @@ const GithubConnection = () => {
         setSelectedOption(option)
     }
 
-    // projectId 테스트용 하드코딩
-    // TODO: 프로젝트 생성 페이지 내에서 projectId 어떻게 관리되는지 확인 후 수정
-    const projectId = 10
+    const projectId = searchParams.get('projectId')
+    const specId = searchParams.get('specId')
 
     const handleCreate = () => {
         if (selectedOption === 'existing') {
