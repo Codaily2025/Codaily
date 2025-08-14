@@ -148,6 +148,19 @@
   background: #5A597D;
 }
 
+/* 비활성화된 다음으로 버튼 스타일 */
+.next-button.disabled {
+  background: #D9D9D9;
+  color: #A9A9A9;
+  cursor: not-allowed;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.next-button.disabled:hover {
+  background: #D9D9D9;
+  color: #A9A9A9;
+}
+
 .loading-message {
   color: #8483AB;
   font-size: 16px;

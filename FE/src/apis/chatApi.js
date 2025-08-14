@@ -1,5 +1,6 @@
 // src/apis/chatApi.js
 import { authInstance } from './axios';
+// import { useSpecificationStore } from '../stores/specificationStore';
 
 // 더미 모드 (원하면 false로 바꾸세요)
 const useMock1 = false;  // fetchChatHistory 용
@@ -118,6 +119,7 @@ export const streamChatResponse = ({
 
   const es = new EventSource(eventSourceUrl, { withCredentials: true });
 
+  // const { showSidebar } = useSpecificationStore((state) => state);
   es.onopen = () => {
     console.log('SSE 연결');
     onOpen?.();
@@ -147,6 +149,7 @@ export const streamChatResponse = ({
         // 요구사항 명세서 관련 작업이므로 "요구사항 명세서를 확인해주세요" 메시지 한 번만 출력
         if (!specNotificationSent) {
           onMessage?.({ type: 'chat', content: '요구사항 명세서를 확인해주세요' });
+          // showSidebar()
           specNotificationSent = true;
         }
         

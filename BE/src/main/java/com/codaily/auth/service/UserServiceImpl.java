@@ -6,23 +6,25 @@ import com.codaily.auth.entity.User;
 import com.codaily.auth.repository.TechStackRepository;
 import com.codaily.auth.repository.UserRepository;
 import com.codaily.common.git.dto.GithubFetchProfileResponse;
-import jakarta.persistence.Entity;
+import com.codaily.common.git.service.WebhookService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import reactor.core.publisher.Mono;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final TechStackRepository techStackRepository;
+    private final SocialUnlinkService socialUnlinkService;
+    private final WebhookService webhookService;
 
     @Override
     public void linkGithub(Long userId, GithubFetchProfileResponse profile, String accessToken) {
@@ -42,12 +44,9 @@ public class UserServiceImpl implements UserService {
         user.setGithubAccessToken(accessToken);
         user.setGithubScope(null); // scope 추출 시 여기에 넣어도 됨
         user.setTokenExpiredAt(null); // GitHub는 만료시간 제공 안 함
-        user.setGithubScope(null);
-        user.setGithubAccessToken(accessToken);
-        user.setGithubProfileUrl(profile.getHtmlUrl());
-        user.setGithubAccount(profile.getLogin());
 
         userRepository.save(user);
+        log.info("save github token: {}", user);
     }
 
     @Override
@@ -158,9 +157,22 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Long userId) {
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
-
+        User user = userRepository.findNativeAsEntity(userId);
+        log.info(userId);
+        log.info(user);
+        log.info("unlink github webhook");
+        // 1) (선택) 깃허브 웹훅 제거 (리포는 삭제하지 않음)
+        webhookService.removeAllHooksForUser(user.getUserId());
+        log.info(user);
+        log.info("unlink social login");
+        // 2) 소셜 로그인 unlink/revoke
+        socialUnlinkService.unlinkSocial(user);
+        log.info(user);
+        log.info("unlink github");
+        // 3) GitHub 토큰 revoke (리포 보존)
+        socialUnlinkService.revokeGithub(user);
+        log.info(user);
+        log.info("delete user");
         userRepository.delete(user);
     }
 }

@@ -54,7 +54,7 @@ export const useProductivityGraphData = (viewMode, currentDate) => {
     queryFn: async () => {
       console.log(`API 호출 - 모드: ${viewMode}, 시작일: ${startDate}, 종료일: ${endDate}`);
       const response = await fetchProductivityGraph(viewMode, startDate, endDate);
-      console.log('생산성 그래프 데이터 조회 성공:', response.data);
+      // console.log('생산성 그래프 데이터 조회 성공:', response.data);
       return response.data;
     },
     staleTime: 5 * 60 * 1000, // 5분간 fresh 상태 유지

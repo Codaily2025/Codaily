@@ -9,9 +9,9 @@ import java.util.List;
 public interface WebhookService {
     void handlePushEvent(WebhookPayload payload, Long userId);
 
-    public List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken);
+    List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken);
 
-    public void sendDiffFilesToPython(Long projectId,
+    void sendDiffFilesToPython(Long projectId,
                                       Long commitId,
                                       String commitHash,
                                       String commitMessage,
@@ -20,21 +20,14 @@ public interface WebhookService {
                                       CommitInfoDto commitInfoDto,
                                       String commitBranch);
 
-    public void sendManualCompleteToPython(Long projectId, Long userId,
+    void sendManualCompleteToPython(Long projectId, Long userId,
                                            Long featureId);
 
-    public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName);
-    public List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths, String repoOwner, String repoName);
+    List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName);
 
+    List<FullFile> getFullFilesByPaths(String commitHash, Long projectId, Long userId, List<String> filePaths, String repoOwner, String repoName);
 
-    public List<DiffFile> getDiffFilesFromCommitTest(String commitUrl, String accessToken);
+    void removeAllHooksForUser(Long userId);
 
-    public void sendDiffFilesToPythonTest(Long projectId,
-                                      Long commitId,
-                                      String commitHash,
-                                      String commitMessage,
-                                      List<DiffFile> diffFiles,
-                                      Long userId,
-                                      CommitInfoDto commitInfoDto);
-    public List<FullFile> getFilesFromRepoPaths(Long userId, String owner, String repo, List<String> filePaths, @Nullable String ref);
+    List<FullFile> getFilesFromRepoPaths(Long userId, String owner, String repo, List<String> filePaths, @Nullable String ref);
 }

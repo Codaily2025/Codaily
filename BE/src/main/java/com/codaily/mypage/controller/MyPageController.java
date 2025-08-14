@@ -8,6 +8,7 @@ import com.codaily.project.entity.Project;
 import com.codaily.project.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Log4j2
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -232,8 +234,8 @@ public class MyPageController {
     public ResponseEntity<Map<String, String>> deleteUser(
             @AuthenticationPrincipal PrincipalDetails userDetails
     ){
+        log.info("userDetail user: {}", userDetails.getUser());
         userService.deleteUser(userDetails.getUser().getUserId());
-
         Map<String, String> response = new HashMap<>();
         response.put("message", "회원 탈퇴가 완료되었습니다.");
 

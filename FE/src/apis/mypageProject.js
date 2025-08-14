@@ -245,13 +245,16 @@ export const updateProjectAPI = async ({ projectId, projectData, existingSchedul
       };
     }),
     
-    // 기존 schedules 데이터가 있으면 사용하고, 없으면 새로 생성
-    scheduledDates: existingSchedules ? 
-      existingSchedules.map(schedule => schedule.scheduledDate) :
-      generateScheduledDates(
-        projectData.startDate.replace(/\./g, '-'),
-        projectData.endDate.replace(/\./g, '-'),
-        safeTimeByDay
+    // schedules 데이터 처리: 새로운 schedules가 있으면 사용, 없으면 기존 로직 사용
+    scheduledDates: projectData.schedules && Array.isArray(projectData.schedules) ? 
+      projectData.schedules.map(schedule => schedule.scheduledDate) :
+      (existingSchedules ? 
+        existingSchedules.map(schedule => schedule.scheduledDate) :
+        generateScheduledDates(
+          projectData.startDate.replace(/\./g, '-'),
+          projectData.endDate.replace(/\./g, '-'),
+          safeTimeByDay
+        )
       ),
   };
   

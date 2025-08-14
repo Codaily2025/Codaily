@@ -105,6 +105,10 @@
   overflow-y: auto;
 }
 
+.modalBody::-webkit-scrollbar {
+  display: none;
+}
+
 .formContainer {
   width: 100%;
   display: flex;
@@ -158,6 +162,14 @@
   gap: 8px;
 }
 
+.adjustmentIconWrapper {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .inputText {
   flex: 1 1 0;
   color: #737373;
@@ -181,7 +193,8 @@
 }
 
 .dateRangeWrapper {
-  align-self: stretch;
+  /* align-self: stretch; */
+  width: 415px;
   display: inline-flex;
   justify-content: flex-start;
   align-items: center;
@@ -579,8 +592,44 @@
   color: white;
 }
 
+.calendarDay.workDaySelected {
+  background: #9C9BC3;
+  color: white;
+  position: relative;
+}
+
+/* .calendarDay.workDaySelected::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: #FFD700;
+  border-radius: 50%;
+} */
+
 .calendarDay.empty {
   cursor: default;
+}
+
+.calendarFooter {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  border-top: 1px solid #E5E5E5;
+  margin-top: 8px;
+}
+
+.calendarFooter .btn {
+  transition: all 0.2s ease;
+}
+
+.calendarFooter .btn:hover {
+  background-color: #9C9BC3;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* GitHub 레포지토리 관련 스타일 */
@@ -602,6 +651,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 300px;
+  overflow: hidden;
 }
 
 .loadingText {
@@ -622,8 +673,29 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 200px;
+  max-height: 180px;
   overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: #B4B3DC #F8F8F8;
+}
+
+.repoList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.repoList::-webkit-scrollbar-track {
+  background: #F8F8F8;
+  border-radius: 3px;
+}
+
+.repoList::-webkit-scrollbar-thumb {
+  background: #B4B3DC;
+  border-radius: 3px;
+}
+
+.repoList::-webkit-scrollbar-thumb:hover {
+  background: #6C6B93;
 }
 
 .repoListItem {
@@ -688,4 +760,12 @@
   justify-content: center;
   align-items: center;
   margin-left: 8px;
+}
+
+.repoButtonContainer {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #E9EAEB;
+  display: flex;
+  justify-content: center;
 }

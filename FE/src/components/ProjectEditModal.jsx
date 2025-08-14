@@ -20,44 +20,172 @@ const CalendarIcon = () => (
 );
 
 const FolderIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M2.66634 13.3332C2.29967 13.3332 1.98579 13.2026 1.72467 12.9415C1.46356 12.6804 1.33301 12.3665 1.33301 11.9998V3.99984C1.33301 3.63317 1.46356 3.31928 1.72467 3.05817C1.98579 2.79706 2.29967 2.6665 2.66634 2.6665H6.66634L7.99967 3.99984H13.333C13.6997 3.99984 14.0136 4.13039 14.2747 4.3915C14.5358 4.65261 14.6663 4.9665 14.6663 5.33317V11.9998C14.6663 12.3665 14.5358 12.6804 14.2747 12.9415C14.0136 13.2026 13.6997 13.3332 13.333 13.3332H2.66634ZM2.66634 11.9998H13.333V5.33317H7.44967L6.11634 3.99984H2.66634V11.9998Z" fill="#6C6B93"/>
-    </svg>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2.66634 13.3332C2.29967 13.3332 1.98579 13.2026 1.72467 12.9415C1.46356 12.6804 1.33301 12.3665 1.33301 11.9998V3.99984C1.33301 3.63317 1.46356 3.31928 1.72467 3.05817C1.98579 2.79706 2.29967 2.6665 2.66634 2.6665H6.66634L7.99967 3.99984H13.333C13.6997 3.99984 14.0136 4.13039 14.2747 4.3915C14.5358 4.65261 14.6663 4.9665 14.6663 5.33317V11.9998C14.6663 12.3665 14.5358 12.6804 14.2747 12.9415C14.0136 13.2026 13.6997 13.3332 13.333 13.3332H2.66634ZM2.66634 11.9998H13.333V5.33317H7.44967L6.11634 3.99984H2.66634V11.9998Z" fill="#6C6B93" />
+  </svg>
 );
 
 const CheckIcon = () => (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M8.33366 2.5L3.75033 7.08333L1.66699 5" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M8.33366 2.5L3.75033 7.08333L1.66699 5" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
 );
 
 const AddIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7.33301 11.3335H8.66634V8.66683H11.333V7.3335H8.66634V4.66683H7.33301V7.3335H4.66634V8.66683H7.33301V11.3335ZM7.99967 14.6668C7.07745 14.6668 6.21079 14.4946 5.39967 14.1502C4.58856 13.7946 3.88301 13.3168 3.28301 12.7168C2.68301 12.1168 2.20523 11.4113 1.84967 10.6002C1.50523 9.78905 1.33301 8.92238 1.33301 8.00016C1.33301 7.07794 1.50523 6.21127 1.84967 5.40016C2.20523 4.58905 2.68301 3.8835 3.28301 3.2835C3.88301 2.6835 4.58856 2.21127 5.39967 1.86683C6.21079 1.51127 7.07745 1.3335 7.99967 1.3335C8.9219 1.3335 9.78856 1.51127 10.5997 1.86683C11.4108 2.21127 12.1163 2.6835 12.7163 3.2835C13.3163 3.8835 13.7886 4.58905 14.133 5.40016C14.4886 6.21127 14.6663 7.07794 14.6663 8.00016C14.6663 8.92238 14.4886 9.78905 14.133 10.6002C13.7886 11.4113 13.3163 12.1168 12.7163 12.7168C12.1163 13.3168 11.4108 13.7946 10.5997 14.1502C9.78856 14.4946 8.9219 14.6668 7.99967 14.6668ZM7.99967 13.3335C9.48856 13.3335 10.7497 12.8168 11.783 11.7835C12.8163 10.7502 13.333 9.48905 13.333 8.00016C13.333 6.51127 12.8163 5.25016 11.783 4.21683C10.7497 3.1835 9.48856 2.66683 7.99967 2.66683C6.51079 2.66683 5.24967 3.1835 4.21634 4.21683C3.18301 5.25016 2.66634 6.51127 2.66634 8.00016C2.66634 9.48905 3.18301 10.7502 4.21634 11.7835C5.24967 12.8168 6.51079 13.3335 7.99967 13.3335Z" fill="#8483AB"/>
-    </svg>
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M7.33301 11.3335H8.66634V8.66683H11.333V7.3335H8.66634V4.66683H7.33301V7.3335H4.66634V8.66683H7.33301V11.3335ZM7.99967 14.6668C7.07745 14.6668 6.21079 14.4946 5.39967 14.1502C4.58856 13.7946 3.88301 13.3168 3.28301 12.7168C2.68301 12.1168 2.20523 11.4113 1.84967 10.6002C1.50523 9.78905 1.33301 8.92238 1.33301 8.00016C1.33301 7.07794 1.50523 6.21127 1.84967 5.40016C2.20523 4.58905 2.68301 3.8835 3.28301 3.2835C3.88301 2.6835 4.58856 2.21127 5.39967 1.86683C6.21079 1.51127 7.07745 1.3335 7.99967 1.3335C8.9219 1.3335 9.78856 1.51127 10.5997 1.86683C11.4108 2.21127 12.1163 2.6835 12.7163 3.2835C13.3163 3.8835 13.7886 4.58905 14.133 5.40016C14.4886 6.21127 14.6663 7.07794 14.6663 8.00016C14.6663 8.92238 14.4886 9.78905 14.133 10.6002C13.7886 11.4113 13.3163 12.1168 12.7163 12.7168C12.1163 13.3168 11.4108 13.7946 10.5997 14.1502C9.78856 14.4946 8.9219 14.6668 7.99967 14.6668ZM7.99967 13.3335C9.48856 13.3335 10.7497 12.8168 11.783 11.7835C12.8163 10.7502 13.333 9.48905 13.333 8.00016C13.333 6.51127 12.8163 5.25016 11.783 4.21683C10.7497 3.1835 9.48856 2.66683 7.99967 2.66683C6.51079 2.66683 5.24967 3.1835 4.21634 4.21683C3.18301 5.25016 2.66634 6.51127 2.66634 8.00016C2.66634 9.48905 3.18301 10.7502 4.21634 11.7835C5.24967 12.8168 6.51079 13.3335 7.99967 13.3335Z" fill="#8483AB" />
+  </svg>
 );
 
 const RepoIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <g clipPath="url(#clip0_498_8103)">
-      <path d="M1.33301 7.99988L7.76116 11.214C7.84862 11.2577 7.89234 11.2795 7.93821 11.2882C7.97883 11.2958 8.02052 11.2958 8.06114 11.2882C8.10701 11.2795 8.15073 11.2577 8.23819 11.214L14.6663 7.99988M1.33301 11.3332L7.76116 14.5473C7.84862 14.591 7.89234 14.6129 7.93821 14.6215C7.97883 14.6291 8.02052 14.6291 8.06114 14.6215C8.10701 14.6129 8.15073 14.591 8.23819 14.5473L14.6663 11.3332M1.33301 4.66655L7.76116 1.45247C7.84862 1.40874 7.89234 1.38688 7.93821 1.37827C7.97883 1.37065 8.02052 1.37065 8.06114 1.37827C8.10701 1.38688 8.15073 1.40874 8.23819 1.45247L14.6663 4.66655L8.23819 7.88062C8.15073 7.92435 8.10701 7.94621 8.06114 7.95482C8.02052 7.96244 7.97883 7.96244 7.93821 7.95482C7.89234 7.94621 7.84862 7.92435 7.76116 7.88062L1.33301 4.66655Z" stroke="#8483AB" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M1.33301 7.99988L7.76116 11.214C7.84862 11.2577 7.89234 11.2795 7.93821 11.2882C7.97883 11.2958 8.02052 11.2958 8.06114 11.2882C8.10701 11.2795 8.15073 11.2577 8.23819 11.214L14.6663 7.99988M1.33301 11.3332L7.76116 14.5473C7.84862 14.591 7.89234 14.6129 7.93821 14.6215C7.97883 14.6291 8.02052 14.6291 8.06114 14.6215C8.10701 14.6129 8.15073 14.591 8.23819 14.5473L14.6663 11.3332M1.33301 4.66655L7.76116 1.45247C7.84862 1.40874 7.89234 1.38688 7.93821 1.37827C7.97883 1.37065 8.02052 1.37065 8.06114 1.37827C8.10701 1.38688 8.15073 1.40874 8.23819 1.45247L14.6663 4.66655L8.23819 7.88062C8.15073 7.92435 8.10701 7.94621 8.06114 7.95482C8.02052 7.96244 7.97883 7.96244 7.93821 7.95482C7.89234 7.94621 7.84862 7.92435 7.76116 7.88062L1.33301 4.66655Z" stroke="#8483AB" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round" />
     </g>
     <defs>
       <clipPath id="clip0_498_8103">
-        <rect width="16" height="16" fill="white"/>
+        <rect width="16" height="16" fill="white" />
       </clipPath>
     </defs>
   </svg>
 );
+
+const AdjustmentIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="23" height="23" viewBox="0 0 48 48" fill="none">
+    <path d="M8 42V28M8 20V6M24 42V24M24 16V6M40 42V32M40 24V6M2 28H14M18 16H30M34 32H46" stroke="#737373" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+
+// 캘린더 컴포넌트
+const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedDate, selectedDates = null, isWorkDayAdjustment = false }) {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+
+    const days = [];
+    for (let i = 0; i < startingDay; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(new Date(year, month, i));
+    }
+    return days;
+  };
+
+  const days = getDaysInMonth(currentMonth);
+  const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+
+  const prevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const handleDayClick = (day) => {
+    if (day) {
+      // 작업 가능 날짜 캘린더인 경우, 다른 달의 날짜를 클릭해도 현재 달을 유지
+      if (isWorkDayAdjustment) {
+        // 현재 표시된 달의 날짜인지 확인
+        const currentYear = currentMonth.getFullYear();
+        const currentMonthNum = currentMonth.getMonth();
+        const dayYear = day.getFullYear();
+        const dayMonth = day.getMonth();
+
+        // 다른 달의 날짜를 클릭한 경우 무시
+        if (dayYear !== currentYear || dayMonth !== currentMonthNum) {
+          return;
+        }
+      }
+
+      onDateSelect(day);
+      // 작업 가능 날짜 캘린더가 아닌 경우에만 캘린더 닫기
+      if (!isWorkDayAdjustment) {
+        onClose();
+      }
+    }
+  };
+
+  return (
+    <div className={styles.calendarOverlay} onClick={onClose}>
+      <div className={styles.calendarContainer} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.calendarHeader}>
+          <button onClick={prevMonth}>&lt;</button>
+          <span>{currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월</span>
+          <button onClick={nextMonth}>&gt;</button>
+        </div>
+        <div className={styles.calendarWeekdays}>
+          {weekDays.map(day => (
+            <div key={day} className={styles.calendarWeekday}>{day}</div>
+          ))}
+        </div>
+        <div className={styles.calendarDays}>
+          {days.map((day, index) => {
+            if (!day) {
+              return <div key={index} className={`${styles.calendarDay} ${styles.empty}`}></div>;
+            }
+
+            // 시간대 문제를 해결하기 위해 로컬 날짜 형식 사용
+            const year = day.getFullYear();
+            const month = String(day.getMonth() + 1).padStart(2, '0');
+            const dayOfMonth = String(day.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${dayOfMonth}`;
+
+            const isSelected = selectedDate && day.toDateString() === selectedDate.toDateString();
+            const isWorkDaySelected = selectedDates && selectedDates.has(dateString);
+
+            let className = styles.calendarDay;
+            if (isSelected) {
+              className += ` ${styles.selected}`;
+            }
+            if (isWorkDaySelected) {
+              className += ` ${styles.workDaySelected}`;
+            }
+
+            return (
+              <div
+                key={index}
+                className={className}
+                onClick={() => handleDayClick(day)}
+              >
+                {day.getDate()}
+              </div>
+            );
+          })}
+        </div>
+        {isWorkDayAdjustment && (
+          <div className={styles.calendarFooter}>
+            <button
+              className={styles.btn}
+              onClick={onClose}
+              style={{ marginTop: '10px', padding: '8px 16px' }}
+            >
+              완료
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});
+
 const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('project:', data?.title)
-  
+
   // useProjectStore에서 프로젝트 정보 가져오기
   const { projects, projectDetail, getProjectDetail } = useProjectStore();
-  
+
   // data prop으로 전달된 프로젝트 ID를 사용하여 스토어에서 프로젝트 정보 찾기
   const projectFromStore = data?.id ? projects.find(p => p.id === data.id) : null;
-  
+
   // 스토어에서 가져온 정보가 있으면 사용하고, 없으면 data prop 사용
   const projectData = projectFromStore || data;
 
@@ -66,7 +194,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
   // GitHub 레포지토리 목록 조회
   const { data: githubReposData, isLoading: isLoadingRepos } = useGithubRepositoriesQuery();
-  
+
   // 새로운 GitHub 레포지토리 생성 뮤테이션
   const { mutate: createNewRepo, isPending: isCreatingRepo } = useCreateNewGithubRepoMutation((repoName) => {
     setSelectedRepoOption(0); // 현재 레포지토리로 변경
@@ -86,10 +214,13 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
   // 프로젝트 수정 뮤테이션
   const { mutate, isPending } = useUpdateProjectMutation();
-  
+
   // 스토어에서 상세 정보 가져오기
   const detailFromStore = getProjectDetail();
-  
+
+  // 작업 가능 날짜 관리 상태 추가
+  const [selectedDates, setSelectedDates] = useState(new Set());
+
   // project가 없을 때 기본값 처리
   if (!projectData) {
     console.log('project is null')
@@ -125,7 +256,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // 기존 duration을 시작일과 종료일로 분리
   const parseDuration = (duration) => {
     if (!duration) return { startDate: '', endDate: '' };
-    
+
     // "2025-08-01 ~ 2025-11-30" 형식을 파싱
     const parts = duration.split(' ~ ');
     if (parts.length === 2) {
@@ -133,14 +264,14 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     }
     return { startDate: '', endDate: '' };
   };
-  
+
   // console.log('프로젝트 기간:', projectData?.duration)  // project.duration: 2025-08-01 ~ 2025-11-30
   const { startDate: initialStartDate, endDate: initialEndDate } = parseDuration(projectData?.duration);
 
   // 상세 정보에서 시작일과 종료일 가져오기 (우선순위: 상세 정보 > 기존 데이터)
   const finalStartDate = detailFromStore?.startDate?.replace(/-/g, '.') || initialStartDate;
   const finalEndDate = detailFromStore?.endDate?.replace(/-/g, '.') || initialEndDate;
-  
+
   // 상세 정보에서 요일별 투자 시간 가져오기 (우선순위: 상세 정보 > 기존 데이터)
   const finalTimeByDay = detailFromStore?.timeByDay || projectData?.timeByDay || { 월: 0, 화: 0, 수: 0, 목: 0, 금: 0, 토: 0, 일: 0 };
 
@@ -155,7 +286,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('현재프로젝트 정보:', projectDetails)
   console.log('스토어에서 가져온 상세 정보:', detailFromStore)
 
-  // 상세 정보가 업데이트될 때마다 컴포넌트 상태 업데이트
+  // 상세 정보가 업데이트될 때 컴포넌트 상태 업데이트
   useEffect(() => {
     if (detailFromStore) {
       const finalStartDate = detailFromStore.startDate?.replace(/-/g, '.') || initialStartDate;
@@ -168,16 +299,35 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
         startDate: finalStartDate,
         endDate: finalEndDate,
         timeByDay: finalTimeByDay,
+        // schedules는 projectDetails에서 제거하고 selectedDates로만 관리
       }));
+
+      // 기존 schedules 데이터를 selectedDates에 설정
+      if (detailFromStore.schedules && Array.isArray(detailFromStore.schedules)) {
+        const existingDates = new Set();
+        detailFromStore.schedules.forEach(schedule => {
+          if (schedule.scheduledDate) {
+            existingDates.add(schedule.scheduledDate);
+          }
+        });
+        setSelectedDates(existingDates);
+        // console.log('기존 schedules에서 selectedDates 설정:', Array.from(existingDates)); // 디버깅용
+      } else {
+        // schedules가 없으면 빈 Set으로 초기화
+        setSelectedDates(new Set());
+        // console.log('schedules가 없어서 빈 Set으로 초기화'); // 디버깅용
+      }
     }
   }, [detailFromStore, initialStartDate, initialEndDate]);
 
   // 에러 상태 관리
-  const [errors, setErrors] = useState({ projectName: false });
+  const [errors, setErrors] = useState({ projectName: false, timeByDay: false });
 
   // 날짜 선택 관련 상태
   const [showStartCalendar, setShowStartCalendar] = useState(false);
   const [showEndCalendar, setShowEndCalendar] = useState(false);
+  const [showWorkDayAdjustment, setShowWorkDayAdjustment] = useState(false);
+  const investmentSectionRef = useRef(null); // 요일별 투자 시간 에러 위해 참조
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -196,75 +346,30 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     if (type === 'start') {
       setProjectDetails(prev => ({ ...prev, startDate: formattedDate }));
       setShowStartCalendar(false);
-    } else {
+    } else if (type === 'end') {
       setProjectDetails(prev => ({ ...prev, endDate: formattedDate }));
       setShowEndCalendar(false);
+    } else if (type === 'workDayAdjustment') {
+      // 작업 가능 날짜 선택/해제
+      // 시간대 문제를 해결하기 위해 로컬 날짜 형식 사용
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`; // YYYY-MM-DD 형식
+
+      setSelectedDates(prev => {
+        const newSelectedDates = new Set(prev);
+        if (newSelectedDates.has(dateString)) {
+          newSelectedDates.delete(dateString);
+          // console.log('날짜 제거:', dateString, '현재 선택된 날짜들:', Array.from(newSelectedDates));
+        } else {
+          newSelectedDates.add(dateString);
+          // console.log('날짜 추가:', dateString, '현재 선택된 날짜들:', Array.from(newSelectedDates));
+        }
+        return newSelectedDates;
+      });
     }
   };
-
-  // 캘린더 컴포넌트
-  const Calendar = ({ onDateSelect, onClose, selectedDate }) => {
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-    
-    const getDaysInMonth = (date) => {
-      const year = date.getFullYear();
-      const month = date.getMonth();
-      const firstDay = new Date(year, month, 1);
-      const lastDay = new Date(year, month + 1, 0);
-      const daysInMonth = lastDay.getDate();
-      const startingDay = firstDay.getDay();
-      
-      const days = [];
-      for (let i = 0; i < startingDay; i++) {
-        days.push(null);
-      }
-      for (let i = 1; i <= daysInMonth; i++) {
-        days.push(new Date(year, month, i));
-      }
-      return days;
-    };
-
-    const days = getDaysInMonth(currentMonth);
-    const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
-    
-    const prevMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
-    };
-
-    const nextMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-    };
-
-    return (
-      <div className={styles.calendarOverlay} onClick={onClose}>
-        <div className={styles.calendarContainer} onClick={(e) => e.stopPropagation()}>
-          <div className={styles.calendarHeader}>
-            <button onClick={prevMonth}>&lt;</button>
-            <span>{currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월</span>
-            <button onClick={nextMonth}>&gt;</button>
-          </div>
-          <div className={styles.calendarWeekdays}>
-            {weekDays.map(day => (
-              <div key={day} className={styles.calendarWeekday}>{day}</div>
-            ))}
-          </div>
-          <div className={styles.calendarDays}>
-            {days.map((day, index) => (
-              <div
-                key={index}
-                className={`${styles.calendarDay} ${!day ? styles.empty : ''} ${selectedDate && day && day.toDateString() === selectedDate.toDateString() ? styles.selected : ''}`}
-                onClick={() => day && onDateSelect(day)}
-              >
-                {day ? day.getDate() : ''}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-
 
   const days = ['월', '화', '수', '목', '금', '토', '일'];
 
@@ -283,7 +388,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     const dayTime = projectDetails.timeByDay[activeDay] || 0;
     setStep(dayTime * 2); // 30분 단위 → 1시간은 step 2
   }, [activeDay, projectDetails.timeByDay]);
-  
+
   // activeDay 기준으로 투자 시간 업데이트
   const handleSliderChange = (newStep) => {
     setStep(newStep); // UI 업데이트
@@ -337,20 +442,23 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       return;
     }
 
-    // 시작일과 종료일을 하나의 문자열로 결합
-    // const duration = formData.startDate && formData.endDate 
-    //   ? `${formData.startDate.replace(/\./g, '-')} ~ ${formData.endDate.replace(/\./g, '-')}`
-    //   : '';
+    // 모든 요일별 투자 시간이 0시간인지 검사
+    const isAllZero =
+      Object.values(projectDetails.timeByDay || {}).every(v => Number(v) === 0);
+    if (isAllZero) {
+      setErrors(prev => ({ ...prev, timeByDay: true }));
+      // 에러 위치로 스크롤
+      investmentSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
-    // if (typeof onSave === 'function') {
-    //   onSave({
-    //     ...(projectData || {}),
-    //     title: formData.projectName,
-    //     duration: duration,
-    //     timeByDay: timeByDay,
-    //     repoUrl: formData.repoUrl
-    //   });
-    // }
+    // selectedDates를 schedules 형식으로 변환 (선택된 날짜만 포함)
+    const updatedSchedules = Array.from(selectedDates).map((date, index) => ({
+      scheduleId: index + 1, // 임시 ID (실제로는 백엔드에서 관리)
+      scheduledDate: date
+    }));
+
+    // console.log('저장할 schedules:', updatedSchedules); // 디버깅용
 
     // mutate 함수를 호출하여 API 요청 실행
     mutate({
@@ -361,6 +469,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
         startDate: projectDetails.startDate,
         endDate: projectDetails.endDate,
         timeByDay: projectDetails.timeByDay,
+        schedules: updatedSchedules, // 수정된 schedules 데이터 (선택된 날짜만)
         // repoUrl은 API 명세에 없으므로 여기서는 제외함
       },
       // 기존 DB의 schedules 데이터 전달
@@ -383,7 +492,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       alert('레포지토리 이름을 입력해주세요.');
       return;
     }
-    
+
     createNewRepo({
       projectId: projectData.id,
       repoName: newRepoName.trim()
@@ -405,12 +514,36 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       alert('연결할 레포지토리를 선택해주세요.');
       return;
     }
-    
+
     linkExistingRepo({
       projectId: projectData.id,
       repoName: selectedExistingRepo
     });
   };
+
+  // 기존 레포지토리 연결하기 버튼 클릭 시 최하단으로 스크롤
+  const bodyRef = useRef(null);
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTo({
+        top: bodyRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [selectedRepoOption]);
+
+  // console.log('projectDetails.schedules: ', projectDetails.schedules)
+  // 응답 형태
+  // [
+  //   {
+  //     "scheduleId": 1,
+  //     "scheduledDate": "2025-08-01"
+  //   },
+  //   {
+  //     "scheduleId": 2,
+  //     "scheduledDate": "2025-08-02"
+  //   }
+  // ]
 
   return (
     <>
@@ -430,7 +563,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
             <div className={styles.modalHeaderSpacer} />
           </div>
 
-          <div className={styles.modalBody}>
+          <div className={styles.modalBody} ref={bodyRef}>
             <div className={styles.formContainer}>
               <div className={styles.formSection}>
                 <div className={styles.labelContainer}>
@@ -440,13 +573,13 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                   )}
                 </div>
                 <div className={`${styles.inputWrapper} ${errors.projectName ? styles.error : ''}`}>
-                  <input 
-                    type="text" 
-                    id="projectName" 
-                    name="projectName" 
-                    className={styles.inputText} 
-                    value={projectDetails.projectName} 
-                    onChange={handleChange} 
+                  <input
+                    type="text"
+                    id="projectName"
+                    name="projectName"
+                    className={styles.inputText}
+                    value={projectDetails.projectName}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -454,55 +587,59 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
               <div className={styles.formSection}>
                 <label className={styles.formLabel}>기간*</label>
                 <div className={styles.dateRangeWrapper}>
-                  <div className={`${styles.inputWrapper} ${styles.dateInput}`}>
+                  <div className={`${styles.inputWrapper} ${styles.dateInput}`} style={{ width: '161px' }}>
                     <div className={styles.inputWithIcon}>
                       <CalendarIcon />
-                      <input 
-                        type="text" 
-                        id="startDate" 
-                        name="startDate" 
-                        className={styles.inputText} 
-                        value={projectDetails.startDate} 
-                        onChange={handleChange} 
+                      <input
+                        type="text"
+                        id="startDate"
+                        name="startDate"
+                        className={styles.inputText}
+                        value={projectDetails.startDate}
+                        onChange={handleChange}
                         onClick={() => setShowStartCalendar(true)}
                         readOnly
                       />
                       {showStartCalendar && (
-                        <Calendar 
-                          onDateSelect={(date) => handleDateSelect(date, 'start')} 
-                          onClose={() => setShowStartCalendar(false)} 
-                          selectedDate={projectDetails.startDate ? new Date(projectDetails.startDate.replace(/\./g, '-')) : null} 
+                        <Calendar
+                          onDateSelect={(date) => handleDateSelect(date, 'start')}
+                          onClose={() => setShowStartCalendar(false)}
+                          selectedDate={projectDetails.startDate ? new Date(projectDetails.startDate.replace(/\./g, '-')) : null}
                         />
                       )}
                     </div>
                   </div>
                   <div className={styles.dateRangeSeparator}>~</div>
-                  <div className={`${styles.inputWrapper} ${styles.dateInput}`}>
+                  <div className={`${styles.inputWrapper} ${styles.dateInput}`} style={{ width: '161px' }}>
                     <div className={styles.inputWithIcon}>
                       <CalendarIcon />
-                      <input 
-                        type="text" 
-                        id="endDate" 
-                        name="endDate" 
-                        className={styles.inputText} 
-                        value={projectDetails.endDate} 
-                        onChange={handleChange} 
+                      <input
+                        type="text"
+                        id="endDate"
+                        name="endDate"
+                        className={styles.inputText}
+                        value={projectDetails.endDate}
+                        onChange={handleChange}
                         onClick={() => setShowEndCalendar(true)}
                         readOnly
                       />
                       {showEndCalendar && (
-                        <Calendar 
-                          onDateSelect={(date) => handleDateSelect(date, 'end')} 
-                          onClose={() => setShowEndCalendar(false)} 
-                          selectedDate={projectDetails.endDate ? new Date(projectDetails.endDate.replace(/\./g, '-')) : null} 
+                        <Calendar
+                          onDateSelect={(date) => handleDateSelect(date, 'end')}
+                          onClose={() => setShowEndCalendar(false)}
+                          selectedDate={projectDetails.endDate ? new Date(projectDetails.endDate.replace(/\./g, '-')) : null}
                         />
                       )}
                     </div>
                   </div>
+                  <div className={styles.adjustmentIconWrapper} onClick={() => setShowWorkDayAdjustment(true)} style={{ cursor: 'pointer' }}>
+                    <AdjustmentIcon />
+                  </div>
                 </div>
               </div>
-              
-              <div className={`${styles.formSection} ${styles.investmentSection}`}>
+
+              <div className={`${styles.formSection} ${styles.investmentSection}`}
+                ref={investmentSectionRef}>
                 <label className={styles.formLabel}>요일별 투자 시간*</label>
                 <div className={styles.daySelector}>
                   {days.map((day) => {
@@ -529,41 +666,42 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                 </div>
                 <div className={styles.sliderWrapper}>
                   <div className={styles.sliderContainer} ref={sliderRef}>
-                      <div className={styles.sliderTrack}>
-                          <div 
-                            className={styles.sliderProgress} 
-                            style={{width: `${percent}%`}}
-                          ></div>
-                          <div 
-                            className={styles.sliderThumb} 
-                            // style={{left: `calc(${percent}% - 15px)`}}
-                            style={{left: `calc(${percent}% - 11px)`}}
-                            onMouseDown={handleMouseDown}>
-                            <svg width="25" height="25" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <g filter="url(#slider-thumb-shadow)">
-                              <rect x="1" y="1" width="22" height="22" rx="11" fill="#F5F5F5"/>
-                              </g>
-                              <defs>
-                              <filter id="slider-thumb-shadow" x="0" y="0" width="30" height="30" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-                              <feFlood floodOpacity="0" result="BackgroundImageFix"/>
-                              <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-                              <feOffset dx="3" dy="3"/>
-                              <feGaussianBlur stdDeviation="2"/>
-                              <feComposite in2="hardAlpha" operator="out"/>
-                              <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"/>
-                              <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_461_4148"/>
-                              <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_461_4148" result="shape"/>
-                              </filter>
-                              </defs>
-                            </svg>
-                          </div>
+                    <div className={styles.sliderTrack}>
+                      <div
+                        className={styles.sliderProgress}
+                        style={{ width: `${percent}%` }}
+                      ></div>
+                      <div
+                        className={styles.sliderThumb}
+                        // style={{left: `calc(${percent}% - 15px)`}}
+                        style={{ left: `calc(${percent}% - 11px)` }}
+                        onMouseDown={handleMouseDown}>
+                        <svg width="25" height="25" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <g filter="url(#slider-thumb-shadow)">
+                            <rect x="1" y="1" width="22" height="22" rx="11" fill="#F5F5F5" />
+                          </g>
+                          <defs>
+                            <filter id="slider-thumb-shadow" x="0" y="0" width="30" height="30" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+                              <feFlood floodOpacity="0" result="BackgroundImageFix" />
+                              <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
+                              <feOffset dx="3" dy="3" />
+                              <feGaussianBlur stdDeviation="2" />
+                              <feComposite in2="hardAlpha" operator="out" />
+                              <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+                              <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_461_4148" />
+                              <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_461_4148" result="shape" />
+                            </filter>
+                          </defs>
+                        </svg>
                       </div>
+                    </div>
                   </div>
                 </div>
                 <div className={styles.sliderTextWrapper}>
                   <div className={styles.sliderText}>{formatTime(step)}</div>
                   {/* <div className="slider-text-subtext">총 투자 시간</div> */}
                 </div>
+                {errors.timeByDay && <div style={{ color: '#FB2C36', fontSize: '12px', marginTop: '4px' }}>요일별 투자 시간에서 하루 이상 값을 설정해주세요.</div>}
               </div>
 
               <div className={styles.formSection}>
@@ -577,8 +715,8 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       <div className={styles.repoTextContent}>
                         <div className={`${styles.repoTitle} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>현재 레포지토리</div>
                         <div className={`${styles.repoUrl} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>
-                          {detailFromStore?.repositories && detailFromStore.repositories.length > 0 
-                            ? detailFromStore.repositories[0].repoUrl 
+                          {detailFromStore?.repositories && detailFromStore.repositories.length > 0
+                            ? detailFromStore.repositories[0].repoUrl
                             : '연결된 레포지토리가 없습니다.'}
                         </div>
                       </div>
@@ -587,7 +725,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       {selectedRepoOption === 0 && <CheckIcon />}
                     </div>
                   </div>
-                  
+
                   <div className={`${styles.repoOptionCard} ${selectedRepoOption === 1 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(1)}>
                     <div className={styles.repoOptionContent}>
                       <div className={`${styles.repoIconWrapper} ${styles.addIcon}`}>
@@ -614,7 +752,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                           className={styles.inputText}
                         />
                       </div>
-                      <button 
+                      <button
                         className={`${styles.btn} ${styles.btnPrimary}`}
                         onClick={handleCreateNewRepo}
                         disabled={isCreatingRepo}
@@ -644,44 +782,48 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                       {isLoadingRepos ? (
                         <div className={styles.loadingText}>레포지토리 목록을 불러오는 중...</div>
                       ) : githubReposData?.repositories?.length > 0 ? (
-                        <div className={styles.repoList}>
-                          {githubReposData.repositories.map((repo, index) => (
-                            <div
-                              key={index}
-                              className={`${styles.repoListItem} ${selectedExistingRepo === repo.name ? styles.selected : ''}`}
-                              onClick={() => setSelectedExistingRepo(repo.name)}
-                            >
-                              <div className={styles.repoItemContent}>
-                                <div className={styles.repoItemName}>{repo.name}</div>
-                                <div className={styles.repoItemUrl}>{repo.htmlUrl}</div>
-                                {repo.description && (
-                                  <div className={styles.repoItemDescription}>{repo.description}</div>
+                        <>
+                          <div className={styles.repoList}>
+                            {githubReposData.repositories.map((repo, index) => (
+                              <div
+                                key={index}
+                                className={`${styles.repoListItem} ${selectedExistingRepo === repo.name ? styles.selected : ''}`}
+                                onClick={() => setSelectedExistingRepo(repo.name)}
+                              >
+                                <div className={styles.repoItemContent}>
+                                  <div className={styles.repoItemName}>{repo.name}</div>
+                                  <div className={styles.repoItemUrl}>{repo.htmlUrl}</div>
+                                  {repo.description && (
+                                    <div className={styles.repoItemDescription}>{repo.description}</div>
+                                  )}
+                                  <div className={styles.repoItemVisibility}>
+                                    {repo.isPrivate ? 'Private' : 'Public'}
+                                  </div>
+                                </div>
+                                {selectedExistingRepo === repo.name && (
+                                  <div className={styles.repoItemCheck}>
+                                    <CheckIcon />
+                                  </div>
                                 )}
-                                <div className={styles.repoItemVisibility}>
-                                  {repo.isPrivate ? 'Private' : 'Public'}
-                                </div>
                               </div>
-                              {selectedExistingRepo === repo.name && (
-                                <div className={styles.repoItemCheck}>
-                                  <CheckIcon />
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
+
+                          {/* {selectedExistingRepo && ( */}
+                          <div className={styles.repoButtonContainer}>
+                            <button
+                              className={`${styles.btn} ${styles.btnPrimary}`}
+                              onClick={handleLinkExistingRepo}
+                              disabled={isLinkingRepo}
+                            >
+                              {isLinkingRepo ? '연결 중...' : '선택한 레포지토리 연결'}
+                            </button>
+                          </div>
+                          {/* )} */}
+                        </>
                       ) : (
                         <div className={styles.noReposText}>연결 가능한 레포지토리가 없습니다.</div>
                       )}
-                      
-                                             {selectedExistingRepo && (
-                         <button 
-                           className={`${styles.btn} ${styles.btnPrimary}`}
-                           onClick={handleLinkExistingRepo}
-                           disabled={isLinkingRepo}
-                         >
-                           {isLinkingRepo ? '연결 중...' : '선택한 레포지토리 연결'}
-                         </button>
-                       )}
                     </div>
                   )}
                 </div>
@@ -697,6 +839,16 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
           </div>
         </div>
       </div>
+
+      {/* 작업 가능 날짜 캘린더 - 모달 레벨에서 렌더링 */}
+      {showWorkDayAdjustment && (
+        <Calendar
+          onDateSelect={(date) => handleDateSelect(date, 'workDayAdjustment')}
+          onClose={() => setShowWorkDayAdjustment(false)}
+          selectedDates={selectedDates}
+          isWorkDayAdjustment={true}
+        />
+      )}
     </>
   );
 };

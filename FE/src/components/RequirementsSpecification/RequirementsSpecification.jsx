@@ -8,6 +8,7 @@ import PriorityBadge from './PriorityBadge';
 import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
 import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest, buildMainFeatureToFieldRequest } from '../../apis/chatApi';
+import { downloadSpecDocument, toggleReduceFlag } from '../../apis/requirementsSpecification';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -109,12 +110,12 @@ const SecondSubTaskItem = ({ task, onToggleOpen, onToggleChecked, level = 0, par
       // onToggleOpen(parentId);
     }}>
       <div className={styles.subTaskLeft}>
-        <Checkbox 
-        checked={task.checked} 
-        onChange={(e) => {
-          e.stopPropagation();
-          onToggleChecked(task.id);
-        }} />
+        <Checkbox
+          checked={task.checked}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggleChecked(task.id);
+          }} />
         <div className={styles.subTaskNameContainer}>
           <div className={styles.subTaskName}>{task.name}</div>
         </div>
@@ -146,12 +147,12 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
           <div className={styles.expandedSectionHeader}>
             <div className={styles.expandedSectionHeaderInner}>
               <div className={styles.subTaskLeft}>
-                <Checkbox 
-                checked={task.checked} 
-                onChange={(e) => {
-                  e.stopPropagation();
-                  onToggleChecked(task.id);
-                }}
+                <Checkbox
+                  checked={task.checked}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleChecked(task.id);
+                  }}
                 />
                 <div className={styles.subTaskNameContainer}>
                   <div className={styles.subTaskName}>{task.name}</div>
@@ -175,12 +176,12 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
                 />
               ))}
               {/* 상세 기능 추가 버튼 */}
-              <AddNewTaskButton 
+              <AddNewTaskButton
                 onClick={(e) => {
                   e.stopPropagation();
                   onAddSubTask(task);
-                }} 
-                text="상세 기능 추가" 
+                }}
+                text="상세 기능 추가"
               />
             </div>
           </div>
@@ -188,12 +189,12 @@ const SubTaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, level 
       ) : (
         <div className={styles.subTaskItem} onClick={() => onToggleOpen(task.id)}>
           <div className={styles.subTaskLeft}>
-            <Checkbox 
-            checked={task.checked} 
-            onChange={(e) => {
-              e.stopPropagation();
-              onToggleChecked(task.id);
-            }} />
+            <Checkbox
+              checked={task.checked}
+              onChange={(e) => {
+                e.stopPropagation();
+                onToggleChecked(task.id);
+              }} />
             <div className={styles.subTaskNameContainer}>
               <div className={styles.subTaskName}>{task.name}</div>
             </div>
@@ -239,12 +240,12 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
     <div className={level === 0 ? styles.mainFeatureCard : styles.subTaskItem}>
       <div className={styles.mainFeatureHeader} onClick={() => hasSubTasks && onToggleOpen(task.id)}>
         <div className={styles.mainFeatureHeaderLeft}>
-          <Checkbox 
-          checked={task.checked} 
-          onChange={(e) => {
-            e.stopPropagation();
-            onToggleChecked(task.id);
-          }} />
+          <Checkbox
+            checked={task.checked}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleChecked(task.id);
+            }} />
           <div className={styles.mainFeatureName}>{task.name}</div>
           <PriorityBadge level={task.priority} />
         </div>
@@ -267,9 +268,9 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
                 onAddSubTask={onAddSubTask}
               />
             ))}
-            <AddNewTaskButton 
-              onClick={() => onOpenModal('main', task)} 
-              text="주 기능 추가" 
+            <AddNewTaskButton
+              onClick={() => onOpenModal('main', task)}
+              text="주 기능 추가"
             />
           </div>
         </div>
@@ -280,25 +281,70 @@ const TaskItem = ({ task, onToggleOpen, onToggleChecked, onAddSubTask, onOpenMod
 
 
 const RequirementsSpecification = () => {
-  const { 
-    projectOverview, 
-    mainFeatures, 
-    techStack, 
-    rawData, 
+  const {
+    projectOverview,
+    mainFeatures,
+    techStack,
+    rawData,
     projectId,
     specId,
-    processSpecData, 
+    processSpecData,
     resetSpecification,
     debugPrintSpecification,
     addMainFeatureManually,
     addSubFeatureManually,
-    addMainFeatureToField
+    addMainFeatureToField,
+    toggleFeatureChecked,
+    toggleFeatureOpen
   } = useSpecificationStore();
-  
+
+  const [specDocument, setSpecDocument] = useState(null); // pdf 다운로드 받기 위한 변수
+
+  // 파일명 추출 
+  function getFileName(headerValue) {
+    if (!headerValue) return null;
+    const match = /filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i.exec(headerValue);
+    return match ? decodeURIComponent(match[1]) : null;
+  }
+  // pdf 다운로드 받기 함수
+  const handleDownloadSpecDocument = async () => {
+    try {
+      const response = await downloadSpecDocument(projectId);
+
+      // 서버가 에러를 JSON으로 보낸 경우(예: 200인데 실제는 에러 바디)
+    const ct = response.headers['content-type'] || '';
+    if (ct.includes('application/json')) {
+      const text = await response.data.text?.(); // blob → text
+      console.error('서버 에러 바디:', text);
+      alert('문서 생성 중 오류가 발생했습니다.');
+      return;
+    }
+    
+    const blob = new Blob([response.data], { type: ct || 'application/pdf' });
+    setSpecDocument(blob);
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const cd = response.headers['content-disposition'];
+    a.download = getFileName(cd) || `specification_${projectId}.pdf`;
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+    console.log('프로젝트 요구사항 명세서 다운로드 성공');
+    } catch (error) {
+      console.error('프로젝트 요구사항 명세서 다운로드 실패:', error);
+    }
+  };
+
   const tags = ['Python', 'FastAPI', 'RAG Pipeline', 'Vector DB', 'AWS EC2', 'AWS RDS', 'AWS S3'];
   const [requirements] = useState(initialRequirementsData);
   // mainFeatures가 있으면 사용하고, 없으면 초기 데이터 사용
-  const [features, setFeatures] = useState(mainFeatures && mainFeatures.length > 0 ? mainFeatures : initialRequirementsData[0].mainFeatures);
+  const features = mainFeatures && mainFeatures.length > 0 ? mainFeatures : initialRequirementsData[0].mainFeatures;
 
   // 모달 상태 관리 -> 상세 기능 추가 모달 열기 위해 필요
   const [modalState, setModalState] = useState({
@@ -369,9 +415,6 @@ const RequirementsSpecification = () => {
   // mainFeatures가 업데이트되면 로컬 state도 업데이트
   useEffect(() => {
     console.log('mainFeatures 업데이트됨:', mainFeatures);
-    if (mainFeatures && mainFeatures.length > 0) {
-      setFeatures(mainFeatures);
-    }
   }, [mainFeatures]);
 
   // 테스트용: 브라우저 콘솔에서 직접 호출할 수 있는 함수들
@@ -380,7 +423,7 @@ const RequirementsSpecification = () => {
     window.testSpecData = () => {
       const currentProjectId = projectId || 1; // 현재 프로젝트 ID 사용, 없으면 기본값
       const currentSpecId = specId || 1; // 현재 스펙 ID 사용, 없으면 기본값
-      
+
       const testData = {
         projectId: currentProjectId,
         specId: currentSpecId,
@@ -417,7 +460,7 @@ const RequirementsSpecification = () => {
     window.testProjectSummary = () => {
       const currentProjectId = projectId || 1; // 현재 프로젝트 ID 사용, 없으면 기본값
       const currentSpecId = specId || 1; // 현재 스펙 ID 사용, 없으면 기본값
-      
+
       const testSummary = {
         projectTitle: "온라인 쇼핑몰 플랫폼 개발",
         specTitle: "온라인 쇼핑몰 플랫폼 명세서",
@@ -455,7 +498,7 @@ const RequirementsSpecification = () => {
     window.printSpec = () => {
       debugPrintSpecification();
     };
-    
+
     return () => {
       delete window.testSpecData;
       delete window.testProjectSummary;
@@ -485,61 +528,72 @@ const RequirementsSpecification = () => {
   }
   // 열림/닫힘 상태를 토글하는 함수
   const handleToggleOpen = useCallback((taskId) => {
-    const toggleOpen = (tasks) => {
-      return tasks.map(task => {
-        if (task.id === taskId) {
-          return { ...task, isOpen: !task.isOpen };
-        }
-        if (task.subTasks) {
-          return { ...task, subTasks: toggleOpen(task.subTasks) };
-        }
-        return task;
-      });
-    };
-    setFeatures(prevFeatures => toggleOpen(prevFeatures));
-  }, []);
+    toggleFeatureOpen(taskId);
+  }, [toggleFeatureOpen]);
 
   // 체크 상태를 토글하는 함수
-  const handleToggleChecked = useCallback((taskId) => {
-    // console.log('토글 호출, taskId:', taskId);
-    let newState;
+  const handleToggleChecked = useCallback(async (taskId) => {
+    console.log('토글 호출, taskId:', taskId);
+    
+    if (!projectId) {
+      console.error('프로젝트 ID가 없습니다.');
+      return;
+    }
 
-    const toggleAndPropagate = list =>
-      list.map(item => {
-        if (item.id === taskId) {
-          const newChecked = !item.checked;
-          return {
-            ...item,
-            checked: newChecked,
-            subTasks: item.subTasks?.map(st => ({ ...st, checked: newChecked, subTasks: st.subTasks ? /* 재귀 */ [] : [] })) ?? []
-          };
+    // 현재 상태에서 해당 task 찾기
+    const findTask = (tasks, targetId) => {
+      for (const task of tasks) {
+        if (task.id === targetId) {
+          return task;
         }
-        if (item.subTasks) {
-          return { ...item, subTasks: toggleAndPropagate(item.subTasks) };
+        if (task.subTasks) {
+          const found = findTask(task.subTasks, targetId);
+          if (found) return found;
         }
-        return item;
-      });
-  
-    // 2) 부모 체크는 자식 전부 체크되어야만 true
-    const updateParents = list =>
-      list.map(item => {
-        if (item.subTasks && item.subTasks.length) {
-          const updatedSubs = updateParents(item.subTasks);
-          const allChecked = updatedSubs.every(st => st.checked);
-          return { ...item, subTasks: updatedSubs, checked: allChecked };
-        }
-        return item;
-      });
-  
-    setFeatures(prev => {
-      newState = toggleAndPropagate(prev);
-      return updateParents(newState);
-    });
+      }
+      return null;
+    };
 
-  }, []);
+    const currentTask = findTask(features, taskId);
+    if (!currentTask) {
+      console.error('Task를 찾을 수 없습니다:', taskId);
+      return;
+    }
 
-   // 하위 작업 추가 핸들러
-   const handleAddSubTask = (parentTask) => {
+    const newChecked = !currentTask.checked;
+    const isReduced = !newChecked; // 체크 해제 시 isReduced=true, 체크 시 isReduced=false
+
+    try {
+      // API 호출
+      let field = null;
+      let featureId = null;
+
+      // 최상위 기능(field)인지 확인 - ID가 'field_'로 시작하는지 확인
+      const isTopLevel = taskId.toString().startsWith('field_');
+      if (isTopLevel) {
+        field = currentTask.name; // field는 이름으로 전달
+        console.log('최상위 기능 토글 - field:', field, 'taskId:', taskId);
+      } else {
+        featureId = taskId; // subTask나 secondSubTask는 ID로 전달
+        console.log('하위 기능 토글 - featureId:', featureId, 'taskId:', taskId);
+      }
+
+      console.log('API 호출 파라미터:', { projectId, field, featureId, isReduced });
+      await toggleReduceFlag(projectId, field, featureId, isReduced);
+      console.log('체크박스 토글 API 호출 성공');
+
+      // 스토어를 통해 UI 상태 업데이트
+      toggleFeatureChecked(taskId, newChecked);
+
+    } catch (error) {
+      console.error('체크박스 토글 API 호출 실패:', error);
+      // 에러 발생 시 UI 상태를 원래대로 되돌리지 않음 (사용자가 다시 시도할 수 있도록)
+    }
+
+  }, [features, projectId]);
+
+  // 하위 작업 추가 핸들러
+  const handleAddSubTask = (parentTask) => {
     // 이 함수는 "상세 기능 추가" 버튼을 클릭할 때만 호출됨
     // 따라서 항상 taskType은 'sub'여야 함
     const taskType = 'sub';
@@ -555,7 +609,6 @@ const RequirementsSpecification = () => {
   // 초기화 버튼 클릭 핸들러
   const handleReset = () => {
     resetSpecification();
-    setFeatures([]);
   };
 
   return (
@@ -568,7 +621,7 @@ const RequirementsSpecification = () => {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             {/* 디버깅 버튼 */}
-            <button 
+            <button
               className={styles.pdfDownloadWrapper}
               onClick={handleDebugPrint}
               style={{ backgroundColor: '#007bff', color: 'white' }}
@@ -578,9 +631,9 @@ const RequirementsSpecification = () => {
               </svg>
               <div className={styles.pdfText}>디버그</div>
             </button>
-            
+
             {/* 초기화 버튼 */}
-            <button 
+            <button
               className={styles.pdfDownloadWrapper}
               onClick={handleReset}
               style={{ backgroundColor: '#dc3545', color: 'white' }}
@@ -592,7 +645,7 @@ const RequirementsSpecification = () => {
             </button>
 
             {/* PDF 다운로드 버튼 */}
-            <button className={styles.pdfDownloadWrapper}>
+            <button className={styles.pdfDownloadWrapper} onClick={handleDownloadSpecDocument}>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
                 <path d="M21 15.5V19.5C21 20.0304 20.7893 20.5391 20.4142 20.9142C20.0391 21.2893 19.5304 21.5 19 21.5H5C4.46957 21.5 3.96086 21.2893 3.58579 20.9142C3.21071 20.5391 3 20.0304 3 19.5V15.5M7 10.5L12 15.5M12 15.5L17 10.5M12 15.5V3.5" stroke="#1E1E1E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -615,7 +668,7 @@ const RequirementsSpecification = () => {
                   <span className={styles.itemValue}>{projectId || 'N/A'}</span>
                 </div>
               </div>
-              <div className={styles.overviewItem} style={{borderBottom: 'none'}}>
+              <div className={styles.overviewItem} style={{ borderBottom: 'none' }}>
                 <div className={styles.bullet}>•</div>
                 <div className={styles.itemContent}>
                   <span className={styles.itemLabel}>Spec ID: </span>
@@ -639,10 +692,10 @@ const RequirementsSpecification = () => {
                 <span className={styles.itemValue}>{projectOverview.projectName || 'N/A'}</span>
               </div>
             </div>
-            <div className={styles.overviewItem} style={{borderBottom: 'none'}}>
+            <div className={styles.overviewItem} style={{ borderBottom: 'none' }}>
               <div className={styles.bullet}>•</div>
               <div className={styles.itemContent}>
-                <span className={styles.itemLabel} style={{marginBottom: '10px'}}>설명 </span>
+                <span className={styles.itemLabel} style={{ marginBottom: '10px' }}>설명 </span>
                 <span className={styles.itemValue}>{projectOverview.projectDescription || 'N/A'}</span>
               </div>
             </div>
@@ -688,10 +741,10 @@ const RequirementsSpecification = () => {
               <div className={styles.cardTitle}>🔍 Raw Data (디버깅용)</div>
             </div>
             <div className={styles.projectOverview}>
-              <pre style={{ 
-                fontSize: '12px', 
-                backgroundColor: '#f5f5f5', 
-                padding: '10px', 
+              <pre style={{
+                fontSize: '12px',
+                backgroundColor: '#f5f5f5',
+                padding: '10px',
                 borderRadius: '4px',
                 overflow: 'auto',
                 maxHeight: '200px'
