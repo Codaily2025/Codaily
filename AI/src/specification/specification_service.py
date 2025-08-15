@@ -156,7 +156,7 @@ def parse_bullet_items_with_duration_and_priority(
 
 
 async def spec_sub_functions_generator(
-    project_description: str, function_group: str, main_function: str
+    project_description: str, function_group: str, main_function: str, time: int
 ) -> list[dict]:
     """
     주어진 주 기능 항목에 대해 상세 기능 항목들을 list[dict] 형식으로 반환합니다.
@@ -164,7 +164,10 @@ async def spec_sub_functions_generator(
     """
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", SPEC_GEN_SUB_FUNC_SYS),
+            (
+                "system",
+                SPEC_GEN_SUB_FUNC_SYS.format(time=time),
+            ),
             (
                 "user",
                 SPEC_GEN_SUB_FUNC_USER.format(
@@ -180,6 +183,7 @@ async def spec_sub_functions_generator(
             "description": project_description,
             "group": function_group,
             "main_function": main_function,
+            "time": time,
         }
     )
 
@@ -196,11 +200,9 @@ async def process_main_function(
     queue: asyncio.Queue,
 ):
     # print("main_func: ", main_func)
-    main_func_full = (
-        f"{main_func['title']}:{main_func['description']}:{main_func['time']}"
-    )
+    main_func_full = f"{main_func['title']}:{main_func['description']}"
     sub_functions = await spec_sub_functions_generator(
-        project_description, field, main_func_full
+        project_description, field, main_func_full, main_func["time"]
     )
     result = {
         "field": field,
@@ -210,7 +212,7 @@ async def process_main_function(
         },
         "sub_feature": sub_functions,
     }
-    # print("result: ", result)
+    # print("result: ", result, "\n")
     await queue.put(result)
 
 
@@ -246,6 +248,7 @@ async def stream_function_specification(
     queue = asyncio.Queue()
 
     function_fields = await function_fields_generator(project_description, time)
+    # print("function_fields: ", function_fields)
     field_tasks = [
         process_field(project_description, field, queue) for field in function_fields
     ]
