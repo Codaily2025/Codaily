@@ -446,7 +446,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             try {
                 FeatureChecklistResponseDto response = langchainWebClient
                         .post()
-                        .uri("ai/api/generate-checklist")
+                        .uri("/ai/api/generate-checklist")
                         .bodyValue(request)
                         .retrieve()
                         .bodyToMono(FeatureChecklistResponseDto.class)
@@ -506,7 +506,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         try {
             FeatureChecklistExtraResponseDto response = langchainWebClient
                     .post()
-                    .uri("ai/api/generate-checklist")
+                    .uri("/ai/api/generate-checklist")
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(FeatureChecklistExtraResponseDto.class)

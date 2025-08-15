@@ -110,3 +110,7 @@ springdoc:
 server:
   port: 8081
   forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        secure: true
