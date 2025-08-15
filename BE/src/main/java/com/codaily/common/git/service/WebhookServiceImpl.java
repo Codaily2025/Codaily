@@ -215,6 +215,9 @@ public class WebhookServiceImpl implements WebhookService {
                 .doOnSuccess(res -> log.info("Python 서버로 diffFiles 전송 성공"))
                 .doOnError(error -> log.error("전송 실패", error))
                 .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
+
+        log.info("featureInferenceUrl={}", featureInferenceUrl);
+
     }
 
     @Override
