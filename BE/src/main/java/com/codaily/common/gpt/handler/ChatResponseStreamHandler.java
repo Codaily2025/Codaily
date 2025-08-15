@@ -60,6 +60,7 @@ public class ChatResponseStreamHandler {
                 request.getMessage(),
                 request.getFeatureId(),
                 request.getField(),
+//                request.getTime()
                 projectService.calculateTotalUserAvailableHours(request.getProjectId())
         );
 
