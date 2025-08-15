@@ -960,20 +960,21 @@
 }
 
 .subTaskRight {
-  width: 58px;
+  min-width: 80px;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 10px;
   display: inline-flex;
 }
 
 .subTaskActions {
   align-self: stretch;
-  justify-content: flex-start;
+  justify-content: flex-end;
   align-items: center;
   gap: 6px;
   display: inline-flex;
+  white-space: nowrap;
 }
 
 .subTaskTime {
@@ -1069,8 +1070,7 @@
 
 .expandedSectionItem {
   align-self: stretch;
-  height: 55px;
-  /* height: 60px; */
+  min-height: 55px;
   box-sizing: border-box;
   padding-left: 17px;
   padding-right: 17px;
@@ -1217,4 +1217,10 @@
 
 .expandIconContainer {
   position: relative;
+}
+
+.dropdownIcon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
 }
