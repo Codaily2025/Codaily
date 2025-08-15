@@ -42,7 +42,7 @@ public class FileStorageServiceImpl implements FileStorageService {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // 파일 URL 반환
-            String fileUrl = baseUrl + "/api/files/" + directory + "/" + fileName;
+            String fileUrl = baseUrl + "/files/" + directory + "/" + fileName;
             log.info("파일 업로드 완료: {}", fileUrl);
 
             return fileUrl;
@@ -56,7 +56,7 @@ public class FileStorageServiceImpl implements FileStorageService {
     @Override
     public void deleteFile(String fileUrl) {
         try {
-            String relativePath = fileUrl.replace(baseUrl + "/api/files/", "");
+            String relativePath = fileUrl.replace(baseUrl + "/files/", "");
             Path filePath = Paths.get(uploadDir, relativePath);
 
             if (Files.exists(filePath)) {
