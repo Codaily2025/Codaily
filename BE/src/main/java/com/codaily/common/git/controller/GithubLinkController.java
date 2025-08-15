@@ -55,6 +55,8 @@ public class GithubLinkController {
     private String tokenUri;
     @Value("${github.user-uri}")
     private String userUri;
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Operation(summary = "GitHub OAuth 인증 콜백", description = "GitHub로부터 발급받은 인증 코드로 accessToken을 얻고 사용자 정보를 저장")
     @ApiResponses(value = {
@@ -83,7 +85,7 @@ public class GithubLinkController {
     }
 
     private ResponseEntity<String> createSuccessResponse() {
-        String html = """
+        String html = String.format("""
             <!DOCTYPE html>
             <html>
             <head>
@@ -94,13 +96,13 @@ public class GithubLinkController {
                     window.opener.postMessage({
                         type: 'GITHUB_CONNECTED',
                         success: true
-                    }, 'http://localhost:5173');
+                    }, '%s');
                     window.close();
                 </script>
                 <p>GitHub 연동이 완료되었습니다. 창이 자동으로 닫힙니다.</p>
             </body>
             </html>
-            """;
+            """, frontendUrl);
 
         return ResponseEntity.ok()
                 .header("Content-Type", "text/html; charset=UTF-8")
@@ -108,7 +110,7 @@ public class GithubLinkController {
     }
 
     private ResponseEntity<String> createErrorResponse() {
-        String html = """
+        String html = String.format("""
             <!DOCTYPE html>
             <html>
             <head>
@@ -119,13 +121,13 @@ public class GithubLinkController {
                     window.opener.postMessage({
                         type: 'GITHUB_ERROR',
                         success: false
-                    }, 'http://localhost:5173');
+                    }, '%s');
                     window.close();
                 </script>
                 <p>GitHub 연동에 실패했습니다. 창이 자동으로 닫힙니다.</p>
             </body>
             </html>
-            """;
+            """, frontendUrl);
 
         return ResponseEntity.ok()
                 .header("Content-Type", "text/html; charset=UTF-8")
