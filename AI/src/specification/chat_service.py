@@ -174,15 +174,14 @@ async def add_main_feature(
     main_feature = await generate_main_feature_from_message(
         message_text=message, field=field
     )
-    main_func_full = (
-        f"{main_feature['title']}:{main_feature['description']}:{main_feature['time']}"
-    )
+    main_func_full = f"{main_feature['title']}:{main_feature['description']}"
     # print(main_func_full)
     # 상세 기능들 생성
     sub_features = await spec_sub_functions_generator(
         project_description=message,
         function_group=field,
         main_function=main_func_full,
+        time=main_feature["time"],
     )
 
     wrapper = {
