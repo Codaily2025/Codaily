@@ -161,7 +161,7 @@ public class WebhookServiceImpl implements WebhookService {
 
                 String patch = file.has("patch") ? file.get("patch").asText() : "";
                 String status = file.has("status") ? file.get("status").asText() : "modified";
-                ChangeType changeType = ChangeType.fromString(status);
+                ChangeType changeType = ChangeType.fromGithubStatus(status);
 
                 diffFiles.add(new DiffFile(filename, patch, changeType));
             }
