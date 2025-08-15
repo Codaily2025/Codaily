@@ -440,7 +440,7 @@ async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
     feature_name = state["feature_name"]
 
     print(f"\n 코드리뷰아이템 요청: project_id={project_id}, feature_name={feature_name}")
-    url = f"https://i13a601.p.ssafy.io/api/code-review-item/project/{project_id}/feature"
+    url = f"https://i13a601.p.ssafy.io/api/code-review/project/{project_id}/feature"
 
     params = {"featureName": feature_name}
 
