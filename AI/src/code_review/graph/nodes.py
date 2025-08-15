@@ -21,7 +21,7 @@ from ..prompts import (
     commit_message_prompt,
 )
 
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 _to_str = StrOutputParser()
 
 def _to_diff_dict(file: Any) -> Dict[str, Any]:
