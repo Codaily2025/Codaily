@@ -59,7 +59,29 @@ const AdjustmentIcon = () => (
 
 // 캘린더 컴포넌트
 const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedDate, selectedDates = null, isWorkDayAdjustment = false }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // 시작일/종료일 캘린더인 경우 선택된 날짜가 있으면 그 날짜의 월을 보여주고, 없으면 현재 월을 보여줌
+  // 작업 가능 날짜 캘린더인 경우 현재 월을 보여줌
+  const getInitialMonth = () => {
+    if (isWorkDayAdjustment) {
+      return new Date(); // 작업 가능 날짜 캘린더는 현재 월
+    }
+    
+    // 시작일/종료일 캘린더에서 선택된 날짜가 있으면 그 날짜의 월을 보여줌
+    if (selectedDate) {
+      return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    }
+    
+    return new Date(); // 선택된 날짜가 없으면 현재 월
+  };
+  
+  const [currentMonth, setCurrentMonth] = useState(getInitialMonth);
+
+  // selectedDate가 변경될 때마다 currentMonth 업데이트 (시작일/종료일 캘린더만)
+  useEffect(() => {
+    if (!isWorkDayAdjustment && selectedDate) {
+      setCurrentMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
+    }
+  }, [selectedDate, isWorkDayAdjustment]);
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();

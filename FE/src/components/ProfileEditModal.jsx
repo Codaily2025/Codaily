@@ -380,7 +380,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 {profileImage?.imageUrl ? (
                   <img src={profileImage.imageUrl} alt="프로필" className={styles.profileImagePreview} />
                 ) : (
-                  <User size={32} className={styles.profileImageIcon} />
+                  <img src="/src/assets/user_base_image.png" alt="프로필" style={{ width: '100%', height: '100%' }}/>
                 )}
               </div>
               <div className={styles.cameraButton} onClick={(e) => e.stopPropagation()}>

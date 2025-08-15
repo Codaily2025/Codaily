@@ -1,5 +1,5 @@
 // src/pages/MyPage/ProjectsSection.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './ProjectsSection.module.css';
 import { useNavigate } from 'react-router-dom';
 import useModalStore from "../../store/modalStore";
@@ -21,6 +21,9 @@ const ProjectsSection = () => {
 
   const { projects, setProjects } = useProjectStore();
   
+  // 스크롤 위치 유지를 위한 ref
+  const projectsSectionRef = useRef(null);
+  
   // React Query를 사용하여 프로젝트 데이터 조회
   const { data: projectsFromServer, isLoading, error } = useProjectsQuery();
   
@@ -36,6 +39,9 @@ const ProjectsSection = () => {
 
   // 삭제 핸들러
   const handleDelete = (id) => {
+    // 삭제 전 현재 스크롤 위치 저장
+    const currentScrollTop = projectsSectionRef.current?.scrollTop || 0;
+    
     deleteProjectMutation.mutate(
       { projectId: id },
       {
@@ -43,6 +49,13 @@ const ProjectsSection = () => {
           // 삭제 성공 시 로컬 스토어에서도 즉시 제거
           setProjects(projects.filter(project => project.id !== id));
           console.log('프로젝트가 성공적으로 삭제되었습니다.');
+          
+          // 다음 렌더링 후 스크롤 위치 복원
+          setTimeout(() => {
+            if (projectsSectionRef.current) {
+              projectsSectionRef.current.scrollTop = currentScrollTop;
+            }
+          }, 0);
         },
         onError: (error) => {
           console.error('프로젝트 삭제에 실패했습니다:', error);
@@ -92,7 +105,7 @@ const ProjectsSection = () => {
   // }, [closeModal, updateProject]);
 
   return (
-    <section className={styles.projectsSection}>
+    <section className={styles.projectsSection} ref={projectsSectionRef}>
       <div className={styles.projectsHeader}>
         <h2>Projects</h2>
         <div className={styles.projectFilters}>
