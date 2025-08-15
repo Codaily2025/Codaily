@@ -129,3 +129,43 @@ export const createCheckList = async (projectId) => {
         throw new Error(error.response?.data?.message || '수동 기능 추가에 실패했습니다.')
     }
 }
+
+// 모든 프로젝트의 회고 데이터 조회
+export const getAllRetrospectives = async (before = null, limit = 15) => {
+    try {
+        const params = new URLSearchParams()
+        // before 파라미터는 항상 전달 (초기 로딩시 오늘 날짜, 무한스크롤시 마지막 데이터 날짜)
+        if (before) {
+            params.append('before', before)
+        }
+        params.append('limit', limit.toString())
+        
+        const url = `projects/retrospectives?${params.toString()}`
+        console.log('모든 프로젝트 회고 조회 요청 api url: ', url)
+        const response = await authInstance.get(url)
+        return response.data
+    } catch (error) {
+        console.error('getAllRetrospectives Error: ', error)
+        throw new Error(error.response?.data?.message || '회고 데이터를 불러오는데 실패했습니다.')
+    }
+}
+
+// 특정 프로젝트의 회고 데이터 조회
+export const getProjectRetrospectives = async (projectId, before = null, limit = 15) => {
+    try {
+        const params = new URLSearchParams()
+        // before 파라미터는 항상 전달 (초기 로딩시 오늘 날짜, 무한스크롤시 마지막 데이터 날짜)
+        if (before) {
+            params.append('before', before)
+        }
+        params.append('limit', limit.toString())
+        
+        const url = `projects/${projectId}/retrospectives?${params.toString()}`
+        console.log('특정 프로젝트 회고 조회 요청 api url: ', url)
+        const response = await authInstance.get(url)
+        return response.data
+    } catch (error) {
+        console.error('getProjectRetrospectives Error: ', error)
+        throw new Error(error.response?.data?.message || `프로젝트 ${projectId}의 회고 데이터를 불러오는데 실패했습니다.`)
+    }
+}
