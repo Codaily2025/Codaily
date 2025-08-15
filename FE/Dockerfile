@@ -4,9 +4,9 @@ WORKDIR /app
 
 # 의존성
 COPY package*.json ./
-RUN npm install   
+RUN npm install
 
-# Vite 빌드 타임 ENV를 build-arg로 받기
+# Vite 빌드 타임 ENV
 ARG VITE_GITHUB_CLIENT_ID
 ARG VITE_GITHUB_SCOPE
 ARG VITE_GITHUB_REDIRECT_URI
@@ -21,13 +21,12 @@ ENV VITE_GITHUB_CLIENT_ID=${VITE_GITHUB_CLIENT_ID} \
     VITE_BASE_URL_2=${VITE_BASE_URL_2} \
     VITE_BASE_URL_3=${VITE_BASE_URL_3}
 
-# 소스 복사 & 빌드
 COPY . .
 RUN npm run build
 
 # ---------- Runtime Stage ----------
 FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 정적 결과물 배포
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
