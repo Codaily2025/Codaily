@@ -65,7 +65,7 @@ public class RetrospectiveGenerateServiceImpl implements RetrospectiveGenerateSe
                     // 신규 생성: LLM 서버 호출
                     RetrospectiveGenerateRequest payload = (RetrospectiveGenerateRequest) obj;
                     return langchainWebClient.post()
-                            .uri("ai/api/retrospective/generate")
+                            .uri("/ai/api/retrospective/generate")
                             .bodyValue(payload)
                             .retrieve()
                             .bodyToMono(RetrospectiveGenerateResponse.class)
