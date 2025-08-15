@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum ChangeType {
     ADDED("added"),
     MODIFIED("modified"),
-    DELETED("deleted");
+    REMOVED("removed");
 
 
     private final String value;
@@ -15,7 +15,7 @@ public enum ChangeType {
         return switch (status.toLowerCase()) {
             case "added" -> ADDED;
             case "modified" -> MODIFIED;
-            case "deleted" -> DELETED;
+            case "removed" -> REMOVED;
             default -> throw new IllegalArgumentException("Unknown change type: " + status);
         };
     }
