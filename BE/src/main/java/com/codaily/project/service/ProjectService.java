@@ -19,7 +19,7 @@ public interface ProjectService {
 
     Project createProject(ProjectCreateRequest request, User user);
 
-    int calculateTotalUserAvailableHours(Long projectId);
+    Double calculateTotalUserAvailableHours(Long projectId);
 
     public FeatureItemReduceResponse reduceFeatureItemsIfNeeded(Long projectId, Long specId);
 
