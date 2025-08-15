@@ -26,7 +26,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
     // 작성자: yeongenn - UserRepository 추가
     private final UserRepository userRepository;
-    @Value("${app.frontend-url}")
+    @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     @Override
