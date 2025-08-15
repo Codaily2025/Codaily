@@ -7,6 +7,8 @@ import { useProjectStore } from '../../stores/mypageProjectStore';
 import { useAuthStore } from '../../stores/authStore';
 import { useProjectsQuery } from '../../queries/useProjectsQuery';
 import { useDeleteProjectMutation } from '../../queries/useProjectMutation';
+import { useDeleteGithubRepoMutation } from '../../queries/useGitHub';
+import { getProjectDetailAPI } from '../../apis/mypageProject';
 
 const ProjectsSection = () => {
 
@@ -18,6 +20,9 @@ const ProjectsSection = () => {
   // 설정 모달 관련 상태 관리
   const [selectedProject, setSelectedProject] = useState(null);
   const { isOpen, modalType, closeModal, openModal } = useModalStore()
+  
+  // 삭제 진행 상태 관리
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { projects, setProjects } = useProjectStore();
   
@@ -29,6 +34,9 @@ const ProjectsSection = () => {
   
   // 프로젝트 삭제 뮤테이션
   const deleteProjectMutation = useDeleteProjectMutation();
+  
+  // 레포지토리 삭제 뮤테이션
+  const deleteGithubRepoMutation = useDeleteGithubRepoMutation();
 
   // 서버에서 데이터를 가져왔을 때 로컬 스토어에 설정
   useEffect(() => {
@@ -38,31 +46,61 @@ const ProjectsSection = () => {
   }, [projectsFromServer, setProjects]);
 
   // 삭제 핸들러
-  const handleDelete = (id) => {
-    // 삭제 전 현재 스크롤 위치 저장
-    const currentScrollTop = projectsSectionRef.current?.scrollTop || 0;
+  const handleDelete = async (id) => {
+    // 삭제 확인
+    if (!window.confirm('정말로 이 프로젝트를 삭제하시겠습니까?\n연결된 레포지토리도 함께 해제됩니다.')) {
+      return;
+    }
     
-    deleteProjectMutation.mutate(
-      { projectId: id },
-      {
-        onSuccess: () => {
-          // 삭제 성공 시 로컬 스토어에서도 즉시 제거
-          setProjects(projects.filter(project => project.id !== id));
-          console.log('프로젝트가 성공적으로 삭제되었습니다.');
-          
-          // 다음 렌더링 후 스크롤 위치 복원
-          setTimeout(() => {
-            if (projectsSectionRef.current) {
-              projectsSectionRef.current.scrollTop = currentScrollTop;
-            }
-          }, 0);
-        },
-        onError: (error) => {
-          console.error('프로젝트 삭제에 실패했습니다:', error);
-          // 여기에 사용자에게 에러 메시지를 보여주는 로직을 추가할 수 있습니다
-        }
+    setIsDeleting(true);
+    
+    try {
+      // 프로젝트 상세 정보를 가져와서 연결된 레포지토리 확인
+      const projectDetail = await getProjectDetailAPI(id);
+      
+      // 연결된 레포지토리들이 있다면 먼저 삭제
+      if (projectDetail.repositories && projectDetail.repositories.length > 0) {
+        console.log('연결된 레포지토리들을 먼저 삭제합니다:', projectDetail.repositories);
+        
+        // 모든 레포지토리를 병렬로 삭제
+        const deletePromises = projectDetail.repositories.map(repo => 
+          deleteGithubRepoMutation.mutateAsync({ repoId: repo.repoId })
+        );
+        
+        await Promise.all(deletePromises);
+        console.log('모든 레포지토리가 성공적으로 삭제되었습니다.');
       }
-    );
+      
+      // 레포지토리 삭제 완료 후 프로젝트 삭제
+      deleteProjectMutation.mutate(
+        { projectId: id },
+        {
+          onSuccess: () => {
+            // 삭제 성공 시 로컬 스토어에서도 즉시 제거
+            setProjects(projects.filter(project => project.id !== id));
+            console.log('프로젝트가 성공적으로 삭제되었습니다.');
+            alert('프로젝트가 성공적으로 삭제되었습니다.');
+            
+            // 다음 렌더링 후 스크롤 위치 복원
+            setTimeout(() => {
+              if (projectsSectionRef.current) {
+                projectsSectionRef.current.scrollTop = currentScrollTop;
+              }
+            }, 0);
+          },
+          onError: (error) => {
+            console.error('프로젝트 삭제에 실패했습니다:', error);
+            alert('프로젝트 삭제에 실패했습니다. 다시 시도해주세요.');
+          }
+        }
+      );
+      
+    } catch (error) {
+      console.error('프로젝트 삭제 중 오류가 발생했습니다:', error);
+      alert('프로젝트 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
  
 
@@ -154,15 +192,15 @@ const ProjectsSection = () => {
               <div className={styles.cardActions}>
                 <button 
                   className={`${styles.iconBtn} ${styles.deleteBtn}`} 
-                  title="삭제" 
-                  disabled={deleteProjectMutation.isPending}
+                  title={isDeleting ? "삭제 중..." : "삭제"} 
+                  disabled={isDeleting}
                   onClick={(e) => {
                     e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
                     // 삭제 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
                     handleDelete(project.id)
                   }}
                 >
-                  {/* {deleteProjectMutation.isPending ? '삭제 중...' : ''} */}
+                  {isDeleting && <div className={styles.loadingSpinner}></div>}
                 </button>
                 <button 
                   className={`${styles.iconBtn} ${styles.settingsBtn}`} 

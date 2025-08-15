@@ -106,3 +106,16 @@ export const fetchGithubRepositories = async () => {
         throw new Error(error.response?.data?.message || 'GitHub 레포지토리 목록 조회에 실패했습니다.');
     }
 };
+
+// 레포지토리 삭제 API
+// /api/repos/{repoId}
+export const deleteGithubRepository = async (repoId) => {
+    try {
+        const response = await authInstance.delete(`repos/${repoId}`);
+        console.log('GitHub 레포지토리 삭제 완료: ', response.data);
+        return response.data;
+    } catch (error) {
+        console.error('GitHub 레포지토리 삭제 실패: ', error);
+        throw new Error(error.response?.data?.message || 'GitHub 레포지토리 삭제에 실패했습니다.');
+    }
+};

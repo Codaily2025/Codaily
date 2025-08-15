@@ -4,7 +4,7 @@ import styles from './ProjectEditModal.module.css';
 import { useProjectStore } from '../stores/mypageProjectStore';
 import { useUpdateProjectMutation } from '../queries/useProjectMutation';
 import { useGetProjectDetailMutation } from '../queries/useProjectMutation';
-import { useGithubRepositoriesQuery, useCreateNewGithubRepoMutation, useLinkGithubRepoMutation } from '../queries/useGitHub';
+import { useGithubRepositoriesQuery, useCreateNewGithubRepoMutation, useLinkGithubRepoMutation, useDeleteGithubRepoMutation } from '../queries/useGitHub';
 
 // SVG 아이콘들
 const CloseIcon = () => (
@@ -56,6 +56,13 @@ const AdjustmentIcon = () => (
   </svg>
 );
 
+const DeleteIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 4H3.33333H14" stroke="#737373" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M12.6667 4V13.3333C12.6667 13.687 12.5262 14.0261 12.2761 14.2761C12.0261 14.5262 11.687 14.6667 11.3333 14.6667H4.66667C4.31305 14.6667 3.97391 14.5262 3.72386 14.2761C3.47381 14.0261 3.33333 13.687 3.33333 13.3333V4M5.33333 4V2.66667C5.33333 2.31305 5.47381 1.97391 5.72386 1.72386C5.97391 1.47381 6.31305 1.33333 6.66667 1.33333H9.33333C9.68695 1.33333 10.0261 1.47381 10.2761 1.72386C10.5262 1.97391 10.6667 2.31305 10.6667 2.66667V4" stroke="#737373" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 
 // 캘린더 컴포넌트
 const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedDate, selectedDates = null, isWorkDayAdjustment = false }) {
@@ -65,15 +72,15 @@ const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedD
     if (isWorkDayAdjustment) {
       return new Date(); // 작업 가능 날짜 캘린더는 현재 월
     }
-    
+
     // 시작일/종료일 캘린더에서 선택된 날짜가 있으면 그 날짜의 월을 보여줌
     if (selectedDate) {
       return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     }
-    
+
     return new Date(); // 선택된 날짜가 없으면 현재 월
   };
-  
+
   const [currentMonth, setCurrentMonth] = useState(getInitialMonth);
 
   // selectedDate가 변경될 때마다 currentMonth 업데이트 (시작일/종료일 캘린더만)
@@ -203,7 +210,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('project:', data?.title)
 
   // useProjectStore에서 프로젝트 정보 가져오기
-  const { projects, projectDetail, getProjectDetail } = useProjectStore();
+  const { projects, projectDetail, getProjectDetail, removeRepository } = useProjectStore();
 
   // data prop으로 전달된 프로젝트 ID를 사용하여 스토어에서 프로젝트 정보 찾기
   const projectFromStore = data?.id ? projects.find(p => p.id === data.id) : null;
@@ -226,13 +233,12 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     alert('새로운 레포지토리가 성공적으로 생성되었습니다.');
   });
 
-  // 프로젝트 상세 조회 뮤테이션 실행 -> projectData가 변경될 때마다 실행
-  // 뮤테이션이란? 데이터를 변경하는 함수
+  // 프로젝트 상세 조회 뮤테이션 실행 -> projectData.id가 변경될 때만 실행
   useEffect(() => {
-    if (projectData) {
+    if (projectData?.id) {
       fetchProjectDetail(projectData.id);
     }
-  }, [projectData, fetchProjectDetail]);
+  }, [projectData?.id, fetchProjectDetail]);
 
   // 프로젝트 수정 뮤테이션
   const { mutate, isPending } = useUpdateProjectMutation();
@@ -306,7 +312,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   });
 
   // console.log('현재프로젝트 정보:', projectDetails)
-  console.log('스토어에서 가져온 상세 정보:', detailFromStore)
+  // console.log('스토어에서 가져온 상세 정보:', detailFromStore)
 
   // 상세 정보가 업데이트될 때 컴포넌트 상태 업데이트
   useEffect(() => {
@@ -340,7 +346,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
         // console.log('schedules가 없어서 빈 Set으로 초기화'); // 디버깅용
       }
     }
-  }, [detailFromStore, initialStartDate, initialEndDate]);
+  }, [detailFromStore?.id, detailFromStore?.title, detailFromStore?.startDate, detailFromStore?.endDate, detailFromStore?.timeByDay, detailFromStore?.schedules, initialStartDate, initialEndDate]);
 
   // 에러 상태 관리
   const [errors, setErrors] = useState({ projectName: false, timeByDay: false });
@@ -409,7 +415,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   useEffect(() => {
     const dayTime = projectDetails.timeByDay[activeDay] || 0;
     setStep(dayTime * 2); // 30분 단위 → 1시간은 step 2
-  }, [activeDay, projectDetails.timeByDay]);
+  }, [activeDay, projectDetails.timeByDay[activeDay]]);
 
   // activeDay 기준으로 투자 시간 업데이트
   const handleSliderChange = (newStep) => {
@@ -425,15 +431,23 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
   // 마우스 이벤트
   const sliderRef = useRef(null);
+  
+  // 슬라이더 클릭/드래그 처리 함수
+  const handleSliderInteraction = (e) => {
+    if (!sliderRef.current) return;
+    const rect = sliderRef.current.getBoundingClientRect();
+    const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
+    const percent = x / rect.width;
+    const newStep = Math.round(percent * maxStep); // 0~20
+    handleSliderChange(newStep); // step, timeByDay 모두 반영
+  };
+
+  // 슬라이더 썸 드래그 시작
   const handleMouseDown = (e) => {
+    e.stopPropagation(); // 이벤트 버블링 방지
+    
     const onMouseMove = (e) => {
-      if (!sliderRef.current) return;
-      const rect = sliderRef.current.getBoundingClientRect();
-      const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width);
-      const percent = x / rect.width;
-      const newStep = Math.round(percent * maxStep); // 0~20
-      handleSliderChange(newStep); // step, timeByDay 모두 반영
-      // setStep(newStep);
+      handleSliderInteraction(e);
     };
 
     const onMouseUp = () => {
@@ -443,6 +457,12 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
+  };
+
+  // 슬라이더 트랙 클릭 처리
+  const handleTrackClick = (e) => {
+    e.stopPropagation(); // 이벤트 버블링 방지
+    handleSliderInteraction(e);
   };
 
   // 슬라이더 현재 진행률 계산
@@ -546,7 +566,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // 기존 레포지토리 연결하기 버튼 클릭 시 최하단으로 스크롤
   const bodyRef = useRef(null);
   useEffect(() => {
-    if (bodyRef.current) {
+    if (bodyRef.current && selectedRepoOption === 2) {
       bodyRef.current.scrollTo({
         top: bodyRef.current.scrollHeight,
         behavior: 'smooth'
@@ -566,6 +586,31 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   //     "scheduledDate": "2025-08-02"
   //   }
   // ]
+
+  // 현재 레포지토리 삭제 뮤테이션
+  const { mutate: deleteGithubRepoMutation, isPending: isDeletingRepo } = useDeleteGithubRepoMutation((repoId) => {
+    // 삭제 성공 시 프로젝트 상세 정보를 다시 불러와서 최신 상태로 업데이트
+    fetchProjectDetail(projectData.id);
+    alert('레포지토리가 성공적으로 삭제되었습니다.');
+  }, (error) => {
+    // 삭제 실패 시 에러 처리
+    console.error('레포지토리 삭제 실패:', error);
+    alert('레포지토리 삭제에 실패했습니다. 다시 시도해주세요.');
+    // 실패 시 프로젝트 상세 정보를 다시 불러와서 원래 상태로 복원
+    fetchProjectDetail(projectData.id);
+  });
+
+  // 현재 레포지토리 목록에서 삭제 클릭한 레포지토리 삭제
+  const handleDelete = (repoId) => {
+    console.log('repoId: ', repoId)
+    if (window.confirm('정말 레포지토리를 삭제하시겠습니까?')) {
+      // 낙관적 업데이트: 즉시 UI에서 제거
+      removeRepository(projectData.id, repoId);
+      
+      // API 호출
+      deleteGithubRepoMutation({ repoId: repoId });
+    }
+  };
 
   return (
     <>
@@ -594,7 +639,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     <div className={styles.errorText}>필수 입력란입니다.</div>
                   )}
                 </div>
-                <div className={`${styles.inputWrapper} ${errors.projectName ? styles.error : ''}`}>
+                <div className={`${styles.inputWrapper} ${errors.projectName ? styles.error : ''}`} style={{ cursor: 'text' }}>
                   <input
                     type="text"
                     id="projectName"
@@ -602,6 +647,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     className={styles.inputText}
                     value={projectDetails.projectName}
                     onChange={handleChange}
+                    style={{ cursor: 'text' }}
                   />
                 </div>
               </div>
@@ -688,7 +734,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                 </div>
                 <div className={styles.sliderWrapper}>
                   <div className={styles.sliderContainer} ref={sliderRef}>
-                    <div className={styles.sliderTrack}>
+                    <div className={styles.sliderTrack} onClick={handleTrackClick}>
                       <div
                         className={styles.sliderProgress}
                         style={{ width: `${percent}%` }}
@@ -729,6 +775,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
               <div className={styles.formSection}>
                 <label className={styles.formLabel}>Github 연결*</label>
                 <div className={styles.repoOptions}>
+                  {/* 현재 레포지토리 카드 */}
                   <div className={`${styles.repoOptionCard} ${selectedRepoOption === 0 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(0)}>
                     <div className={styles.repoOptionContent}>
                       <div className={`${styles.repoIconWrapper} ${styles.folderIcon}`}>
@@ -738,7 +785,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                         <div className={`${styles.repoTitle} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>현재 레포지토리</div>
                         <div className={`${styles.repoUrl} ${selectedRepoOption === 0 ? '' : styles.repoTitleDark}`}>
                           {detailFromStore?.repositories && detailFromStore.repositories.length > 0
-                            ? detailFromStore.repositories[0].repoUrl
+                            ? detailFromStore.repositories[0].repoUrl.slice(19, 65) + (detailFromStore.repositories[0].repoUrl.length < 70 ? '' : '...') + (detailFromStore.repositories.length > 1 ? '외 총 ' + (detailFromStore.repositories.length - 1) + '개' : '')
                             : '연결된 레포지토리가 없습니다.'}
                         </div>
                       </div>
@@ -748,6 +795,62 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     </div>
                   </div>
 
+                  {/* 현재 레포지토리 목록 조회하고 삭제 버튼 추가 */}
+                  {/* 참고 detailFromStore.repositories 예시
+                  [
+                    {
+                      "repoId": 1,
+                      "repoName": "repo1",
+                      "repoUrl": "https://github.com/repo1",
+                      "createdAt": null
+                  }
+                  ]
+                  */}
+                  {selectedRepoOption === 0 && (isLoadingRepos || (detailFromStore?.repositories && detailFromStore.repositories.length > 0)) && (
+                    <div className={styles.repoListSection}>
+                      {isLoadingRepos ? (
+                        <div className={styles.loadingText}>레포지토리 목록을 불러오는 중...</div>
+                      ) : (
+                        <>
+                          <div className={styles.repoList}>
+                            {detailFromStore.repositories.map((repo, index) => (
+                              <div
+                                key={index}
+                                className={`${styles.repoListItem}`}
+                                onClick={() => setSelectedExistingRepo(repo.repoId)}
+                              >
+                                <div className={styles.repoItemContent}>
+                                  <div className={styles.repoItemName}>{repo.repoName}</div>
+                                  <div className={styles.repoItemUrl}>{repo.repoUrl}</div>
+                                </div>
+                                {/* 삭제 버튼 */}
+                                <button
+                                  className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                                  title={isDeletingRepo ? "삭제 중..." : "삭제"}
+                                  disabled={isDeletingRepo}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(repo.repoId);
+                                  }}
+                                >
+                                  {isDeletingRepo ? (
+                                    <div className={styles.loadingSpinner}></div>
+                                  ) : (
+                                    <DeleteIcon />
+                                  )}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {/* {selectedRepoOption === 0 && !isLoadingRepos && (!detailFromStore?.repositories || detailFromStore.repositories.length === 0) && (
+                    <div className={styles.noReposText}>연결된 레포지토리가 없습니다.</div>
+                  )} */}
+
+                  {/* 새로운 레포지토리 생성 카드 */}
                   <div className={`${styles.repoOptionCard} ${selectedRepoOption === 1 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(1)}>
                     <div className={styles.repoOptionContent}>
                       <div className={`${styles.repoIconWrapper} ${styles.addIcon}`}>
@@ -784,6 +887,7 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                     </div>
                   )}
 
+                  {/* 기존 레포지토리 연결 카드 */}
                   <div className={`${styles.repoOptionCard} ${selectedRepoOption === 2 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(2)}>
                     <div className={styles.repoOptionContent}>
                       <div className={`${styles.repoIconWrapper} ${styles.repoIcon}`}>
