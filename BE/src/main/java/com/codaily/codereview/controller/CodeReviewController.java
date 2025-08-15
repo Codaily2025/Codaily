@@ -119,7 +119,7 @@ public class CodeReviewController {
         return ref;
     }
 
-    @PostMapping("/feature-inference")
+    @PostMapping("/code-review/manual")
     public ResponseEntity<?> requestCodeReviewToPython(@RequestBody ManualCompleteFeatureInferenceRequestDto request) {
         if(projectService.isProjectOwner(request.getProjectId(), request.getUserId())) {
             log.error("본인의 프로젝트만 구현 완료할 수 있습니다.");

@@ -93,6 +93,7 @@ public class WebhookServiceImpl implements WebhookService {
             LocalDateTime utcTime = LocalDateTime.ofInstant(odt.toInstant(), ZoneOffset.UTC);
 
             ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repoName);
+
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
                             .author(payload.getSender().getLogin())
@@ -255,7 +256,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .projectId(projectId).featureName(featureItem.getTitle()).items(codeReviewItems).build();
 
         webClient.post()
-                .uri("ai/api/code-review/feature-inference")
+                .uri("/api/code-review/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()
