@@ -1,22 +1,13 @@
 package com.codaily.project.service;
 
-import com.codaily.codereview.dto.FeatureChecklistFeatureDto;
-import com.codaily.codereview.dto.FeatureChecklistRequestDto;
-import com.codaily.codereview.dto.FeatureChecklistResponseDto;
+import com.codaily.codereview.dto.*;
 import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.codereview.repository.FeatureItemChecklistRepository;
-import com.codaily.codereview.dto.*;
 import com.codaily.global.exception.ProjectNotFoundException;
 import com.codaily.management.entity.FeatureItemSchedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.project.dto.*;
-import com.codaily.codereview.entity.FeatureItemChecklist;
-import com.codaily.codereview.repository.FeatureItemChecklistRepository;
-import com.codaily.project.dto.FeatureSaveContent;
-import com.codaily.project.dto.FeatureSaveItem;
-import com.codaily.project.dto.FeatureSaveRequest;
-import com.codaily.project.dto.FeatureSaveResponse;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
@@ -28,7 +19,6 @@ import com.codaily.project.repository.SpecificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -361,8 +351,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
     @Override
     @Transactional
-    public int calculateTotalEstimatedTime(Long specId) {
-        Integer total = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
+    public Double calculateTotalEstimatedTime(Long specId) {
+        Double total = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
         return total != null ? total : 0;
     }
 

@@ -22,7 +22,7 @@ public class ChatServiceImpl implements ChatService {
     private final WebClient langchainWebClient;
     private final FeatureItemService featureItemService;
 
-    public Flux<String> streamChat(String intent, Long projectId, String message, Long featureId, String field, Integer time) {
+    public Flux<String> streamChat(String intent, Long projectId, String message, Long featureId, String field, Double time) {
         log.info("streamChat param: {}, {}, {}, {}, {}, {}",intent, projectId, message,featureId, field, time);
         return langchainWebClient.get()
                 .uri(uriBuilder -> {

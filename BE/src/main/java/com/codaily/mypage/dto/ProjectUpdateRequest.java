@@ -1,7 +1,9 @@
 package com.codaily.mypage.dto;
 
-import com.codaily.project.entity.Project;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -23,6 +25,6 @@ public class ProjectUpdateRequest {
     @AllArgsConstructor
     public static class DaysOfWeekRequest {
         private String dateName; // "MONDAY", "TUESDAY" 등
-        private Integer hours;
+        private Double hours;
     }
 }

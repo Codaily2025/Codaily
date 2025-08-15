@@ -28,7 +28,7 @@ class FeatureItemServiceImplTest {
     void setUp() {
         featureItemRepository = mock(FeatureItemRepository.class);
         projectRepository = mock(ProjectRepository.class);
-        featureItemService = new FeatureItemServiceImpl(null, projectRepository, null, featureItemRepository, null, null, null, null, null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
+        featureItemService = new FeatureItemServiceImpl(null, projectRepository, null, featureItemRepository, null, null, null, null, null, null, null, null); // projectRepo, specRepo는 null로 둠 (사용 안함)
     }
 
     @Test
@@ -153,10 +153,10 @@ class FeatureItemServiceImplTest {
         // Repository가 SUM 결과를 17로 리턴하도록 설정
         when(projectRepository.existsById(1L)).thenReturn(true);
         when(featureItemRepository.getTotalEstimatedTimeBySpecId(specId))
-                .thenReturn(17);
+                .thenReturn(17.0);
 
         // when
-        int totalTime = featureItemService.calculateTotalEstimatedTime(specId);
+        Double totalTime = featureItemService.calculateTotalEstimatedTime(specId);
 
         // then
         assertEquals(17, totalTime);
@@ -174,7 +174,7 @@ class FeatureItemServiceImplTest {
                 .thenReturn(null);
 
         // when
-        int totalTime = featureItemService.calculateTotalEstimatedTime(specId);
+        Double totalTime = featureItemService.calculateTotalEstimatedTime(specId);
 
         // then
         assertEquals(0, totalTime);

@@ -24,7 +24,7 @@ export async function downloadSpecDocument(projectId) {
 // 프로젝트 체크박스 선택, 해제 토글 패치
 // /api/projects/{projectId}/specification/reduce
 // FE/src/apis/requirementsSpecification.js에서 toggleReduceFlag 함수 수정
-export async function toggleReduceFlag(projectId, field, featureId, isReduced, cascadeChildren = true) {
+export async function toggleReduceFlag(projectId, field, featureId, isReduced, cascadeChildren = true, specId) {
   try {
       if (field && featureId) {
           throw new Error('field와 featureId는 둘 중 하나만 존재함. 둘 다 존재하면 안됨');
@@ -55,6 +55,11 @@ export async function toggleReduceFlag(projectId, field, featureId, isReduced, c
       });
       
       console.log('API 응답:', response);
+      // 여기서 명세서 총 소요 시간 api 호출
+      if (specId) {
+        const totalTime = await getTotalEstimatedTime(specId);
+        console.log('명세서 총 소요 시간:', totalTime);
+      }
       return response.data;
   } catch (error) {
       console.error('프로젝트 체크박스 선택, 해제 토글 패치 실패:', error);
@@ -94,4 +99,14 @@ export const finalizeSpecification = async (projectId) => {
   }
 };
 
-
+// 명세서 총 소요 시간 조회
+// /api/specifications/{specId}/total-time
+export async function getTotalEstimatedTime(specId) {
+    try {
+        const response = await authInstance.get(`specifications/${specId}/total-time`);
+        return response.data;
+    } catch (error) {
+        console.error('명세서 총 소요 시간 조회 실패:', error);
+        throw error;
+    }
+}

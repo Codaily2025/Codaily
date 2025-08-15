@@ -25,7 +25,7 @@ public interface FeatureItemService {
 
     void deleteBySpecId(Long specId);
 
-    int calculateTotalEstimatedTime(Long specId);
+    Double calculateTotalEstimatedTime(Long specId);
 
     List<FeatureItem> getAllMainFeature(Long projectId);
 

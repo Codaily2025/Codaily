@@ -7,6 +7,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class SpecificationTimeResponse {
     private Long specId;
-    private int totalEstimatedTime;
+    private Double totalEstimatedTime;
 }
 

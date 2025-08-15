@@ -8,8 +8,8 @@ import java.util.List;
 @Data
 @Builder
 public class FeatureItemReduceResponse {
-    private int totalEstimatedTime;
-    private int totalAvailableTime;
+    private Double totalEstimatedTime;
+    private Double totalAvailableTime;
     private int reducedCount;
     private int keptCount;
     private List<FeatureItemReduceItem> features;

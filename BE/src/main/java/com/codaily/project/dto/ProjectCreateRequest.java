@@ -17,5 +17,5 @@ public class ProjectCreateRequest {
     private List<LocalDate> availableDates;
 
     // 요일별 작업 가능 시간 (예: {"MONDAY": 4, "WEDNSDAY": 6, "금": 2})
-    private Map<String, Integer> workingHours;
+    private Map<String, Double> workingHours;
 }

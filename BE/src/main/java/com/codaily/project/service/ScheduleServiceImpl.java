@@ -177,7 +177,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트가 존재하지 않습니다."));
 
         LocalDate projectEndDate = project.getEndDate();
-        Map<String, Integer> weeklySchedule = getWeeklyScheduleMap(projectId);
+        Map<String, Double> weeklySchedule = getWeeklyScheduleMap(projectId);
 
         List<FeatureItemSchedule> schedulesToSave = new ArrayList<>();
         Map<LocalDate, Double> dateAllocationCache = buildRemainingAllocationCache(projectId, startDate, projectEndDate);
@@ -215,7 +215,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     private double scheduleWithinProject(FeatureItem feature, LocalDate startDate,
-                                         Map<String, Integer> weeklySchedule, Long projectId,
+                                         Map<String, Double> weeklySchedule, Long projectId,
                                          LocalDate projectEndDate, List<FeatureItemSchedule> schedulesToSave,
                                          Map<LocalDate, Double> dateAllocationCache) {
         double remainingHours = feature.getEstimatedTime();
@@ -250,7 +250,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     private void scheduleWithWeeklyPattern(List<FeatureItem> features, LocalDate startDate,
-                                           Map<String, Integer> weeklySchedule, Long projectId,
+                                           Map<String, Double> weeklySchedule, Long projectId,
                                            List<FeatureItemSchedule> schedulesToSave,
                                            Map<LocalDate, Double> dateAllocationCache) {
         LocalDate currentDate = startDate;
@@ -262,7 +262,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     private LocalDate scheduleFeatureWithWeeklyPattern(FeatureItem feature, LocalDate startDate,
-                                                       Map<String, Integer> weeklySchedule, Long projectId,
+                                                       Map<String, Double> weeklySchedule, Long projectId,
                                                        List<FeatureItemSchedule> schedulesToSave,
                                                        Map<LocalDate, Double> dateAllocationCache) {
         double remainingHours = feature.getRemainingTime();
@@ -272,7 +272,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         while (remainingHours > 0 && dayCount < maxDays) {
             String dayName = currentDate.getDayOfWeek().toString();
-            double availableHours = weeklySchedule.getOrDefault(dayName, 0);
+            double availableHours = weeklySchedule.getOrDefault(dayName, 0.0);
 
             if (availableHours > 0) {
                 double allocatedHours = dateAllocationCache.getOrDefault(currentDate, 0.0);
@@ -310,12 +310,12 @@ public class ScheduleServiceImpl implements ScheduleService {
         return currentDate;
     }
 
-    private double getAvailableHours(Long projectId, LocalDate date, Map<String, Integer> weeklySchedule) {
+    private double getAvailableHours(Long projectId, LocalDate date, Map<String, Double> weeklySchedule) {
         boolean isWorkingDay = scheduleRepository.existsByProject_ProjectIdAndScheduledDate(projectId, date);
         if (!isWorkingDay) return 0;
 
         String dayName = date.getDayOfWeek().toString();
-        return weeklySchedule.getOrDefault(dayName, 0);
+        return weeklySchedule.getOrDefault(dayName, 0.0);
     }
 
     private double getAllocatedHours(Long projectId, LocalDate date) {
@@ -340,7 +340,7 @@ public class ScheduleServiceImpl implements ScheduleService {
         return cache;
     }
 
-    private Map<String, Integer> getWeeklyScheduleMap(Long projectId) {
+    private Map<String, Double> getWeeklyScheduleMap(Long projectId) {
         List<DaysOfWeek> daysOfWeekList = daysOfWeekRepository.findByProject_ProjectId(projectId);
         return daysOfWeekList.stream()
                 .collect(Collectors.toMap(DaysOfWeek::getDateName, DaysOfWeek::getHours));
