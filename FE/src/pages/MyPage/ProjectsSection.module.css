@@ -294,6 +294,11 @@
   outline: none;
 }
 
+.iconBtn.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* 설정 버튼 스타일 */
 .iconBtn.settingsBtn {
   width: 24px;
@@ -321,3 +326,18 @@
 /* .projectCard {
   animation: fadeInUp 0.5s ease-out;
 } */
+
+/* 로딩 스피너 스타일 */
+.loadingSpinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #737373;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
