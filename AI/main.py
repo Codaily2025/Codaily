@@ -43,7 +43,7 @@ async def print_routes():
 # 라우터 등록
 # app.include_router(specification_router, prefix="/specification")
 app.include_router(chat_router, prefix="/ai/api/chat")
-app.include_router(code_review_router, prefix="/ai/api/code-review")
+app.include_router(code_review_router, prefix="/api/code-review")
 app.include_router(retrospective_router, prefix="/ai/api/retrospective")
 app.include_router(checklist_router, prefix="/ai")
 
