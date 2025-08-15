@@ -149,7 +149,7 @@ public class SpecificationController {
     public ResponseEntity<SpecificationTimeResponse> getTotalEstimatedTime(
             @PathVariable Long specId
     ) {
-        int totalTime = featureItemService.calculateTotalEstimatedTime(specId);
+        Double totalTime = featureItemService.calculateTotalEstimatedTime(specId);
         SpecificationTimeResponse response = new SpecificationTimeResponse(specId, totalTime);
         return ResponseEntity.ok(response);
     }
