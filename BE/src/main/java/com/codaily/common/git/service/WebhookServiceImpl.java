@@ -68,8 +68,8 @@ public class WebhookServiceImpl implements WebhookService {
     @Value("${app.url.ai}")
     private String aiUrl;
 
-    @Value("${internal.ai-base-url}")
-    private String internalAiBaseUrl;
+    @Value("${gpt.api.feature-inference-url}")
+    private String featureInferenceUrl;
 
     @Override
     public void handlePushEvent(WebhookPayload payload, Long userId) {
@@ -184,7 +184,7 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitBranch) {
 
         WebClient webClient = WebClient.builder()
-                .baseUrl(internalAiBaseUrl) // Python 서버 전용
+                .baseUrl(featureInferenceUrl) // Python 서버 전용
                 .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
