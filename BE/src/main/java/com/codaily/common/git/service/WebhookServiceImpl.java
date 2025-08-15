@@ -210,11 +210,21 @@ public class WebhookServiceImpl implements WebhookService {
                 .uri(featureInferenceUrl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
-                .retrieve()
-                .toBodilessEntity()
-                .doOnSuccess(res -> log.info("Python 서버로 diffFiles 전송 성공"))
+                .exchangeToMono(res -> {
+                    if (res.statusCode().isError()) {
+                        return res.bodyToMono(String.class)
+                                .defaultIfEmpty("")
+                                .flatMap(body -> {
+                                    log.error("AI  error {} body={}", res.statusCode(), body);
+                                    return Mono.error(new RuntimeException("AI error " + res.statusCode()));
+                                });
+                    }
+                    return res.toBodilessEntity().then(Mono.empty());
+                })
+                .doOnSuccess(v -> log.info("Python 서버로 diffFiles 전송 성공"))
                 .doOnError(error -> log.error("전송 실패", error))
-                .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
+                .subscribe();
+
 
         log.info("featureInferenceUrl={}", featureInferenceUrl);
 
