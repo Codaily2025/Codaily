@@ -205,7 +205,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .build();
 
         webClient.post()
-                .uri("/api/code-review/feature-inference")
+                .uri("/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()
@@ -256,7 +256,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .projectId(projectId).featureName(featureItem.getTitle()).items(codeReviewItems).build();
 
         webClient.post()
-                .uri("/api/code-review/feature-inference")
+                .uri("/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()
