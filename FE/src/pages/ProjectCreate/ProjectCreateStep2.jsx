@@ -7,6 +7,7 @@ import { useChatStore } from '../../stores/chatStore';
 import { useSpecificationStore } from '../../stores/specificationStore';
 import { useChatHistoryQuery, useSendUserMessage } from '../../queries/useChat';
 import { useGetRequirementsSpecification } from '../../queries/useRequirementsSpecification';
+import { finalizeSpecification, toggleReduceFlag } from '../../apis/requirementsSpecification';
 
 import ChatProgressBar from '../../components/ChatProgressBar/ChatProgressBar';
 import ChatbotMessage from '../../components/ChatbotMessage/ChatbotMessage';
@@ -21,8 +22,7 @@ const ProjectCreateStep2 = () => {
   // URL 파라미터에서 projectId와 specId 가져오기
   const projectId = searchParams.get('projectId');
   const specId = searchParams.get('specId');
-
-  // const [isSplitView, setIsSplitView] = useState(false); // 분할 화면 상태
+  
   // zustand 스토어의 showSidebar 상태 가져오기
   const isSidebarVisible = useSpecificationStore((s) => s.isSidebarVisible);
   const isSpecPolling    = useSpecificationStore((s) => s.isSpecPolling);
@@ -37,17 +37,19 @@ const ProjectCreateStep2 = () => {
   const setProjectInfo = useSpecificationStore((state) => state.setProjectInfo);
   const setProjectSummary = useSpecificationStore((state) => state.setProjectSummary);
   const hasSpecification = useSpecificationStore((s) => s.hasSpecification);
+  const extendSpecPolling = useSpecificationStore(s => s.extendSpecPolling);
 
+  const finalizeSpecificationStore = useSpecificationStore((state) => state.finalizeSpecification);
+  
   // 사이드바 표시 조건: isSidebarVisible이 true이거나 mainFeatures가 있을 때
   const shouldShowSidebar = isSidebarVisible || (mainFeatures && mainFeatures.length > 0);
- const specExists = hasSpecification();
+  const specExists = hasSpecification();
 
   // 디버깅을 위한 로그 추가
   useEffect(() => {
     console.log('isSidebarVisible 상태 변경:', isSidebarVisible);
     console.log('mainFeatures 상태:', mainFeatures);
     console.log('hasSpecification:', specExists);
-    // console.log('shouldShowSidebar:', shouldShowSidebar);
   }, [projectId, specId, isSidebarVisible, mainFeatures, shouldShowSidebar, specExists]);
 
   console.log('ProjectCreateStep2 진입 - projectId:', projectId, 'specId:', specId);
@@ -79,12 +81,6 @@ const ProjectCreateStep2 = () => {
 
   // 백엔드 (또는 dummy data) 채팅 기록 로드
   const { data, isLoading, isError } = useChatHistoryQuery()
-  // const { isLoading: isHistoryLoading, isError, error } = useChatHistoryQuery();
-  // 디버깅을 위한 로그 추가
-  // console.log('ProjectCreateStep2 - useChatHistoryQuery 결과:', {
-  //   data,
-  //   messages
-  // });
 
   useEffect(() => {
     if (data) {
@@ -103,27 +99,161 @@ const ProjectCreateStep2 = () => {
   // 사용자 메세지 전송 훅 - projectId와 specId 전달
   const sendUserMessage = useSendUserMessage(projectId, specId);
 
+  const processRequirementsSpecification = (data) => {
+    if (!data || !data.features) return [];
+  
+    const fieldMap = new Map();
+  
+    data.features.forEach((feature) => {
+      const { field, isReduced, projectId, specId, mainFeature, subFeature, estimatedTime } = feature;
+  
+      if (!fieldMap.has(field)) {
+        fieldMap.set(field, {
+          field,
+          isReduced: true, // 기본값을 true로 설정하고, 나중에 계산
+          projectId,
+          specId,
+          estimatedTime,
+          mainFeature: []
+        });
+      }
+  
+      const processedMainFeature = {
+        ...mainFeature,
+        subFeature: subFeature || []
+      };
+  
+      fieldMap.get(field).mainFeature.push(processedMainFeature);
+    });
+  
+    // 각 field의 isReduced 상태를 계산
+    fieldMap.forEach((fieldData, fieldName) => {
+      const allMainFeaturesReduced = fieldData.mainFeature.every(mf => mf.isReduced);
+      fieldData.isReduced = allMainFeaturesReduced;
+    });
+  
+    return Array.from(fieldMap.values());
+  };
+
+  const handleFinalizeSpecification = async () => {
+    if (!specExists) {
+      throw new Error('확정할 요구사항 명세서가 없습니다.');
+    }
+  
+    console.log('=== 확정 처리 시작 ===');
+    console.log('확정 전 최신 데이터 가져오기...');
+    
+    // refetch를 기다리고 반환된 데이터를 직접 사용
+    const { data: freshData } = await refetchRequirementsSpecification();
+    
+    console.log('=== 최신 데이터 확인 ===');
+    console.log('freshData:', freshData);
+    console.log('freshData.features:', freshData?.features);
+    console.log('freshData.features 길이:', freshData?.features?.length);
+    
+    if (!freshData || !freshData.features) {
+      throw new Error('명세서 데이터가 없습니다.');
+    }
+  
+    const checkedFeatureIds = [];
+    const uncheckedFeatureIds = [];
+    
+    // 각 feature 분석 (freshData 사용)
+    freshData.features.forEach((feature, index) => {
+      console.log(`=== Feature ${index} 분석 ===`);
+      console.log('feature.field:', feature.field);
+      console.log('feature.mainFeature:', feature.mainFeature);
+      console.log('feature.subFeature:', feature.subFeature);
+      
+      const { mainFeature, subFeature } = feature;
+      
+      // mainFeature 확인
+      if (mainFeature) {
+        console.log(`MainFeature: ${mainFeature.title} (${mainFeature.id}) - isReduced: ${mainFeature.isReduced}`);
+        if (mainFeature.isReduced === true) {
+          uncheckedFeatureIds.push(mainFeature.id);
+        } else if (mainFeature.isReduced === false) {
+          checkedFeatureIds.push(mainFeature.id);
+        }
+      }
+      
+      // subFeature 확인
+      if (subFeature && Array.isArray(subFeature) && subFeature.length > 0) {
+        subFeature.forEach((sub, subIndex) => {
+          console.log(`  SubFeature: ${sub.title} (${sub.id}) - isReduced: ${sub.isReduced}`);
+          if (sub.isReduced === true) {
+            uncheckedFeatureIds.push(sub.id);
+          } else if (sub.isReduced === false) {
+            checkedFeatureIds.push(sub.id);
+          }
+        });
+      }
+    });
+    
+    console.log('=== 최종 결과 ===');
+    console.log('체크된 기능 ID들 (isReduced=false):', checkedFeatureIds);
+    console.log('체크 해제된 기능 ID들 (isReduced=true):', uncheckedFeatureIds);
+    console.log('체크된 기능 개수:', checkedFeatureIds.length);
+    
+    if (checkedFeatureIds.length === 0) {
+      console.error('=== 오류: 선택된 기능이 없음 ===');
+      throw new Error('선택된 기능이 없습니다. 최소 하나 이상의 기능을 선택해주세요.');
+    }
+  
+    try {
+      console.log('=== 현재 상태 그대로 확정 API 호출 ===');
+      console.log(`체크된 기능 ${checkedFeatureIds.length}개, 해제된 기능 ${uncheckedFeatureIds.length}개로 확정 진행`);
+      
+      await finalizeSpecification(projectId);
+      finalizeSpecificationStore();
+      
+      console.log('요구사항 명세서 확정 완료 ✅');
+      console.log('=== 확정 처리 완료 ===');
+      
+    } catch (error) {
+      console.error('확정 처리 중 오류 발생 ❌:', error);
+      throw error;
+    }
+  };
+
   // 다음으로 버튼 클릭 핸들러
-  const handleNextClick = () => {
+  const handleNextClick = async () => {
     // 요구사항 명세서가 없으면 클릭 무시
     if (!specExists) {
       return;
     }
-    // setIsSplitView(true); // 수동으로 분할 화면 활성화
-    navigate('/project/create/step4')
-  };
+    
+    try {
+      // 확정 처리 실행
+      await handleFinalizeSpecification();
+      
+    // 확정 성공 시 다음 단계로 이동
+    // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
+    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)
+    
+  } catch (error) {
+    console.error('요구사항 명세서 확정 실패:', error);
+    alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
+};
 
   const {
     data: specData,
     isLoading: specLoading,
     isError: specError,
+    refetch: refetchRequirementsSpecification,
   } = useGetRequirementsSpecification(projectId,
     {
       // 사이드바가 아직 안 보일 때만 Step2가 폴링 담당
       polling: isSpecPolling && !shouldShowSidebar,
       intervalMs: 1800 + Math.floor(Math.random() * 600), // 1.8초~2.4초 간격
     }
-  ); // enabled 가드는 훅 내부에서 처리했다고 가정
+  );
+
+  // 가공된 데이터
+  const refinedFeaturesStructure = processRequirementsSpecification(specData);
+  // requirementsSpecification은 specData와 동일하게 설정
+  const requirementsSpecification = specData;
 
   // 우선순위 변환 (스토어 함수와 동일 로직의 지역 헬퍼)
   const convertNumberToPriority = (priorityLevel) => {
@@ -245,9 +375,6 @@ const ProjectCreateStep2 = () => {
   return (
     <div className="chat-page-container">
       {/* 스텝바 */}
-      {/* <ChatProgressBar /> */}
-
-      {/* 수정자: yeongenn - 현재 스텝 인덱스를 props로 넘기기 */}
       <ChatProgressBar currentStep={1} />
 
       {/* 채팅 영역 */}
@@ -273,11 +400,9 @@ const ProjectCreateStep2 = () => {
                 ))}
               </div>
             </div>
-
           </div>
 
           {/* 채팅 입력창 */}
-          {/* <ChatInputBar /> */}
           <ChatInputBar
             onSend={text => sendUserMessage.mutate(text)} // 사용자 메세지 전송 함수 호출
             isSending={sendUserMessage.isLoading} // 메세지 전송 중인지 표시

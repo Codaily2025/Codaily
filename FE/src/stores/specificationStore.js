@@ -22,6 +22,7 @@ const initialState = {
   rawData: null, // 디버깅용 raw data
   projectId: null,
   specId: null,
+  userUncheckedIds: new Set(),
 };
 
 // 명세서 초기화용 데이터 구조
@@ -37,6 +38,7 @@ const specInitialData = {
   rawData: null,
   projectId: null,
   specId: null,
+  userUncheckedIds: new Set(),
 };
 
 export const useSpecificationStore = create((set, get) => ({
@@ -423,48 +425,122 @@ export const useSpecificationStore = create((set, get) => ({
   },
 
   // 체크박스 토글 상태 업데이트 (API 호출 후 UI 상태 동기화용)
-  toggleFeatureChecked: (taskId, newChecked) => set((state) => {
+  toggleFeatureChecked:(taskId, newChecked, isUserAction = true) => set((state) => {
+    console.log(`=== 체크박스 토글 (사용자 액션: ${isUserAction}): ${taskId} -> ${newChecked} ===`);
+    
+    // userUncheckedIds를 Set으로 보장
+    let newUserUncheckedIds = state.userUncheckedIds instanceof Set 
+      ? new Set(state.userUncheckedIds)
+      : new Set(state.userUncheckedIds || []);
+    
+    // 사용자가 직접 클릭한 경우에만 추적 (field_ 제외)
+    if (isUserAction && !taskId.toString().startsWith('field_')) {
+      if (newChecked) {
+        // 체크 시: 해제 목록에서 제거
+        console.log(`사용자 해제 목록에서 제거 시도: ${taskId}`);
+        const deleted = newUserUncheckedIds.delete(taskId);
+        console.log(`제거 성공: ${deleted}`);
+      } else {
+        // 해제 시: 해제 목록에 추가
+        console.log(`사용자 해제 목록에 추가: ${taskId}`);
+        newUserUncheckedIds.add(taskId);
+      }
+    }
+  
     const updateFeatureRecursive = (features) => {
       return features.map(feature => {
         if (feature.id === taskId) {
-          return {
-            ...feature,
-            checked: newChecked,
-            subTasks: feature.subTasks?.map(st => ({
-              ...st,
+          console.log(`대상 기능 찾음: ${feature.name} (${feature.id})`);
+          
+          const hasChildren = feature.subTasks && feature.subTasks.length > 0;
+          
+          if (hasChildren) {
+            // 부모 기능 토글 - 모든 자식들도 같은 상태로 변경
+            console.log('부모 기능 토글 - 모든 자식들도 같은 상태로 변경');
+            
+            const updateAllChildren = (subTasks) => {
+              return subTasks.map(subTask => {
+                // 부모가 해제되면 자식들을 사용자 해제 목록에서 제거
+                if (!newChecked && !subTask.id.toString().startsWith('field_')) {
+                  newUserUncheckedIds.delete(subTask.id);
+                }
+                
+                return {
+                  ...subTask,
+                  checked: newChecked,
+                  subTasks: subTask.subTasks ? updateAllChildren(subTask.subTasks) : []
+                };
+              });
+            };
+  
+            return {
+              ...feature,
               checked: newChecked,
-              subTasks: st.subTasks ? st.subTasks.map(sst => ({ ...sst, checked: newChecked })) : []
-            })) ?? []
-          };
+              subTasks: updateAllChildren(feature.subTasks || [])
+            };
+          } else {
+            // 자식 기능 토글 - 해당 자식만 변경
+            console.log('자식 기능 토글 - 개별 변경');
+            return {
+              ...feature,
+              checked: newChecked
+            };
+          }
         }
-
+        
         if (feature.subTasks && feature.subTasks.length > 0) {
           return {
             ...feature,
             subTasks: updateFeatureRecursive(feature.subTasks)
           };
         }
-
+        
         return feature;
       });
     };
-
+  
     const updatedFeatures = updateFeatureRecursive(state.mainFeatures);
-
-    // 부모 체크 상태 업데이트 (모든 자식이 체크되어야 부모도 체크)
-    const updateParents = (features) => {
+    
+    // 부모들의 체크 상태를 자식들 상태에 따라 업데이트
+    const updateParentStates = (features) => {
       return features.map(feature => {
         if (feature.subTasks && feature.subTasks.length > 0) {
-          const updatedSubs = updateParents(feature.subTasks);
-          const allChecked = updatedSubs.every(st => st.checked);
-          return { ...feature, subTasks: updatedSubs, checked: allChecked };
+          const updatedSubs = updateParentStates(feature.subTasks);
+          
+          const noChildrenChecked = updatedSubs.every(st => !st.checked);
+          const someChildrenChecked = updatedSubs.some(st => st.checked);
+          
+          let newParentChecked = feature.checked;
+          
+          if (someChildrenChecked && !feature.checked) {
+            // 자식이 체크되면 부모도 체크
+            newParentChecked = true;
+            console.log(`부모 ${feature.name} 자동 체크 (자식 중 하나라도 체크됨)`);
+          } else if (noChildrenChecked && feature.checked) {
+            // 모든 자식이 해제되면 부모도 해제
+            newParentChecked = false;
+            console.log(`부모 ${feature.name} 자동 해제 (모든 자식이 해제됨)`);
+          }
+          
+          return { 
+            ...feature, 
+            subTasks: updatedSubs, 
+            checked: newParentChecked 
+          };
         }
         return feature;
       });
     };
-
+  
+    let finalFeatures = updateParentStates(updatedFeatures);
+    finalFeatures = updateParentStates(finalFeatures);
+    
+    console.log('=== 최종 결과 ===');
+    console.log('사용자 해제 목록:', Array.from(newUserUncheckedIds));
+    
     return {
-      mainFeatures: updateParents(updatedFeatures)
+      mainFeatures: finalFeatures,
+      userUncheckedIds: newUserUncheckedIds
     };
   }),
 
@@ -498,4 +574,5 @@ export const useSpecificationStore = create((set, get) => ({
     if (_pollingTimer) clearTimeout(_pollingTimer);
     set({ isSpecPolling: false, _pollingTimer: null });
   },
+  finalizeSpecification: () => set({ isSpecificationFinalized: true }),
 }));

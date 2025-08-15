@@ -2,59 +2,6 @@ import { defaultInstance, authInstance } from "./axios"
 
 const project_default_url = 'projects/'
 
-// 더미 데이터 - 사용자 진행 중 프로젝트 목록
-const dummyProjectsList = [
-    {
-        "projectId": 1,
-        "title": "TaskFlow 칸반보드 시스템",
-        "startDate": "2025-01-01",
-        "endDate": "2025-03-15",
-        "lastWorkedDate": "2025-01-20",
-        "status": "IN_PROGRESS",
-        "progressRate": 65,
-        "techStacks": ["React", "Node.js", "MongoDB"]
-    },
-    {
-        "projectId": 2,
-        "title": "E-commerce 쇼핑몰",
-        "startDate": "2024-12-01",
-        "endDate": "2025-04-30",
-        "lastWorkedDate": "2025-01-15",
-        "status": "IN_PROGRESS",
-        "progressRate": 40,
-        "techStacks": ["Vue.js", "Spring Boot", "MySQL"]
-    },
-    {
-        "projectId": 3,
-        "title": "모바일 금융 앱",
-        "startDate": "2024-11-15",
-        "endDate": "2025-05-30",
-        "lastWorkedDate": "2025-01-10",
-        "status": "IN_PROGRESS",
-        "progressRate": 25,
-        "techStacks": ["React Native", "Firebase"]
-    },
-    {
-        "projectId": 4,
-        "title": "AI 챗봇 서비스",
-        "startDate": "2024-10-01",
-        "endDate": "2025-02-28",
-        "lastWorkedDate": "2025-01-30",
-        "status": "IN_PROGRESS",
-        "progressRate": 80,
-        "techStacks": ["Python", "TensorFlow", "FastAPI"]
-    }
-]
-
-// 더미 데이터 - 칸반 탭 필드 목록
-const dummyKanbanTabFields = [
-    "Backend",
-    "Frontend",
-    "Testing"
-]
-
-const dummyProjectDetail = {}
-
 // 데이터 전처리 함수 - 분리 예정
 const preprocessProjectsList = (data) => {
     if (!Array.isArray(data)) return []
@@ -76,44 +23,12 @@ export const getUserProjects = async () => {
     try {
         // 실제 서버 연동 시 이런 형태로~
         const response = await authInstance.get(`/users/projects/active`)
-        console.log('사용자가 진행 중인 프로젝트 목록: ', response.data.data.projects)
+        // console.log('사용자가 진행 중인 프로젝트 목록: ', response.data.data.projects)
         return preprocessProjectsList(response.data.data.projects)
-
-        // // 확인용 더미 데이터
-        // return new Promise((resolve) => {
-        //     setTimeout(() => {
-        //         const processedData = preprocessProjectsList(dummyProjectsList)
-        //         resolve(processedData)
-        //     }, 500) // 네트워크 지연 시뮬레이션
-        // })
 
     } catch (error) {
         console.error('getUserProjects Error:', error)
         throw new Error(error.response?.data?.message || '프로젝트 목록을 불러오는데 실패했습니다.')
-    }
-}
-
-// 마지막으로 작업한 프로젝트 ID 가져오기
-export const getLastWorkedProjectId = async () => {
-    try {
-        // 실제 서버 연동 시
-        // const response = await authInstance.get(project_default_url + 'last-worked-id')
-        // return response.data.lastWorkedProjectId
-
-        // 확인용 더미 데이터
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                // 가장 최근 lastWorkedDate을 가진 프로젝트 ID 반환
-                const sortedProjects = [...dummyProjectsList].sort(
-                    (a, b) => new Date(b.lastWorkedDate) - new Date(a.lastWorkedDate)
-                )
-                resolve(sortedProjects[0].projectId)
-            }, 300)
-        })
-
-    } catch (error) {
-        console.error('getLastWorkedProjectId Error:', error)
-        throw new Error(error.response?.data?.message || '마지막 작업 프로젝트를 찾는데 실패했습니다.')
     }
 }
 
@@ -126,13 +41,6 @@ export const getKanbanTabFields = async (projectId) => {
         console.log(response.data)
         return response.data
 
-        // // 더미 데이터로 확인
-        // return new Promise((resolve) => {
-        //     setTimeout(() => {
-        //         resolve(dummyKanbanTabFields)
-        //     }, 500) // 네트워크 지연 시뮬레이션
-        // })
-        
     } catch (error) {
         console.error('getKanbanTabFields Error: ', error)
         throw new Error(error.response?.data?.message || 'Kanban Tab Fields를 불러오는데 실패했습니다.')
@@ -144,7 +52,7 @@ export const getFeatureItemsByKanbanTab = async (projectId, field) => {
     try {
         // api 요청 url
         const url = `projects/${projectId}/features/field/${field}/by-status`
-        console.log('요청 url 확인: ', url)
+        // console.log('요청 url 확인: ', url)
 
         // 실제 서버 연동 시 
         // const response = await defaultInstance.get(``)
@@ -168,5 +76,56 @@ export const updateFeatureItemStatus = async (projectId, featureId, newStatus) =
     } catch (error) {
         console.error('updateFeatureItemStatus Error:', error)
         throw new Error(error.response?.data?.message || '상태 변경에 실패했습니다.')
+    }
+}
+
+// 부모 기능 리스트 조회
+export const getParentFeatures = async (projectId) => {
+    try {
+        const url = `projects/${projectId}/features/parents`
+        const response = await authInstance.get(url)
+        return response.data
+
+    } catch (error) {
+        console.error('getParentFeatures Error: ', error)
+        throw new Error(error.response?.data?.message || `부모 기능 목록을 불러오는데 실패했습니다. 프로젝트 Id: `, projectId)
+    }
+}
+
+// 수동 기능 추가
+export const addFeaturesManually = async (projectId, formData) => {
+    try {
+        const url = `projects/${projectId}/features`
+        const response = await authInstance.post(url, { ...formData })
+        return response.data
+    } catch (error) {
+        console.error('addFeaturesManually Error: ', error)
+        throw new Error(error.response?.data?.message || '수동 기능 추가에 실패했습니다.')
+    }
+}
+
+// 프로젝트 초기 일정 설정
+export const createProjectInitialSchedule = async (projectId) => {
+    try {
+        // projects/{projectId}/features/schedule
+        const url = `projects/${projectId}/features/schedule`
+        const response = await authInstance.post(url)
+        return response.data
+    } catch (error) {
+        console.error('addFeaturesManually Error: ', error)
+        throw new Error(error.response?.data?.message || '수동 기능 추가에 실패했습니다.')
+    }
+}
+
+// 프로젝트 생성 시 체크리스트 생성
+export const createCheckList = async (projectId) => {
+    try {
+        // feature-checklist/{projectId}/generate
+        const url = `feature-checklist/${projectId}/generate`
+        const response = await authInstance.get(url)
+        return response.data
+    } catch (error) {
+        console.error('addFeaturesManually Error: ', error)
+        throw new Error(error.response?.data?.message || '수동 기능 추가에 실패했습니다.')
     }
 }

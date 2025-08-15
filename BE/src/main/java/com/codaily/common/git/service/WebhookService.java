@@ -9,7 +9,7 @@ import java.util.List;
 public interface WebhookService {
     void handlePushEvent(WebhookPayload payload, Long userId);
 
-    List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken);
+    List<DiffFile> getDiffFilesFromCommit(String repoName, String repoOwner, String commitHash, String accessToken);
 
     void sendDiffFilesToPython(Long projectId,
                                       Long commitId,

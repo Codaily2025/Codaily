@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import './Project.css'
 import './TaskCard.css'
 import ProjectTemplate from '@/components/layouts/ProjectTemplate'
-import { useUserProjects } from '@/hooks/useProjects'
+import { useUserProjects, useParentFeatures } from '@/hooks/useProjects'
 import useProjectStore from '@/stores/projectStore'
 
 const Project = () => {
@@ -13,9 +13,11 @@ const Project = () => {
     activeProjects,
     lastWorkedProject,
     currentProject,
+    parentFeatures,
     setActiveProjects, 
     updateLastWorkedProject, 
-    setCurrentProject 
+    setCurrentProject,
+    setParentFeatures 
   } = useProjectStore()
 
   // id 여부에 따른 currentProject 설정
@@ -61,8 +63,8 @@ const Project = () => {
     }
   }, [projects, setActiveProjects, updateLastWorkedProject])
 
-  console.log('사용자가 진행 중인 프로젝트 리스트: ', projects)
-  console.log('현재 렌더링 중인 currentProject: ', currentProject)
+  // console.log('사용자가 진행 중인 프로젝트 리스트: ', projects)
+  // console.log('현재 렌더링 중인 currentProject: ', currentProject)
 
   const handleCreateProject = () => {
     navigate('/project/create')
@@ -110,6 +112,7 @@ const Project = () => {
       <ProjectTemplate 
         currentProject={currentProject} 
         projects={projects}
+        // parentFeatures={parentFeaturesList}
       />
     </div>
   );

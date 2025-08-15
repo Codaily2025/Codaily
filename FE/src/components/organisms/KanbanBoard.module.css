@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+    position: relative;
 }
 
 .kanbanColumns {
@@ -220,4 +221,38 @@
 
 .kanbanColumnContent.dropZoneActive {
     padding: 8px;
+}
+
+/* 플로팅 기능 추가 버튼 */
+.floatingAddBtn {
+    position: sticky;
+    bottom: 20px;
+    right: 20px;
+    margin-left: auto;
+    align-self: flex-end;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, #8B7EC8, #9B8ECC);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(139, 126, 200, 0.3);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.floatingAddBtn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(139, 126, 200, 0.4);
+    background: linear-gradient(135deg, #9B8ECC, #A599D1);
+}
+
+.floatingAddBtn:active {
+    transform: scale(0.95);
 }

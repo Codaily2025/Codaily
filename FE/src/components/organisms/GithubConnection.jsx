@@ -6,6 +6,7 @@ import RepositoryOptionCard from '@/components/molecules/RepositoryOptionCard'
 import RepositoryUrlInput from '@/components/molecules/RepositoryUrlInput'
 import styles from './GithubConnection.module.css'
 import { useLinkGithubRepoMutation, useCreateGithubRepoMutation } from '@/queries/useGitHub'
+import { useCreateInitialSchedule, useCreateInitialChecklist } from '@/hooks/useCreateProjectSetup'
 
 const GithubConnection = () => {
     const [selectedOption, setSelectedOption] = useState(null)                      // 전역 관리 필요 X
@@ -15,16 +16,38 @@ const GithubConnection = () => {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     
-    // github 연동 후 해당 프로젝트 페이지로 네비게이션
-    const handleNavigateToProject = (projectId) => {
-        navigate(`/project/${projectId}`)
+    // github 연동 후 초기 설정 및 프로젝트 페이지로 네비게이션
+    const handleInitialSetupAndNavigate = async (projectId) => {
+        try {
+            console.log('GitHub 연동 성공, 초기 설정 시작: ', projectId)
+            
+            // 1. 초기 일정 생성
+            await createInitialSchedule.mutateAsync({ projectId })
+            console.log('초기 일정 생성 완료')
+            
+            // 2. 체크리스트 생성
+            await createInitialChecklist.mutateAsync({ projectId })
+            console.log('초기 체크리스트 생성 완료')
+            
+            // 3. 프로젝트 페이지로 이동
+            navigate(`/project/${projectId}`)
+        } catch (error) {
+            console.error('초기 설정 중 오류 발생:', error)
+            // 실패해도 프로젝트 페이지로 이동
+            // TODO: 실패 시 에러페이지로 이동
+            navigate(`/project/${projectId}`)
+        }
     }
     
     // github 저장소 연동/생성 mutation 훅 생성
-    // - handleNavigateToProject: mutation 성공 시 실행할 콜백 함수
+    // - handleInitialSetupAndNavigate: mutation 성공 시 실행할 콜백 함수
     // - mutate 실행 시 넘긴 variables.projectId를 콜백 인자로 전달
-    const linkGithubRepoMutation = useLinkGithubRepoMutation(handleNavigateToProject)
-    const createGithubRepoMutation = useCreateGithubRepoMutation(handleNavigateToProject)
+    const linkGithubRepoMutation = useLinkGithubRepoMutation(handleInitialSetupAndNavigate)
+    const createGithubRepoMutation = useCreateGithubRepoMutation(handleInitialSetupAndNavigate)
+
+    // 프로젝트 초기 설정 - 초기 일정, 체크리스트 생성
+    const createInitialSchedule = useCreateInitialSchedule()
+    const createInitialChecklist = useCreateInitialChecklist()
 
     const handleSelect = (option) => {
         setSelectedOption(option)
