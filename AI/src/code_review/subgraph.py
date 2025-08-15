@@ -38,7 +38,7 @@ def create_feature_graph():
         "apply_checklist_evaluation",
         route_after_checklist_apply,
         {
-            "to_summary": "run_code_review_summary",
+            "to_summary": "run_code_review_item_fetch",
             "to_detail": "run_code_review_file_fetch",
         },
     )
