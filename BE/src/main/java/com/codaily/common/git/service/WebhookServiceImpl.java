@@ -255,7 +255,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .projectId(projectId).featureName(featureItem.getTitle()).items(codeReviewItems).build();
 
         webClient.post()
-                .uri("ai/api/code-review/feature-inference")
+                .uri("/ai/api/code-review/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()
