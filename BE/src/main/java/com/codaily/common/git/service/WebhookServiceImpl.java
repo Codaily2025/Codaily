@@ -184,7 +184,6 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitBranch) {
 
         WebClient webClient = WebClient.builder()
-                .baseUrl(featureInferenceUrl) // Python 서버 전용
                 .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
@@ -208,7 +207,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .build();
 
         webClient.post()
-                .uri("/feature-inference")
+                .uri(featureInferenceUrl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()
