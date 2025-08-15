@@ -35,7 +35,7 @@ export const handleGithubConnectPopup = (GITHUB_CLIENT_ID, onSuccess) => {
     const token = localStorage.getItem('authToken') || '';
     console.log('유저의 jwt token: ', token);
 
-    // const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=http://localhost:8081/oauth/github/callback`;
+    // const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user&redirect_uri=https://i13a601.p.ssafy.io/oauth/github/callback`;
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&scope=repo,user,admin:repo_hook&redirect_uri=${import.meta.env.VITE_GITHUB_REDIRECT_URI}`;
     const popup = window.open(githubAuthUrl, 'github-auth', 'width=500,height=600');
     if (!popup) {
