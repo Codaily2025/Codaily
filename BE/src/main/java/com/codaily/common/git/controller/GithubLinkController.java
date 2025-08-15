@@ -94,7 +94,7 @@ public class GithubLinkController {
                     window.opener.postMessage({
                         type: 'GITHUB_CONNECTED',
                         success: true
-                    }, 'https://i13a601.p.ssafy.io');
+                    }, 'http://localhost:5173');
                     window.close();
                 </script>
                 <p>GitHub 연동이 완료되었습니다. 창이 자동으로 닫힙니다.</p>
@@ -119,7 +119,7 @@ public class GithubLinkController {
                     window.opener.postMessage({
                         type: 'GITHUB_ERROR',
                         success: false
-                    }, 'https://i13a601.p.ssafy.io');
+                    }, 'http://localhost:5173');
                     window.close();
                 </script>
                 <p>GitHub 연동에 실패했습니다. 창이 자동으로 닫힙니다.</p>

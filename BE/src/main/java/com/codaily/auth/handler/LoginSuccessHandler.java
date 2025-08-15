@@ -26,7 +26,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtTokenProvider jwtTokenProvider;
     // 작성자: yeongenn - UserRepository 추가
     private final UserRepository userRepository;
-    @Value("${app.frontend-url:https://i13a601.p.ssafy.io}")
+    @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     @Override
@@ -71,7 +71,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
             response.sendRedirect(redirectUrl);
         } catch (Exception e) {
             log.error("Error in LoginSuccessHandler", e);
-            response.sendRedirect("https://i13a601.p.ssafy.io/login?error=authentication_failed");
+            response.sendRedirect("http://localhost:5173/login?error=authentication_failed");
         }
     }
     private String buildRedirectUrl(String base, String token, boolean isFirstLogin) {
