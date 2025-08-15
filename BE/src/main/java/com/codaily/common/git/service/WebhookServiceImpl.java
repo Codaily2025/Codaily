@@ -68,6 +68,9 @@ public class WebhookServiceImpl implements WebhookService {
     @Value("${app.url.ai}")
     private String aiUrl;
 
+    @Value("${internal.ai-base-url}")
+    private String internalAiBaseUrl;
+
     @Override
     public void handlePushEvent(WebhookPayload payload, Long userId) {
         List<WebhookPayload.Commit> commits = payload.getCommits();
@@ -181,7 +184,7 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitBranch) {
 
         WebClient webClient = WebClient.builder()
-                .baseUrl(aiUrl) // Python 서버 전용
+                .baseUrl(internalAiBaseUrl) // Python 서버 전용
                 .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
