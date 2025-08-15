@@ -50,6 +50,7 @@ async def function_fields_generator(project_description: str, time: int) -> list
     raw_output = await chain.ainvoke({"description": project_description, "time": time})
 
     # 리스트로 변환 (Markdown-style list 형식 파싱)
+    print("raw_output: ", raw_output)
     lines = raw_output.strip().split("\n")
     groups = []
     for line in lines:
@@ -62,7 +63,7 @@ async def function_fields_generator(project_description: str, time: int) -> list
                 except ValueError:
                     time_value = None
                 groups.append({"title": title.strip(), "time": time_value})
-
+    # print("groups: ", groups)
     return groups
 
 
@@ -403,7 +404,7 @@ async def generate_field_from_message(user_message: str) -> dict[str, float]:
 
     chain = prompt | model | str_parser
     raw = (await chain.ainvoke({"user_message": user_message})).strip()
-
+    # print("raw: ", raw)
     # 파싱
     if ":" not in raw:
         return {"title": raw, "time": 0.0}

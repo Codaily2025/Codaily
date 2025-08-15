@@ -5,6 +5,7 @@ import com.codaily.common.gpt.handler.ChatResponseStreamHandler;
 import com.codaily.project.dto.SpecificationRegenerateRequest;
 import com.codaily.project.dto.SpecificationTimeResponse;
 import com.codaily.project.service.FeatureItemService;
+import com.codaily.project.service.ProjectService;
 import com.codaily.project.service.SpecificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,6 +29,7 @@ public class SpecificationController {
     private final ChatResponseStreamHandler chatResponseStreamHandler;
     private final SpecificationService specificationService;
     private final FeatureItemService featureItemService;
+    private final ProjectService projectService;
 
     @Operation(
             summary = "명세서 재생성 (SSE)",

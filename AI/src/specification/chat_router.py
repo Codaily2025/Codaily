@@ -37,7 +37,8 @@ async def chat_stream(
     title: str = None,
     field: str = None,
 ):
-    print("project_id: ", project_id)
+    # time = 100
+    print("project_id: ", project_id, ", time: ", time)
     history = user_histories.setdefault(project_id, ChatMessageHistory())
     history.add_user_message(message)
 
