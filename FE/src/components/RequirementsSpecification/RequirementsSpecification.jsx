@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import styles from './RequirementsSpecification.module.css';
 import TechTag from './TechTag';
 import Checkbox from './Checkbox';
-import TimeIndicator from './TimeIndicator';
+import TimeIndicator, { getRoundedHours } from './TimeIndicator';
 import PriorityBadge from './PriorityBadge';
 import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
@@ -115,7 +115,9 @@ const SecondSubTaskItem = ({ task, onToggleChecked, level = 0, parentId }) => {
     /* 클릭했을 때 상위 task의 드롭다운이 닫히면 안됨, 이벤트 막기 */
     <div className={styles.expandedSectionItem} onClick={(e) => {
       e.stopPropagation();
-      // onToggleOpen(parentId);
+      // 카드 클릭 시 체크박스 토글
+      // console.log('SecondSubTaskItem - 카드 클릭:', task.id, '현재 isReduced:', task.isReduced);
+      onToggleChecked(task.id);
     }}>
       <div className={styles.subTaskLeft}>
         <Checkbox
@@ -144,11 +146,15 @@ const SubTaskItem = ({ task, onToggleChecked, onAddSubTask, level = 0 }) => {
   // console.log('주 기능(mainFeature):', task)
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
-    <div className={styles.expandIconContainer} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-      <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 8L10 13L5 8" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
+    <img 
+      className={styles.dropdownIcon} 
+      src="/src/assets/caret_up.svg" 
+      alt="caret" 
+      style={{ 
+        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+        transition: 'transform 0.2s ease' 
+      }}
+    />
   );
 
   const hasSecondSubTasks = task.subFeature && task.subFeature.length > 0;
@@ -240,15 +246,26 @@ const SubTaskItem = ({ task, onToggleChecked, onAddSubTask, level = 0 }) => {
 const TaskItem = ({ task, onToggleChecked, onAddSubTask, onOpenModal, level = 0 }) => {
   const [isOpen, setIsOpen] = useState(false); // 로컬 상태로 isOpen 관리
   const hasSubTasks = task.mainFeature && task.mainFeature.length > 0;
+  
+  // 주 기능들의 estimatedTime만 더해서 totalTime 계산
+  const totalTime = hasSubTasks ? task.mainFeature.reduce((total, mainFeature) => {
+    const mainFeatureTime = mainFeature.estimatedTime ? getRoundedHours(mainFeature.estimatedTime) : 0;
+    return total + mainFeatureTime;
+  }, 0) : 0;
+  
   // console.log('필드:', task)
 
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
-    <div className={styles.expandIconContainer} style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-      <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 8L10 13L5 8" stroke="#6C757D" strokeWidth="2.08333" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </div>
+    <img 
+      className={styles.dropdownIcon} 
+      src="/src/assets/caret_up.svg" 
+      alt="caret" 
+      style={{ 
+        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
+        transition: 'transform 0.2s ease' 
+      }}
+    />
   );
 
   // 카드 클릭 시 열림/닫힘 토글
@@ -268,15 +285,15 @@ const TaskItem = ({ task, onToggleChecked, onAddSubTask, onOpenModal, level = 0 
             checked={!task.isReduced} // isReduced가 true면 체크 박스 해제
             onChange={(e) => {
               e.stopPropagation();
-              console.log('TaskItem - field 체크박스 클릭:', task.field, '현재 isReduced:', task.isReduced);
-              console.log('TaskItem - task 객체:', task);
+              // console.log('TaskItem - field 체크박스 클릭:', task.field, '현재 isReduced:', task.isReduced);
+              // console.log('TaskItem - task 객체:', task);
               onToggleChecked(task.field);
             }} />
           <div className={styles.mainFeatureName}>{task.field}</div>
           {task.priorityLevel && <PriorityBadge level={priorityStringLevel} />}
         </div>
         <div className={styles.mainFeatureHeaderRight}>
-          {task.estimatedTime && <TimeIndicator hours={task.estimatedTime} />}
+          {totalTime > 0 && <TimeIndicator hours={totalTime} />}
           {hasSubTasks && <ExpandIcon isOpen={isOpen} />}
         </div>
       </div>
@@ -293,10 +310,10 @@ const TaskItem = ({ task, onToggleChecked, onAddSubTask, onOpenModal, level = 0 
                 onAddSubTask={onAddSubTask}
               />
             ))}
-            <AddNewTaskButton
+            {/* <AddNewTaskButton
               onClick={() => onOpenModal('main', task)}
               text="주 기능 추가"
-            />
+            /> */}
           </div>
         </div>
       )}
@@ -488,10 +505,10 @@ const RequirementsSpecification = () => {
       const allMainFeaturesReduced = fieldData.mainFeature.every(mf => mf.isReduced);
       fieldData.isReduced = allMainFeaturesReduced;
 
-      console.log(`Field "${fieldName}" 계산 결과:`, {
-        mainFeatures: fieldData.mainFeature.map(mf => ({ id: mf.id, isReduced: mf.isReduced })),
-        fieldIsReduced: fieldData.isReduced
-      });
+      // console.log(`Field "${fieldName}" 계산 결과:`, {
+      //   mainFeatures: fieldData.mainFeature.map(mf => ({ id: mf.id, isReduced: mf.isReduced })),
+      //   fieldIsReduced: fieldData.isReduced
+      // });
     });
 
     const result = Array.from(fieldMap.values());
@@ -499,6 +516,8 @@ const RequirementsSpecification = () => {
     return result;
   };
 
+  // 원데이터
+  console.log('원데이터:', requirementsSpecification);
   // 가공된 데이터
   const refinedFeaturesStructure = processRequirementsSpecification(requirementsSpecification);
   console.log('가공된 요구사항 명세서 주요 기능 데이터:', refinedFeaturesStructure);
@@ -647,13 +666,13 @@ const RequirementsSpecification = () => {
   const handleToggleChecked = useCallback(async (taskId) => {
     console.log('=== 체크박스 토글 시작 ===');
     console.log('토글 호출, taskId:', taskId);
-  
+   
     if (!projectId) {
       console.error('프로젝트 ID가 없습니다.');
       return;
     }
-  
-    // task 찾기 (기존과 동일)
+   
+    // task 찾기
     const findTask = (features, targetId) => {
       for (const field of features) {
         if (field.field === targetId) {
@@ -693,109 +712,110 @@ const RequirementsSpecification = () => {
       }
       return null;
     };
-  
+   
     const result = findTask(refinedFeaturesStructure, taskId);
     if (!result) {
       console.error('Task를 찾을 수 없습니다:', taskId);
       return;
     }
-  
+   
     const { task: currentTask, level, fieldData, mainFeatureData } = result;
     console.log('찾은 task:', currentTask);
     console.log('현재 isReduced 상태:', currentTask.isReduced);
-  
+   
     const newIsReduced = !currentTask.isReduced;
-  
+   
     try {
-      // 🔥 실제로 변경이 필요한 API 호출만 수집
       const apiCalls = [];
-  
+   
       if (level === 'field') {
-        // 필드 토글 - 현재 상태와 다르면 호출
-        if (fieldData.isReduced !== newIsReduced) {
-          console.log(`필드 토글 필요: ${fieldData.field} (${fieldData.isReduced} → ${newIsReduced})`);
-          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, newIsReduced));
+        const field = currentTask.field;
+        console.log('필드 토글 - field:', field, 'newIsReduced:', newIsReduced);
+   
+        // 필드 토글
+        apiCalls.push(toggleReduceFlag(projectId, field, null, newIsReduced));
+   
+        // 필드가 해제되면 모든 하위 항목도 해제
+        if (newIsReduced) {
+          if (fieldData.mainFeature) {
+            for (const mainFeature of fieldData.mainFeature) {
+              if (!mainFeature.isReduced) {
+                apiCalls.push(toggleReduceFlag(projectId, null, mainFeature.id, true, true));
+              }
+            }
+          }
         } else {
-          console.log(`필드 토글 불필요: ${fieldData.field} (이미 ${newIsReduced} 상태)`);
+          // 필드가 선택되면 모든 하위 항목도 선택
+          if (fieldData.mainFeature) {
+            for (const mainFeature of fieldData.mainFeature) {
+              if (mainFeature.isReduced) {
+                apiCalls.push(toggleReduceFlag(projectId, null, mainFeature.id, false, true));
+              }
+            }
+          }
         }
-  
+   
       } else if (level === 'mainFeature') {
-        // 주 기능 토글 - 현재 상태와 다르면 호출 (cascade=true)
-        if (mainFeatureData.isReduced !== newIsReduced) {
-          console.log(`주 기능 토글 필요: ${mainFeatureData.id} (${mainFeatureData.isReduced} → ${newIsReduced}) cascade=true`);
-          apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, newIsReduced, true));
-        } else {
-          console.log(`주 기능 토글 불필요: ${mainFeatureData.id} (이미 ${newIsReduced} 상태)`);
-        }
-  
-        // 🔥 상위 필드 상태 확인 후 필요하면 조정
-        const shouldFieldBeChecked = !newIsReduced || 
-          (fieldData.mainFeature && fieldData.mainFeature.some(mf => 
-            mf.id !== mainFeatureData.id && !mf.isReduced
+        const featureId = taskId;
+        console.log('주 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
+   
+        // 주 기능을 cascade=true로 토글 (상세기능들도 함께 변경)
+        apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, true));
+   
+        // 상위 필드 상태 조정
+        const shouldFieldBeChecked = !newIsReduced ||
+          (fieldData.mainFeature && fieldData.mainFeature.some(mf =>
+            mf.id !== featureId && !mf.isReduced
           ));
-        const shouldFieldBeReduced = !shouldFieldBeChecked;
-  
-        if (fieldData.isReduced !== shouldFieldBeReduced) {
-          console.log(`상위 필드 조정 필요: ${fieldData.field} (${fieldData.isReduced} → ${shouldFieldBeReduced})`);
-          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, shouldFieldBeReduced));
-        } else {
-          console.log(`상위 필드 조정 불필요: ${fieldData.field} (이미 ${shouldFieldBeReduced} 상태)`);
+   
+        if (fieldData.isReduced !== !shouldFieldBeChecked) {
+          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
         }
-  
+   
       } else if (level === 'subFeature') {
-        // 🔥 상세 기능 토글 - 현재 상태와 다르면 호출 (cascade=false)
-        const subFeatureData = result.subFeatureData;
-        if (subFeatureData.isReduced !== newIsReduced) {
-          console.log(`상세 기능 토글 필요: ${subFeatureData.id} (${subFeatureData.isReduced} → ${newIsReduced}) cascade=false`);
-          apiCalls.push(toggleReduceFlag(projectId, null, subFeatureData.id, newIsReduced, false));
-        } else {
-          console.log(`상세 기능 토글 불필요: ${subFeatureData.id} (이미 ${newIsReduced} 상태)`);
-        }
-  
-        // 🔥 상위 주 기능 상태 확인 후 필요하면 조정
-        const shouldMainFeatureBeChecked = !newIsReduced || 
-          (mainFeatureData.subFeature && mainFeatureData.subFeature.some(sf => 
-            sf.id !== subFeatureData.id && !sf.isReduced
+        const featureId = taskId;
+        console.log('상세 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
+   
+        // 상세 기능 토글 (cascade=false, 개별 토글)
+        apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, false));
+   
+        // 상세 기능 상태에 따라 상위 주 기능 상태 조정
+        const shouldMainFeatureBeChecked = !newIsReduced ||
+          (mainFeatureData.subFeature && mainFeatureData.subFeature.some(sf =>
+            sf.id !== featureId && !sf.isReduced
           ));
-        const shouldMainFeatureBeReduced = !shouldMainFeatureBeChecked;
-  
-        if (mainFeatureData.isReduced !== shouldMainFeatureBeReduced) {
-          console.log(`상위 주 기능 조정 필요: ${mainFeatureData.id} (${mainFeatureData.isReduced} → ${shouldMainFeatureBeReduced}) cascade=false`);
-          apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, shouldMainFeatureBeReduced, false));
-        } else {
-          console.log(`상위 주 기능 조정 불필요: ${mainFeatureData.id} (이미 ${shouldMainFeatureBeReduced} 상태)`);
+   
+        // 부모 주기능 상태 조정
+        if (mainFeatureData.isReduced !== !shouldMainFeatureBeChecked) {
+          apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, !shouldMainFeatureBeChecked, false));
         }
-  
-        // 🔥 상위 필드 상태 확인 후 필요하면 조정
-        const shouldFieldBeChecked = shouldMainFeatureBeChecked || 
-          (fieldData.mainFeature && fieldData.mainFeature.some(mf => 
+   
+        // 주 기능 상태에 따라 상위 필드 상태 조정
+        const shouldFieldBeChecked = shouldMainFeatureBeChecked ||
+          (fieldData.mainFeature && fieldData.mainFeature.some(mf =>
             mf.id !== mainFeatureData.id && !mf.isReduced
           ));
-        const shouldFieldBeReduced = !shouldFieldBeChecked;
-  
-        if (fieldData.isReduced !== shouldFieldBeReduced) {
-          console.log(`상위 필드 조정 필요: ${fieldData.field} (${fieldData.isReduced} → ${shouldFieldBeReduced})`);
-          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, shouldFieldBeReduced));
-        } else {
-          console.log(`상위 필드 조정 불필요: ${fieldData.field} (이미 ${shouldFieldBeReduced} 상태)`);
+   
+        // 필드 상태 조정
+        if (fieldData.isReduced !== !shouldFieldBeChecked) {
+          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
         }
       }
-  
-      // 🔥 실제로 필요한 API 호출만 실행
+   
       if (apiCalls.length > 0) {
         console.log(`실제 필요한 API 호출 개수: ${apiCalls.length}`);
         await Promise.all(apiCalls);
-        console.log('필요한 API 호출만 완료 ✅');
-  
+        console.log('필요한 API 호출만 완료');
+   
         // API 호출이 있었으면 데이터 새로고침
         await refetchRequirementsSpecification();
-        console.log('데이터 새로고침 완료 ✅');
+        console.log('데이터 새로고침 완료');
       } else {
-        console.log('변경이 필요한 항목이 없어 API 호출 생략 ⚡');
+        console.log('변경이 필요한 항목이 없어 API 호출 생략');
       }
-  
+   
     } catch (error) {
-      console.error('체크박스 토글 API 호출 실패 ❌:', error);
+      console.error('체크박스 토글 API 호출 실패:', error);
       alert('체크박스 상태 변경에 실패했습니다. 다시 시도해주세요.');
       
       try {
@@ -807,36 +827,39 @@ const RequirementsSpecification = () => {
     
     extendSpecPolling(6000);
     console.log('=== 체크박스 토글 완료 ===');
-  
-  }, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification]);
+   
+   }, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification]);
   const handleAddSubTask = (parentTask) => {
     // 이 함수는 "상세 기능 추가" 버튼을 클릭할 때만 호출됨
     // 따라서 항상 taskType은 'sub'여야 함
     const taskType = 'sub';
     console.log('handleAddSubTask - parentTask:', parentTask, 'taskType:', taskType);
+    console.log('handleAddSubTask - parentTask keys:', Object.keys(parentTask));
+    console.log('handleAddSubTask - parentTask.name:', parentTask.name);
+    console.log('handleAddSubTask - parentTask.title:', parentTask.title);
     openModal(taskType, parentTask);
   };
 
   // 디버깅 버튼 클릭 핸들러
-  const handleDebugPrint = () => {
-    debugPrintSpecification();
-  };
+  // const handleDebugPrint = () => {
+  //   debugPrintSpecification();
+  // };
 
   // 초기화 버튼 클릭 핸들러
-  const handleReset = () => {
-    resetSpecification();
-  };
+  // const handleReset = () => {
+  //   resetSpecification();
+  // };
 
-  // 새로고침 버튼 클릭 핸들러
-  const handleRefresh = async () => {
-    try {
-      console.log('명세서 정보 새로고침 시작...');
-      await refetchRequirementsSpecification();
-      console.log('명세서 정보 새로고침 완료');
-    } catch (error) {
-      console.error('명세서 정보 새로고침 실패:', error);
-    }
-  };
+  // // 새로고침 버튼 클릭 핸들러
+  // const handleRefresh = async () => {
+  //   try {
+  //     console.log('명세서 정보 새로고침 시작...');
+  //     await refetchRequirementsSpecification();
+  //     console.log('명세서 정보 새로고침 완료');
+  //   } catch (error) {
+  //     console.error('명세서 정보 새로고침 실패:', error);
+  //   }
+  // };
 
   return (
     <div className={styles.requirementsSidebar}>
@@ -848,7 +871,7 @@ const RequirementsSpecification = () => {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             {/* 새로고침 버튼 */}
-            <button
+            {/* <button
               className={styles.pdfDownloadWrapper}
               onClick={handleRefresh}
               style={{ backgroundColor: '#28a745', color: 'white' }}
@@ -860,10 +883,10 @@ const RequirementsSpecification = () => {
               <div className={styles.pdfText}>
                 {isLoadingRequirementsSpecification ? '로딩중...' : '새로고침'}
               </div>
-            </button>
+            </button> */}
 
             {/* 디버깅 버튼 */}
-            <button
+            {/* <button
               className={styles.pdfDownloadWrapper}
               onClick={handleDebugPrint}
               style={{ backgroundColor: '#007bff', color: 'white' }}
@@ -872,10 +895,10 @@ const RequirementsSpecification = () => {
                 <path d="M8 1V15M1 8H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <div className={styles.pdfText}>디버그</div>
-            </button>
+            </button> */}
 
             {/* 초기화 버튼 */}
-            <button
+            {/* <button
               className={styles.pdfDownloadWrapper}
               onClick={handleReset}
               style={{ backgroundColor: '#dc3545', color: 'white' }}
@@ -884,7 +907,7 @@ const RequirementsSpecification = () => {
                 <path d="M8 3V1L3 6L8 11V9C11.866 9 15 12.134 15 16C15 12.134 11.866 9 8 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <div className={styles.pdfText}>초기화</div>
-            </button>
+            </button> */}
 
             {/* PDF 다운로드 버튼 */}
             <button className={styles.pdfDownloadWrapper} onClick={handleDownloadSpecDocument}>
@@ -975,26 +998,6 @@ const RequirementsSpecification = () => {
           </div>
         </div>
 
-        {/* 디버깅용 Raw Data 표시 */}
-        {/* {rawData && (
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <div className={styles.cardTitle}>🔍 Raw Data (디버깅용)</div>
-            </div>
-            <div className={styles.projectOverview}>
-              <pre style={{
-                fontSize: '12px',
-                backgroundColor: '#f5f5f5',
-                padding: '10px',
-                borderRadius: '4px',
-                overflow: 'auto',
-                maxHeight: '200px'
-              }}>
-                {JSON.stringify(rawData, null, 2)}
-              </pre>
-            </div>
-          </div>
-        )} */}
       </div>
       <AddTaskModal
         isOpen={modalState.isOpen}

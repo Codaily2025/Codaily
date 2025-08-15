@@ -35,6 +35,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -81,9 +83,14 @@ public class WebhookServiceImpl implements WebhookService {
             log.info("삭제된 파일: {}", commit.getRemoved());
 
             String fullName = payload.getRepository().getFull_name();
-            String[] parts = fullName.split("/");
+            String[] parts = fullName.trim().split("/");
             String repoOwner = parts[0];
             String repoName = parts[1];
+
+            String ts = commit.getTimestamp(); // "2025-08-11T21:59:41+09:00"
+            // 1) 오프셋 포함 파싱
+            OffsetDateTime odt = OffsetDateTime.parse(ts);
+            LocalDateTime utcTime = LocalDateTime.ofInstant(odt.toInstant(), ZoneOffset.UTC);
 
             ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repoName);
             CodeCommit entity = CodeCommit.builder()
@@ -91,7 +98,7 @@ public class WebhookServiceImpl implements WebhookService {
                             .author(payload.getSender().getLogin())
                             .project(repositories.getProject())
                             .message(commit.getMessage())
-                            .committedAt(LocalDateTime.parse(commit.getTimestamp())).build();
+                            .committedAt(utcTime).build();
 
             Long commitId = codeCommitRepository.save(entity).getCommitId();
 
@@ -197,7 +204,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .build();
 
         webClient.post()
-                .uri("ai/api/code-review/feature-inference")
+                .uri("/api/code-review/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()

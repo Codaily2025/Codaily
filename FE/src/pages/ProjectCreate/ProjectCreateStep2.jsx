@@ -22,16 +22,16 @@ const ProjectCreateStep2 = () => {
   // URL 파라미터에서 projectId와 specId 가져오기
   const projectId = searchParams.get('projectId');
   const specId = searchParams.get('specId');
-  
+
   // zustand 스토어의 showSidebar 상태 가져오기
   const isSidebarVisible = useSpecificationStore((s) => s.isSidebarVisible);
-  const isSpecPolling    = useSpecificationStore((s) => s.isSpecPolling);
+  const isSpecPolling = useSpecificationStore((s) => s.isSpecPolling);
   const startSpecPolling = useSpecificationStore((s) => s.startSpecPolling);
-  const stopSpecPolling  = useSpecificationStore((s) => s.stopSpecPolling);
+  const stopSpecPolling = useSpecificationStore((s) => s.stopSpecPolling);
   const mainFeatures = useSpecificationStore((state) => state.mainFeatures);
-  const toggleSidebar    = useSpecificationStore((s) => s.toggleSidebar);
-  const hideSidebar      = useSpecificationStore((s) => s.closeSidebar);
-  const showSidebarAction= useSpecificationStore((s) => s.openSidebar);
+  const toggleSidebar = useSpecificationStore((s) => s.toggleSidebar);
+  const hideSidebar = useSpecificationStore((s) => s.closeSidebar);
+  const showSidebarAction = useSpecificationStore((s) => s.openSidebar);
 
   const setFeatures = useSpecificationStore((state) => state.setFeatures);
   const setProjectInfo = useSpecificationStore((state) => state.setProjectInfo);
@@ -40,7 +40,7 @@ const ProjectCreateStep2 = () => {
   const extendSpecPolling = useSpecificationStore(s => s.extendSpecPolling);
 
   const finalizeSpecificationStore = useSpecificationStore((state) => state.finalizeSpecification);
-  
+
   // 사이드바 표시 조건: isSidebarVisible이 true이거나 mainFeatures가 있을 때
   const shouldShowSidebar = isSidebarVisible || (mainFeatures && mainFeatures.length > 0);
   const specExists = hasSpecification();
@@ -70,7 +70,7 @@ const ProjectCreateStep2 = () => {
     }
     return () => {
       // 페이지 떠날 때 폴링 중이면 정리
-      try { stopSpecPolling(); } catch {}
+      try { stopSpecPolling(); } catch { }
     };
   }, [projectId, specId, navigate, stopSpecPolling]);
 
@@ -101,12 +101,12 @@ const ProjectCreateStep2 = () => {
 
   const processRequirementsSpecification = (data) => {
     if (!data || !data.features) return [];
-  
+
     const fieldMap = new Map();
-  
+
     data.features.forEach((feature) => {
       const { field, isReduced, projectId, specId, mainFeature, subFeature, estimatedTime } = feature;
-  
+
       if (!fieldMap.has(field)) {
         fieldMap.set(field, {
           field,
@@ -117,21 +117,21 @@ const ProjectCreateStep2 = () => {
           mainFeature: []
         });
       }
-  
+
       const processedMainFeature = {
         ...mainFeature,
         subFeature: subFeature || []
       };
-  
+
       fieldMap.get(field).mainFeature.push(processedMainFeature);
     });
-  
+
     // 각 field의 isReduced 상태를 계산
     fieldMap.forEach((fieldData, fieldName) => {
       const allMainFeaturesReduced = fieldData.mainFeature.every(mf => mf.isReduced);
       fieldData.isReduced = allMainFeaturesReduced;
     });
-  
+
     return Array.from(fieldMap.values());
   };
 
@@ -139,34 +139,34 @@ const ProjectCreateStep2 = () => {
     if (!specExists) {
       throw new Error('확정할 요구사항 명세서가 없습니다.');
     }
-  
+
     console.log('=== 확정 처리 시작 ===');
     console.log('확정 전 최신 데이터 가져오기...');
-    
+
     // refetch를 기다리고 반환된 데이터를 직접 사용
     const { data: freshData } = await refetchRequirementsSpecification();
-    
+
     console.log('=== 최신 데이터 확인 ===');
     console.log('freshData:', freshData);
     console.log('freshData.features:', freshData?.features);
     console.log('freshData.features 길이:', freshData?.features?.length);
-    
+
     if (!freshData || !freshData.features) {
       throw new Error('명세서 데이터가 없습니다.');
     }
-  
+
     const checkedFeatureIds = [];
     const uncheckedFeatureIds = [];
-    
+
     // 각 feature 분석 (freshData 사용)
     freshData.features.forEach((feature, index) => {
       console.log(`=== Feature ${index} 분석 ===`);
       console.log('feature.field:', feature.field);
       console.log('feature.mainFeature:', feature.mainFeature);
       console.log('feature.subFeature:', feature.subFeature);
-      
+
       const { mainFeature, subFeature } = feature;
-      
+
       // mainFeature 확인
       if (mainFeature) {
         console.log(`MainFeature: ${mainFeature.title} (${mainFeature.id}) - isReduced: ${mainFeature.isReduced}`);
@@ -176,7 +176,7 @@ const ProjectCreateStep2 = () => {
           checkedFeatureIds.push(mainFeature.id);
         }
       }
-      
+
       // subFeature 확인
       if (subFeature && Array.isArray(subFeature) && subFeature.length > 0) {
         subFeature.forEach((sub, subIndex) => {
@@ -189,27 +189,27 @@ const ProjectCreateStep2 = () => {
         });
       }
     });
-    
+
     console.log('=== 최종 결과 ===');
     console.log('체크된 기능 ID들 (isReduced=false):', checkedFeatureIds);
     console.log('체크 해제된 기능 ID들 (isReduced=true):', uncheckedFeatureIds);
     console.log('체크된 기능 개수:', checkedFeatureIds.length);
-    
+
     if (checkedFeatureIds.length === 0) {
       console.error('=== 오류: 선택된 기능이 없음 ===');
       throw new Error('선택된 기능이 없습니다. 최소 하나 이상의 기능을 선택해주세요.');
     }
-  
+
     try {
       console.log('=== 현재 상태 그대로 확정 API 호출 ===');
       console.log(`체크된 기능 ${checkedFeatureIds.length}개, 해제된 기능 ${uncheckedFeatureIds.length}개로 확정 진행`);
-      
+
       await finalizeSpecification(projectId);
       finalizeSpecificationStore();
-      
+
       console.log('요구사항 명세서 확정 완료 ✅');
       console.log('=== 확정 처리 완료 ===');
-      
+
     } catch (error) {
       console.error('확정 처리 중 오류 발생 ❌:', error);
       throw error;
@@ -222,20 +222,20 @@ const ProjectCreateStep2 = () => {
     if (!specExists) {
       return;
     }
-    
+
     try {
       // 확정 처리 실행
       await handleFinalizeSpecification();
-      
-    // 확정 성공 시 다음 단계로 이동
-    // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
-    navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)
-    
-  } catch (error) {
-    console.error('요구사항 명세서 확정 실패:', error);
-    alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
-  }
-};
+
+      // 확정 성공 시 다음 단계로 이동
+      // 수정자: yeongenn - 요구사항 명세서 받은 후 github 연동 페이지로 네비게이션
+      navigate(`/project/create/step4?projectId=${projectId}&specId=${specId}`)
+
+    } catch (error) {
+      console.error('요구사항 명세서 확정 실패:', error);
+      alert(error.message || '요구사항 명세서 확정 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
 
   const {
     data: specData,
@@ -420,12 +420,15 @@ const ProjectCreateStep2 = () => {
       </div>
 
       {/* 이전/다음으로 네비게이션 버튼 */}
-      <div className="nav-buttons-container">
-        <button
+      <div
+        className="nav-buttons-container"
+        style={{ alignSelf: 'flex-end' }}
+      >
+        {/* <button
           className="nav-button prev-button"
           onClick={() => navigate('/project/create')}>
           이전으로
-        </button>
+        </button> */}
         <button
           className={`nav-button next-button ${!specExists ? 'disabled' : ''}`}
           onClick={handleNextClick}

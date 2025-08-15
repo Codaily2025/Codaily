@@ -16,6 +16,7 @@ model = init_chat_model(model="gpt-4.1-nano", model_provider="openai", streaming
 
 @router.post("/intent")
 async def determine_intent(req: MessageRequest):
+    # print("req: ", req)
     intent, feature_id, field = await classify_chat_intent(
         req.message, req.mainFeatures
     )

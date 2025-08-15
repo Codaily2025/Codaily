@@ -25,7 +25,7 @@ public class WebhookController {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
-    @PostMapping(value = "/webhook", consumes = "application/json")
+    @PostMapping(value = {"/webhook", "/webhook/"}, consumes = "application/json")
     public ResponseEntity<Void> handleWebhook(
             @RequestBody String rawBody,
             @RequestHeader(value = "X-GitHub-Event", required = false) String event
