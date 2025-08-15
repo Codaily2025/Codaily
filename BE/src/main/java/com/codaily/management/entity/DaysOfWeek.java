@@ -24,5 +24,5 @@ public class DaysOfWeek {
     private String dateName;
 
     @Column(nullable = false)
-    private Integer hours;
+    private Double hours;
 }

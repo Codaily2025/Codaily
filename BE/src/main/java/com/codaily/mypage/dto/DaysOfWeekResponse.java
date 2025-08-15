@@ -8,5 +8,5 @@ import lombok.Data;
 public class DaysOfWeekResponse {
     private Long dayId;
     private String dateName;
-    private Integer hours;
+    private Double hours;
 }

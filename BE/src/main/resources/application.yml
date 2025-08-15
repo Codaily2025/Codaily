@@ -1,10 +1,10 @@
 spring:
   application:
     name: Codaily
-  spring:
-    jackson:
-      serialization:
-        fail-on-empty-beans: false
+
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
 
   profiles:
     include: secret
@@ -84,8 +84,10 @@ github:
 
 gpt:
   api:
-    feature-inference-url: ${app.url.ai}/api/feature-inference
-    generate-checklist-url: ${app.url.ai}/api/generate-checklist
+    #feature-inference-url: ${app.url.ai}/api/feature-inference
+    feature-inference-url: ${internal.ai-base-url}/api/feature-inference
+    #generate-checklist-url: ${app.url.ai}/api/generate-checklist
+    generate-checklist-url: ${internal.ai-base-url}/api/generate-checklist
 
 file:
   upload:

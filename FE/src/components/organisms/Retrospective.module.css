@@ -1,0 +1,552 @@
+.retrospectiveContainer {
+  width: 1089px;
+  max-width: 1089px;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 30px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+.projectSelector {
+  position: relative;
+  min-width: 210px;
+}
+
+.dropdown {
+  height: 36px;
+  padding: 8px 12px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: #374151;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  width: 210px;
+}
+
+.dropdown:hover {
+  border-color: #a3a3a3;
+}
+
+.dropdown.open {
+  outline: 1px solid #B4B3DC;
+}
+
+.dropdown:focus {
+  outline: 1px solid #B4B3DC;
+  box-shadow: none;
+}
+
+.dropdownArrow {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 51px;
+  left: 0;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.09);
+  border: 1px solid #f1f5f9;
+  z-index: 999;
+  width: 210px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #404040;
+  line-height: 20px;
+  background-color: white;
+}
+
+.dropdownItem:hover {
+  background-color: #f3f2fa;
+}
+
+.dropdownItem.selected {
+  background-color: #f3f2fa;
+  color: #5A597D;
+}
+
+.dropdownItemIcon {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdownItemLabel {
+  flex: 1;
+  line-height: 20px;
+}
+
+.timeline {
+  position: relative;
+}
+
+.timelineItem {
+  display: flex;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.timelineDate {
+  flex: 0 0 150px;
+  padding-right: 20px;
+  text-align: right;
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+}
+
+.dateText {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.monthIndicator {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #666;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.timelineContent {
+  flex: 1;
+  position: relative;
+  padding-left: 30px;
+}
+
+.timelineContent::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e0e0e0;
+}
+
+.retrospectiveCard {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 24px 32px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  width: 100%;
+}
+
+.retrospectiveCard::before {
+  content: '';
+  position: absolute;
+  left: -38px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: white;
+  border: 3px solid #2196f3;
+  border-radius: 50%;
+}
+
+.retrospectiveCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.retrospectiveCard.expanded {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.retrospectiveCard.expanded::before {
+  background: #2196f3;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.cardLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}
+
+.cardTitleSection {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardRight {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.projectBadge {
+  display: inline-block;
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.triggerBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.triggerBadge.auto {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.triggerBadge.manual {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.metrics {
+  display: flex;
+  gap: 20px;
+  margin: 0;
+}
+
+.metric {
+  text-align: center;
+}
+
+.metricValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+}
+
+.metricLabel {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.expandedContent {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 24px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.summarySection {
+  margin-bottom: 20px;
+}
+
+.summaryTitle {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.summaryItem {
+  margin-bottom: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f8f8f8;
+}
+
+.summaryItem:last-child {
+  border-bottom: none;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.summaryText {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.summaryText.strengths {
+  color: #2e7d32;
+}
+
+.summaryText.improvements {
+  color: #f57c00;
+}
+
+.summaryText.risks {
+  color: #d32f2f;
+}
+
+.featuresSection {
+  margin-bottom: 20px;
+}
+
+.featureItem {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
+
+.featureHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.featureTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.featureField {
+  font-size: 12px;
+  color: #666;
+  background: #e0e0e0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.checklistProgress {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.qualityScore {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+.actionItems {
+  margin-top: 15px;
+}
+
+.actionItemsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.actionItem {
+  background: #fff3e0;
+  border-left: 3px solid #f57c00;
+  padding: 8px 12px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+}
+
+.loadingText {
+  color: #666;
+  font-size: 14px;
+}
+
+.errorContainer {
+  text-align: center;
+  padding: 40px;
+  background: #fff5f5;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.errorText {
+  color: #d32f2f;
+  font-size: 14px;
+}
+
+.emptyContainer {
+  text-align: center;
+  padding: 100px 0;
+  color: #666;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #E5E5E5;
+  margin-top: 20px;
+  width: 1089px;
+}
+
+.emptyText {
+  color: #737373;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  margin-bottom: 16px;
+}
+
+.emptySubtext {
+  color: #A1A1A1;
+  font-size: 14px;
+  margin: 0;
+}
+
+.loadMoreTrigger {
+  height: 20px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+  .retrospectiveContainer {
+    padding: 30px 40px;
+  }
+  
+  .cardLeft {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .metrics {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .retrospectiveContainer {
+    padding: 20px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .projectSelector {
+    min-width: auto;
+  }
+
+  .timelineItem {
+    flex-direction: column;
+  }
+
+  .timelineDate {
+    flex: none;
+    text-align: left;
+    padding-right: 0;
+    margin-bottom: 10px;
+    position: static;
+  }
+
+  .timelineContent {
+    padding-left: 0;
+  }
+
+  .timelineContent::before {
+    display: none;
+  }
+
+  .retrospectiveCard::before {
+    display: none;
+  }
+  
+  .retrospectiveCard {
+    padding: 20px;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .cardLeft {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .cardTitleSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .cardRight {
+    justify-content: flex-start;
+  }
+
+  .metrics {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .metric {
+    flex: 1;
+    min-width: 80px;
+  }
+}
