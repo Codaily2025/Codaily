@@ -41,18 +41,33 @@ const dummyHistory = [
   },
 ];
 
-// 채팅 기록 조회(더미)
+// 채팅 기록 조회
 export const fetchChatHistory = async () => {
   if (useMock1) {
     await new Promise((r) => setTimeout(r, 300));
     return dummyHistory;
   }
-  // 실제 구현 시 API 연동
+  // 실제 연결했을 때 초기 메세지
   return [{
     id: 'bot-1',
     sender: 'bot',
-    text: `안녕하세요! 프로젝트 관리 도우미 Codaily 입니다.
-프로젝트 시작할 아이디어를 알려주세요.`
+    text: `👋 안녕하세요! 프로젝트 관리 도우미 Codaily 입니다. 시작하고 싶은 프로젝트 아이디어를 알려주세요.
+
+💡 명세서 작성 가이드:
+  아래 예시처럼 단계별로 요청해 보세요.
+
+• 전체 명세 생성
+   "쇼핑몰 앱 명세서 만들어줘." 
+
+• 새로운 그룹 추가
+   "사용자 관리 기능 넣고 싶어." 
+
+• 주 기능 추가
+   "사용자 관리에 로그인 기능 추가해줘." 
+
+• 상세 기능 추가
+   "로그인 기능 아래에 '소셜 로그인 기능' 
+   추가해줘. 사용자 관리 필드야."`
   }];
 };
 
@@ -92,14 +107,14 @@ export const streamChatResponse = ({
   onSpecData, // 명세서 데이터 처리용 콜백 추가
 }) => {
   let specNotificationSent = false; // 요구사항 명세서 알림이 한 번만 전송되도록 플래그
-  
+
   // projectId와 projectSpecId가 전달되지 않았으면 에러
   if (!projectId || !projectSpecId) {
     console.error('projectId와 projectSpecId가 필요합니다:', { projectId, projectSpecId });
     onError?.(new Error('projectId와 projectSpecId가 필요합니다.'));
-    return { close: () => {} };
+    return { close: () => { } };
   }
-  
+
   const eventSourceUrl =
     `${import.meta.env.VITE_BASE_URL}chat/stream` +
     `?message=${encodeURIComponent(userText)}` +
@@ -152,12 +167,12 @@ export const streamChatResponse = ({
           // showSidebar()
           specNotificationSent = true;
         }
-        
+
         // 명세서 데이터 처리 콜백 호출
         if (onSpecData && msg?.content) {
           onSpecData({ type: msg.type, content: msg.content });
         }
-        
+
         // 실제 데이터는 원본 타입과 함께 전달
         // onMessage?.({ type: msg?.type, content: msg?.content });
       } else if (msg?.type === 'chat') {

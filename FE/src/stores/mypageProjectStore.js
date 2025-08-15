@@ -108,6 +108,26 @@ export const useProjectStore = create((set, get) => ({
 
   // 프로젝트 상세 정보 가져오기
   getProjectDetail: () => get().projectDetail,
+  
+  // 레포지토리 삭제 (프로젝트 상세 정보에서)
+  removeRepository: (projectId, repoId) => {
+    set((state) => {
+      if (!state.projectDetail || state.projectDetail.id !== projectId) {
+        return state;
+      }
+      
+      const updatedRepositories = state.projectDetail.repositories.filter(
+        repo => repo.repoId !== repoId
+      );
+      
+      return {
+        projectDetail: {
+          ...state.projectDetail,
+          repositories: updatedRepositories
+        }
+      };
+    });
+  },
 }));
 
 // 헬퍼 함수: 영문 요일명을 한글로 변환

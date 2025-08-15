@@ -1,10 +1,10 @@
 spring:
   application:
     name: Codaily
-  spring:
-    jackson:
-      serialization:
-        fail-on-empty-beans: false
+
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
 
   profiles:
     include: secret
@@ -34,7 +34,7 @@ spring:
           github:
             client-id: ${GITHUB.CLIENT_ID}
             client-secret: ${GITHUB.CLIENT_SECRET}
-            redirect-uri: ${app.url.backend}/api/oauth/github/callback
+            redirect-uri: ${app.url.backend}/oauth/github/callback
           #            token-uri: https://github.com/login/oauth/access_token
           #            user-uri: https://api.github.com/user
             scope:
@@ -77,15 +77,17 @@ spring:
 github:
   client-id: ${GITHUB.CLIENT_ID}
   client-secret: ${GITHUB.CLIENT_SECRET}
-  redirect-uri: ${app.url.backend}/api/oauth/github/callback
+  redirect-uri: ${app.url.backend}/oauth/github/callback
   token-uri: https://github.com/login/oauth/access_token
   user-uri: https://api.github.com/user
   api-url: https://api.github.com
 
 gpt:
   api:
-    feature-inference-url: ${app.url.ai}/api/feature-inference
-    generate-checklist-url: ${app.url.ai}/api/generate-checklist
+    #feature-inference-url: ${app.url.ai}/api/feature-inference
+    feature-inference-url: ${internal.ai-base-url}/api/feature-inference
+    #generate-checklist-url: ${app.url.ai}/api/generate-checklist
+    generate-checklist-url: ${internal.ai-base-url}/api/generate-checklist
 
 file:
   upload:

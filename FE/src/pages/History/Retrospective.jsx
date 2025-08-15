@@ -1,12 +1,12 @@
-import React from 'react';
-import './Retrospective.css';
+import React from 'react'
+import RetrospectiveOrganism from '../../components/organisms/Retrospective'
 
 const Retrospective = () => {
   return (
-    <div className="retrospective-container">
-      <h1>회고</h1>
+    <div>
+      <RetrospectiveOrganism />
     </div>
-  );
-};
+  )
+}
 
-export default Retrospective; 
+export default Retrospective

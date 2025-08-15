@@ -17,6 +17,11 @@ load_config()
 # FastAPI 인스턴스 생성
 app = FastAPI()
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 또는 ["http://localhost:3000"] 등 프론트 주소

@@ -9,8 +9,9 @@ import AddTaskModal from './AddTaskModal';
 import { useSpecificationStore } from '../../stores/specificationStore'; // 스토어 임포트
 import { addManualFeature, buildMainFeatureRequest, buildSubFeatureRequest, buildMainFeatureToFieldRequest } from '../../apis/chatApi';
 import { downloadSpecDocument, toggleReduceFlag } from '../../apis/requirementsSpecification';
-import { useGetRequirementsSpecification } from '../../queries/useRequirementsSpecification';
+import { useGetRequirementsSpecification, useGetTotalEstimatedTime } from '../../queries/useRequirementsSpecification';
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -146,13 +147,13 @@ const SubTaskItem = ({ task, onToggleChecked, onAddSubTask, level = 0 }) => {
   // console.log('주 기능(mainFeature):', task)
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
-    <img 
-      className={styles.dropdownIcon} 
-      src="/src/assets/caret_up.svg" 
-      alt="caret" 
-      style={{ 
-        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
-        transition: 'transform 0.2s ease' 
+    <img
+      className={styles.dropdownIcon}
+      src="/src/assets/caret_up.svg"
+      alt="caret"
+      style={{
+        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+        transition: 'transform 0.2s ease'
       }}
     />
   );
@@ -246,24 +247,24 @@ const SubTaskItem = ({ task, onToggleChecked, onAddSubTask, level = 0 }) => {
 const TaskItem = ({ task, onToggleChecked, onAddSubTask, onOpenModal, level = 0 }) => {
   const [isOpen, setIsOpen] = useState(false); // 로컬 상태로 isOpen 관리
   const hasSubTasks = task.mainFeature && task.mainFeature.length > 0;
-  
+
   // 주 기능들의 estimatedTime만 더해서 totalTime 계산
   const totalTime = hasSubTasks ? task.mainFeature.reduce((total, mainFeature) => {
     const mainFeatureTime = mainFeature.estimatedTime ? getRoundedHours(mainFeature.estimatedTime) : 0;
     return total + mainFeatureTime;
   }, 0) : 0;
-  
+
   // console.log('필드:', task)
 
   // SVG 아이콘 컴포넌트
   const ExpandIcon = ({ isOpen }) => (
-    <img 
-      className={styles.dropdownIcon} 
-      src="/src/assets/caret_up.svg" 
-      alt="caret" 
-      style={{ 
-        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', 
-        transition: 'transform 0.2s ease' 
+    <img
+      className={styles.dropdownIcon}
+      src="/src/assets/caret_up.svg"
+      alt="caret"
+      style={{
+        transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+        transition: 'transform 0.2s ease'
       }}
     />
   );
@@ -323,6 +324,8 @@ const TaskItem = ({ task, onToggleChecked, onAddSubTask, onOpenModal, level = 0 
 
 
 const RequirementsSpecification = () => {
+  const queryClient = useQueryClient();
+
   const {
     projectOverview,
     mainFeatures,
@@ -343,6 +346,20 @@ const RequirementsSpecification = () => {
   } = useSpecificationStore();
 
   const [search] = useSearchParams();
+
+  const forceRefresh = useCallback(async () => {
+    const specKey = ['requirementsSpecification', projectId];
+    const totalKey = ['totalEstimatedTime', specId];
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: specKey }),
+      queryClient.invalidateQueries({ queryKey: totalKey }),
+    ]);
+    await Promise.all([
+      queryClient.refetchQueries({ queryKey: specKey, type: 'active' }),
+      queryClient.refetchQueries({ queryKey: totalKey, type: 'active' }),
+    ]);
+  }, [projectId, specId, queryClient]);
+
 
   // if (!projectId) {
   //   return <div>프로젝트 ID가 없습니다.</div>;
@@ -369,6 +386,17 @@ const RequirementsSpecification = () => {
     isError: isErrorRequirementsSpecification,
     refetch: refetchRequirementsSpecification
   } = useGetRequirementsSpecification(projectId, {
+    polling: isSpecPolling,
+    intervalMs: 1800 + Math.floor(Math.random() * 600), // 1.8초~2.4초 간격
+  });
+
+  // 명세서 총 소요 시간 조회
+  const {
+    data: totalEstimatedTimeData,
+    isLoading: isLoadingTotalTime,
+    isError: isErrorTotalTime,
+    refetch: refetchTotalTime
+  } = useGetTotalEstimatedTime(specId, {
     polling: isSpecPolling,
     intervalMs: 1800 + Math.floor(Math.random() * 600), // 1.8초~2.4초 간격
   });
@@ -626,6 +654,13 @@ const RequirementsSpecification = () => {
       console.log('API 응답:', response);
       closeModal();
       extendSpecPolling(10000); // 10초 연장
+      
+      // 요구사항 명세서 새로고침 (총 소요시간도 함께 새로고침)
+      // await Promise.all([
+      //   refetchRequirementsSpecification(),
+      //   refetchTotalTime()
+      // ]);
+      await forceRefresh();
     } catch (error) {
       console.error('수동 기능 추가 실패:', error);
     }
@@ -666,40 +701,40 @@ const RequirementsSpecification = () => {
   const handleToggleChecked = useCallback(async (taskId) => {
     console.log('=== 체크박스 토글 시작 ===');
     console.log('토글 호출, taskId:', taskId);
-   
+
     if (!projectId) {
       console.error('프로젝트 ID가 없습니다.');
       return;
     }
-   
+
     // task 찾기
     const findTask = (features, targetId) => {
       for (const field of features) {
         if (field.field === targetId) {
-          return { 
-            task: field, 
-            level: 'field', 
-            fieldData: field 
+          return {
+            task: field,
+            level: 'field',
+            fieldData: field
           };
         }
-        
+
         if (field.mainFeature) {
           for (const mainFeature of field.mainFeature) {
             if (mainFeature.id === targetId) {
-              return { 
-                task: mainFeature, 
-                level: 'mainFeature', 
+              return {
+                task: mainFeature,
+                level: 'mainFeature',
                 fieldData: field,
                 mainFeatureData: mainFeature
               };
             }
-            
+
             if (mainFeature.subFeature) {
               for (const subFeature of mainFeature.subFeature) {
                 if (subFeature.id === targetId) {
-                  return { 
-                    task: subFeature, 
-                    level: 'subFeature', 
+                  return {
+                    task: subFeature,
+                    level: 'subFeature',
                     fieldData: field,
                     mainFeatureData: mainFeature,
                     subFeatureData: subFeature
@@ -712,29 +747,29 @@ const RequirementsSpecification = () => {
       }
       return null;
     };
-   
+
     const result = findTask(refinedFeaturesStructure, taskId);
     if (!result) {
       console.error('Task를 찾을 수 없습니다:', taskId);
       return;
     }
-   
+
     const { task: currentTask, level, fieldData, mainFeatureData } = result;
     console.log('찾은 task:', currentTask);
     console.log('현재 isReduced 상태:', currentTask.isReduced);
-   
+
     const newIsReduced = !currentTask.isReduced;
-   
+
     try {
       const apiCalls = [];
-   
+
       if (level === 'field') {
         const field = currentTask.field;
         console.log('필드 토글 - field:', field, 'newIsReduced:', newIsReduced);
-   
+
         // 필드 토글
-        apiCalls.push(toggleReduceFlag(projectId, field, null, newIsReduced));
-   
+        apiCalls.push(toggleReduceFlag(projectId, field, null, newIsReduced, false, specId));
+
         // 필드가 해제되면 모든 하위 항목도 해제
         if (newIsReduced) {
           if (fieldData.mainFeature) {
@@ -754,81 +789,90 @@ const RequirementsSpecification = () => {
             }
           }
         }
-   
+
       } else if (level === 'mainFeature') {
         const featureId = taskId;
         console.log('주 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
-   
+
         // 주 기능을 cascade=true로 토글 (상세기능들도 함께 변경)
-        apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, true));
-   
+        apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, true, specId));
+
         // 상위 필드 상태 조정
         const shouldFieldBeChecked = !newIsReduced ||
           (fieldData.mainFeature && fieldData.mainFeature.some(mf =>
             mf.id !== featureId && !mf.isReduced
           ));
-   
+
         if (fieldData.isReduced !== !shouldFieldBeChecked) {
-          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
+          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked, false, specId));
         }
-   
+
       } else if (level === 'subFeature') {
         const featureId = taskId;
         console.log('상세 기능 토글 - featureId:', featureId, 'newIsReduced:', newIsReduced);
-   
+
         // 상세 기능 토글 (cascade=false, 개별 토글)
-        apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, false));
-   
+        apiCalls.push(toggleReduceFlag(projectId, null, featureId, newIsReduced, false, specId));
+
         // 상세 기능 상태에 따라 상위 주 기능 상태 조정
         const shouldMainFeatureBeChecked = !newIsReduced ||
           (mainFeatureData.subFeature && mainFeatureData.subFeature.some(sf =>
             sf.id !== featureId && !sf.isReduced
           ));
-   
+
         // 부모 주기능 상태 조정
         if (mainFeatureData.isReduced !== !shouldMainFeatureBeChecked) {
-          apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, !shouldMainFeatureBeChecked, false));
+          apiCalls.push(toggleReduceFlag(projectId, null, mainFeatureData.id, !shouldMainFeatureBeChecked, false, specId));
         }
-   
+
         // 주 기능 상태에 따라 상위 필드 상태 조정
         const shouldFieldBeChecked = shouldMainFeatureBeChecked ||
           (fieldData.mainFeature && fieldData.mainFeature.some(mf =>
             mf.id !== mainFeatureData.id && !mf.isReduced
           ));
-   
+
         // 필드 상태 조정
         if (fieldData.isReduced !== !shouldFieldBeChecked) {
-          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked));
+          apiCalls.push(toggleReduceFlag(projectId, fieldData.field, null, !shouldFieldBeChecked, false, specId));
         }
       }
-   
+
       if (apiCalls.length > 0) {
         console.log(`실제 필요한 API 호출 개수: ${apiCalls.length}`);
         await Promise.all(apiCalls);
         console.log('필요한 API 호출만 완료');
-   
-        // API 호출이 있었으면 데이터 새로고침
-        await refetchRequirementsSpecification();
+
+        // API 호출이 있었으면 데이터 새로고침 (총 소요시간도 함께 새로고침)
+        // await Promise.all([
+        //   refetchRequirementsSpecification(),
+        //   refetchTotalTime()
+        // ]);
+        await forceRefresh();
         console.log('데이터 새로고침 완료');
       } else {
         console.log('변경이 필요한 항목이 없어 API 호출 생략');
       }
-   
+
     } catch (error) {
       console.error('체크박스 토글 API 호출 실패:', error);
       alert('체크박스 상태 변경에 실패했습니다. 다시 시도해주세요.');
-      
+
       try {
-        await refetchRequirementsSpecification();
+        // await Promise.all([
+        //   refetchRequirementsSpecification(),
+        //   refetchTotalTime()
+        // ]);
+        await forceRefresh();
       } catch (refreshError) {
         console.error('데이터 새로고침도 실패:', refreshError);
       }
     }
-    
+
     extendSpecPolling(6000);
     console.log('=== 체크박스 토글 완료 ===');
-   
-   }, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification]);
+
+  }, [refinedFeaturesStructure, projectId, forceRefresh, extendSpecPolling]);
+  // }, [refinedFeaturesStructure, projectId, refetchRequirementsSpecification, refetchTotalTime]);
   const handleAddSubTask = (parentTask) => {
     // 이 함수는 "상세 기능 추가" 버튼을 클릭할 때만 호출됨
     // 따라서 항상 taskType은 'sub'여야 함
@@ -845,11 +889,6 @@ const RequirementsSpecification = () => {
   //   debugPrintSpecification();
   // };
 
-  // 초기화 버튼 클릭 핸들러
-  // const handleReset = () => {
-  //   resetSpecification();
-  // };
-
   // // 새로고침 버튼 클릭 핸들러
   // const handleRefresh = async () => {
   //   try {
@@ -860,6 +899,33 @@ const RequirementsSpecification = () => {
   //     console.error('명세서 정보 새로고침 실패:', error);
   //   }
   // };
+
+
+  // 서버에서 가져온 총 소요 시간 사용
+  const totalEstimatedTime = totalEstimatedTimeData?.totalEstimatedTime || 0;
+  console.log('서버에서 가져온 총 소요 시간:', totalEstimatedTime);
+
+  // 총 소요 시간 변환 (예. 1.5 => 1시간 30분)
+  // 소수점 윗부분은 시간, 아래부분은 분으로 처리하고 10분 단위로 반올림
+  const totalEstimatedTimeText = totalEstimatedTime > 0 ? (() => {
+    const time = totalEstimatedTime;
+    const hours = Math.floor(time); // 정수 부분은 시간
+    const minutes = Math.round((time - hours) * 60); // 소수점 부분을 분으로 변환하고 반올림
+    
+    // 10분 단위로 반올림
+    const roundedMinutes = Math.round(minutes / 10) * 10;
+    
+    // 60분이 되면 시간으로 변환
+    const finalHours = hours + Math.floor(roundedMinutes / 60);
+    const finalMinutes = roundedMinutes % 60;
+    
+    if (finalMinutes === 0) {
+      return `${finalHours}시간`;
+    } else {
+      return `${finalHours}시간 ${finalMinutes}분`;
+    }
+  })() : '0시간 0분';
+
 
   return (
     <div className={styles.requirementsSidebar}>
@@ -897,18 +963,6 @@ const RequirementsSpecification = () => {
               <div className={styles.pdfText}>디버그</div>
             </button> */}
 
-            {/* 초기화 버튼 */}
-            {/* <button
-              className={styles.pdfDownloadWrapper}
-              onClick={handleReset}
-              style={{ backgroundColor: '#dc3545', color: 'white' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 3V1L3 6L8 11V9C11.866 9 15 12.134 15 16C15 12.134 11.866 9 8 9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <div className={styles.pdfText}>초기화</div>
-            </button> */}
-
             {/* PDF 다운로드 버튼 */}
             <button className={styles.pdfDownloadWrapper} onClick={handleDownloadSpecDocument}>
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="25" viewBox="0 0 24 25" fill="none">
@@ -920,7 +974,7 @@ const RequirementsSpecification = () => {
         </div>
 
         {/* 프로젝트 정보 표시 */}
-        {(projectId || specId) && (
+        {/* {(projectId || specId) && (
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <div className={styles.cardTitle}>프로젝트 정보</div>
@@ -942,8 +996,18 @@ const RequirementsSpecification = () => {
               </div>
             </div>
           </div>
-        )}
+        )} */}
 
+        {/* 명세서 총 소요 시간 조회 */}
+        { totalEstimatedTime > 0 && (
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.cardTitle}>
+              📈 명세서 총 소요 시간 : {isLoadingTotalTime ? '계산 중...' : totalEstimatedTimeText}
+            </div>
+          </div>
+        </div>
+        )}
         {/* 프로젝트 개요 */}
         <div className={styles.card}>
           <div className={styles.cardHeader}>
@@ -973,7 +1037,24 @@ const RequirementsSpecification = () => {
             <div className={styles.mainFeaturesTitle}>주요 기능</div>
           </div>
           <div className={styles.mainFeaturesList}>
-            {refinedFeaturesStructure && refinedFeaturesStructure.length > 0 ? (
+            {isLoadingRequirementsSpecification ? (
+              // 로딩 중일 때 스피너 표시
+              <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinnerLarge}></div>
+                <div className={styles.loadingText}>
+                  요구사항 명세서를 생성하고 있습니다...
+                </div>
+              </div>
+            ) : isErrorRequirementsSpecification ? (
+              // 에러 발생 시 메시지 표시
+              <div className={styles.errorContainer}>
+                <div className={styles.errorTitle}>
+                  기능 불러오는 중
+                </div>
+                <div className={styles.loadingSpinnerLarge}></div>
+              </div>
+            ) : refinedFeaturesStructure && refinedFeaturesStructure.length > 0 ? (
+              // 데이터가 있을 때 기능 목록 표시
               refinedFeaturesStructure.map(feature => (
                 <TaskItem
                   key={feature.field} // 필드는 id 값이 없음, 필드 이름으로 구분
@@ -985,8 +1066,12 @@ const RequirementsSpecification = () => {
                 />
               ))
             ) : (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#6C757D' }}>
-                아직 기능이 추가되지 않았습니다.
+              // 데이터가 없을 때 (폴링 시간이 지난 후)
+              <div className={styles.emptyContainer}>
+                <div className={styles.emptyTitle}>
+                  기능을 불러오는 중
+                </div>
+                <div className={styles.loadingSpinnerLarge}></div>
               </div>
             )}
             {/* 필드는 아직 수동 추가 기능 없음, 막기 */}
