@@ -180,14 +180,23 @@ const ProjectScheduleSetter = () => {
 
     // 마우스 이벤트 처리
     const sliderRef = useRef(null)
+    
+    // 슬라이더 클릭/드래그 처리 함수
+    const handleSliderInteraction = (e) => {
+        if (!sliderRef.current) return
+        const rect = sliderRef.current.getBoundingClientRect()
+        const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width)
+        const percent = x / rect.width
+        const newStep = Math.round(percent * maxStep)
+        handleSliderChange(newStep)
+    }
+
+    // 슬라이더 썸 드래그 시작
     const handleMouseDown = (e) => {
+        e.stopPropagation() // 이벤트 버블링 방지
+        
         const onMouseMove = (e) => {
-            if (!sliderRef.current) return
-            const rect = sliderRef.current.getBoundingClientRect()
-            const x = Math.min(Math.max(e.clientX - rect.left, 0), rect.width)
-            const percent = x / rect.width
-            const newStep = Math.round(percent * maxStep)
-            handleSliderChange(newStep)
+            handleSliderInteraction(e)
         }
 
         const onMouseUp = () => {
@@ -197,6 +206,12 @@ const ProjectScheduleSetter = () => {
 
         document.addEventListener('mousemove', onMouseMove)
         document.addEventListener('mouseup', onMouseUp)
+    }
+
+    // 슬라이더 트랙 클릭 처리
+    const handleTrackClick = (e) => {
+        e.stopPropagation() // 이벤트 버블링 방지
+        handleSliderInteraction(e)
     }
 
     // 시간 포맷팅
@@ -301,7 +316,7 @@ const ProjectScheduleSetter = () => {
 
                     <div className={styles.sliderWrapper}>
                         <div className={styles.sliderContainer} ref={sliderRef}>
-                            <div className={styles.sliderTrack}>
+                            <div className={styles.sliderTrack} onClick={handleTrackClick}>
                                 <div 
                                     className={styles.sliderProgress} 
                                     style={{width: `${percent}%`}}
