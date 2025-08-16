@@ -87,7 +87,7 @@ const Mypage = () => {
                     onClick={handleSyncTechStack}
                     disabled={githubTechStackSyncMutation.isPending}
                   >
-                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : 'GitHub 동기화'}
+                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : '기술스택 동기화'}
                   </button>
                 </div>
               ) : 
