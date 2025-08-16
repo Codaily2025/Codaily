@@ -165,7 +165,7 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         출력 형식(고정, JSON):
         {{
           "code_reviews": [
-            {{ "category": "보안 위험", "items": [ { "filePath": "...", "lineRange": "10-12", "severity": "높음", "message": "..." }, ... ] }},
+            {{ "category": "보안 위험", "items": [ {{ "filePath": "...", "lineRange": "10-12", "severity": "높음", "message": "..." }}, ... ] }},
             {{ "category": "성능 최적화", "items": "해당 없음" }},
             ...
           ],
