@@ -98,7 +98,7 @@ const Project = () => {
         <div className="project-info">
           {/* 전역에서 가져온 currentProject 데이터 */}
           <h1>{currentProject?.title || '프로젝트'}</h1>
-          <p>{currentProject?.description || `프로젝트 ID: ${currentProject?.projectId}`}</p>
+          {/* <p>{currentProject?.description || `프로젝트 ID: ${currentProject?.projectId}`}</p> */}
           {currentProject?.lastWorkedDate && (
             <span className="last-worked">
               마지막 작업: {new Date(currentProject?.lastWorkedDate).toLocaleDateString('ko-KR')}
