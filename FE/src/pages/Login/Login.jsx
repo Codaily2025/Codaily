@@ -23,7 +23,7 @@ const Login = ({ onLogin }) => {
       window.location.href = `${import.meta.env.VITE_BASE_URL}oauth2/authorization/naver`;
     } else {
       // 카카오는 아직 구현되지 않음
-      console.log(`${provider} 로그인은 아직 구현되지 않았습니다.`);
+      window.location.href = `${import.meta.env.VITE_BASE_URL}oauth2/authorization/kakao`;
     }
   };
 
