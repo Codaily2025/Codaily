@@ -22,10 +22,10 @@ feature_inference_prompt = ChatPromptTemplate.from_messages([
      """),
     ("human", 
      """
-     ✅ 코드 변경 내용:
+     코드 변경 내용:
      {diff_text}
 
-     ✅ 가능한 기능 목록:
+     가능한 기능 목록:
      {available_features}
      """)
 ])
@@ -160,9 +160,9 @@ review_summary_prompt = ChatPromptTemplate.from_messages([
 
     입력은 기능명과 카테고리별 리뷰 묶음(categorized_reviews)임.
     각 리뷰 아이템은 최소 다음 필드를 가짐:
-    - category ∈ {convention, bug_risk, security_risk, performance, refactoring_suggestion, complexity}
+    - category ∈ {{convention, bug_risk, security_risk, performance, refactoring_suggestion, complexity}}
     - message: 리뷰 메시지(자유 서술)
-    - severity: 심각도 ∈ {높음, 중간, 낮음}
+    - severity: 심각도 ∈ {{높음, 중간, 낮음}}
 
     규칙:
     0) categorized_reviews가 비어있거나 없음 → 아래 형식으로만 출력:
