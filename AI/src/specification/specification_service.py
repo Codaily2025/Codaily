@@ -32,7 +32,7 @@ model = init_chat_model(
 str_parser = StrOutputParser()
 
 
-async def function_fields_generator(project_description: str, time: int) -> list:
+async def function_fields_generator(project_description: str, time: float) -> list:
     """
     주어진 프로젝트 설명을 기반으로 핵심 기능 그룹 목록을 리스트로 반환합니다.
     """
@@ -156,7 +156,7 @@ def parse_bullet_items_with_duration_and_priority(
 
 
 async def spec_sub_functions_generator(
-    project_description: str, function_group: str, main_function: str, time: int
+    project_description: str, function_group: str, main_function: str, time: float
 ) -> list[dict]:
     """
     주어진 주 기능 항목에 대해 상세 기능 항목들을 list[dict] 형식으로 반환합니다.
@@ -243,7 +243,7 @@ async def watch_all_fields(field_tasks: list[Awaitable[Any]], queue: asyncio.Que
 
 async def stream_function_specification(
     project_description: str,
-    time: int,
+    time: float,
 ) -> AsyncGenerator[str, None]:
     queue = asyncio.Queue()
 
