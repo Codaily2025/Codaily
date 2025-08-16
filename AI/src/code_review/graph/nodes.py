@@ -471,7 +471,7 @@ async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
 
     # state["code_review_items_java"] = flat_items
 
-    print(f"기존 코드리뷰아이템 {len(flat_items)}개 수집 완료.")
+    print(f"기존 코드리뷰아이템 {len(code_review_items_java)}개 수집 완료.")
 
     return state
 
