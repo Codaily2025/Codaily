@@ -3,7 +3,21 @@ import './ReviewCard.css';
 
 const ReviewCard = ({ category, title, details, tags, score, scoreColor, highlight, onCardClick, isSelected }) => {
   const scoreClass = `card-score score-${scoreColor}`;
-
+  
+  // 태그 타입을 CSS 클래스명에 맞게 매핑하는 함수
+  const getTagClass = (type) => {
+    switch (type) {
+      case '높음':
+        return 'high';
+      case '중간':
+        return 'medium';
+      case '낮음':
+        return 'low';
+      default:
+        return 'medium'; // 기본값
+    }
+  };
+  
   // 카드 클릭 시 상세 사이드 페이지를 띄우기 위한 클릭 핸들러
   const handleClick = () => {
     if (onCardClick) {
@@ -19,7 +33,7 @@ const ReviewCard = ({ category, title, details, tags, score, scoreColor, highlig
         <p className="card-details">{details}</p>
         <div className="card-tags">
           {tags.map((tag, index) => (
-            <span key={index} className={`tag tag-${tag.type}`}>
+            <span key={index} className={`tag tag-${getTagClass(tag.type)}`}>
               {tag.text}
             </span>
           ))}

@@ -12,6 +12,7 @@ import useModalStore from '../../store/modalStore';
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 import { useGithubIdQuery, useGithubTechStackSyncMutation } from '../../queries/useGitHub';
 import { User } from 'lucide-react';
+import userBaseImage from '../../assets/user_base_image.png';
 
 const Mypage = () => {
   const { isOpen, modalType, openModal, closeModal } = useModalStore()
@@ -63,7 +64,7 @@ const Mypage = () => {
             {profileImage?.imageUrl ? (
               <img src={profileImage.imageUrl} alt="프로필" />
             ) : (
-              <img src="/src/assets/user_base_image.png" alt="프로필" />
+              <img src={userBaseImage} alt="프로필" />
             )}
           </div>
           {/* <a onClick={() => setIsModalOpen(true)} className="edit-profile-link"> */}
