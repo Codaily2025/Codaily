@@ -182,3 +182,16 @@ export const createRetrospective = async (projectId) => {
         throw new Error(error.response?.data?.message || '회고 생성에 실패했습니다.')
     }
 }
+
+// 오늘의 할 일 조회
+export const getTodayTasks = async (projectId) => {
+    try {
+        const url = `projects/${projectId}/today`
+        console.log('오늘의 할 일 조회 요청 api url: ', url)
+        const response = await authInstance.get(url)
+        return response.data
+    } catch (error) {
+        console.error('getTodayTasks Error: ', error)
+        throw new Error(error.response?.data?.message || '오늘의 할 일 데이터를 불러오는데 실패했습니다.')
+    }
+}

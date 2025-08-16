@@ -4,7 +4,8 @@ import {
     getKanbanTabFields, 
     getFeatureItemsByKanbanTab, 
     updateFeatureItemStatus, 
-    getParentFeatures 
+    getParentFeatures,
+    getTodayTasks
 } from '../apis/projectApi'
 
 // Query Keys
@@ -19,7 +20,8 @@ export const PROJECT_QUERY_KEYS = {
     kanbanTab: (projectId) => [...PROJECT_QUERY_KEYS.kanbanTabs(), projectId],
     byField: (projectId, field) => [...PROJECT_QUERY_KEYS.kanbanTab(projectId), field],
     features: () => [...PROJECT_QUERY_KEYS.all, 'features'],
-    parentFeatures: (projectId) => [...PROJECT_QUERY_KEYS.features(), 'parent', projectId]
+    parentFeatures: (projectId) => [...PROJECT_QUERY_KEYS.features(), 'parent', projectId],
+    todayTasks: (projectId) => [...PROJECT_QUERY_KEYS.all, 'todayTasks', projectId]
 }
 
 // staleTime은 1시간으로 설정 (60분 * 60초 * 1000ms)
@@ -110,6 +112,22 @@ export const useParentFeatures = (projectId) => {
         enabled: !!projectId && projectId !== '',
         onError: (error) => {
             console.error('useUpdateFeatureItemStatus Error: ', error)
+        }
+    })
+}
+
+// 오늘의 할 일 조회
+export const useTodayTasks = (projectId) => {
+    return useQuery({
+        queryKey: PROJECT_QUERY_KEYS.todayTasks(projectId),
+        queryFn: () => getTodayTasks(projectId),
+        staleTime: STALE_TIME,
+        cacheTime: STALE_TIME * 2, // 2시간 캐시
+        retry: 2,
+        refetchOnWindowFocus: false,
+        enabled: !!projectId && projectId !== '',
+        onError: (error) => {
+            console.error('useTodayTasks Error: ', error)
         }
     })
 }
