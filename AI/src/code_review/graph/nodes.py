@@ -42,6 +42,14 @@ def _to_diff_dict(file: Any) -> Dict[str, Any]:
         return file
     raise TypeError(f"Unsupported diff file type: {type(file)}")
 
+
+def _prefer_nonempty(old, new):
+    """new가 비었으면 old 유지, new가 비어있지 않으면 new로 교체"""
+    if new in (None, {}, [], ""):
+        return old
+    return new
+
+
 #
 def _build_diff_text(diff_files: list[dict]) -> str:
     parts = []
@@ -273,20 +281,22 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
     eimp = getattr(parsed_obj, "extra_implemented", []) or []
     fmap = getattr(parsed_obj, "checklist_file_map", {}) or {}
 
-    # 6) LLM 결과가 빈 경우/부분 부족 시 폴백 병합
-    if not ce or not fmap:
-        heur_eval, heur_impl, heur_map = _heuristic_eval(feature_name, all_items, diff_files)
-        merged_eval = {**heur_eval, **ce}   # LLM이 채운 값 우선
-        merged_map  = {**heur_map, **fmap}
-        ce, fmap = merged_eval, merged_map
-        print("[heuristic] eval:", json.dumps(heur_eval, ensure_ascii=False))
-        print("[heuristic] map keys:", list(heur_map.keys()))
+    # 6) 휴리스틱 한 번 계산하고, LLM 우선으로 폴백 병합
+    #    - LLM이 채운 값이 우선이고, 없으면 휴리스틱으로 보완
+    heur_eval, heur_impl, heur_map = _heuristic_eval(feature_name, all_items, diff_files)
 
-    # 7) 상태 반영
+    # dict 병합 (LLM 값 우선)
+    ce   = {**(heur_eval or {}), **(ce   or {})}
+    fmap = {**(heur_map  or {}), **(fmap or {})}
+
+    print("[heuristic] eval:", json.dumps(heur_eval or {}, ensure_ascii=False))
+    print("[heuristic] map keys:", list((heur_map or {}).keys()))
+
+    # 7) 상태 반영 (빈 값으로 덮지 않도록 보호)
     state["implemented"]          = implemented_final
-    state["checklist_evaluation"] = ce
     state["extra_implemented"]    = eimp
-    state["checklist_file_map"]   = fmap
+    state["checklist_evaluation"] = _prefer_nonempty(state.get("checklist_evaluation"), ce)
+    state["checklist_file_map"]   = _prefer_nonempty(state.get("checklist_file_map"),   fmap)
 
     # 8) 요약 직행 여부
     state["go_summary"] = bool(parsed_ok and implemented_final and len(state["extra_implemented"]) == 0)
@@ -675,6 +685,21 @@ async def run_code_review_summary(state: CodeReviewState) -> CodeReviewState:
         items = []
     
     print(f"요약 입력 아이템 그룹 수: {len(items)}")
+
+    # ── 코드 없음 단축 경로 ───────────────────────────────────────────────
+    review_files = state.get("review_files") or []
+    code_review_items = items or []
+    file_map = state.get("checklist_file_map") or {}
+
+    has_files_content = any((f.get("content") or "").strip() for f in review_files)
+    has_map_files = any((v or []) for v in file_map.values())
+    has_items = bool(code_review_items)
+
+    if not (has_files_content or has_map_files or has_items):
+        # 요구사항: summaries 의 summary(=요약)만 채움
+        state["review_summaries"] = {"요약": "코드가 없습니다"}
+        # review_summary(문자열)는 건드리지 않음
+        return state
 
     categorized_reviews = build_categorized_reviews(items)
     prompt_input = {
