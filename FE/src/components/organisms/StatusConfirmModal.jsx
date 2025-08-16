@@ -4,9 +4,9 @@ import ModalContainer from '@/components/molecules/ModalContainer'
 import styles from './StatusConfirmModal.module.css'
 
 const STATUS_LABELS = {
-  TODO: '해야할 작업',
-  IN_PROGRESS: '진행 중인 작업', 
-  DONE: '완료한 작업'
+  TODO: 'To Do',
+  IN_PROGRESS: 'In Progress', 
+  DONE: 'Completed'
 }
 
 const StatusConfirmModal = ({ data, onClose }) => {
@@ -24,7 +24,7 @@ const StatusConfirmModal = ({ data, onClose }) => {
       <ModalContainer>
         <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
           <div className={styles.modalHeader}>
-            <h3 className={styles.modalTitle}>상태 변경 확인</h3>
+            <h3 className={styles.modalTitle}>작업 상태 변경 확인</h3>
           </div>
           
           <div className={styles.modalBody}>
@@ -33,12 +33,13 @@ const StatusConfirmModal = ({ data, onClose }) => {
             </div>
             
             <div className={styles.statusChangeInfo}>
-              <span className={styles.statusText}>
-                <span className={styles.fromStatus}>[{STATUS_LABELS[fromStatus]}]</span>
+              <div className={styles.statusText}>
+                <span className={styles.fromStatus}>{STATUS_LABELS[fromStatus]}</span>
                 <span className={styles.arrow}>→</span>  
-                <span className={styles.toStatus}>[{STATUS_LABELS[toStatus]}]</span>
-              </span>
-              <p className={styles.confirmText}>로 변경하시겠습니까?</p>
+                <span className={styles.toStatus}>{STATUS_LABELS[toStatus]}</span>
+              </div>
+              <p className={styles.confirmText}>상태를 변경하시겠습니까?</p>
+              <p className={styles.noteText}>일정이 조정될 수 있습니다.</p>
             </div>
           </div>
 
@@ -47,7 +48,7 @@ const StatusConfirmModal = ({ data, onClose }) => {
               onClick={onClose}
               className={styles.cancelBtn}
             >
-              취소
+              닫기
             </button>
             <button 
               onClick={handleConfirm}
