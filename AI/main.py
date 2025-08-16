@@ -6,7 +6,7 @@ from src.config.osConfig import *
 
 # from src.specification.specification_router import router as specification_router
 from src.specification.chat_router import router as chat_router
-from src.code_review.code_review_router import router as code_review_router
+from src.code_review.code_review_router import router as start_feature_inference
 from src.code_review.checklist_router import router as checklist_router
 from src.retrospective.retrospective_router import router as retrospective_router
 
@@ -43,7 +43,7 @@ async def print_routes():
 # 라우터 등록
 # app.include_router(specification_router, prefix="/specification")
 app.include_router(chat_router, prefix="/ai/api/chat")
-app.include_router(code_review_router, prefix="/ai/api/code-review")
+app.include_router(start_feature_inference, prefix="/api/code-review")
 app.include_router(retrospective_router, prefix="/ai/api/retrospective")
 app.include_router(checklist_router, prefix="/ai")
 

@@ -9,13 +9,15 @@ import com.codaily.project.repository.ProjectRepository;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfWriter;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Objects;
 
 @Log4j2
 @Service
@@ -24,6 +26,57 @@ public class SpecificationServiceImpl implements SpecificationService {
 
     private final ProjectRepository projectRepository;
     private final FeatureItemRepository featureItemRepository;
+
+    private Font fontTitle;
+    private Font fontSection;
+    private Font fontBold;
+    private Font font;
+    private Font fontSmall;
+
+    @PostConstruct
+    public void initFonts() {
+        try {
+            // 1) 클래스패스에서 바이트 읽기
+            byte[] regularBytes;
+            byte[] boldBytes;
+            {
+                Resource regRes = new ClassPathResource("fonts/Pretendard-Regular.ttf");
+                Resource boldRes = new ClassPathResource("fonts/Pretendard-Bold.ttf");
+                try (var in = regRes.getInputStream()) { regularBytes = in.readAllBytes(); }
+                try (var in = boldRes.getInputStream()) { boldBytes = in.readAllBytes(); }
+            }
+
+            // 2) BaseFont 생성 (바이트 기반)
+            BaseFont base = BaseFont.createFont(
+                    "Pretendard-Regular.ttf",
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED,
+                    true,
+                    regularBytes,
+                    null
+            );
+            BaseFont baseBold = BaseFont.createFont(
+                    "Pretendard-Bold.ttf",
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED,
+                    true,
+                    boldBytes,
+                    null
+            );
+
+            // 3) Font 스타일 구성
+            this.fontTitle   = new Font(baseBold, 24);
+            this.fontSection = new Font(baseBold, 14);
+            this.fontBold    = new Font(baseBold, 18);
+            this.font        = new Font(base, 12);
+            this.fontSmall   = new Font(base, 11);
+
+            log.info("PDF 폰트 초기화 완료");
+        } catch (Exception e) {
+            log.error("PDF 폰트 초기화 실패", e);
+            throw new RuntimeException("PDF 폰트 로드 실패", e);
+        }
+    }
 
     @Override
     public byte[] generateSpecDocument(Long projectId) {
@@ -65,21 +118,6 @@ public class SpecificationServiceImpl implements SpecificationService {
             PdfWriter.getInstance(document, baos);
             document.open();
 
-            // Pretendard 폰트 설정
-            String fontDir = "fonts/";
-            BaseFont base = BaseFont.createFont(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(fontDir + "Pretendard-Regular.ttf")).getPath(),
-                    BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-            BaseFont baseBold = BaseFont.createFont(
-                    Objects.requireNonNull(getClass().getClassLoader().getResource(fontDir + "Pretendard-Bold.ttf")).getPath(),
-                    BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-
-            Font fontTitle = new Font(baseBold, 24);
-            Font fontSection = new Font(baseBold, 14);
-            Font fontBold = new Font(baseBold, 18);
-            Font font = new Font(base, 12);
-            Font fontSmall = new Font(base, 11);
-
             // 제목
             Paragraph docTitle = new Paragraph("프로젝트 명세서", fontTitle);
             docTitle.setSpacingAfter(20);
@@ -87,20 +125,19 @@ public class SpecificationServiceImpl implements SpecificationService {
 
             // 프로젝트 정보
             Paragraph projTitle = new Paragraph("제목: " + title, fontBold);
-            Paragraph projDesc = new Paragraph("설명: " + (description != null ? description : "없음"), font);
+            Paragraph projDesc  = new Paragraph("설명: " + (description != null ? description : "없음"), font);
             projDesc.setIndentationLeft(5);
             projDesc.setSpacingAfter(15);
             document.add(projTitle);
             document.add(projDesc);
 
+            // 기능 출력
             for (FeatureSaveContent spec : specs) {
                 FeatureSaveItem main = spec.getMainFeature();
-
                 String mainTime = main.getEstimatedTime() + "h";
                 String mainPriority = main.getPriorityLevel() != null ? String.valueOf(main.getPriorityLevel()) : "-";
 
-                Paragraph mainTitle = new Paragraph(
-                        "주 기능: " + main.getTitle() + " (" + mainTime + ")", fontSection);
+                Paragraph mainTitle = new Paragraph("주 기능: " + main.getTitle() + " (" + mainTime + ")", fontSection);
                 mainTitle.setSpacingBefore(10);
                 mainTitle.setSpacingAfter(4);
                 document.add(mainTitle);
@@ -138,6 +175,5 @@ public class SpecificationServiceImpl implements SpecificationService {
             throw new RuntimeException("PDF 생성 실패", e);
         }
     }
-
 }
 

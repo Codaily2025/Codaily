@@ -21,7 +21,7 @@ from ..prompts import (
     commit_message_prompt,
 )
 
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 _to_str = StrOutputParser()
 
 def _to_diff_dict(file: Any) -> Dict[str, Any]:
@@ -440,7 +440,7 @@ async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
     feature_name = state["feature_name"]
 
     print(f"\n 코드리뷰아이템 요청: project_id={project_id}, feature_name={feature_name}")
-    url = f"https://i13a601.p.ssafy.io/api/code-review-item/project/{project_id}/feature"
+    url = f"https://i13a601.p.ssafy.io/api/code-review/project/{project_id}/feature"
 
     params = {"featureName": feature_name}
 
@@ -452,26 +452,26 @@ async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
     data = response.json()
 
      # 1) 원본 그대로 저장
-    state["code_review_items_grouped"] = data
+    state["code_review_items_java"] = data
 
     # 2) 평탄화해서 저장
-    flat_items = []
-    for category_block in data:
-        category = category_block.get("category")
-        checklist_item = category_block.get("checklist_item")
-        for item in category_block.get("items", []):
-            flat_items.append({
-                "category": category,
-                "checklist_item": checklist_item,
-                "file_path": item.get("file_path") or item.get("filePath"),
-                "line_range": item.get("line_range") or item.get("lineRange"),
-                "severity": item.get("severity"),
-                "message": item.get("message"),
-            })
+    # flat_items = []
+    # for category_block in data:
+    #     category = category_block.get("category")
+    #     checklist_item = category_block.get("checklist_item")
+    #     for item in category_block.get("items", []):
+    #         flat_items.append({
+    #             "category": category,
+    #             "checklist_item": checklist_item,
+    #             "file_path": item.get("file_path") or item.get("filePath"),
+    #             "line_range": item.get("line_range") or item.get("lineRange"),
+    #             "severity": item.get("severity"),
+    #             "message": item.get("message"),ㄴ
+    #         })
 
-    state["code_review_items_java"] = flat_items
+    # state["code_review_items_java"] = flat_items
 
-    print(f"기존 코드리뷰아이템 {len(flat_items)}개 수집 완료.")
+    print(f"기존 코드리뷰아이템 수집 완료.")
 
     return state
 
@@ -479,14 +479,19 @@ async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
 async def run_code_review_summary(state: CodeReviewState) -> CodeReviewState:
     items = state.get("code_review_items", []) + state.get("code_review_items_java", [])
 
-    # set은 순서가 깨지니까, dict.fromkeys로 순서 유지 중복 제거
-    items = list({tuple(sorted(d.items())): d for d in items}.values())
+    items = dedup_groups_preserve_order(items)
+
+    if not isinstance(items, list):
+        items = []
+    
+    print(f"요약 입력 아이템 그룹 수: {len(items)}")
 
     categorized_reviews = build_categorized_reviews(items)
     prompt_input = {
         "feature_name": state["feature_name"],
         "categorized_reviews": categorized_reviews,
     }
+
     raw = await ask_str(review_summary_prompt, **prompt_input)
 
     # LLM 출력(문자열)을 Map[String,String]으로 변환
@@ -521,6 +526,44 @@ def build_categorized_reviews(code_review_items: list[dict]) -> dict:
         categorized.setdefault(category, []).extend(simplified_items)
 
     return categorized
+
+def _dedup_inner_items(inner):
+    seen = set()
+    out = []
+    for it in inner or []:
+        key = (
+            it.get("file_path") or it.get("filePath"),
+            it.get("line_range") or it.get("lineRange"),
+            it.get("severity"),
+            it.get("message"),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(it)
+    return out
+
+def _merge_items(a, b):
+    return _dedup_inner_items((a or []) + (b or []))
+
+def dedup_groups_preserve_order(groups):
+    # 같은 (category, checklist_item) 그룹이 여러 번 올 수 있으므로 병합
+    index_by_key = {}
+    out = []
+    for g in groups or []:
+        cat = g.get("category")
+        chk = g.get("checklist_item") or g.get("checklistItem")
+        key = (cat, chk)
+        if key in index_by_key:
+            idx = index_by_key[key]
+            out[idx]["items"] = _merge_items(out[idx].get("items"), g.get("items"))
+        else:
+            new_g = dict(g)
+            new_g["items"] = _dedup_inner_items(new_g.get("items"))
+            index_by_key[key] = len(out)
+            out.append(new_g)
+    return out
+
 
 
 def _preview_payload(payload: dict) -> str:

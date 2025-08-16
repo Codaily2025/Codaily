@@ -84,7 +84,7 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "https://i13a601.p.ssafy.io"
         ));
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+//        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
