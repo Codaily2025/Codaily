@@ -33,7 +33,7 @@ async def chat_stream(
     intent: ChatIntent,
     project_id: int,
     message: str,
-    time: int,
+    time: float,
     feature_id: int = None,
     title: str = None,
     field: str = None,
