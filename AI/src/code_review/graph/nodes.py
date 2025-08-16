@@ -42,6 +42,14 @@ def _to_diff_dict(file: Any) -> Dict[str, Any]:
         return file
     raise TypeError(f"Unsupported diff file type: {type(file)}")
 
+
+def _prefer_nonempty(old, new):
+    """new가 비었으면 old 유지, new가 비어있지 않으면 new로 교체"""
+    if new in (None, {}, [], ""):
+        return old
+    return new
+
+
 #
 def _build_diff_text(diff_files: list[dict]) -> str:
     parts = []
@@ -284,11 +292,11 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
     print("[heuristic] eval:", json.dumps(heur_eval or {}, ensure_ascii=False))
     print("[heuristic] map keys:", list((heur_map or {}).keys()))
 
-    # 7) 상태 반영
+    # 7) 상태 반영 (빈 값으로 덮지 않도록 보호)
     state["implemented"]          = implemented_final
-    state["checklist_evaluation"] = ce
     state["extra_implemented"]    = eimp
-    state["checklist_file_map"]   = fmap
+    state["checklist_evaluation"] = _prefer_nonempty(state.get("checklist_evaluation"), ce)
+    state["checklist_file_map"]   = _prefer_nonempty(state.get("checklist_file_map"),   fmap)
 
     # 8) 요약 직행 여부
     state["go_summary"] = bool(parsed_ok and implemented_final and len(state["extra_implemented"]) == 0)
