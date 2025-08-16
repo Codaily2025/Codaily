@@ -163,14 +163,14 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         - 파일 간 연관성을 고려하여 전체 흐름을 파악한 뒤 평가할 것.
 
         출력 형식(고정, JSON):
-        {
+        {{
           "code_reviews": [
-            { "category": "보안 위험", "items": [ { "filePath": "...", "lineRange": "10-12", "severity": "높음", "message": "..." }, ... ] },
-            { "category": "성능 최적화", "items": "해당 없음" },
+            {{ "category": "보안 위험", "items": [ { "filePath": "...", "lineRange": "10-12", "severity": "높음", "message": "..." }, ... ] }},
+            {{} "category": "성능 최적화", "items": "해당 없음" }},
             ...
           ],
           "summary": "여러 줄 허용, 단 종결어미는 ~함으로 마무리"
-        }
+        }}
 
         작성 규칙:
         1) 각 카테고리는 최대 3개 항목까지 중요도 순으로 기입(필요 시 1~2개만).
