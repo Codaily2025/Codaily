@@ -1,4 +1,25 @@
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from .code_review_schema import ChecklistEvaluation  # ← schema에서 import
+
+# 파서
+checklist_eval_parser = JsonOutputParser(pydantic_object=ChecklistEvaluation)
+
+EXAMPLE_JSON = """
+{
+  "feature_name": "{feature_name}",
+  "checklist_evaluation": {
+    "항목1": true,
+    "항목2": false
+  },
+  "implemented": false,
+  "extra_implemented": ["로깅 처리", "에러 응답 통일"],
+  "checklist_file_map": {
+    "항목1": ["AuthController.java"],
+    "로깅 처리": ["src/main/java/com/util/LogUtil.java"]
+  }
+}
+""".strip()
 
 feature_inference_prompt = ChatPromptTemplate.from_messages([
     ("system", 
@@ -51,47 +72,79 @@ commit_message_prompt = ChatPromptTemplate.from_messages([
 checklist_evaluation_prompt = ChatPromptTemplate.from_messages([
     ("system", 
      """
-     당신은 소프트웨어 개발 기능 구현 평가자입니다. 
-     전체 코드를 분석해 아래 checklist 항목들이 구현되어 있는지 판단합니다.
-     
-     기능 구현 판단 규칙:
-     1. checklist 항목 각각에 대해 true/false로 명확히 표시합니다.
-     2. checklist 항목 외에도 코드 상에 의미 있는 기능 구현이 있으면 extra_implemented에 반드시 추가합니다.
-        - 예: 로깅 처리, 예외 처리, 유효성 검증, 에러 응답 통일, 캐싱, 트랜잭션 관리 등
-     3. extra_implemented는 반드시 존재 여부를 확인하고, 없으면 빈 배열 []을 반환합니다.
-     4. implemented는 checklist가 전부 true일 때만 true, 하나라도 false면 false입니다.
-     5. true로 판정된 checklist 항목과 extra_implemented 항목은 checklist_file_map에 파일 경로와 함께 반드시 포함합니다.
-     6. file_path는 반드시 실제 코드 파일명과 일치해야 합니다.
+     당신은 소프트웨어 개발 기능 구현 평가자임.
+     전체 코드를 분석하여 체크리스트 항목들의 구현 여부를 판단하고, 체크리스트 외 추가 구현도 추출함.
 
-     📌 출력은 반드시 아래 JSON 형식을 따라야 합니다 (추가/생략 금지):
+     출력 규칙(매우 중요):
+     - 오직 JSON만 출력할 것(코드블록, 주석, 설명, 여분 텍스트 절대 금지).
+     - 키는 정확히 다음 다섯 개만 포함: "feature_name", "checklist_evaluation", "implemented", "extra_implemented", "checklist_file_map".
+     - "checklist_evaluation": 입력 체크리스트의 모든 항목을 key로 포함하고 true/false로 채울 것.
+     - "implemented": 모든 체크리스트가 true일 때만 true, 아니면 false.
+     - "extra_implemented": 체크리스트에 없는 추가 구현이 있으면 문자열 배열로, 없으면 [].
+       (예: 로깅 처리, 예외 처리, 유효성 검증, 에러 응답 통일, 캐싱, 트랜잭션 관리 등)
+     - "checklist_file_map": true로 판정된 체크리스트 항목과 extra_implemented 항목만 포함하며,
+       각 key의 값은 실제 코드 파일 경로 문자열 배열임(파일명은 실제 코드와 정확히 일치).
 
-        {{
-          "feature_name": "{feature_name}",
-          "checklist_evaluation": {{
-            "항목1": true,
-            "항목2": false
-          }},
-          "implemented": false,
-          "extra_implemented": ["로깅 처리", "에러 응답 통일"],
-          "checklist_file_map": {{
-            "항목1": ["AuthController.java"],
-            "로깅 처리": ["src/main/java/com/util/LogUtil.java"]
-          }}
-        }}
+     정확한 출력 형식(예시, 형식만 참고하고 값은 실제로 채울 것):
+     {example}
 
-     ⚠️ 주의:
-     - checklist_evaluation은 모든 항목을 반드시 포함해야 합니다.
-     - extra_implemented는 없더라도 반드시 [] 반환해야 합니다.
-     - checklist_file_map에는 true 항목과 extra_implemented만 포함하세요.
+     스키마 지시(파서가 기대하는 구조와 타입):
+     {format_instructions}
      """
     ),
     ("user",
-        "기능명: {feature_name}\n\n"
-        "전체 코드:\n{diff_files}\n\n"
-        "체크리스트 항목:\n{checklist_items}\n\n"
-        "checklist 외의 구현된 기능도 반드시 찾아 extra_implemented에 기입하세요."
-    )
-])
+     "기능명: {feature_name}\n\n"
+     "전체 코드:\n{diff_text}\n\n"
+     "체크리스트 항목:\n{checklist_items}\n")
+]).partial(
+    format_instructions=checklist_eval_parser.get_format_instructions(),
+    example=EXAMPLE_JSON
+)
+
+# checklist_evaluation_prompt = ChatPromptTemplate.from_messages([
+#     ("system", 
+#      """
+#      당신은 소프트웨어 개발 기능 구현 평가자입니다. 
+#      전체 코드를 분석해 아래 checklist 항목들이 구현되어 있는지 판단합니다.
+     
+#      기능 구현 판단 규칙:
+#      1. checklist 항목 각각에 대해 true/false로 명확히 표시합니다.
+#      2. checklist 항목 외에도 코드 상에 의미 있는 기능 구현이 있으면 extra_implemented에 반드시 추가합니다.
+#         - 예: 로깅 처리, 예외 처리, 유효성 검증, 에러 응답 통일, 캐싱, 트랜잭션 관리 등
+#      3. extra_implemented는 반드시 존재 여부를 확인하고, 없으면 빈 배열 []을 반환합니다.
+#      4. implemented는 checklist가 전부 true일 때만 true, 하나라도 false면 false입니다.
+#      5. true로 판정된 checklist 항목과 extra_implemented 항목은 checklist_file_map에 파일 경로와 함께 반드시 포함합니다.
+#      6. file_path는 반드시 실제 코드 파일명과 일치해야 합니다.
+
+#      📌 출력은 반드시 아래 JSON 형식을 따라야 합니다 (추가/생략 금지):
+
+#         {{
+#           "feature_name": "{feature_name}",
+#           "checklist_evaluation": {{
+#             "항목1": true,
+#             "항목2": false
+#           }},
+#           "implemented": false,
+#           "extra_implemented": ["로깅 처리", "에러 응답 통일"],
+#           "checklist_file_map": {{
+#             "항목1": ["AuthController.java"],
+#             "로깅 처리": ["src/main/java/com/util/LogUtil.java"]
+#           }}
+#         }}
+
+#      ⚠️ 주의:
+#      - checklist_evaluation은 모든 항목을 반드시 포함해야 합니다.
+#      - extra_implemented는 없더라도 반드시 [] 반환해야 합니다.
+#      - checklist_file_map에는 true 항목과 extra_implemented만 포함하세요.
+#      """
+#     ),
+#     ("user",
+#         "기능명: {feature_name}\n\n"
+#         "전체 코드:\n{diff_files}\n\n"
+#         "체크리스트 항목:\n{checklist_items}\n\n"
+#         "checklist 외의 구현된 기능도 반드시 찾아 extra_implemented에 기입하세요."
+#     )
+# ])
 
 code_review_prompt = ChatPromptTemplate.from_messages([
     ("system", 
@@ -110,14 +163,14 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         - 파일 간 연관성을 고려하여 전체 흐름을 파악한 뒤 평가할 것.
 
         출력 형식(고정, JSON):
-        {
+        {{
           "code_reviews": [
-            { "category": "보안 위험", "items": [ { "filePath": "...", "lineRange": "10-12", "severity": "높음", "message": "..." }, ... ] },
-            { "category": "성능 최적화", "items": "해당 없음" },
+            {{ "category": "보안 위험", "items": [ {{ "filePath": "...", "lineRange": "10-12", "severity": "높음", "message": "..." }}, ... ] }},
+            {{ "category": "성능 최적화", "items": "해당 없음" }},
             ...
           ],
           "summary": "여러 줄 허용, 단 종결어미는 ~함으로 마무리"
-        }
+        }}
 
         작성 규칙:
         1) 각 카테고리는 최대 3개 항목까지 중요도 순으로 기입(필요 시 1~2개만).
@@ -129,7 +182,7 @@ code_review_prompt = ChatPromptTemplate.from_messages([
              * 특정 지점 문제면 "42-42"처럼 한 줄 범위 사용.
              * 파일 전반 문제면 파일 총 줄수를 계산해 "1-<마지막줄>"로 표기.
              * (줄수 계산: 제공된 파일 내용의 줄바꿈 수 + 1로 추정)
-           - severity: {"높음","중간","낮음"} 중 택1. 
+           - severity: {{"높음","중간","낮음"}} 중 택1. 
              * 보안/버그 관련 취약점은 기본 "중간" 이상, 데이터 유실/취약점 확정이면 "높음".
            - message: 한 줄, 다음 3요소를 모두 포함하고 구체적으로 작성(세미콜론으로 구분).
              * 원인: 규칙/패턴/함수/변수/어노테이션 등 구체 키워드 포함
