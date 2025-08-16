@@ -43,11 +43,18 @@ def _to_diff_dict(file: Any) -> Dict[str, Any]:
     raise TypeError(f"Unsupported diff file type: {type(file)}")
 
 
-def _prefer_nonempty(old, new):
-    """new가 비었으면 old 유지, new가 비어있지 않으면 new로 교체"""
-    if new in (None, {}, [], ""):
-        return old
-    return new
+def _is_nonempty_dict(x):
+    return isinstance(x, dict) and len(x) > 0
+
+def _prefer_nonempty(existing, computed):
+    # 새로 계산된 값이 비어있지 않으면 무조건 그걸 사용
+    if _is_nonempty_dict(computed):
+        return computed
+    # 기존 값이 비어있지 않으면 유지
+    if _is_nonempty_dict(existing):
+        return existing
+    # 둘 다 비거나 None이면 빈 dict
+    return {}
 
 
 #
@@ -281,6 +288,11 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
     eimp = getattr(parsed_obj, "extra_implemented", []) or []
     fmap = getattr(parsed_obj, "checklist_file_map", {}) or {}
 
+    if state.get("checklist_evaluation") is None:
+        state["checklist_evaluation"] = {}
+    if state.get("checklist_file_map") is None:
+        state["checklist_file_map"] = {}
+
     # 6) 휴리스틱 한 번 계산하고, LLM 우선으로 폴백 병합
     #    - LLM이 채운 값이 우선이고, 없으면 휴리스틱으로 보완
     heur_eval, heur_impl, heur_map = _heuristic_eval(feature_name, all_items, diff_files)
@@ -292,11 +304,18 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
     print("[heuristic] eval:", json.dumps(heur_eval or {}, ensure_ascii=False))
     print("[heuristic] map keys:", list((heur_map or {}).keys()))
 
-    # 7) 상태 반영 (빈 값으로 덮지 않도록 보호)
-    state["implemented"]          = implemented_final
-    state["extra_implemented"]    = eimp
-    state["checklist_evaluation"] = _prefer_nonempty(state.get("checklist_evaluation"), ce)
-    state["checklist_file_map"]   = _prefer_nonempty(state.get("checklist_file_map"),   fmap)
+    # 7) 상태 반영 (⚠️ None/빈 dict로 덮어쓰지 않도록)
+    ce   = dict(ce or {})
+    fmap = dict(fmap or {})
+    eimp = list(eimp or [])
+
+    # 이 함수에서 계산한 값을 최우선으로 넣고, 없으면 기존값 사용, 최종적으로는 {} 보장
+    state["implemented"] = implemented_final
+    state["extra_implemented"] = eimp
+    state["checklist_evaluation"] = (ce if _is_nonempty_dict(ce)
+                                    else dict(state.get("checklist_evaluation") or {}))
+    state["checklist_file_map"]   = (fmap if _is_nonempty_dict(fmap)
+                                    else dict(state.get("checklist_file_map") or {}))
 
     # 8) 요약 직행 여부
     state["go_summary"] = bool(parsed_ok and implemented_final and len(state["extra_implemented"]) == 0)
@@ -410,27 +429,96 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
 # -----------------------------
 # checklist 평가 반영
 # -----------------------------
+# -----------------------------
+# checklist 평가 반영 (빈 리스트도 implemented=True 가능)
+# -----------------------------
 async def apply_checklist_evaluation(state: CodeReviewState) -> CodeReviewState:
-    checklist_eval = state.get("checklist_evaluation", {})
+    # 0) 가드: None/비정상 타입 정규화
+    checklist_eval = state.get("checklist_evaluation") or {}
+    if not isinstance(checklist_eval, dict):
+        checklist_eval = {}
+
+    checklist_in = state.get("checklist") or []
+    if not isinstance(checklist_in, list):
+        checklist_in = []
+
+    # 1) 체크리스트 각 항목에 평가 결과 반영
     updated_checklist = []
+    for it in checklist_in:
+        if not isinstance(it, dict) or "item" not in it:
+            updated_checklist.append(it)  # 형식 이상 항목은 그대로 보존
+            continue
 
-    for item in state["checklist"]:
-        item_name = item["item"]
-        item["done"] = checklist_eval.get(item_name, item.get("done", False))
-        updated_checklist.append(item)
+        item_name = it.get("item")
+        prev_done = bool(it.get("done", False))
+        now_done = bool(checklist_eval.get(item_name, prev_done))
+        updated_checklist.append({**it, "done": now_done})
 
+    # 2) 로그
     print("\nchecklist 평가 결과 반영 완료:")
     for c in updated_checklist:
-        print(f" - {c['item']} → {'ㅇ' if c['done'] else 'x'}")
+        if isinstance(c, dict) and "item" in c:
+            print(f" - {c['item']} → {'ㅇ' if c.get('done', False) else 'x'}")
+        else:
+            print(f" - (invalid item kept as-is): {c}")
 
+    # 3) 상태 반영
     state["checklist"] = updated_checklist
-    after_check_undone_items  = [it.get("item") for it in updated_checklist if not it.get("done", False)]
-    implemented_now = len(after_check_undone_items) == 0
+
+    # 4) 구현 여부 계산
+    #    - 빈 체크리스트면 이전 implemented를 존중,
+    #      이전 값도 없으면 force_done 기준으로 결정
+    if len(updated_checklist) == 0:
+        if "implemented" in state:
+            implemented_now = bool(state["implemented"])
+        else:
+            implemented_now = bool(state.get("force_done", False))
+        undone = []
+    else:
+        undone = [
+            it.get("item")
+            for it in updated_checklist
+            if isinstance(it, dict) and not it.get("done", False)
+        ]
+        implemented_now = (len(undone) == 0)
+
     state["implemented"] = implemented_now
-    state["no_code_review_file_patch"] = len(state["checklist_file_map"]) == 0
-    print(f"[NODE:run_xxx] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
+
+    # 5) 코드 리뷰 파일 유무 플래그(가드 포함)
+    fmap = state.get("checklist_file_map") or {}
+    if not isinstance(fmap, dict):
+        fmap = {}
+    state["checklist_file_map"] = fmap
+    state["no_code_review_file_patch"] = (len(fmap) == 0)
+
+    force_done = bool(state.get("force_done"))
+    print(f"[NODE:apply_checklist_evaluation] force_done={force_done} ({type(force_done).__name__})")
+    print(f" - implemented={state['implemented']} (undone={len(undone)}, total={len(updated_checklist)})")
 
     return state
+
+
+# async def apply_checklist_evaluation(state: CodeReviewState) -> CodeReviewState:
+#     checklist_eval = state.get("checklist_evaluation", {})
+#     updated_checklist = []
+
+#     for item in state["checklist"]:
+#         item_name = item["item"]
+#         item["done"] = checklist_eval.get(item_name, item.get("done", False))
+#         updated_checklist.append(item)
+
+#     print("\nchecklist 평가 결과 반영 완료:")
+#     for c in updated_checklist:
+#         print(f" - {c['item']} → {'ㅇ' if c['done'] else 'x'}")
+
+#     state["checklist"] = updated_checklist
+#     after_check_undone_items  = [it.get("item") for it in updated_checklist if not it.get("done", False)]
+#     implemented_now = len(after_check_undone_items) == 0
+#     state["implemented"] = implemented_now
+#     state["no_code_review_file_patch"] = len(state["checklist_file_map"]) == 0
+#     print(f"[NODE:run_xxx] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
+
+#     return state
 
 # -----------------------------
 # 코드리뷰 파일 요청
