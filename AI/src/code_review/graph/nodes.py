@@ -51,6 +51,22 @@ def _to_diff_dict(file: Any) -> Dict[str, Any]:
         return file
     raise TypeError(f"Unsupported diff file type: {type(file)}")
 
+#
+def _build_diff_text(diff_files: list[dict]) -> str:
+    parts = []
+    for f in diff_files or []:
+        path = f.get("file_path") or f.get("filePath")
+        patch = f.get("patch", "")
+        change = f.get("change_type") or f.get("changeType") or "MODIFIED"
+        if change == "REMOVED":
+            parts.append(f"\n{path} (삭제됨):\n- 삭제된 파일\n")
+        elif change == "ADDED":
+            parts.append(f"\n{path} (새 파일):\n{patch or '- (패치 정보 없음)'}\n")
+        else:
+            parts.append(f"\n{path}:\n{patch}\n")
+    return "".join(parts)
+
+
 async def ask_str(prompt, **vars) -> str:
     # ChatPromptTemplate -> str
     return await (prompt | llm | _to_str).ainvoke(vars)
@@ -150,6 +166,8 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
     diff_files     = state.get("diff_files") or []
     commit_message = state.get("commit_message", "")
 
+
+
     # 1) 요청에서 온 force_done 값을 최우선으로 반영
     force_done_req = bool(state.get("force_done", False))
 
@@ -181,12 +199,20 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
     chain = checklist_evaluation_prompt | llm_json | checklist_eval_parser
 
     parsed_ok = True
+
+    # run_feature_implementation_check 내부 — 변경 포인트
+    diff_files = state.get("diff_files") or []
+    # 추가:
+    diff_text = _build_diff_text(diff_files)
+
     try:
+        # 체인 호출 부분 — 인자 교체
         parsed_obj = await chain.ainvoke({
             "feature_name": feature_name,
-            "checklist_items": all_items,   # ★ 전체 항목 전달
-            "diff_files": diff_files,
+            "checklist_items": all_items,
+            "diff_text": diff_text,      # ← 여기로 바꿈
         })
+
     except Exception as e:
         parsed_ok = False
         print(f" checklist_evaluation 파싱 실패: {e}")

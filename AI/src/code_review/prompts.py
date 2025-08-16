@@ -94,7 +94,7 @@ checklist_evaluation_prompt = ChatPromptTemplate.from_messages([
     ),
     ("user",
      "기능명: {feature_name}\n\n"
-     "전체 코드:\n{diff_files}\n\n"
+     "전체 코드:\n{diff_text}\n\n"
      "체크리스트 항목:\n{checklist_items}\n")
 ]).partial(
     format_instructions=checklist_eval_parser.get_format_instructions(),
