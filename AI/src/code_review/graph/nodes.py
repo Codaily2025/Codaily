@@ -452,24 +452,24 @@ async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
     data = response.json()
 
      # 1) 원본 그대로 저장
-    state["code_review_items_grouped"] = data
+    state["code_review_items_java"] = data
 
     # 2) 평탄화해서 저장
-    flat_items = []
-    for category_block in data:
-        category = category_block.get("category")
-        checklist_item = category_block.get("checklist_item")
-        for item in category_block.get("items", []):
-            flat_items.append({
-                "category": category,
-                "checklist_item": checklist_item,
-                "file_path": item.get("file_path") or item.get("filePath"),
-                "line_range": item.get("line_range") or item.get("lineRange"),
-                "severity": item.get("severity"),
-                "message": item.get("message"),
-            })
+    # flat_items = []
+    # for category_block in data:
+    #     category = category_block.get("category")
+    #     checklist_item = category_block.get("checklist_item")
+    #     for item in category_block.get("items", []):
+    #         flat_items.append({
+    #             "category": category,
+    #             "checklist_item": checklist_item,
+    #             "file_path": item.get("file_path") or item.get("filePath"),
+    #             "line_range": item.get("line_range") or item.get("lineRange"),
+    #             "severity": item.get("severity"),
+    #             "message": item.get("message"),ㄴ
+    #         })
 
-    state["code_review_items_java"] = flat_items
+    # state["code_review_items_java"] = flat_items
 
     print(f"기존 코드리뷰아이템 {len(flat_items)}개 수집 완료.")
 

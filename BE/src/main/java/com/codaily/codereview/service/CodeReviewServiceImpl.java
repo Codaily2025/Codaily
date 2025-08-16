@@ -440,26 +440,47 @@ public class CodeReviewServiceImpl implements CodeReviewService {
         // 2) CodeReviewItem 조회
         List<CodeReviewItem> entities = codeReviewItemRepository.findByFeatureItem_FeatureId(featureId);
 
+        if (entities.isEmpty()) {
+            return Collections.emptyList(); // 반드시 빈 배열
+        }
+
         // 3) DTO 변환 (category + checklist_item 기준 그룹핑)
         Map<String, CodeReviewItemDto> grouped = new LinkedHashMap<>();
+
         for (CodeReviewItem entity : entities) {
-            String key = entity.getCategory() + "::" + entity.getFeatureItemChecklist().getItem();
-            grouped.computeIfAbsent(key, k -> CodeReviewItemDto.builder()
-                    .category(entity.getCategory())
-                    .checklistItem(entity.getFeatureItemChecklist().getItem())
-                    .items(new ArrayList<>())
-                    .build()
-            ).getItems().add(
+            // 널 대비
+            String category = entity.getCategory() != null ? entity.getCategory() : "기타";
+            FeatureItemChecklist cic = entity.getFeatureItemChecklist();
+            if (cic == null) {
+                // 체크리스트 연결이 없으면 스킵(또는 별도 "미지정" 버킷으로 모아도 됨)
+                continue;
+            }
+            String item = cic.getItem() != null ? cic.getItem() : "(미지정)";
+
+            String key = category + "::" + item;
+
+            CodeReviewItemDto bucket = grouped.computeIfAbsent(
+                    key,
+                    k -> CodeReviewItemDto.builder()
+                            .category(category)
+                            .checklistItem(item)
+                            .items(new ArrayList<>())
+                            .build()
+            );
+
+            bucket.getItems().add(
                     ReviewItemDto.builder()
-                            .filePath(entity.getFilePath())
-                            .lineRange(entity.getLineRange())
-                            .severity(entity.getSeverity())
-                            .message(entity.getMessage())
+                            .filePath(entity.getFilePath() != null ? entity.getFilePath() : "")
+                            .lineRange(entity.getLineRange() != null ? entity.getLineRange() : "")
+                            .severity(entity.getSeverity() != null ? entity.getSeverity() : "INFO")
+                            .message(entity.getMessage() != null ? entity.getMessage() : "")
                             .build()
             );
         }
+
         return new ArrayList<>(grouped.values());
     }
+
 
 
 

@@ -2,6 +2,7 @@ package com.codaily.codereview.controller;
 
 import com.codaily.auth.config.PrincipalDetails;
 import com.codaily.codereview.dto.*;
+import com.codaily.codereview.entity.CodeReviewItem;
 import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.codereview.service.CodeReviewService;
 import com.codaily.codereview.service.FeatureItemChecklistService;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -76,7 +78,34 @@ public class CodeReviewController {
             codeReviewItems = java.util.Collections.emptyList();
         }
 
-        return ResponseEntity.ok(codeReviewItems);
+
+        return ResponseEntity.ok(codeReviewItems != null ? codeReviewItems : Collections.emptyList());
+    }
+
+    record Key(String category, String checklistItem) {}
+
+    private List<CodeReviewItemDto> toGroupedDtos(List<CodeReviewItem> rows) {
+        Map<Key, List<ReviewItemDto>> grouped = rows.stream()
+                .filter(cri -> cri.getFeatureItemChecklist() != null) // null이면 제외(원하면 덤프 그룹으로)
+                .collect(Collectors.groupingBy(
+                        cri -> new Key(cri.getCategory(), cri.getFeatureItemChecklist().getItem()),
+                        Collectors.mapping(cri -> ReviewItemDto.builder()
+                                        .filePath(cri.getFilePath())
+                                        .lineRange(cri.getLineRange())
+                                        .severity(String.valueOf(cri.getSeverity())) // enum이면 .name() / String이면 그대로
+                                        .message(cri.getMessage())
+                                        .build(),
+                                Collectors.toList()
+                        )
+                ));
+
+        return grouped.entrySet().stream()
+                .map(e -> CodeReviewItemDto.builder()
+                        .category(e.getKey().category())
+                        .checklistItem(e.getKey().checklistItem())
+                        .items(e.getValue())
+                        .build())
+                .toList();
     }
 
     @PostMapping("/project/{projectId}/commit/{commitHash}/files")
