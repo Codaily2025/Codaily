@@ -151,61 +151,62 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
 # -----------------------------
 # 기능 구현 평가 (JSON 구조화 파싱)
 # -----------------------------
-def _heuristic_eval(feature_name: str, items: list[str], diff_files: list[dict]):
-    """LLM가 비우거나 실패했을 때를 위한 간단한 키워드 기반 폴백"""
-    text = "\n".join((f.get("patch") or "") for f in diff_files)
-    paths = [f.get("file_path") or f.get("filePath") or "" for f in diff_files]
+# (기존 함수 위/아래 구조 유지)
+from collections import defaultdict
 
-    file_map: dict[str, list[str]] = {}
+def _heuristic_eval(feature_name: str, all_items: list[str], diff_files: list[dict]):
     eval_map: dict[str, bool] = {}
+    file_map: dict[str, list[str]] = defaultdict(list)
 
-    def add_map(key: str, predicate: bool, candidates: list[str]):
-        if key not in eval_map:
-            eval_map[key] = False
-        if predicate:
-            eval_map[key] = True
-            sel = [p for p in paths if any(c in p for c in candidates)]
-            if sel:
-                file_map[key] = sorted(set(sel))
+    def add_map(key: str | None, ok: bool, has_update: bool = False, path: str | None = None):
+        # key가 없으면 아무 것도 하지 않음 (UnboundLocal 방지)
+        if not key:
+            return
+        prev = eval_map.get(key, False)
+        eval_map[key] = bool(prev or ok)
+        if has_update and path:
+            if path not in file_map[key]:
+                file_map[key].append(path)
 
-    if feature_name == "이미지 업로드":
-        # 예시 체크리스트 문구 가정:
-        # - "이미지 파일을 서버에 업로드"
-        # - "이미지 파일 경로를 데이터베이스에 저장"
-        up_key = next((i for i in items if "서버에 업로드" in i), None)
-        db_key = next((i for i in items if "데이터베이스에 저장" in i or "DB" in i), None)
+    # 체크리스트 키 안전 추출 (없으면 None 유지)
+    up_key = None
+    soldout_key = None
+    for k in all_items:
+        if '재고 수량' in k or '수량 변경' in k or '업데이트' in k:
+            up_key = k
+        if '품절' in k:
+            soldout_key = k
 
-        has_upload_flow = ("MultipartFile" in text) and ("transferTo" in text or "Files.createDirectories" in text)
-        has_db_save    = ("repository.save" in text) or ("JpaRepository<MealImage" in text)
+    # diff 스캔
+    has_update = False
+    update_path = None
+    has_soldout = False
+    soldout_path = None
 
-        if up_key:
-            add_map(up_key, has_upload_flow,
-                    ["ImageUploadController", "ImageUploadService", "/images", "upload"])
-        if db_key:
-            add_map(db_key, has_db_save,
-                    ["MealImageRepository", "MealImage.java", "ImageUploadService"])
+    for f in diff_files or []:
+        p = f.get('file_path', '')
+        patch = f.get('patch', '') or ''
+        # 재고 수량 변경 힌트
+        if ('InventoryService' in p or 'InventoryRepository' in p or 'inventory' in p.lower()):
+            if 'addStock' in patch or 'removeStock' in patch or 'quantity' in patch:
+                has_update = True
+                update_path = p
+        # 품절 상태 변경 힌트(보수적)
+        if ('status' in patch.lower() or 'soldout' in patch.lower() or "품절" in patch):
+            has_soldout = True
+            soldout_path = p
 
-    elif feature_name == "재고 관리":
-        # 예시 체크리스트 문구 가정:
-        # - "상품 재고 수량 변경 시 데이터베이스 업데이트"
-        # - "재고 수량이 0이 되면 상품 상태를 '품절'로 변경"
-        upd_key = next((i for i in items if "데이터베이스 업데이트" in i or "DB 업데이트" in i), None)
-        soldout_key = next((i for i in items if "품절" in i), None)
+    # 안전 추가 (key가 None이면 add_map이 무시)
+    add_map(up_key, has_update, has_update, update_path)
+    add_map(soldout_key, has_soldout, has_soldout, soldout_path)
 
-        has_update = ("addStock(" in text or "removeStock(" in text) and "repository.save" in text
-        # 품절 로직은 현재 코드에 없음(엔티티 status 필드/처리 부재)
-        has_soldout = False
+    # 구현 여부 판단(모든 항목을 본다면, 없는 항목은 False로 간주)
+    implemented = all(eval_map.get(k, False) for k in all_items) if all_items else False
 
-        if upd_key:
-            add_map(up_key, has_update,
-                    ["InventoryController", "InventoryService", "InventoryItemRepository", "InventoryItem.java"])
-        if soldout_key:
-            add_map(soldout_key, has_soldout,
-                    ["InventoryItem.java", "InventoryService"])
-
-    # implemented: 모든 항목 true일 때만 true
-    implemented = bool(items) and all(eval_map.get(i, False) for i in items)
+    # list로 변환
+    file_map = {k: list(v) for k, v in file_map.items()}
     return eval_map, implemented, file_map
+
 
 
 async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeReviewState":
