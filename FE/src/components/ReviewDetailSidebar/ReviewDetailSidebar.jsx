@@ -84,19 +84,19 @@ const ReviewDetailSidebar = ({ review, onClose }) => {
           <div className={styles.meta}>{review.details} · {reviewDetail.reviewScore}점</div>
         </div>
         <div className={styles.headerActions}>
-          <button
+          {/* <button
             className={styles.actionButton}
             onClick={() => refetch()}
             disabled={isFetching} // 데이터 가져오는 중일 때 버튼 비활성화
-          >
+          > */}
             {/* 로딩 중이면 rotating 클래스 추가*/}
-            <RefreshIcon
+            {/* <RefreshIcon
               className={`${styles.actionIcon} 
                   ${isFetching ? styles.rotating : ''
                 }`}
             />
             <span>{isFetching ? '분석 중' : '재분석'}</span>
-          </button>
+          </button> */}
           {/* <button className={styles.iconButton}>
                       <MoreVerticalIcon className={styles.actionIcon} />
                 </button> */}

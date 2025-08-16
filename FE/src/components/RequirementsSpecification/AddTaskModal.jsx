@@ -1,6 +1,7 @@
 // FE/src/components/RequirementsSpecification/AddTaskModal.jsx
 import React, { useState, useEffect } from 'react';
 import styles from './AddTaskModal.module.css';
+import caretUpIcon from '../../assets/caret_up.svg';
 
 const AddTaskModal = ({
   isOpen,
@@ -9,14 +10,11 @@ const AddTaskModal = ({
   parentTask = null, // 부모 작업 (상세 기능 추가 시 사용)
   taskType = 'main' // 'main' | 'sub' (주 기능 또는 상세 기능)
 }) => {
-  // 디버깅을 위한 로그
-  console.log('AddTaskModal - parentTask:', parentTask);
-  console.log('AddTaskModal - taskType:', taskType);
   if (parentTask) {
-    console.log('AddTaskModal - parentTask keys:', Object.keys(parentTask));
-    console.log('AddTaskModal - parentTask.name:', parentTask.name);
-    console.log('AddTaskModal - parentTask.title:', parentTask.title);
-    console.log('AddTaskModal - parentTask.field:', parentTask.field);
+    // console.log('AddTaskModal - parentTask keys:', Object.keys(parentTask));
+    // console.log('AddTaskModal - parentTask.name:', parentTask.name);
+    // console.log('AddTaskModal - parentTask.title:', parentTask.title);
+    // console.log('AddTaskModal - parentTask.field:', parentTask.field);
   }
   const [formData, setFormData] = useState({
     title: '',
@@ -287,7 +285,7 @@ const AddTaskModal = ({
                 >
                   {formData.priorityLevel === 'high' ? 'High' : 
                    formData.priorityLevel === 'medium' ? 'Medium' : 'Low'}
-                  <img className={styles.dropdownIcon} src="/src/assets/caret_up.svg" alt="caret" />
+                  <img className={styles.dropdownIcon} src={caretUpIcon} alt="caret" />
                 </button>
                 {openDropdown === 'priority' && (
                   <div className={styles.dropdownMenu}>
@@ -358,7 +356,7 @@ const AddTaskModal = ({
                     style={{ width: '100%' }}
                   >
                     {formData.estimatedMinutes}
-                    <img className={styles.dropdownIcon} src="/src/assets/caret_up.svg" alt="caret" />
+                      <img className={styles.dropdownIcon} src={caretUpIcon} alt="caret" />
                   </button>
                   {openDropdown === 'minutes' && (
                     <div className={styles.dropdownMenu} style={{ width: '80px' }}>
