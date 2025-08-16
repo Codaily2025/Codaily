@@ -72,7 +72,7 @@ export const useLinkGithubRepoMutation = (onSuccessCallback) => {
             // 레포지토리 목록 캐시 무효화
             queryClient.invalidateQueries({ queryKey: ['githubRepositories'] });
             if (onSuccessCallback) {
-                onSuccessCallback(variables.repoName)
+                onSuccessCallback(variables.projectId)
             }
         },
         onError: (error) => {
