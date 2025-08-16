@@ -1,11 +1,11 @@
-.modalContent {
+/* .modalContent {
   background: white;
   border-radius: 16px;
   max-width: 400px;
   width: 90%;
   overflow: hidden;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
+} */
 
 .modalHeader {
   padding: 24px 24px 16px 24px;
