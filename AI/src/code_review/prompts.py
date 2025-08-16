@@ -166,7 +166,7 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         {{
           "code_reviews": [
             {{ "category": "보안 위험", "items": [ { "filePath": "...", "lineRange": "10-12", "severity": "높음", "message": "..." }, ... ] }},
-            {{} "category": "성능 최적화", "items": "해당 없음" }},
+            {{ "category": "성능 최적화", "items": "해당 없음" }},
             ...
           ],
           "summary": "여러 줄 허용, 단 종결어미는 ~함으로 마무리"
