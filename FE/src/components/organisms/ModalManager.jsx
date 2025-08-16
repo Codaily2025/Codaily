@@ -6,6 +6,7 @@ import NicknameCheckModal from './NicknameCheckModal'
 import TaskDetailModal from './TaskDetailModal'
 import StatusConfirmModal from './StatusConfirmModal'
 import AddFeatureModal from './AddFeatureModal'
+import RetrospectiveResultModal from './RetrospectiveResultModal'
 import { useAuthStore } from "../../stores/authStore"
 
 
@@ -18,6 +19,7 @@ const MODAL_COMPONENTS = {
     TASK_DETAIL: TaskDetailModal,
     STATUS_CONFIRM: StatusConfirmModal,
     ADD_FEATURE: AddFeatureModal,
+    RETROSPECTIVE_RESULT: RetrospectiveResultModal,
     // CONFIRMATION: ConfirmationModal,
     // DELETION: DeleteModal,
     // ...

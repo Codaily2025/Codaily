@@ -169,3 +169,16 @@ export const getProjectRetrospectives = async (projectId, before = null, limit =
         throw new Error(error.response?.data?.message || `프로젝트 ${projectId}의 회고 데이터를 불러오는데 실패했습니다.`)
     }
 }
+
+// 회고 수동 생성
+export const createRetrospective = async (projectId) => {
+    try {
+        const url = `projects/${projectId}/retrospectives`
+        console.log('회고 수동 생성 요청 api url: ', url)
+        const response = await authInstance.post(url)
+        return response.data
+    } catch (error) {
+        console.error('createRetrospective Error: ', error)
+        throw new Error(error.response?.data?.message || '회고 생성에 실패했습니다.')
+    }
+}
