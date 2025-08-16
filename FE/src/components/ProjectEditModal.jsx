@@ -806,49 +806,40 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                   }
                   ]
                   */}
-                  {selectedRepoOption === 0 && (isLoadingRepos || (detailFromStore?.repositories && detailFromStore.repositories.length > 0)) && (
+                  {selectedRepoOption === 0 && detailFromStore?.repositories && detailFromStore.repositories.length > 0 && (
                     <div className={styles.repoListSection}>
-                      {isLoadingRepos ? (
-                        <div className={styles.loadingText}>레포지토리 목록을 불러오는 중...</div>
-                      ) : (
-                        <>
-                          <div className={styles.repoList}>
-                            {detailFromStore.repositories.map((repo, index) => (
-                              <div
-                                key={index}
-                                className={`${styles.repoListItem}`}
-                                onClick={() => setSelectedExistingRepo(repo.repoId)}
-                              >
-                                <div className={styles.repoItemContent}>
-                                  <div className={styles.repoItemName}>{repo.repoName}</div>
-                                  <div className={styles.repoItemUrl}>{repo.repoUrl}</div>
-                                </div>
-                                {/* 삭제 버튼 */}
-                                <button
-                                  className={`${styles.iconBtn} ${styles.deleteBtn}`}
-                                  title={isDeletingRepo ? "삭제 중..." : "삭제"}
-                                  disabled={isDeletingRepo}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(repo.repoId);
-                                  }}
-                                >
-                                  {isDeletingRepo ? (
-                                    <div className={styles.loadingSpinner}></div>
-                                  ) : (
-                                    <DeleteIcon />
-                                  )}
-                                </button>
-                              </div>
-                            ))}
+                      <div className={styles.repoList}>
+                        {detailFromStore.repositories.map((repo, index) => (
+                          <div
+                            key={index}
+                            className={`${styles.repoListItem}`}
+                            onClick={() => setSelectedExistingRepo(repo.repoId)}
+                          >
+                            <div className={styles.repoItemContent}>
+                              <div className={styles.repoItemName}>{repo.repoName}</div>
+                              <div className={styles.repoItemUrl}>{repo.repoUrl}</div>
+                            </div>
+                            {/* 삭제 버튼 */}
+                            <button
+                              className={`${styles.iconBtn} ${styles.deleteBtn}`}
+                              title={isDeletingRepo ? "삭제 중..." : "삭제"}
+                              disabled={isDeletingRepo}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(repo.repoId);
+                              }}
+                            >
+                              {isDeletingRepo ? (
+                                <div className={styles.loadingSpinner}></div>
+                              ) : (
+                                <DeleteIcon />
+                              )}
+                            </button>
                           </div>
-                        </>
-                      )}
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {/* {selectedRepoOption === 0 && !isLoadingRepos && (!detailFromStore?.repositories || detailFromStore.repositories.length === 0) && (
-                    <div className={styles.noReposText}>연결된 레포지토리가 없습니다.</div>
-                  )} */}
 
                   {/* 새로운 레포지토리 생성 카드 */}
                   <div className={`${styles.repoOptionCard} ${selectedRepoOption === 1 ? styles.active : ''}`} onClick={() => setSelectedRepoOption(1)}>
@@ -906,7 +897,10 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
                   {selectedRepoOption === 2 && (
                     <div className={styles.repoListSection}>
                       {isLoadingRepos ? (
-                        <div className={styles.loadingText}>레포지토리 목록을 불러오는 중...</div>
+                        <div className={styles.loadingContainer}>
+                          <div className={styles.loadingSpinnerLarge}></div>
+                          <div className={styles.loadingText}>레포지토리 목록을 불러오는 중...</div>
+                        </div>
                       ) : githubReposData?.repositories?.length > 0 ? (
                         <>
                           <div className={styles.repoList}>
