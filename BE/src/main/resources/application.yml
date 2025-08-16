@@ -85,7 +85,7 @@ github:
 gpt:
   api:
     #feature-inference-url: ${app.url.ai}/api/feature-inference
-    feature-inference-url: ${internal.ai-base-url}/api/feature-inference
+    feature-inference-url: ${internal.ai-base-url}/api/code-review/feature-inference
     #generate-checklist-url: ${app.url.ai}/api/generate-checklist
     generate-checklist-url: ${internal.ai-base-url}/api/generate-checklist
 

@@ -68,6 +68,9 @@ public class WebhookServiceImpl implements WebhookService {
     @Value("${app.url.ai}")
     private String aiUrl;
 
+    @Value("${gpt.api.feature-inference-url}")
+    private String featureInferenceUrl;
+
     @Override
     public void handlePushEvent(WebhookPayload payload, Long userId) {
         List<WebhookPayload.Commit> commits = payload.getCommits();
@@ -93,6 +96,7 @@ public class WebhookServiceImpl implements WebhookService {
             LocalDateTime utcTime = LocalDateTime.ofInstant(odt.toInstant(), ZoneOffset.UTC);
 
             ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repoName);
+
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
                             .author(payload.getSender().getLogin())
@@ -157,7 +161,7 @@ public class WebhookServiceImpl implements WebhookService {
 
                 String patch = file.has("patch") ? file.get("patch").asText() : "";
                 String status = file.has("status") ? file.get("status").asText() : "modified";
-                ChangeType changeType = ChangeType.fromString(status);
+                ChangeType changeType = ChangeType.fromGithubStatus(status);
 
                 diffFiles.add(new DiffFile(filename, patch, changeType));
             }
@@ -180,7 +184,6 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitBranch) {
 
         WebClient webClient = WebClient.builder()
-                .baseUrl(aiUrl) // Python 서버 전용
                 .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
@@ -204,14 +207,27 @@ public class WebhookServiceImpl implements WebhookService {
                 .build();
 
         webClient.post()
-                .uri("/api/code-review/feature-inference")
+                .uri(featureInferenceUrl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
-                .retrieve()
-                .toBodilessEntity()
-                .doOnSuccess(res -> log.info("Python 서버로 diffFiles 전송 성공"))
+                .exchangeToMono(res -> {
+                    if (res.statusCode().isError()) {
+                        return res.bodyToMono(String.class)
+                                .defaultIfEmpty("")
+                                .flatMap(body -> {
+                                    log.error("AI  error {} body={}", res.statusCode(), body);
+                                    return Mono.error(new RuntimeException("AI error " + res.statusCode()));
+                                });
+                    }
+                    return res.toBodilessEntity().then(Mono.empty());
+                })
+                .doOnSuccess(v -> log.info("Python 서버로 diffFiles 전송 성공"))
                 .doOnError(error -> log.error("전송 실패", error))
-                .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
+                .subscribe();
+
+
+        log.info("featureInferenceUrl={}", featureInferenceUrl);
+
     }
 
     @Override
@@ -255,7 +271,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .projectId(projectId).featureName(featureItem.getTitle()).items(codeReviewItems).build();
 
         webClient.post()
-                .uri("/ai/api/code-review/feature-inference")
+                .uri("/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()

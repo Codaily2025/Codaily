@@ -1,7 +1,7 @@
 // FE/src/components/RequirementsSpecification/RequirementsSpecification.jsx
 import React, { useState, useCallback, useEffect } from 'react';
 import styles from './RequirementsSpecification.module.css';
-import TechTag from './TechTag';
+  // import TechTag from './TechTag';
 import Checkbox from './Checkbox';
 import TimeIndicator, { getRoundedHours } from './TimeIndicator';
 import PriorityBadge from './PriorityBadge';
@@ -12,6 +12,7 @@ import { downloadSpecDocument, toggleReduceFlag } from '../../apis/requirementsS
 import { useGetRequirementsSpecification, useGetTotalEstimatedTime } from '../../queries/useRequirementsSpecification';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import caretUpIcon from '../../assets/caret_up.svg';
 
 // 초기 데이터 구조 정의
 const initialRequirementsData = [
@@ -149,7 +150,7 @@ const SubTaskItem = ({ task, onToggleChecked, onAddSubTask, level = 0 }) => {
   const ExpandIcon = ({ isOpen }) => (
     <img
       className={styles.dropdownIcon}
-      src="/src/assets/caret_up.svg"
+      src={caretUpIcon}
       alt="caret"
       style={{
         transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -260,7 +261,7 @@ const TaskItem = ({ task, onToggleChecked, onAddSubTask, onOpenModal, level = 0 
   const ExpandIcon = ({ isOpen }) => (
     <img
       className={styles.dropdownIcon}
-      src="/src/assets/caret_up.svg"
+      src={caretUpIcon}
       alt="caret"
       style={{
         transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
