@@ -61,7 +61,7 @@ const KanbanBoard = memo(() => {
   // console.log(`필드 ${activeTab} 하위 기능들: `, featuresByField)
 
   const handleTaskClick = useCallback((cardData) => {
-    console.log(`Task Clicked!`)
+    console.log(`Task Clicked!: `, cardData)
     openModal('TASK_DETAIL', { event: cardData })
   }, [openModal])
 

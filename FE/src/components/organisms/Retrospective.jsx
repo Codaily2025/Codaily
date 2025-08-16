@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useAllRetrospectives, useProjectRetrospectives } from '@/hooks/useRetrospectives'
 import useProjectStore from '@/stores/projectStore'
 import styles from './Retrospective.module.css'
 import caretUp from '../../assets/caret_up.svg'
 
 const Retrospective = memo(() => {
+  const location = useLocation()
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [expandedCards, setExpandedCards] = useState(new Set())
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -12,6 +14,18 @@ const Retrospective = memo(() => {
   
   const { activeProjects } = useProjectStore()
   const loadMoreRef = useRef()
+
+  // URL 쿼리 파라미터에서 projectId 읽어서 초기 선택 상태 설정
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const projectIdFromUrl = urlParams.get('projectId')
+    
+    if (projectIdFromUrl) {
+      // 숫자로 변환 (api에서 숫자 형태로 오는 경우 대비)
+      const projectId = parseInt(projectIdFromUrl, 10)
+      setSelectedProjectId(projectId)
+    }
+  }, [location.search])
 
   // 선택된 프로젝트에 따라 적절한 훅 사용
   // !!true -> false 설정 시 실제 api 호출!!

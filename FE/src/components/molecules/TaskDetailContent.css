@@ -1,35 +1,46 @@
 .task-detail-content {
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+.task-fields {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 24px 32px; /* 좌우 균형 */
 }
 
-.task-meta-header {
+.task-fields .field-item {
+  margin-bottom: 0;
+  min-height: 30px;
+}
+
+/* FieldItem 내부 스타일 조정 */
+.task-detail-content .field-item {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: center;
+  gap: 32px;
 }
 
-.meta-label {
-  font-size: 14px;
-  color: #6C6B93;
+.task-detail-content .field-item > div:first-child {
+  display: flex;
+  align-items: center;
+  width: 150px;
+  flex-shrink: 0;
+  gap: 16px;
 }
 
-.task-title {
-  font-size: 24px;
-  font-weight: 700;
+.task-detail-content .field-item > div:last-child {
+  flex: 1;
+  display: flex;
+  align-items: center;
 }
 
-.task-detail-list {
-  list-style: disc;
-  padding-left: 20px;
-  margin-top: 12px;
-}
-
-.task-detail-text {
-  font-size: 16px;
-  color: #333;
-  line-height: 1.6;
+/* 라벨 텍스트 스타일 */
+.task-detail-content .field-item label {
+  font-size: 12px;
+  color: #A6A6A6;
+  font-weight: 500;
+  margin: 0;
 }

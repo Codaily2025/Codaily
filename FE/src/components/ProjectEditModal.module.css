@@ -848,6 +848,36 @@
   animation: spin 1s linear infinite;
 }
 
+/* 큰 로딩 스피너 */
+.loadingSpinnerLarge {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #F3F2FA;
+  border-top: 4px solid #8483AB;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin: 0 auto 16px;
+}
+
+/* 로딩 컨테이너 */
+.loadingContainer {
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.loadingText {
+  color: #737373;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 16px;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
