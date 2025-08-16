@@ -139,7 +139,7 @@ async def gen_chat(
             history.add_ai_message("".join(collected))
 
 
-async def gen_spec(formatted_text: str, wrapper_type: ChatIntent, time: int):
+async def gen_spec(formatted_text: str, wrapper_type: ChatIntent, time: float):
     async for line in monitor_sse_stream(
         stream_function_specification(formatted_text, time), wrapper_type=wrapper_type
     ):
