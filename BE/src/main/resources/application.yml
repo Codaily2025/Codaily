@@ -35,8 +35,8 @@ spring:
             client-id: ${GITHUB.CLIENT_ID}
             client-secret: ${GITHUB.CLIENT_SECRET}
             redirect-uri: ${app.url.backend}/oauth/github/callback
-          #            token-uri: https://github.com/login/oauth/access_token
-          #            user-uri: https://api.github.com/user
+            #            token-uri: https://github.com/login/oauth/access_token
+            #            user-uri: https://api.github.com/user
             scope:
               - user
               - repo
@@ -53,7 +53,8 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/api/login/oauth2/code/naver"
           kakao:
-            client-id: ${KAKAO_REST_API_KEY}
+            client-id: ${KAKAO.CLIENT_ID}
+            client-secret: ${KAKAO.CLIENT_SECRET}
             redirect-uri: "{baseUrl}/api/login/oauth2/code/kakao"
             authorization-grant-type: authorization_code
             scope: profile_nickname
