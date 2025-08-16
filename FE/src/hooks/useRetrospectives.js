@@ -1,5 +1,5 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { getAllRetrospectives, getProjectRetrospectives } from '@/apis/projectApi'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getAllRetrospectives, getProjectRetrospectives, createRetrospective } from '@/apis/projectApi'
 
 // 더미 데이터 import (실제 서버 연동 전까지 사용)
 import { fetchedData, fetchedData2, fetchedData3, fetchedData4 } from '/retrospectiveRes.js'
@@ -100,6 +100,28 @@ export const useProjectRetrospectives = (projectId, useDummyData = true) => {
     refetchOnWindowFocus: false,
     onError: (error) => {
       console.error('useProjectRetrospectives Error:', error)
+    }
+  })
+}
+
+// 회고 수동 생성 mutation
+export const useCreateRetrospectiveMutation = () => {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: createRetrospective,
+    onSuccess: (data, projectId) => {
+      // 특정 프로젝트 회고 데이터 쿼리 무효화
+      queryClient.invalidateQueries({
+        queryKey: RETROSPECTIVE_QUERY_KEYS.project(projectId)
+      })
+      // 모든 프로젝트 회고 데이터도 무효화 (전체 목록에도 영향)
+      queryClient.invalidateQueries({
+        queryKey: RETROSPECTIVE_QUERY_KEYS.allProjects()
+      })
+    },
+    onError: (error) => {
+      console.error('useCreateRetrospectiveMutation Error:', error)
     }
   })
 }

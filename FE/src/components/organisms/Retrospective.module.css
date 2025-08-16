@@ -23,6 +23,9 @@
 .projectSelector {
   position: relative;
   min-width: 210px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .dropdown {
@@ -456,6 +459,30 @@
 
 .loadMoreTrigger {
   height: 20px;
+}
+
+/* 회고 수동 생성 버튼 */
+.createRetrospectiveBtn {
+  height: 36px;
+  padding: 8px 16px;
+  background-color: #5A597D;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.createRetrospectiveBtn:hover:not(:disabled) {
+  background-color: #6C6B93;
+}
+
+.createRetrospectiveBtn:disabled {
+  background-color: #9CA3AF;
+  cursor: not-allowed;
 }
 
 /* 반응형 디자인 */

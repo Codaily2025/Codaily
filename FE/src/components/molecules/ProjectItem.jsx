@@ -1,5 +1,6 @@
 import React from 'react'
 import { ChevronUp, ChevronDown, FolderOpen, Calendar, BarChart3, CodeXml, Settings } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import styles from './ProjectItem.module.css'
 
 const ProjectItem = ({ 
@@ -10,12 +11,26 @@ const ProjectItem = ({
   className = ''
 }) => {
   const { isActive = false, isExpanded = false } = state
+  const navigate = useNavigate()
   
   const subMenuItems = [
-    { icon: Calendar, label: 'history' },
     { icon: CodeXml, label: 'code reviews' },
-    { icon: Settings, label: 'settings' }
+    { icon: Calendar, label: 'history' },
+    // { icon: Settings, label: 'settings' }
   ]
+
+  // 서브메뉴 아이템 클릭 핸들러
+  const handleSubMenuClick = (item, event) => {
+    event.stopPropagation() // 부모 클릭 이벤트 방지
+    
+    if (item.label === 'history') {
+      // history 클릭 시 회고 탭으로 이동하면서 해당 프로젝트 선택
+      navigate(`/history?projectId=${project.projectId || project.id}&tab=retrospective`)
+    } else if (item.label === 'code reviews') {
+      // code reviews 클릭 시 코드리뷰 탭으로 이동
+      // navigate('/history?tab=code-review')
+    }
+  }
 
   // 상태에 따른 스타일 결정
   const getItemClasses = () => {
@@ -62,7 +77,11 @@ const ProjectItem = ({
       {isExpanded && (
         <div className={styles.projectSubmenu}>
           {subMenuItems.map((item) => (
-            <div key={item.label} className={styles.submenuItem}>
+            <div 
+              key={item.label} 
+              className={styles.submenuItem}
+              onClick={(event) => handleSubMenuClick(item, event)}
+            >
               <item.icon size={16} className={styles.submenuIcon} />
               <span className={styles.submenuLabel}>{item.label}</span>
             </div>

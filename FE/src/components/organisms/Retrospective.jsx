@@ -1,17 +1,36 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
-import { useAllRetrospectives, useProjectRetrospectives } from '@/hooks/useRetrospectives'
+import { useLocation } from 'react-router-dom'
+import { useAllRetrospectives, useProjectRetrospectives, useCreateRetrospectiveMutation } from '@/hooks/useRetrospectives'
 import useProjectStore from '@/stores/projectStore'
+import useModalStore from '@/store/modalStore'
 import styles from './Retrospective.module.css'
 import caretUp from '../../assets/caret_up.svg'
 
 const Retrospective = memo(() => {
+  const location = useLocation()
   const [selectedProjectId, setSelectedProjectId] = useState(null)
   const [expandedCards, setExpandedCards] = useState(new Set())
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [currentYearMonth, setCurrentYearMonth] = useState('')
   
   const { activeProjects } = useProjectStore()
+  const { openModal } = useModalStore()
   const loadMoreRef = useRef()
+  
+  // 회고 수동 생성 mutation
+  const createRetrospectiveMutation = useCreateRetrospectiveMutation()
+
+  // URL 쿼리 파라미터에서 projectId 읽어서 초기 선택 상태 설정
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search)
+    const projectIdFromUrl = urlParams.get('projectId')
+    
+    if (projectIdFromUrl) {
+      // 숫자로 변환 (api에서 숫자 형태로 오는 경우 대비)
+      const projectId = parseInt(projectIdFromUrl, 10)
+      setSelectedProjectId(projectId)
+    }
+  }, [location.search])
 
   // 선택된 프로젝트에 따라 적절한 훅 사용
   // !!true -> false 설정 시 실제 api 호출!!
@@ -114,6 +133,26 @@ const Retrospective = memo(() => {
     setSelectedProjectId(projectId)
     setIsDropdownOpen(false)
     setExpandedCards(new Set()) // 프로젝트 변경 시 확장된 카드 초기화
+  }
+
+  // 회고 수동 생성 버튼 클릭 핸들러
+  const handleCreateRetrospective = () => {
+    if (!selectedProjectId) return
+    
+    createRetrospectiveMutation.mutate(selectedProjectId, {
+      onSuccess: () => {
+        openModal('RETROSPECTIVE_RESULT', {
+          success: true,
+          message: '회고가 성공적으로 생성되었습니다.'
+        })
+      },
+      onError: (error) => {
+        openModal('RETROSPECTIVE_RESULT', {
+          success: false,
+          message: error.message || '회고 생성 중 오류가 발생했습니다.'
+        })
+      }
+    })
   }
 
   const getSelectedProjectName = () => {
@@ -289,6 +328,18 @@ const Retrospective = memo(() => {
             <span>{getSelectedProjectName()}</span>
             <img className={styles.dropdownArrow} src={caretUp} alt="caret" />
           </div>
+          
+          {/* 회고 수동 생성 버튼 - 특정 프로젝트 선택 시에만 표시 */}
+          {/* TODO: 버튼 위치 조정하기 */}
+          {selectedProjectId && (
+            <button 
+              className={styles.createRetrospectiveBtn}
+              onClick={handleCreateRetrospective}
+              disabled={createRetrospectiveMutation.isPending}
+            >
+              {createRetrospectiveMutation.isPending ? '생성 중...' : '회고 수동 생성'}
+            </button>
+          )}
           
           {isDropdownOpen && (
             <div className={styles.dropdownMenu}>
