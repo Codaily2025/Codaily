@@ -44,6 +44,7 @@ const ProjectsSection = () => {
   // 서버에서 데이터를 가져왔을 때 로컬 스토어에 설정
   useEffect(() => {
     if (projectsFromServer) {
+      console.log('API에서 가져온 프로젝트 목록:', projectsFromServer);
       setProjects(projectsFromServer);
     }
   }, [projectsFromServer, setProjects]);
@@ -194,68 +195,70 @@ const ProjectsSection = () => {
           </div>
         </div>
       ) : (
-        <div className={styles.projectList}>
-          {filteredProjects.slice(0, visibleCount).map((project) => (
-            <div
-              key={project.id}
-              className={`${styles.projectCard} ${project.disabled ? styles.disabled : ''}`}
-              onClick={() => handleProjectBoard(project.id)}
-            >
-              {/* 우측 상단 삭제, 설정 버튼 */}
-              <div className={styles.cardActions}>
-                <button 
-                  className={`${styles.iconBtn} ${styles.deleteBtn}`} 
-                  title={isDeleting ? "삭제 중..." : "삭제"} 
-                  disabled={isDeleting}
-                  onClick={(e) => {
-                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
-                    // 삭제 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
-                    handleDelete(project.id)
-                  }}
-                >
-                  {isDeleting && <div className={styles.loadingSpinner}></div>}
-                </button>
-                <button 
-                  className={`${styles.iconBtn} ${styles.settingsBtn}`} 
-                  title="설정" 
-                  onClick={(e) => {
-                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
-                    // 설정 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
-                    handleSettings(project)
-                  }}
-                >
-                </button>
-              </div>
-              <h3>{project.title}</h3>
-              <p className={styles.projectDuration}>{project.duration}</p>
-              <div className={styles.progressBarContainer}>
-                <span>진행률</span>
-                <span>{project.progress}%</span>
-                <div className={styles.progressBar}>
-                  <div
-                    className={styles.progress}
-                    style={{
-                      width: `${project.progress}%`,
-                      backgroundColor: project.disabled ? '#CCCBE4' : undefined
+        <>
+          <div className={styles.projectList}>
+            {filteredProjects.slice(0, visibleCount).map((project) => (
+              <div
+                key={project.id}
+                className={`${styles.projectCard} ${project.disabled ? styles.disabled : ''}`}
+                onClick={() => handleProjectBoard(project.id)}
+              >
+                {/* 우측 상단 삭제, 설정 버튼 */}
+                <div className={styles.cardActions}>
+                  <button 
+                    className={`${styles.iconBtn} ${styles.deleteBtn}`} 
+                    title={isDeleting ? "삭제 중..." : "삭제"} 
+                    disabled={isDeleting}
+                    onClick={(e) => {
+                      e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                      // 삭제 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                      handleDelete(project.id)
                     }}
-                  ></div>
+                  >
+                    {isDeleting && <div className={styles.loadingSpinner}></div>}
+                  </button>
+                  <button 
+                    className={`${styles.iconBtn} ${styles.settingsBtn}`} 
+                    title="설정" 
+                    onClick={(e) => {
+                      e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                      // 설정 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                      handleSettings(project)
+                    }}
+                  >
+                  </button>
+                </div>
+                <h3>{project.title}</h3>
+                <p className={styles.projectDuration}>{project.duration}</p>
+                <div className={styles.progressBarContainer}>
+                  <span>진행률</span>
+                  <span>{project.progress}%</span>
+                  <div className={styles.progressBar}>
+                    <div
+                      className={styles.progress}
+                      style={{
+                        width: `${project.progress}%`,
+                        backgroundColor: project.disabled ? '#CCCBE4' : undefined
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                {/* 기술 스택 */}
+                <div className={styles.projectStack}>
+                  {/* {project.stack.map((tech, index) => (
+                    <span
+                      key={index}
+                      className={project.disabled ? styles.techTagDisabled : styles.techTagInProcess}
+                    >
+                      {tech}
+                    </span>
+                  ))} */}
                 </div>
               </div>
-              {/* 기술 스택 */}
-              <div className={styles.projectStack}>
-                {/* {project.stack.map((tech, index) => (
-                  <span
-                    key={index}
-                    className={project.disabled ? styles.techTagDisabled : styles.techTagInProcess}
-                  >
-                    {tech}
-                  </span>
-                ))} */}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
           
-          {/* 더보기 버튼 */}
+          {/* 더보기 버튼 - projectList 밖으로 이동 */}
           {visibleCount < filteredProjects.length && (
             <div className={styles.loadMoreContainer}>
               <button className={styles.loadMoreButton} onClick={handleLoadMore}>
@@ -263,7 +266,7 @@ const ProjectsSection = () => {
               </button>
             </div>
           )}
-        </div>
+        </>
       )}
     </section>
   );
