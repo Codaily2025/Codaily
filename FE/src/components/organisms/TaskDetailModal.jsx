@@ -15,7 +15,7 @@ const TaskDetailModal = ({ data, onClose }) => {
     fontSize: '16px',
     color: '#303030',
     marginTop: '32px',
-    width: '94px',
+    width: '100%',
   }
 
   return (

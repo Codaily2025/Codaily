@@ -99,16 +99,17 @@ const Project = () => {
           {/* 전역에서 가져온 currentProject 데이터 */}
           <h1>{currentProject?.title || '프로젝트'}</h1>
           {/* <p>{currentProject?.description || `프로젝트 ID: ${currentProject?.projectId}`}</p> */}
-          {currentProject?.lastWorkedDate && (
-            <span className="last-worked">
-              마지막 작업: {new Date(currentProject?.lastWorkedDate).toLocaleDateString('ko-KR')}
-            </span>
-          )}
         </div>
+        {currentProject?.lastWorkedDate && (
+          <span className="last-worked">
+            마지막 작업일: {new Date(currentProject?.lastWorkedDate).toLocaleDateString('ko-KR')}
+          </span>
+        )}
         {/* <button className="create-project-button" onClick={handleCreateProject}>
           + 새 프로젝트 만들기
         </button> */}
       </div>
+      <div className="project-divider"></div>
       <ProjectTemplate 
         currentProject={currentProject} 
         projects={projects}

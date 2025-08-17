@@ -9,7 +9,7 @@
 
 .modalHeader {
   padding: 0px 24px 16px 12px;
-  border-bottom: 1px solid #5A597D;
+  border-bottom: 1px solid #B4B3DC;
 }
 
 .modalTitle {
@@ -33,7 +33,7 @@
   padding: 16px 24px;
   background-color: #F3F4F6;
   border-radius: 24px;
-  border: 1px solid #5A597D;
+  border: 1px solid #B4B3DC;
 }
 
 .featureTitle {
@@ -100,7 +100,7 @@
 .modalFooter {
   display: flex;
   gap: 16px;
-  padding: 24px 24px 0px 24px;
+  padding: 24px 0px 0px 0px;
   justify-content: center;
 }
 
@@ -115,7 +115,8 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 100px;
+  /* min-width: 100px; */
+  width: 100%;
 }
 
 /* .cancelBtn:hover {
@@ -133,7 +134,9 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 100px;
+  /* min-width: 100px; */
+    width: 100%;
+
 }
 
 .confirmBtn:hover {

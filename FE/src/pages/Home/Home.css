@@ -47,7 +47,8 @@
 
 /* 메인 타이틀 */
 .hero-title {
-  color: #515067;
+  /* color: #515067; */
+  color: #3B3954;
   /* font-size: 62px; */
   font-size: 55px;
   font-family: 'Roboto', sans-serif;
@@ -58,7 +59,8 @@
 
 /* 서브 타이틀 */
 .hero-subtitle {
-  color: #515067;
+  /* color: #515067; */
+  color: #4B4964;
   font-size: 22px;
   font-family: 'Pretendard Variable', sans-serif;
   font-weight: 400;
@@ -71,10 +73,12 @@
   width: 225px;
   height: 64px;
   background-color: transparent;
-  border: 2px solid #515067;
+  /* border: 2px solid #515067; */
+  border: 2px solid #3B3954;
   border-radius: 10px;
   
-  color: #515067;
+  /* color: #515067; */
+  color: #3B3954;
   /* font-size: 22px; */
   font-size: 21px;
   font-family: 'Inter', sans-serif;
