@@ -15,6 +15,7 @@ import com.codaily.project.entity.ProjectRepositories;
 import com.codaily.project.repository.FeatureItemRepository;
 import com.codaily.project.repository.ProjectRepository;
 import com.codaily.project.repository.ScheduleRepository;
+import com.codaily.project.service.ProjectProgressService;
 import lombok.RequiredArgsConstructor;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,6 +41,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final ScheduleRepository scheduleRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    private final ProjectProgressService projectProgressService;
 
 
     @Override
@@ -244,15 +247,30 @@ public class MyPageServiceImpl implements MyPageService {
     }
 
     private ProjectListResponse convertToList(Project project){
+        Double progressRate = getProgressRate(project.getProjectId());
+
         return ProjectListResponse.builder()
                 .projectId(project.getProjectId())
                 .title(project.getTitle())
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
                 .status(project.getStatus().toString())
+                .progressRate(progressRate)
                 .daysOfWeeks(convertDaysOfWeekToDto(project.getDaysOfWeek()))
                 .schedules(convertSchedulesToDto(project.getSchedules()))
                 .build();
+    }
+
+    private Double getProgressRate(Long projectId) {
+        try {
+            return Optional.ofNullable(projectProgressService.getProjectProgress(projectId))
+                    .map(response -> response.getData())
+                    .map(data -> data.getOverallProgress())
+                    .map(progress -> progress.getPercentage())
+                    .orElse(0.0);
+        } catch (Exception e) {
+            return 0.0;
+        }
     }
 
     private List<ProjectRepositoryResponse> convertRepositoriesToDto(List<ProjectRepositories> projectRepositories) {
