@@ -34,7 +34,8 @@ def create_feature_graph():
     def route_after_checklist_apply(state: CodeReviewState) -> str:
         if state.get("force_done") or state.get("go_summary") or state.get("no_code_review_file_patch"):
             return "to_summary"
-    return "to_detail"
+        return "to_detail"
+    
     builder.add_conditional_edges(
         "apply_checklist_evaluation",
         route_after_checklist_apply,
