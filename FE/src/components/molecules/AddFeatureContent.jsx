@@ -177,8 +177,8 @@ const AddFeatureContent = ({
                             className={styles.range}
                         />
                         <div className={styles.rangeLabels}>
-                            <span>낮음(1)</span>
-                            <span>높음(10)</span>
+                            <span>높음(1)</span>
+                            <span>낮음(10)</span>
                         </div>
                     </div>
 
