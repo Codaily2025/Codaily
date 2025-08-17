@@ -16,7 +16,7 @@ public class ProjectListResponse {
     private LocalDate startDate;
     private LocalDate endDate;
     private String status;
-    private int progressRate;
+    private Double progressRate;
     private List<String> techStacks;
     private List<DaysOfWeekResponse> daysOfWeeks;
     private List<ScheduleResponse> schedules;

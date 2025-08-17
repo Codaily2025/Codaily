@@ -62,11 +62,12 @@ class CodeReviewState(TypedDict, total=False):
     # 체크리스트/평가
     feature_id: Annotated[Optional[int], prefer_non_null]
     checklist: List[Dict[str, Any]]              # {id, title,...} 등 자유
-    implements: Optional[bool]
+    implemented: Optional[bool]
     checklist_evaluation: Dict[str, bool]        # {"항목명": true/false}
     extra_implemented: List[str]
     checklist_file_map: Dict[str, List[str]]     # {"항목명": ["a.java","b.java"]}
     no_code_review_file_patch: bool
+    go_summary: bool
 
     # 코드리뷰 결과
     review_files: Annotated[List[Dict[str, Any]], prefer_non_empty]

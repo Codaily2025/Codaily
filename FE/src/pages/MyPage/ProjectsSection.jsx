@@ -24,6 +24,9 @@ const ProjectsSection = () => {
   // 삭제 진행 상태 관리
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // 더보기 기능을 위한 상태 (초기값 10개)
+  const [visibleCount, setVisibleCount] = useState(10);
+
   const { projects, setProjects } = useProjectStore();
   
   // 스크롤 위치 유지를 위한 ref
@@ -41,6 +44,7 @@ const ProjectsSection = () => {
   // 서버에서 데이터를 가져왔을 때 로컬 스토어에 설정
   useEffect(() => {
     if (projectsFromServer) {
+      console.log('API에서 가져온 프로젝트 목록:', projectsFromServer);
       setProjects(projectsFromServer);
     }
   }, [projectsFromServer, setProjects]);
@@ -122,6 +126,11 @@ const ProjectsSection = () => {
     navigate(`/project/${id}`);
   };
 
+  // 더보기 버튼 클릭 핸들러
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + 10);
+  };
+
   // const filteredProjects = localProjects.filter((project) => {
   const filteredProjects = projects.filter((project) => {
     if (activeFilter === '전체') return true;
@@ -129,6 +138,11 @@ const ProjectsSection = () => {
     if (activeFilter === '완료') return project.disabled;
     return true;
   });
+
+  // 필터가 변경될 때 visibleCount 초기화
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [activeFilter]);
 
   const handleModalClose = useCallback(() => {
     closeModal();
@@ -181,67 +195,78 @@ const ProjectsSection = () => {
           </div>
         </div>
       ) : (
-        <div className={styles.projectList}>
-          {filteredProjects.map((project) => (
-            <div
-              key={project.id}
-              className={`${styles.projectCard} ${project.disabled ? styles.disabled : ''}`}
-              onClick={() => handleProjectBoard(project.id)}
-            >
-              {/* 우측 상단 삭제, 설정 버튼 */}
-              <div className={styles.cardActions}>
-                <button 
-                  className={`${styles.iconBtn} ${styles.deleteBtn}`} 
-                  title={isDeleting ? "삭제 중..." : "삭제"} 
-                  disabled={isDeleting}
-                  onClick={(e) => {
-                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
-                    // 삭제 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
-                    handleDelete(project.id)
-                  }}
-                >
-                  {isDeleting && <div className={styles.loadingSpinner}></div>}
-                </button>
-                <button 
-                  className={`${styles.iconBtn} ${styles.settingsBtn}`} 
-                  title="설정" 
-                  onClick={(e) => {
-                    e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
-                    // 설정 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
-                    handleSettings(project)
-                  }}
-                >
-                </button>
-              </div>
-              <h3>{project.title}</h3>
-              <p className={styles.projectDuration}>{project.duration}</p>
-              <div className={styles.progressBarContainer}>
-                <span>진행률</span>
-                <span>{project.progress}%</span>
-                <div className={styles.progressBar}>
-                  <div
-                    className={styles.progress}
-                    style={{
-                      width: `${project.progress}%`,
-                      backgroundColor: project.disabled ? '#CCCBE4' : undefined
+        <>
+          <div className={styles.projectList}>
+            {filteredProjects.slice(0, visibleCount).map((project) => (
+              <div
+                key={project.id}
+                className={`${styles.projectCard} ${project.disabled ? styles.disabled : ''}`}
+                onClick={() => handleProjectBoard(project.id)}
+              >
+                {/* 우측 상단 삭제, 설정 버튼 */}
+                <div className={styles.cardActions}>
+                  <button 
+                    className={`${styles.iconBtn} ${styles.deleteBtn}`} 
+                    title={isDeleting ? "삭제 중..." : "삭제"} 
+                    disabled={isDeleting}
+                    onClick={(e) => {
+                      e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                      // 삭제 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                      handleDelete(project.id)
                     }}
-                  ></div>
+                  >
+                    {isDeleting && <div className={styles.loadingSpinner}></div>}
+                  </button>
+                  <button 
+                    className={`${styles.iconBtn} ${styles.settingsBtn}`} 
+                    title="설정" 
+                    onClick={(e) => {
+                      e.stopPropagation(); // 카드 클릭 이벤트 버블링 방지
+                      // 설정 버튼을 클릭했을 때 상세 페이지로 이동하지 않기 위함
+                      handleSettings(project)
+                    }}
+                  >
+                  </button>
+                </div>
+                <h3>{project.title}</h3>
+                <p className={styles.projectDuration}>{project.duration}</p>
+                <div className={styles.progressBarContainer}>
+                  <span>진행률</span>
+                  <span>{project.progress}%</span>
+                  <div className={styles.progressBar}>
+                    <div
+                      className={styles.progress}
+                      style={{
+                        width: `${project.progress}%`,
+                        backgroundColor: project.disabled ? '#CCCBE4' : undefined
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                {/* 기술 스택 */}
+                <div className={styles.projectStack}>
+                  {/* {project.stack.map((tech, index) => (
+                    <span
+                      key={index}
+                      className={project.disabled ? styles.techTagDisabled : styles.techTagInProcess}
+                    >
+                      {tech}
+                    </span>
+                  ))} */}
                 </div>
               </div>
-              {/* 기술 스택 */}
-              <div className={styles.projectStack}>
-                {/* {project.stack.map((tech, index) => (
-                  <span
-                    key={index}
-                    className={project.disabled ? styles.techTagDisabled : styles.techTagInProcess}
-                  >
-                    {tech}
-                  </span>
-                ))} */}
-              </div>
+            ))}
+          </div>
+          
+          {/* 더보기 버튼 - projectList 밖으로 이동 */}
+          {visibleCount < filteredProjects.length && (
+            <div className={styles.loadMoreContainer}>
+              <button className={styles.loadMoreButton} onClick={handleLoadMore}>
+                더보기
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
     </section>
   );

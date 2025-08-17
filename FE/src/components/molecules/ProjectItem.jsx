@@ -23,12 +23,18 @@ const ProjectItem = ({
   const handleSubMenuClick = (item, event) => {
     event.stopPropagation() // 부모 클릭 이벤트 방지
     
+    console.log('ProjectItem 서브메뉴 클릭:', item.label, 'projectId:', project.projectId || project.id)
+    
     if (item.label === 'history') {
       // history 클릭 시 회고 탭으로 이동하면서 해당 프로젝트 선택
-      navigate(`/history?projectId=${project.projectId || project.id}&tab=retrospective`)
+      const url = `/history?projectId=${project.projectId || project.id}&tab=retrospective`
+      console.log('회고 페이지로 이동:', url)
+      navigate(url)
     } else if (item.label === 'code reviews') {
-      // code reviews 클릭 시 코드리뷰 탭으로 이동
-      // navigate('/history?tab=code-review')
+      // code reviews 클릭 시 코드리뷰 탭으로 이동하면서 해당 프로젝트 선택
+      const url = `/history?projectId=${project.projectId || project.id}&tab=code-review`
+      console.log('코드리뷰 페이지로 이동:', url)
+      navigate(url)
     }
   }
 
