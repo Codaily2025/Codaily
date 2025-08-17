@@ -253,13 +253,14 @@
 
 .issueItem {
   width: 100%;
+  box-sizing: border-box;
   background: rgba(248, 248, 252, 0.50);
   border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 13px;
   /* padding: 15px 0 15px 11px; */
-  padding: 15px 0 15px 24px;
+  padding: 15px 24px 15px 24px;
   position: relative;
 }
 
@@ -288,7 +289,9 @@
 }
 
 .issueFile {
-  color: #6D8BF0;
+  /* color: #ae60e2; */
+  color: #a251d8;
+  /* color: #9694d6; */
   font-size: 13px;
   font-weight: 500;
 }
