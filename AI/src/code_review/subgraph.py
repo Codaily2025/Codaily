@@ -48,8 +48,8 @@ def create_feature_graph():
 
     def route_after_checklist_apply(state: CodeReviewState) -> str:
     # 파일맵이 없거나(force_done/go_summary면) 요약으로 직행
-    if state.get("force_done") or state.get("go_summary") or state.get("no_code_review_file_patch"):
-        return "to_summary"
+        if state.get("force_done") or state.get("go_summary") or state.get("no_code_review_file_patch"):
+            return "to_summary"
     return "to_detail"
 
 
