@@ -347,7 +347,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-top: 30px;
+  margin-top: 0;
 }
 
 /* 더보기 버튼 스타일 (CodeReview 페이지 참고) */
@@ -366,8 +366,7 @@
   border: none;
   border-radius: 8px;
   transition: all 0.2s ease;
-  width: 100%;
-  max-width: 200px;
+  width: 854.006px;
 }
 
 .loadMoreButton:hover {
