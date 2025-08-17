@@ -160,6 +160,8 @@ async def run_feature_inference(state: CodeReviewState) -> CodeReviewState:
 # checklist 요청
 # -----------------------------
 async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
+    print(f"{state.get('feature_name')} 노드 실행 : run_checklist_fetch")
+
     project_id = state["project_id"]
     feature_name = state["feature_name"]
 
@@ -210,6 +212,8 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
 # -----------------------------
 # (기존 함수 위/아래 구조 유지)
 async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeReviewState":
+    print(f"{state.get('feature_name')} 노드 실행 : run_feature_implementation_check")
+
     feature_name   = state.get("feature_name", "")
     checklist      = state.get("checklist") or []   # [{item: str, done: bool}, ...]
     diff_files     = state.get("diff_files") or []
@@ -503,8 +507,14 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
 # checklist 평가 반영
 # -----------------------------
 async def apply_checklist_evaluation(state: "CodeReviewState") -> "CodeReviewState":
+    print(f"{state.get('feature_name')} 노드 실행 : apply_checklist_evaluation")
+
     checklist     = state.get("checklist") or []
     checklist_eval = state.get("checklist_evaluation") or {}
+
+    print("[APPLY:BEGIN] keys_before")
+    print(f"checklist: {checklist}")
+    print(f"checklist_eval: {checklist_eval}")
 
     # 빈 체크리스트도 안전 처리
     if not checklist:
@@ -533,6 +543,11 @@ async def apply_checklist_evaluation(state: "CodeReviewState") -> "CodeReviewSta
     state["no_code_review_file_patch"] = len(state.get("checklist_file_map") or {}) == 0
 
     print(f"[NODE:run_xxx] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
+    
+    print("[APPLY:END] implemented=", state["implemented"],
+          "ce_keys=", list(state["checklist_evaluation"].keys()),
+          "cfm_keys=", list(state["checklist_file_map"].keys()))
+    
     return state
 
 # async def apply_checklist_evaluation(state: CodeReviewState) -> CodeReviewState:
@@ -627,6 +642,8 @@ async def apply_checklist_evaluation(state: "CodeReviewState") -> "CodeReviewSta
 # 코드리뷰 파일 요청
 # -----------------------------
 async def run_code_review_file_fetch(state: CodeReviewState) -> CodeReviewState:
+    print(f"{state.get('feature_name')} 노드 실행 : run_code_review_file_fetch")
+
     project_id = state["project_id"]
     commit_hash = state["commit_hash"]
     commit_info = state.get("commit_info", {})
@@ -721,6 +738,8 @@ def _norm_path(p: str) -> str:
 # 코드리뷰 수행
 # -----------------------------
 async def run_feature_code_review(state: CodeReviewState) -> CodeReviewState:
+    print(f"{state.get('feature_name')} 노드 실행 : run_feature_code_review")
+
     file_map = state.get("checklist_file_map", {}) or {}
     review_files = state.get("review_files", []) or []
     print("state.review_files 샘플:", (review_files[:1] if review_files else "EMPTY"))
@@ -842,6 +861,8 @@ def normalize_summary_text_to_map(text: str) -> Dict[str, str]:
 # 코드리뷰아이템 가져오기
 # -----------------------------
 async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
+    print(f"{state.get('feature_name')} 노드 실행 : run_code_review_item_fetch")
+
     project_id = state["project_id"]
     feature_name = state["feature_name"]
 
@@ -868,6 +889,10 @@ async def run_code_review_item_fetch(state: CodeReviewState) -> CodeReviewState:
 # 코드리뷰 요약
 # -----------------------------
 async def run_code_review_summary(state: CodeReviewState) -> CodeReviewState:
+    print(f"{state.get('feature_name')} 노드 실행 : run_code_review_summary")
+    print(f"code_reivew_items : {state.get('code_review_items')}")
+    print(f"code_review_items_java : {state.get('code_review_items_java')}")
+
     items = state.get("code_review_items", []) + state.get("code_review_items_java", [])
 
     items = dedup_groups_preserve_order(items)

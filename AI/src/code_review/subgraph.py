@@ -32,10 +32,8 @@ def create_feature_graph():
     # state["go_summary"] 가 True → 바로 요약 노드로
     # False → 체크리스트 평가 적용 → 파일 매핑 → 코드리뷰
     def route_after_checklist_apply(state: CodeReviewState) -> str:
-        if state.get("force_done") or state.get("go_summary") or state.get("no_code_review_file_patch"):
-            return "to_summary"
-        return "to_detail"
-    
+        return "to_summary" if bool(state.get("no_code_review_file_patch")) else "to_detail"
+
     builder.add_conditional_edges(
         "apply_checklist_evaluation",
         route_after_checklist_apply,
@@ -68,6 +66,11 @@ def create_feature_graph():
 
     return builder.compile()
 
+app = create_feature_graph()        
+g = app.get_graph()
+
+# 1) ASCII로 구조 출력
+print(g.draw_ascii())
 
 # from langgraph.graph import StateGraph, END
 # from src.code_review.state import CodeReviewState
