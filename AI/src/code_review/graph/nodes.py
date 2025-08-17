@@ -739,6 +739,21 @@ async def run_code_review_file_fetch(state: CodeReviewState) -> CodeReviewState:
             "content": f.get("content", "")
         })
 
+    requested_paths = {_norm_path(p) for p in (file_paths or [])}
+    requested_basenames = {p.split("/")[-1] for p in requested_paths}
+
+    before = len(normalized_files)
+    normalized_files = [
+        nf for nf in normalized_files
+        if nf["file_path"] in requested_paths
+        or nf["file_path"].split("/")[-1] in requested_basenames
+    ]
+    if len(normalized_files) != before:
+        print(f"비요청 파일 필터링: before={before}, after={len(normalized_files)} "
+            f"(req={sorted(requested_paths)})")
+
+    state["review_files"] = normalized_files
+
     state["review_files"] = normalized_files
     print("정규화된 리뷰 파일 경로들:", [x["file_path"] for x in normalized_files])
     print(f"최종 review_files: {len(normalized_files)}개")
@@ -806,11 +821,22 @@ async def run_feature_code_review(state: CodeReviewState) -> CodeReviewState:
             "files": files_to_review,
         }
 
-        raw = await ask_str(code_review_prompt, **prompt_input)
+        # raw = await ask_str(code_review_prompt, **prompt_input)
+        # 1) 가능하면 JSON 강제
         try:
-            parsed = json.loads(raw)
+            llm_json = llm.bind(response_format={"type": "json_object"})
         except Exception:
-            parsed = {"code_reviews": [], "summary": str(raw).strip()}
+            llm_json = llm
+
+        raw_msg = await (code_review_prompt | llm_json).ainvoke(prompt_input)
+        raw = getattr(raw_msg, "content", raw_msg)
+
+        # 2) 코드펜스도 안전하게 제거 후 파싱
+        try:
+            parsed = json.loads(_strip_code_fences(raw))
+        except Exception:
+            parsed = _json_loads_loose(raw) or {"code_reviews": [], "summary": str(raw).strip()}
+
 
         for category_review in parsed.get("code_reviews", []) or []:
             if isinstance(category_review.get("items"), str) and category_review["items"].strip() == "해당 없음":

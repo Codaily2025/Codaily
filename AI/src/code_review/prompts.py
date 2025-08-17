@@ -218,16 +218,6 @@ review_summary_prompt = ChatPromptTemplate.from_messages([
     - severity: 심각도 ∈ {{높음, 중간, 낮음}}
 
     규칙:
-    0) categorized_reviews가 비어있거나 없음 → 아래 형식으로만 출력:
-       - summary: 코드를 찾을 수 없음
-       - quality_score: 0
-       - convention: 코드를 찾을 수 없음
-       - bug_risk: 코드를 찾을 수 없음
-       - complexity: 코드를 찾을 수 없음
-       - security_risk: 코드를 찾을 수 없음
-       - performance: 코드를 찾을 수 없음
-       - refactoring_suggestion: 코드를 찾을 수 없음
-
     1) 항목이 존재하면, 각 카테고리 한 줄 요약을 작성하되, 실제 메시지에서 핵심을 뽑아 구체적으로 요약할 것.
        - 구체성: 파일/라인, 규칙명, 함수명, API 엔드포인트, 주요 키워드가 보이면 반영.
        - 중복 메시지는 묶어 간결히 표현.
