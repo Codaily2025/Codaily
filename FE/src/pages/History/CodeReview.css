@@ -74,7 +74,34 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* 프로젝트 드롭다운 스크롤 기능 - 5개 항목 + 모든프로젝트 = 총 6개 기준으로 최대 높이 설정 */
+  max-height: 350px; /* 대략 6개 항목이 보이는 높이 */
+  overflow-y: auto;
+  /* Firefox용 스크롤바 스타일 */
+  scrollbar-width: thin;
+  scrollbar-color: #B4B3DC #F8F8F8;
 }
+
+/* 프로젝트 드롭다운 스크롤바 스타일 (ProjectEditModal 참고) */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: #F8F8F8;
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: #B4B3DC;
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #6C6B93;
+}
+
+/* Firefox용 스크롤바 스타일 - 기존 .dropdown-menu에 추가 */
 
 .dropdown-menu.small {
   width: 143px;
