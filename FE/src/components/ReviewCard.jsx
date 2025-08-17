@@ -32,11 +32,16 @@ const ReviewCard = ({ category, title, details, tags, score, scoreColor, highlig
         <span className="card-title">{title}</span>
         <p className="card-details">{details}</p>
         <div className="card-tags">
-          {tags.map((tag, index) => (
-            <span key={index} className={`tag tag-${getTagClass(tag.type)}`}>
-              {tag.text}
-            </span>
-          ))}
+          {tags.map((tag, index) => {
+            // console.log('태그 데이터:', tag); // 디버깅용
+            // console.log('tag.type:', tag.type); // 디버깅용
+            // console.log('getTagClass 결과:', getTagClass(tag.type)); // 디버깅용
+            return (
+              <span key={index} className={`tag tag-${getTagClass(tag.type)}`}>
+                {tag.text}
+              </span>
+            );
+          })}
         </div>
       </div>
       <div className={scoreClass}>
