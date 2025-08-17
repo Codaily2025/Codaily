@@ -341,3 +341,46 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* 더보기 버튼 컨테이너 */
+.loadMoreContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+/* 더보기 버튼 스타일 (CodeReview 페이지 참고) */
+.loadMoreButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 32px;
+  background: rgba(228, 227, 243, 0.50);
+  color: #8483AB;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+  max-width: 200px;
+}
+
+.loadMoreButton:hover {
+  background-color: #E4E3F3;
+  color: #5A597D;
+  transform: translateY(-1px);
+}
+
+.loadMoreButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(132, 131, 171, 0.3);
+}
+
+.loadMoreButton:active {
+  transform: translateY(0);
+}
