@@ -19,9 +19,9 @@ const TaskDetailContent = ({ task }) => {
   // 상태에 따른 Badge 색상 결정
   const getStatusColor = (status) => {
     switch(status) {
-      case 'DONE': return 'green'
-      case 'IN_PROGRESS': return 'red'
-      case 'TODO': return 'red'
+      case 'DONE': return '8483AB'
+      case 'IN_PROGRESS': return 'CCCBE4'
+      case 'TODO': return '8B7EC8'
       default: return 'red'
     }
   }
@@ -68,7 +68,7 @@ const TaskDetailContent = ({ task }) => {
     alignItems: 'flex-start',
     marginBottom: '32px',
     paddingBottom: '16px',
-    borderBottom: '0.5px solid #938F99'
+    borderBottom: '0.5px solid #B4B3DC'
   }
 
   const titleStyle = {
@@ -100,7 +100,7 @@ const TaskDetailContent = ({ task }) => {
           {task?.title || 'Task Title'}
         </Title>
         <div style={priorityBadgeStyle}>
-          {task?.priority || '5'}
+          {task?.priorityLevel || '5'}
         </div>
       </div>
       
@@ -139,7 +139,7 @@ const TaskDetailContent = ({ task }) => {
         >
           <Text style={{ fontSize: '12px', color: '#000000', fontWeight: 500 }}>
             {/* {task?.remainedEstimated || '5 / 5 (시간)'} */}
-            {task?.remainingTime}  /  {task?.estimatedTime}  (시간)
+            {task?.remainingTime || '잔여 시간 정보 없음'}  /  {task?.estimatedTime || '예상 시간 정보 없음'}  (시간)
           </Text>
         </FieldItem>
 
@@ -148,18 +148,10 @@ const TaskDetailContent = ({ task }) => {
           label="Label"
         >
           <div style={{ display: 'flex', gap: '6px' }}>
-            {task?.labels?.map((label, index) => (
-              <Badge 
-                key={index}
-                content={label}
-                color={getLabelColor()}
-              />
-            )) || (
               <>
-                <Badge content="Authentication" color="orange" />
-                <Badge content="dont know" color="orange" />
+                <Badge content={task?.field || '필드 정보 없음'} color="orange" />
+                <Badge content={task?.category || '카테고리 정보 없음'} color="orange" />
               </>
-            )}
           </div>
         </FieldItem>
 

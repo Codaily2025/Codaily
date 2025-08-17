@@ -3,6 +3,7 @@ import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import useModalStore from "../../store/modalStore"
 import { useUserScheduleByMonth, transformSchedulesToEvents } from "../../hooks/useSchedules"
+import styles from './Calendar.module.css'
 
 const Calendar = () => {
   const { openModal } = useModalStore()
@@ -33,8 +34,8 @@ const Calendar = () => {
   const events = transformSchedulesToEvents(schedules)
   // console.log(events)
 
-
   return (
+    <div className={styles.calendarContainer}>
       <FullCalendar
         initialView="dayGridMonth"
         plugins={[dayGridPlugin]}
@@ -42,7 +43,14 @@ const Calendar = () => {
         events={events}
         eventClick={handleEventClick}
         datesSet={handleDatesSet}
+        headerToolbar={{
+          left: 'prev',
+          center: 'title',
+          right: 'next'
+        }}
+        height="auto"
       />
+    </div>
   )
 }
 
