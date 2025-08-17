@@ -46,6 +46,13 @@ def create_feature_graph():
     # 세부 리뷰 경로
     builder.add_edge("run_code_review_file_fetch", "run_feature_code_review")
 
+    def route_after_checklist_apply(state: CodeReviewState) -> str:
+    # 파일맵이 없거나(force_done/go_summary면) 요약으로 직행
+    if state.get("force_done") or state.get("go_summary") or state.get("no_code_review_file_patch"):
+        return "to_summary"
+    return "to_detail"
+
+
     # ── 분기 2: 세부 리뷰 이후 최종 요약 여부 ──────────────────
     # 세부 리뷰를 돈 경우엔 implements 기준으로 요약 수행 (미구현이면 종료)
     def should_run_code_review_summary(state: CodeReviewState) -> bool:

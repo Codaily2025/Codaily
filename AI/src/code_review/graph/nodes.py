@@ -56,35 +56,50 @@ def _prefer_nonempty(existing, computed):
     # 둘 다 비거나 None이면 빈 dict
     return {}
 
+def _safe_dict(x):
+    return x if isinstance(x, dict) else {}
+
+def _safe_list(x):
+    return x if isinstance(x, list) else []
+
 from collections.abc import Mapping, Sequence
 
-def _is_empty(v) -> bool:
-    if v is None:
-        return True
-    if isinstance(v, (str, bytes)):
-        return len(v.strip()) == 0
-    if isinstance(v, Mapping):
-        return len(v) == 0
-    if isinstance(v, Sequence) and not isinstance(v, (str, bytes, bytearray)):
-        return len(v) == 0
-    return False
+_CODE_BLOCK_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
+_FIRST_JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
 
-def _prefer_new(new_val, prev_val):
-    """새 값이 비어있지 않으면 새 값, 아니면 이전 값 유지."""
-    if not _is_empty(new_val):
-        return new_val
-    if not _is_empty(prev_val):
-        return prev_val
-    # 둘 다 비었으면 타입 맞춰 기본값
-    if isinstance(prev_val, Mapping) or isinstance(new_val, Mapping):
+def _strip_code_fences(text: str) -> str:
+    if not isinstance(text, str):
+        return text
+    m = _CODE_BLOCK_RE.search(text)
+    if m:
+        return m.group(1).strip()
+    return text.strip()
+
+def _json_loads_loose(text: str) -> dict:
+    if not isinstance(text, str):
         return {}
-    if isinstance(prev_val, Sequence) or isinstance(new_val, Sequence):
-        return []
-    return prev_val if prev_val is not None else new_val
+    t = _strip_code_fences(text)
+    try:
+        return json.loads(t)
+    except Exception:
+        # 본문 어딘가의 첫 JSON 블록만 추출 시도
+        m = _FIRST_JSON_RE.search(t)
+        if m:
+            try:
+                return json.loads(m.group(0))
+            except Exception:
+                return {}
+        return {}
 
-
-
+def _nonempty(d, default):
+    # dict/list가 비어있으면 default 리턴
+    if isinstance(d, dict) and len(d) == 0:
+        return default
+    if isinstance(d, list) and len(d) == 0:
+        return default
+    return d if d is not None else default
 #
+
 def _build_diff_text(diff_files: list[dict]) -> str:
     parts = []
     for f in diff_files or []:
@@ -194,95 +209,41 @@ async def run_checklist_fetch(state: CodeReviewState) -> CodeReviewState:
 # 기능 구현 평가 (JSON 구조화 파싱)
 # -----------------------------
 # (기존 함수 위/아래 구조 유지)
-from collections import defaultdict
-
-def _heuristic_eval(feature_name: str, all_items: list[str], diff_files: list[dict]):
-    eval_map: dict[str, bool] = {}
-    file_map: dict[str, list[str]] = defaultdict(list)
-
-    def add_map(key: str | None, ok: bool, has_update: bool = False, path: str | None = None):
-        # key가 없으면 아무 것도 하지 않음 (UnboundLocal 방지)
-        if not key:
-            return
-        prev = eval_map.get(key, False)
-        eval_map[key] = bool(prev or ok)
-        if has_update and path:
-            if path not in file_map[key]:
-                file_map[key].append(path)
-
-    # 체크리스트 키 안전 추출 (없으면 None 유지)
-    up_key = None
-    soldout_key = None
-    for k in all_items:
-        if '재고 수량' in k or '수량 변경' in k or '업데이트' in k:
-            up_key = k
-        if '품절' in k:
-            soldout_key = k
-
-    # diff 스캔
-    has_update = False
-    update_path = None
-    has_soldout = False
-    soldout_path = None
-
-    for f in diff_files or []:
-        p = f.get('file_path', '')
-        patch = f.get('patch', '') or ''
-        # 재고 수량 변경 힌트
-        if ('InventoryService' in p or 'InventoryRepository' in p or 'inventory' in p.lower()):
-            if 'addStock' in patch or 'removeStock' in patch or 'quantity' in patch:
-                has_update = True
-                update_path = p
-        # 품절 상태 변경 힌트(보수적)
-        if ('status' in patch.lower() or 'soldout' in patch.lower() or "품절" in patch):
-            has_soldout = True
-            soldout_path = p
-
-    # 안전 추가 (key가 None이면 add_map이 무시)
-    add_map(up_key, has_update, has_update, update_path)
-    add_map(soldout_key, has_soldout, has_soldout, soldout_path)
-
-    # 구현 여부 판단(모든 항목을 본다면, 없는 항목은 False로 간주)
-    implemented = all(eval_map.get(k, False) for k in all_items) if all_items else False
-
-    # list로 변환
-    file_map = {k: list(v) for k, v in file_map.items()}
-    return eval_map, implemented, file_map
-
-
 async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeReviewState":
     feature_name   = state.get("feature_name", "")
-    checklist      = state.get("checklist") or []
+    checklist      = state.get("checklist") or []   # [{item: str, done: bool}, ...]
     diff_files     = state.get("diff_files") or []
     commit_message = state.get("commit_message", "")
 
-    # 1) force_done
+    # 1) 요청 force_done 최우선
     force_done_req = bool(state.get("force_done", False))
 
-    # 2) 커밋 메시지에서 force_done 추출
+    # 2) 커밋 메시지에서 force_done 신호 추출
     try:
         msg_pred = (await ask_str(commit_message_prompt, commit_message=commit_message)).strip()
-        force_done_msg = msg_pred.strip().lower() in {"완료", "완료됨", "complete", "done", "종료", "마무리"}
+        force_done_msg = msg_pred.strip().lower() in {"완료", "완료됨", "complete", "done", "종료", "마무리", "true"}
     except Exception:
+        msg_pred = ""
         force_done_msg = False
 
-    # 3) 체크리스트 집계
-    has_checklist = len(checklist) > 0
-    all_items     = [it.get("item") for it in checklist if isinstance(it, dict) and it.get("item")]
-    undone_items  = [it.get("item") for it in checklist if isinstance(it, dict) and not it.get("done", False)]
-    all_done      = has_checklist and len(undone_items) == 0
+    # 3) 체크리스트 모아두기
+    all_items    = [it.get("item") for it in checklist if it.get("item")]
+    undone_items = [it.get("item") for it in checklist if not it.get("done", False)]
+    has_checklist = len(all_items) > 0
+    all_done = (not has_checklist) or (len(undone_items) == 0)
 
     print(f"\n 기능 구현 평가 시작: feature_name='{feature_name}'")
-    print(f" 체크리스트: total={len(checklist)}, undone={len(undone_items)} (all_done={all_done})")
+    print(f" 체크리스트: total={len(checklist)}, undone={len(undone_items)} (has_checklist={has_checklist})")
     print(f" commit_message force_done? req={force_done_req} msg={force_done_msg}")
     print(f" 변경 파일 수: {len(diff_files)}")
 
-    # 4) LLM 평가(JSON)
-    diff_text = _build_diff_text(diff_files)
+    # 4) LLM 평가(JSON 강제)
     try:
         llm_json = llm.bind(response_format={"type": "json_object"})
     except Exception:
         llm_json = llm
+
+    diff_text = _build_diff_text(diff_files)
 
     parsed_ok = True
     try:
@@ -307,45 +268,32 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
 
     # 5) 상태 기본
     state["force_done"] = bool(force_done_req or force_done_msg)
-    implemented_final = bool(force_done_req or force_done_msg or all_done)
+    implemented_final = bool(state["force_done"] or all_done)
+    state["implemented"] = implemented_final
 
-    ce   = getattr(parsed_obj, "checklist_evaluation", {}) or {}
-    eimp = getattr(parsed_obj, "extra_implemented", []) or []
-    fmap = getattr(parsed_obj, "checklist_file_map", {}) or {}
+    # 6) LLM 결과 반영 (None 방지)
+    ce   = _safe_dict(getattr(parsed_obj, "checklist_evaluation", {}))
+    fmap = _safe_dict(getattr(parsed_obj, "checklist_file_map", {}))
+    eimp = _safe_list(getattr(parsed_obj, "extra_implemented", []))
 
-    # 6) 휴리스틱 병합 (LLM 우선, 없으면 보완)
-    heur_eval, heur_impl, heur_map = _heuristic_eval(feature_name, all_items, diff_files)
-    ce   = {**(heur_eval or {}), **(ce   or {})}
-    fmap = {**(heur_map  or {}), **(fmap or {})}
-
-    print("[heuristic] eval:", json.dumps(heur_eval or {}, ensure_ascii=False))
-    print("[heuristic] map keys:", list((heur_map or {}).keys()))
-
-    # 7) 상태 반영 — 새값 우선, 빈값이면 기존 유지
-    state["implemented"]          = implemented_final
+    state["checklist_evaluation"] = ce
     state["extra_implemented"]    = eimp
-    state["checklist_evaluation"] = _prefer_new(ce,   state.get("checklist_evaluation"))
-    state["checklist_file_map"]   = _prefer_new(fmap, state.get("checklist_file_map"))
+    state["checklist_file_map"]   = fmap
 
-    # 타입 보정
-    if not isinstance(state["checklist_evaluation"], dict):
-        state["checklist_evaluation"] = {}
-    if not isinstance(state["checklist_file_map"], dict):
-        state["checklist_file_map"] = {}
-
-    # 8) 요약 직행 여부
-    state["go_summary"] = bool(parsed_ok and implemented_final and len(state["extra_implemented"]) == 0)
+    # 7) 요약 직행 여부
+    #    - force_done이면 언제나 요약으로
+    #    - 아니면 LLM 파싱 성공 + implemented + 추가구현 없음
+    state["go_summary"] = bool(state["force_done"] or (parsed_ok and implemented_final and len(eimp) == 0))
 
     print(" implemented_final:", state["implemented"])
     print(" extra_implemented:", state["extra_implemented"])
     print(" 다음 경로:", "run_code_review_summary (직행)" if state["go_summary"] else "세부 리뷰 경로")
     try:
         print("checklist_evaluation :", json.dumps(state["checklist_evaluation"], ensure_ascii=False, indent=2))
-        print("checklist_file_map :", json.dumps(state["checklist_file_map"], ensure_ascii=False, indent=2))
+        print("checklist_file_map   :", json.dumps(state["checklist_file_map"],   ensure_ascii=False, indent=2))
     except Exception:
         pass
     print(f"[NODE:run_feature_implementation_check] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
-
     return state
 
 
@@ -554,42 +502,38 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
 # -----------------------------
 # checklist 평가 반영
 # -----------------------------
-# -----------------------------
-# checklist 평가 반영 (빈 리스트도 implemented=True 가능)
-# -----------------------------
-async def apply_checklist_evaluation(state: CodeReviewState) -> CodeReviewState:
-    checklist = state.get("checklist") or []
+async def apply_checklist_evaluation(state: "CodeReviewState") -> "CodeReviewState":
+    checklist     = state.get("checklist") or []
     checklist_eval = state.get("checklist_evaluation") or {}
-    updated_checklist = []
 
-    # 체크리스트가 아예 없으면 implemented True 허용
+    # 빈 체크리스트도 안전 처리
     if not checklist:
-        state["checklist"] = []
-        state["implemented"] = True
+        print("\nchecklist 없음 → 그대로 진행")
         state["no_code_review_file_patch"] = len(state.get("checklist_file_map") or {}) == 0
-        print("\nchecklist 없음 → implemented=True")
+        # implemented 는 이전 단계 결정값 유지 (force_done 또는 all_done 로직)
         print(f"[NODE:run_xxx] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
         return state
 
-    # 항목별 done 채우기
-    for it in checklist:
-        if not isinstance(it, dict):
-            continue
-        name = it.get("item")
-        it["done"] = bool(checklist_eval.get(name, it.get("done", False)))
-        updated_checklist.append(it)
+    updated_checklist = []
+    for item in checklist:
+        name = item.get("item")
+        prev = item.get("done", False)
+        item["done"] = bool(checklist_eval.get(name, prev))
+        updated_checklist.append(item)
 
     print("\nchecklist 평가 결과 반영 완료:")
     for c in updated_checklist:
-        print(f" - {c['item']} → {'ㅇ' if c.get('done') else 'x'}")
+        print(f" - {c.get('item')} → {'ㅇ' if c.get('done') else 'x'}")
 
     state["checklist"] = updated_checklist
-    implemented_now = all(it.get("done", False) for it in updated_checklist)
-    state["implemented"] = implemented_now
+    # 모든 항목이 True면 구현 완료
+    state["implemented"] = all(i.get("done", False) for i in updated_checklist)
+
+    # 파일 매핑 없으면 코드리뷰 파일이 없다고 판단 (요약 직행 분기에서 사용)
     state["no_code_review_file_patch"] = len(state.get("checklist_file_map") or {}) == 0
+
     print(f"[NODE:run_xxx] force_done={state.get('force_done')} ({type(state.get('force_done')).__name__})")
     return state
-
 
 # async def apply_checklist_evaluation(state: CodeReviewState) -> CodeReviewState:
 #     # 0) 가드: None/비정상 타입 정규화

@@ -13,4 +13,6 @@ public interface FeatureItemChecklistService {
 
     boolean existsByFeatureItem_FeatureIdAndItem(Long featureId, String item);
 
+    void deleteFeatureChecklist(Long featureId);
+
 }
