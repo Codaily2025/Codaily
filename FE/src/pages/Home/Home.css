@@ -21,11 +21,11 @@
   transform: translateX(-50%);
   /* width: 100%; */
   /* width: 100vw; */
-  width: 1800px;
+  width: 100%;
   /* width: 1440px; */
   /* width: 1366px; */
   height: 100%;
-  border-radius: 25px;
+  /* border-radius: 25px; */
   object-fit: cover;
   z-index: 0;
 }
@@ -34,7 +34,10 @@
 .hero-section {
   /* margin-top: 149px; */
   margin-top: 129px;
-  margin-left: 260px;
+  /* margin-left: 260px; */
+  margin-left: calc(
+    (100vw - min(var(--page-width), 100vw)) / 2 + var(--side-gutter)
+  );
   max-width: 456px;
   height: 350px;
   text-align: left;
