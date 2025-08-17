@@ -115,7 +115,7 @@ const AddFeatureContent = ({
                         value={formData.parentFeatureId}
                         onChange={(e) => handleChange('parentFeatureId', e.target.value)}
                         options={parentFeatureOptions}
-                        placeholder="상위 기능을 선택하세요 (선택사항)"
+                        placeholder="상위 기능을 선택하세요"
                         className={styles.input}
                     />
                 </div>

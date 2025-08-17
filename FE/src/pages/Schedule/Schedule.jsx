@@ -5,7 +5,7 @@ import './Schedule.css';
 const Schedule = () => {
   return (
     <div className="schedule-container">
-      <h1>일정</h1>
+      {/* <h1>일정</h1> */}
         <Calendar />
     </div>
   );

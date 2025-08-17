@@ -30,7 +30,7 @@
 
 .dropdown {
   height: 36px;
-  padding: 8px 12px;
+  padding: 2px 12px;
   background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -141,8 +141,8 @@
 
 .monthIndicator {
   display: inline-block;
-  background: #f0f0f0;
-  color: #666;
+  background: #D6D5EB;
+  color: #6C6B93;
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
@@ -163,7 +163,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #e0e0e0;
+  background: #D6D5EB;
 }
 
 .retrospectiveCard {
@@ -173,35 +173,42 @@
   padding: 24px 32px;
   margin-bottom: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  transform: translateY(0);
   position: relative;
   width: 100%;
+  box-shadow: 1px 1px 4px 0 rgba(212, 212, 212, 0.40);
+
 }
 
 .retrospectiveCard::before {
   content: '';
   position: absolute;
-  left: -38px;
+  left: -36px;
   top: 50%;
   transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   background: white;
-  border: 3px solid #2196f3;
+  border: 3px solid #D6D5EB;
   border-radius: 50%;
 }
 
 .retrospectiveCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  outline: 3px solid #B4B3DC;
+  outline-offset: -2px;
+  transform: translateY(-4px);
+  box-shadow: 2px 8px 16px 0 rgba(180, 179, 220, 0.25);
 }
 
 .retrospectiveCard.expanded {
+  outline: 3px solid #B4B3DC;
+  outline-offset: -2px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .retrospectiveCard.expanded::before {
-  background: #2196f3;
+  background: #D6D5EB;
 }
 
 .cardHeader {
@@ -305,6 +312,9 @@
   font-weight: 600;
   margin-bottom: 10px;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .summaryItem {
@@ -463,7 +473,7 @@
 
 /* 회고 수동 생성 버튼 */
 .createRetrospectiveBtn {
-  height: 36px;
+  height: 42px;
   padding: 8px 16px;
   background-color: #5A597D;
   color: white;
