@@ -62,6 +62,11 @@ def _safe_dict(x):
 def _safe_list(x):
     return x if isinstance(x, list) else []
 
+def _get_attr_or_key(obj, key, default=None):
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
 from collections.abc import Mapping, Sequence
 
 _CODE_BLOCK_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
@@ -271,27 +276,39 @@ async def run_feature_implementation_check(state: "CodeReviewState") -> "CodeRev
         )
 
     # 5) 상태 기본
-    state["force_done"] = bool(force_done_req or force_done_msg)
-    implemented_final = bool(state["force_done"] or all_done)
-    state["implemented"] = implemented_final
 
     # 6) LLM 결과 반영 (None 방지)
-    ce   = _safe_dict(getattr(parsed_obj, "checklist_evaluation", {}))
-    fmap = _safe_dict(getattr(parsed_obj, "checklist_file_map", {}))
-    eimp = _safe_list(getattr(parsed_obj, "extra_implemented", []))
+    ce   = _safe_dict(_get_attr_or_key(parsed_obj, "checklist_evaluation", {}))
+    fmap = _safe_dict(_get_attr_or_key(parsed_obj, "checklist_file_map", {}))
+    eimp = _safe_list(_get_attr_or_key(parsed_obj, "extra_implemented", []))
+    impl = bool(_get_attr_or_key(parsed_obj, "implemented", False))
 
+    state["force_done"] = bool(force_done_req or force_done_msg)
+    # 구현 판정은 원칙적으로 LLM 응답을 신뢰
+    if parsed_ok:
+        state["implemented"] = impl
+    else:
+        # 파싱 실패 시에만 보수적 폴백
+        state["implemented"] = bool(all_done)
+
+    # 요약 직행 여부는 별개로 판단 (force_done은 '직행 신호'로만)
+    state["go_summary"] = bool(
+        state["force_done"] or                    # 운영상 강제 직행
+        (parsed_ok and state["implemented"] and len(eimp) == 0)
+    )
+    
     state["checklist_evaluation"] = ce
-    state["extra_implemented"]    = eimp
     state["checklist_file_map"]   = fmap
+    state["extra_implemented"]    = eimp
+    state["implemented"]          = impl  # ★ LLM 결과 우선 (아래 참고)
 
     # 7) 요약 직행 여부
     #    - force_done이면 언제나 요약으로
     #    - 아니면 LLM 파싱 성공 + implemented + 추가구현 없음
-    state["go_summary"] = bool(state["force_done"] or (parsed_ok and implemented_final and len(eimp) == 0))
 
     print(" implemented_final:", state["implemented"])
     print(" extra_implemented:", state["extra_implemented"])
-    print(" 다음 경로:", "run_code_review_summary (직행)" if state["go_summary"] else "세부 리뷰 경로")
+
     try:
         print("checklist_evaluation :", json.dumps(state["checklist_evaluation"], ensure_ascii=False, indent=2))
         print("checklist_file_map   :", json.dumps(state["checklist_file_map"],   ensure_ascii=False, indent=2))
