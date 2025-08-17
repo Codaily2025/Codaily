@@ -24,6 +24,9 @@ const ProjectsSection = () => {
   // 삭제 진행 상태 관리
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // 더보기 기능을 위한 상태 (초기값 10개)
+  const [visibleCount, setVisibleCount] = useState(10);
+
   const { projects, setProjects } = useProjectStore();
   
   // 스크롤 위치 유지를 위한 ref
@@ -122,6 +125,11 @@ const ProjectsSection = () => {
     navigate(`/project/${id}`);
   };
 
+  // 더보기 버튼 클릭 핸들러
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + 10);
+  };
+
   // const filteredProjects = localProjects.filter((project) => {
   const filteredProjects = projects.filter((project) => {
     if (activeFilter === '전체') return true;
@@ -129,6 +137,11 @@ const ProjectsSection = () => {
     if (activeFilter === '완료') return project.disabled;
     return true;
   });
+
+  // 필터가 변경될 때 visibleCount 초기화
+  useEffect(() => {
+    setVisibleCount(10);
+  }, [activeFilter]);
 
   const handleModalClose = useCallback(() => {
     closeModal();
@@ -182,7 +195,7 @@ const ProjectsSection = () => {
         </div>
       ) : (
         <div className={styles.projectList}>
-          {filteredProjects.map((project) => (
+          {filteredProjects.slice(0, visibleCount).map((project) => (
             <div
               key={project.id}
               className={`${styles.projectCard} ${project.disabled ? styles.disabled : ''}`}
@@ -241,6 +254,15 @@ const ProjectsSection = () => {
               </div>
             </div>
           ))}
+          
+          {/* 더보기 버튼 */}
+          {visibleCount < filteredProjects.length && (
+            <div className={styles.loadMoreContainer}>
+              <button className={styles.loadMoreButton} onClick={handleLoadMore}>
+                더보기
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>
