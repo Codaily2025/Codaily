@@ -347,7 +347,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-top: 0;
+  margin-top: 20px;
 }
 
 /* 더보기 버튼 스타일 (CodeReview 페이지 참고) */
