@@ -21,6 +21,14 @@ const ProjectScheduleSetter = () => {
     const [showStartCalendar, setShowStartCalendar] = useState(false)
     const [showEndCalendar, setShowEndCalendar] = useState(false)
 
+    // 에러 상태 관리
+    const [errors, setErrors] = useState({
+        startDate: '',
+        endDate: '',
+        availableDates: '',
+        timeByDay: ''
+    })
+
     // 작업 가능 일자 상태
     const [availableWorkDays, setAvailableWorkDays] = useState(new Set())
 
@@ -78,10 +86,60 @@ const ProjectScheduleSetter = () => {
         }
         
         setAvailableWorkDays(newAvailableDays)
+        
+        // 작업 가능 일자 에러 초기화
+        if (newAvailableDays.size > 0 && errors.availableDates) {
+            setErrors({ ...errors, availableDates: '' })
+        }
+    }
+
+    // 폼 유효성 검사 함수
+    const validateForm = () => {
+        const newErrors = {
+            startDate: '',
+            endDate: '',
+            availableDates: '',
+            timeByDay: ''
+        }
+
+        // 시작일 검사
+        if (!formData.startDate) {
+            newErrors.startDate = '시작일을 선택해주세요.'
+        }
+
+        // 종료일 검사
+        if (!formData.endDate) {
+            newErrors.endDate = '종료일을 선택해주세요.'
+        } else if (formData.startDate && formData.endDate) {
+            const startDate = new Date(formData.startDate.replace(/\//g, '-'))
+            const endDate = new Date(formData.endDate.replace(/\//g, '-'))
+            
+            if (endDate <= startDate) {
+                newErrors.endDate = '종료일은 시작일보다 늦은 날짜여야 합니다.'
+            }
+        }
+
+        // 작업 가능 일자 검사
+        if (availableWorkDays.size === 0) {
+            newErrors.availableDates = '최소 하나의 작업 가능 일자를 선택해주세요.'
+        }
+
+        // 요일별 작업 시간 검사
+        const hasWorkingTime = Object.values(formData.timeByDay).some(time => time > 0)
+        if (!hasWorkingTime) {
+            newErrors.timeByDay = '최소 하나의 요일에 작업 시간을 설정해주세요.'
+        }
+
+        setErrors(newErrors)
+        return Object.values(newErrors).every(error => error === '')
     }
 
     // 생성하기 버튼 클릭 시
     const handleCreate = () => {
+        // 폼 유효성 검사
+        if (!validateForm()) {
+            return
+        }
         // 작업 가능 일자 - YYYY-MM-DD 형식으로 변환
         const availableWorkDaysList = Array.from(availableWorkDays).map(dateString => {
             const date = new Date(dateString)
@@ -150,12 +208,16 @@ const ProjectScheduleSetter = () => {
         }
         setFormData(newData)
         
+        // 에러 상태 초기화
+        const newErrors = { ...errors }
         if (type === 'start') {
+            newErrors.startDate = ''
             setShowStartCalendar(false)
         } else {
+            newErrors.endDate = ''
             setShowEndCalendar(false)
         }
-
+        setErrors(newErrors)
     }
 
     // activeDay 변경 시 step 업데이트
@@ -176,6 +238,12 @@ const ProjectScheduleSetter = () => {
             timeByDay: newTimeByDay
         }
         setFormData(newData)
+        
+        // 요일별 작업 시간 에러 초기화
+        const hasWorkingTime = Object.values(newTimeByDay).some(time => time > 0)
+        if (hasWorkingTime && errors.timeByDay) {
+            setErrors({ ...errors, timeByDay: '' })
+        }
     }
 
     // 마우스 이벤트 처리
@@ -266,12 +334,19 @@ const ProjectScheduleSetter = () => {
                                     <Calendar 
                                         onDateSelect={(date) => handleDateSelect(date, 'end')} 
                                         onClose={() => setShowEndCalendar(false)} 
-                                        selectedDate={formData.endDate ? new Date(formData.endDate.replace(/\//g, '-')) : null} 
+                                        selectedDate={formData.endDate ? new Date(formData.endDate.replace(/\//g, '-')) : null}
+                                        minDate={formData.startDate ? new Date(formData.startDate.replace(/\//g, '-')) : null}
                                     />
                                 )}
                             </div>
                         </div>
                     </div>
+                    {(errors.startDate || errors.endDate) && (
+                        <div className={styles.errorContainer}>
+                            {errors.startDate && <div className={styles.errorMessage}>{errors.startDate}</div>}
+                            {errors.endDate && <div className={styles.errorMessage}>{errors.endDate}</div>}
+                        </div>
+                    )}
                 </div>
 
                 {/* 작업 가능 일자 설정 */}
@@ -285,6 +360,9 @@ const ProjectScheduleSetter = () => {
                             onToggleDate={toggleAvailableWorkDay}
                         />
                     </div>
+                    {errors.availableDates && (
+                        <div className={styles.errorMessage}>{errors.availableDates}</div>
+                    )}
                 </div>
 
                 {/* 요일별 투자 시간 */}
@@ -350,6 +428,9 @@ const ProjectScheduleSetter = () => {
                             <div className={styles.sliderText}>{formatTime(step)}</div>
                         </div>
                     </div>
+                    {errors.timeByDay && (
+                        <div className={styles.errorMessage}>{errors.timeByDay}</div>
+                    )}
                 </div>
 
                 {/* 생성 버튼 */}
@@ -363,7 +444,7 @@ const ProjectScheduleSetter = () => {
 }
 
 // Calendar 컴포넌트
-const Calendar = ({ onDateSelect, onClose, selectedDate }) => {
+const Calendar = ({ onDateSelect, onClose, selectedDate, minDate = null }) => {
     const [currentMonth, setCurrentMonth] = useState(new Date())
     
     const getDaysInMonth = (date) => {
@@ -412,8 +493,8 @@ const Calendar = ({ onDateSelect, onClose, selectedDate }) => {
                     {days.map((day, index) => (
                         <div
                             key={index}
-                            className={`${styles.calendarDay} ${!day ? styles.calendarDayEmpty : ''} ${selectedDate && day && day.toDateString() === selectedDate.toDateString() ? styles.calendarDaySelected : ''}`}
-                            onClick={() => day && onDateSelect(day)}
+                            className={`${styles.calendarDay} ${!day ? styles.calendarDayEmpty : ''} ${selectedDate && day && day.toDateString() === selectedDate.toDateString() ? styles.calendarDaySelected : ''} ${minDate && day && day <= minDate ? styles.calendarDayDisabled : ''}`}
+                            onClick={() => day && (!minDate || day > minDate) && onDateSelect(day)}
                         >
                             {day ? day.getDate() : ''}
                         </div>

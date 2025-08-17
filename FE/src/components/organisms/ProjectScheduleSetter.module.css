@@ -223,6 +223,18 @@
   margin-top: 32px;
 }
 
+/* 에러 메시지 스타일 */
+.errorContainer {
+  margin-top: 8px;
+}
+
+.errorMessage {
+  color: #e53e3e;
+  font-size: 12px;
+  margin-top: 4px;
+  line-height: 16px;
+}
+
 /* Calendar styles - 모듈 스타일로 변경하여 backdrop 클릭 이슈 해결 */
 .calendarOverlay {
   position: fixed;
@@ -320,6 +332,17 @@
 
 .calendarDayEmpty {
   cursor: default;
+}
+
+.calendarDayDisabled {
+  background-color: #f7f7f7 !important;
+  color: #d1d5db !important;
+  cursor: not-allowed !important;
+}
+
+.calendarDayDisabled:hover {
+  background-color: #f7f7f7 !important;
+  color: #d1d5db !important;
 }
 
 /* 작업 가능 일자 섹션 */
