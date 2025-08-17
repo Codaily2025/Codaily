@@ -66,11 +66,6 @@ def create_feature_graph():
 
     return builder.compile()
 
-app = create_feature_graph()        
-g = app.get_graph()
-
-# 1) ASCII로 구조 출력
-print(g.draw_ascii())
 
 # from langgraph.graph import StateGraph, END
 # from src.code_review.state import CodeReviewState
