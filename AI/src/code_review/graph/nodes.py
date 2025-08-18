@@ -316,6 +316,40 @@ def _norm_path(p: str) -> str:
     # 슬래시, 앞 슬래시 제거, 공백 제거
     return (p or "").replace("\\", "/").lstrip("/").strip()
 
+# 카테고리 매핑 테이블(한국어 → 영문 키)
+CATEGORY_MAP = {
+    "코딩 컨벤션": "convention",
+    "버그 위험도": "bugRisk",
+    "보안 위험": "security",
+    "보안": "security",
+    "성능 최적화": "performance",
+    "성능": "performance",
+    "복잡도": "complexity",
+    "요약": "summary",
+}
+
+def normalize_category(cat: str) -> str:
+    if not cat:
+        return "convention"  # 기본값
+    cat = str(cat).strip()
+    # 완전일치 우선
+    if cat in CATEGORY_MAP:
+        return CATEGORY_MAP[cat]
+    # 부분일치(방어)
+    if "컨벤션" in cat or "코딩" in cat:
+        return "convention"
+    if "버그" in cat:
+        return "bugRisk"
+    if "보안" in cat:
+        return "security"
+    if "성능" in cat or "최적화" in cat:
+        return "performance"
+    if "복잡" in cat:
+        return "complexity"
+    # 이미 영문이 들어온 경우는 그대로 사용
+    return cat
+
+
 # 코드리뷰 수행
 async def run_feature_code_review(state: CodeReviewState) -> CodeReviewState:
     file_map = state.get("checklist_file_map", {}) or {}
@@ -376,6 +410,10 @@ async def run_feature_code_review(state: CodeReviewState) -> CodeReviewState:
         for category_review in parsed.get("code_reviews", []) or []:
             if isinstance(category_review.get("items"), str) and category_review["items"].strip() == "해당 없음":
                 category_review["items"] = []
+
+            # 카테고리 영문화
+            category_review["category"] = normalize_category(category_review.get("category"))
+            
             category_review["checklist_item"] = item
             code_review_items.append(category_review)
 
