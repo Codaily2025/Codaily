@@ -8,7 +8,7 @@ export const useReviewStore = create((set) => ({
   selectedFeature: '전체',      // 선택된 기능명
   searchQuery: '',            // 검색어
   selectedReviewId: null,      // 상세보기로 선택된 리뷰 ID
-  visibleCount: 3,            // 화면에 보이는 카드 수
+  visibleCount: 9,            // 화면에 보이는 카드 수
   openDropdown: null,         // 열려있는 드롭다운: 'project' | 'feature' | null
 
   // 액션 함수 정의
@@ -21,7 +21,7 @@ export const useReviewStore = create((set) => ({
     selectedProjectId: projectId,
     selectedFeature: '전체',  // 기능 필터 초기화
     searchQuery: '',         // 검색어 초기화
-    visibleCount: 3,         // 카드 개수 초기화
+    visibleCount: 9,         // 카드 개수 초기화
     openDropdown: null,      // 드롭다운 닫기
   }),
 
@@ -32,7 +32,7 @@ export const useReviewStore = create((set) => ({
   setFeature: (feature) => set({
     selectedFeature: feature,
     searchQuery: '',         // 검색어 초기화
-    visibleCount: 3,         // 카드 개수 초기화
+    visibleCount: 9,         // 카드 개수 초기화
     openDropdown: null,      // 드롭다운 닫기
   }),
 
@@ -56,7 +56,7 @@ export const useReviewStore = create((set) => ({
   /**
    * 더보기 버튼 클릭 시, 보여줄 카드 개수 증가
    */
-  loadMore: () => set((state) => ({ visibleCount: state.visibleCount + 3 })),
+  loadMore: () => set((state) => ({ visibleCount: state.visibleCount + 9 })),
 
   /**
    * 특정 드롭다운을 열거나 닫기
