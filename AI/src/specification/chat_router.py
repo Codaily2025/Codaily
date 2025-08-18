@@ -16,6 +16,7 @@ model = init_chat_model(model="gpt-4.1-nano", model_provider="openai", streaming
 
 @router.post("/intent")
 async def determine_intent(req: MessageRequest):
+    # print("req: ", req)
     intent, feature_id, field = await classify_chat_intent(
         req.message, req.mainFeatures
     )
@@ -32,11 +33,13 @@ async def chat_stream(
     intent: ChatIntent,
     project_id: int,
     message: str,
+    time: float,
     feature_id: int = None,
     title: str = None,
     field: str = None,
 ):
-    print("project_id: ", project_id)
+    # time = 100
+    print("project_id: ", project_id, ", time: ", time)
     history = user_histories.setdefault(project_id, ChatMessageHistory())
     history.add_user_message(message)
 
@@ -61,10 +64,20 @@ async def chat_stream(
                 media_type="text/event-stream",
             )
 
-        case ChatIntent.SPEC | ChatIntent.SPEC_REGENERATE:
+        case ChatIntent.SPEC:
             formatted_text = format_history_to_text(history.messages)
             return StreamingResponse(
-                gen_spec(formatted_text=formatted_text, wrapper_type=intent),
+                gen_spec(formatted_text=formatted_text, wrapper_type=intent, time=time),
+                media_type="text/event-stream",
+            )
+
+        case ChatIntent.SPEC_REGENERATE:
+            user_histories[project_id] = ChatMessageHistory()
+            history = user_histories.setdefault(project_id, ChatMessageHistory())
+            history.add_user_message(message)
+            formatted_text = format_history_to_text(history.messages)
+            return StreamingResponse(
+                gen_spec(formatted_text=formatted_text, wrapper_type=intent, time=time),
                 media_type="text/event-stream",
             )
 

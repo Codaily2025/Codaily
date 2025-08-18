@@ -5,37 +5,34 @@ import KanbanBoard from '@/components/organisms/KanbanBoard'
 import Sidebar from '@/components/organisms/Sidebar'
 import Badge from '@/components/atoms/Badge'
 import { Menu } from 'lucide-react'
+import { useTodayTasks } from '@/hooks/useProjects'
 import styles from './ProjectTemplate.module.css'
 
 const ProjectTemplate = ({ currentProject, projects = [] }) => {
   // 사이드바 
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
-  // 프로젝트 데이터에서 오늘 할 일 추출
+  // 오늘의 할 일 api 데이터 조회
+  const { data: todayTasksData, isLoading: isTodayTasksLoading, error: todayTasksError } = useTodayTasks(currentProject?.projectId)
+  
+  // api 데이터를 ui 컴포넌트에 맞게 변환
+  // TODO: 응답 데이터 형식 확인 후 수정 예정 (네이밍 등...)
   const todayTasks = useMemo(() => {
-    if (!currentProject?.features) return []
+    if (!todayTasksData?.tasks) return []
     
-    const tasks = []
-    currentProject.features.forEach(feature => {
-      if (feature.tasks) {
-        feature.tasks.forEach(task => {
-          // 오늘 날짜와 비교하여 오늘 할 일만 필터링 (데이터 전처리 로직으로 분리 예정)
-          if (task.status === 'todo' || task.status === 'in_progress') {
-            tasks.push({
-              id: task.id,
-              category: task.category,
-              title: task.title,
-              details: task.details,
-              tags: [
-                { text: task.status === 'in_progress' ? '진행중' : '할일', type: task.status === 'in_progress' ? 'medium' : 'low' }
-              ]
-            })
-          }
-        })
-      }
-    })
-    return tasks
-  }, [currentProject])
+    return todayTasksData.tasks.map(task => ({
+      id: task.scheduleId,
+      category: task.category,
+      title: task.featureTitle,
+      details: task.featureDescription,
+      tags: [
+        { 
+          text: task.status === 'IN_PROGRESS' ? '진행중' : task.status === 'TODO' ? '할일' : '완료', 
+          type: task.status === 'IN_PROGRESS' ? 'medium' : task.status === 'TODO' ? 'low' : 'high' 
+        }
+      ]
+    }))
+  }, [todayTasksData])
 
   // 현재 진행 중인 기능 이름들
   const currentFeatures = useMemo(() => {

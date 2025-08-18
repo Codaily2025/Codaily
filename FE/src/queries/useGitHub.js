@@ -1,7 +1,8 @@
 // src/queries/usegitHub.js
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchGithubId, disconnectGithub, linkGithubRepository, createGithubRepository, fetchGithubRepositories } from '../apis/gitHub';
+import { fetchGithubId, disconnectGithub, linkGithubRepository, createGithubRepository, fetchGithubRepositories, deleteGithubRepository } from '../apis/gitHub';
 import { syncGithubTechStack } from '../apis/profile';
+import { useGitHubStore } from '../stores/gitHubStore';
 
 // 깃허브 아이디 조회 커스텀 훅
 // 캐시 키 : ['githubId']
@@ -71,7 +72,7 @@ export const useLinkGithubRepoMutation = (onSuccessCallback) => {
             // 레포지토리 목록 캐시 무효화
             queryClient.invalidateQueries({ queryKey: ['githubRepositories'] });
             if (onSuccessCallback) {
-                onSuccessCallback(variables.repoName)
+                onSuccessCallback(variables.projectId)
             }
         },
         onError: (error) => {
@@ -129,3 +130,42 @@ export const useCreateNewGithubRepoMutation = (onSuccessCallback) => {
         }
     });
 };
+
+// 레포지토리 삭제 뮤테이션
+export const useDeleteGithubRepoMutation = (onSuccessCallback, onErrorCallback) => {
+    const queryClient = useQueryClient();
+    const { removeRepository } = useGitHubStore();
+
+    return useMutation({
+        mutationFn: ({ repoId }) => deleteGithubRepository(repoId),
+        onMutate: async ({ repoId }) => {
+            // 낙관적 업데이트: UI에서 즉시 제거
+            removeRepository(repoId);
+            
+            // 기존 데이터 백업
+            const previousRepos = queryClient.getQueryData(['githubRepositories']);
+            
+            return { previousRepos };
+        },
+        onSuccess: (data, variables) => {
+            console.log('레포지토리 삭제 성공:', variables.repoId);
+            // 캐시 무효화
+            queryClient.invalidateQueries({ queryKey: ['githubRepositories'] });
+            if (onSuccessCallback) {
+                onSuccessCallback(variables.repoId);
+            }
+        },
+        onError: (error, variables, context) => {
+            console.error('레포지토리 삭제 실패:', error);
+            // 에러 시 롤백
+            if (context?.previousRepos) {
+                queryClient.setQueryData(['githubRepositories'], context.previousRepos);
+            }
+            if (onErrorCallback) {
+                onErrorCallback(error);
+            }
+        }
+    });
+};
+
+

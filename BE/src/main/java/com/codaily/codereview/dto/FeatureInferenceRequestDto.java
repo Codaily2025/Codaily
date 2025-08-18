@@ -14,18 +14,32 @@ import java.util.List;
 public class FeatureInferenceRequestDto {
     @JsonProperty("project_id")
     private Long projectId;
+
+    @JsonProperty("commit_id")
     private Long commitId;
+
+    @JsonProperty("commit_hash")
     private String commitHash;
+
+    @JsonProperty("commit_branch")
     private String commitBranch;
+
+    @JsonProperty("diff_files")
     private List<DiffFile> diffFiles;
+
     @JsonProperty("available_features")
     private List<String> availableFeatures;
+
     @JsonProperty("access_token")
     private String accessToken;
+
+    @JsonProperty("commit_message")
     private String commitMessage;
 
     @JsonProperty("commit_info")
     private CommitInfoDto commitInfoDto;
+
+    @JsonProperty("force_done")
     private boolean forceDone;
 }
 

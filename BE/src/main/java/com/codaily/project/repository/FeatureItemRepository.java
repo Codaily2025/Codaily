@@ -35,15 +35,15 @@ public interface FeatureItemRepository extends JpaRepository<FeatureItem, Long> 
 
     List<FeatureItem> findAllBySpecification_SpecId(Long specId);
 
-    @Query("SELECT SUM(f.estimatedTime) FROM FeatureItem f WHERE f.specification.specId = :specId AND f.parentFeature IS NULL")
-    Integer getTotalEstimatedTimeBySpecId(@Param("specId") Long specId);
+    @Query("SELECT SUM(f.estimatedTime) FROM FeatureItem f WHERE f.specification.specId = :specId AND f.parentFeature IS NOT NULL AND f.isReduced = false")
+    Double getTotalEstimatedTimeBySpecId(@Param("specId") Long specId);
 
     // ===== 필드/카테고리별 조회 =====
     @Query("SELECT DISTINCT f.field FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.parentFeature IS NULL ORDER BY f.field")
     List<String> findDistinctFieldsByProjectId(Long projectId);
 
-    //    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
-    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field ORDER BY f.priorityLevel")
+    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field AND f.parentFeature IS NOT NULL ORDER BY f.priorityLevel")
+//    @Query("SELECT f FROM FeatureItem f WHERE f.project.projectId = :projectId AND f.field = :field ORDER BY f.priorityLevel")
     List<FeatureItem> findByProjectIdAndField(Long projectId, String field);
 
 

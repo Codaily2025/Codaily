@@ -1,16 +1,23 @@
 package com.codaily.codereview.entity;
 
-public enum ChangeType {
-    ADDED,
-    MODIFIED,
-    REMOVED;
+import com.fasterxml.jackson.annotation.JsonValue;
 
-    public static ChangeType fromString(String status) {
-        return switch (status.toLowerCase()) {
-            case "added" -> ADDED;
-            case "modified" -> MODIFIED;
-            case "removed" -> REMOVED;
-            default -> throw new IllegalArgumentException("Unknown change type: " + status);
-        };
+public enum ChangeType {
+    ADDED, MODIFIED, REMOVED;
+
+    @JsonValue
+    public String toJson() {
+        // 항상 "ADDED"/"MODIFIED"/"REMOVED"로 직렬화
+        return name();
+    }
+
+    public static ChangeType fromGithubStatus(String status) {
+        if (status == null) return MODIFIED;
+        switch (status.toLowerCase()) {
+            case "added": return ADDED;
+            case "removed":
+            case "deleted": return REMOVED;
+            default: return MODIFIED; // renamed/copied 등 폴백
+        }
     }
 }

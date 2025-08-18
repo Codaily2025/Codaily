@@ -86,4 +86,6 @@ public interface CodeCommitRepository extends JpaRepository<CodeCommit, Long> {
     List<CodeCommit> findLatestByAuthorAndFeatureName(@Param("author") String author,
                                                       @Param("featureName") String featureName,
                                                       Pageable pageable);
+
+    boolean existsByCommitHash(String commitHash);
 }

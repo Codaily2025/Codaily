@@ -5,6 +5,7 @@ import com.codaily.common.gpt.dto.ChatFilterResult;
 import com.codaily.common.gpt.dto.ChatStreamRequest;
 import com.codaily.common.gpt.filter.ChatFilter;
 import com.codaily.common.gpt.service.ChatService;
+import com.codaily.project.service.ProjectService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -24,13 +25,14 @@ public class ChatResponseStreamHandler {
 
     private final ChatFilter chatFilter;
     private final ChatService chatService;
+    private final ProjectService projectService;
     private final SseMessageDispatcher dispatcher;
     private final ObjectMapper objectMapper;
 
     public SseEmitter stream(ChatStreamRequest request) {
         SseEmitter emitter = new SseEmitter(90_000L);
         final Object sendLock = new Object();
-        if(MessageType.fromString(request.getIntent()) == MessageType.CHAT_SMALLTALK) {
+        if (MessageType.fromString(request.getIntent()) == MessageType.CHAT_SMALLTALK) {
             request.setIntent(MessageType.CHAT.name().toLowerCase());
         }
 
@@ -38,6 +40,7 @@ public class ChatResponseStreamHandler {
                 request.getSpecId(),
                 request.getFeatureId(),
                 request.getField());
+
 
         if (!check.isAllowed()) {
             try {
@@ -56,14 +59,16 @@ public class ChatResponseStreamHandler {
                 request.getProjectId(),
                 request.getMessage(),
                 request.getFeatureId(),
-                request.getField()
+                request.getField(),
+//                request.getTime()
+                projectService.calculateTotalUserAvailableHours(request.getProjectId())
         );
 
         Disposable subscription = chatFlux.subscribe(chunk -> {
                     try {
                         JsonNode root = objectMapper.readTree(chunk);
                         MessageType type = MessageType.fromString(root.path("type").asText());
-                        if(type == MessageType.CHAT_SMALLTALK) type = MessageType.CHAT;
+                        if (type == MessageType.CHAT_SMALLTALK) type = MessageType.CHAT;
                         JsonNode content = root.path("content");
                         log.info("sse chunk: {}", content.asText());
 
@@ -82,8 +87,7 @@ public class ChatResponseStreamHandler {
                         // 클라이언트 단절: 즉시 정리
                         log.debug("client disconnected during send");
                         emitter.complete();
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         try {
                             synchronized (sendLock) {
                                 emitter.send(SseEmitter.event().name("error").data("internal-error"));

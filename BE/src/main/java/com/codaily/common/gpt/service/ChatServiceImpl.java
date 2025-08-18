@@ -22,16 +22,17 @@ public class ChatServiceImpl implements ChatService {
     private final WebClient langchainWebClient;
     private final FeatureItemService featureItemService;
 
-    public Flux<String> streamChat(String intent, Long projectId, String message, Long featureId, String field) {
-        log.info("streamChat param: {}, {}, {}, {}, {}",intent, projectId, message,featureId, field);
+    public Flux<String> streamChat(String intent, Long projectId, String message, Long featureId, String field, Double time) {
+        log.info("streamChat param: {}, {}, {}, {}, {}, {}",intent, projectId, message,featureId, field, time);
         return langchainWebClient.get()
                 .uri(uriBuilder -> {
                     uriBuilder
-                            .path("ai/api/chat/gpt/stream")
+                            .path("/ai/api/chat/gpt/stream")
                             .queryParam("intent", intent)
                             .queryParam("project_id", projectId)
                             .queryParam("message", message)
-                            .queryParam("field", field);
+                            .queryParam("field", field)
+                            .queryParam("time", time);
 
                     if (featureId != null) {
                         uriBuilder.queryParam("feature_id", featureId);
@@ -52,7 +53,7 @@ public class ChatServiceImpl implements ChatService {
                 .map(f -> new FeatureClassifyRequest(f.getFeatureId(), f.getTitle(), f.getField()))
                 .toList();
         return langchainWebClient.post()
-                .uri("ai/api/chat/intent")
+                .uri("/ai/api/chat/intent")
                 .bodyValue(new ChatIntentRequest(message, mainFeatures))
                 .retrieve()
                 .bodyToMono(ChatIntentResponse.class);

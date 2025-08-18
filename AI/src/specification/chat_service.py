@@ -139,9 +139,9 @@ async def gen_chat(
             history.add_ai_message("".join(collected))
 
 
-async def gen_spec(formatted_text: str, wrapper_type: ChatIntent):
+async def gen_spec(formatted_text: str, wrapper_type: ChatIntent, time: float):
     async for line in monitor_sse_stream(
-        stream_function_specification(formatted_text), wrapper_type=wrapper_type
+        stream_function_specification(formatted_text, time), wrapper_type=wrapper_type
     ):
         yield line
 
@@ -151,16 +151,16 @@ async def add_field(
     project_description: str,
     history: ChatMessageHistory,
 ):
-    field_title = await generate_field_from_message(project_description)
+    field = await generate_field_from_message(project_description)
     # print(group_title)
     # 그룹 하나에 대한 기능 흐름을 stream 형식으로 순차 반환
     try:
-        async for item in stream_single_field(project_description, field_title):
+        async for item in stream_single_field(project_description, field):
             wrapped = {"type": intent.value, "content": item}
             # print(wrapped)
             yield f"data: {json.dumps(wrapped, ensure_ascii=False)}\n\n"
     finally:
-        history.add_ai_message(f"새로운 기능 그룹 '{field_title}'이 생성되었습니다.")
+        history.add_ai_message(f"새로운 기능 그룹 '{field}'이 생성되었습니다.")
 
 
 async def add_main_feature(
@@ -174,23 +174,28 @@ async def add_main_feature(
     main_feature = await generate_main_feature_from_message(
         message_text=message, field=field
     )
-    main_func_full = f"{main_feature['title']}. {main_feature['description']}"
+    main_func_full = f"{main_feature['title']}:{main_feature['description']}"
     # print(main_func_full)
     # 상세 기능들 생성
     sub_features = await spec_sub_functions_generator(
         project_description=message,
         function_group=field,
         main_function=main_func_full,
+        time=main_feature["time"],
     )
 
     wrapper = {
-        "type": intent,
+        "type": intent.value,
         "content": {
             "field": field,
-            "main_feature": main_feature,
+            "main_feature": {
+                "title": main_feature["title"],
+                "description": main_feature["description"],
+            },
             "sub_feature": sub_features,
         },
     }
+    # print("wrapper: ", wrapper)
     yield f"data: {json.dumps(wrapper, ensure_ascii=False)}\n\n"
     history.add_ai_message(f"주 기능이 생성되었습니다: {main_feature['title']}")
 

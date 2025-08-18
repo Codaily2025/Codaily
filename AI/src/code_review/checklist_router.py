@@ -8,7 +8,7 @@ import re
 
 
 router = APIRouter()
-llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 
 @router.post("/api/generate-checklist", response_model=FeatureChecklistResponse)
 async def generate_checklist(request: FeatureChecklistRequest):

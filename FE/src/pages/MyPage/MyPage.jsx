@@ -12,6 +12,7 @@ import useModalStore from '../../store/modalStore';
 import { useProfileQuery } from '../../queries/useProfile'; // 프로필 조회 훅
 import { useGithubIdQuery, useGithubTechStackSyncMutation } from '../../queries/useGitHub';
 import { User } from 'lucide-react';
+import userBaseImage from '../../assets/user_base_image.png';
 
 const Mypage = () => {
   const { isOpen, modalType, openModal, closeModal } = useModalStore()
@@ -63,7 +64,7 @@ const Mypage = () => {
             {profileImage?.imageUrl ? (
               <img src={profileImage.imageUrl} alt="프로필" />
             ) : (
-              <User size={32} className={styles.profileImageIcon} />
+              <img src={userBaseImage} alt="프로필" />
             )}
           </div>
           {/* <a onClick={() => setIsModalOpen(true)} className="edit-profile-link"> */}
@@ -80,19 +81,26 @@ const Mypage = () => {
             <div className={`${styles.infoBox} ${styles.techStack}`}>
               {!isGithubConnected ? ( // 깃허브 미연동일때
                 <div className={styles.techStackEmpty}>
-                  <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
+                  <span>GitHub에서 나의 기술 스택을 가져와보세요.</span>
                   <button
                     className={styles.syncTechStackBtn}
                     onClick={handleSyncTechStack}
                     disabled={githubTechStackSyncMutation.isPending}
                   >
-                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : 'GitHub 동기화'}
+                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : '기술스택 동기화'}
                   </button>
                 </div>
               ) : 
               isTechStackEmpty ? ( // 기술스택 비어있을때
                 <div className={styles.techStackEmpty}>
-                  <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
+                  <span>GitHub에서 나의 기술 스택을 가져와보세요.</span>
+                  <button
+                    className={styles.syncTechStackBtn}
+                    onClick={handleSyncTechStack}
+                    disabled={githubTechStackSyncMutation.isPending}
+                  >
+                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : '기술스택 동기화'}
+                  </button>
                 </div>
               ) : (
                 <>

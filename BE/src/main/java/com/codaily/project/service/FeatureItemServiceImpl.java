@@ -1,22 +1,13 @@
 package com.codaily.project.service;
 
-import com.codaily.codereview.dto.FeatureChecklistFeatureDto;
-import com.codaily.codereview.dto.FeatureChecklistRequestDto;
-import com.codaily.codereview.dto.FeatureChecklistResponseDto;
+import com.codaily.codereview.dto.*;
 import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.codereview.repository.FeatureItemChecklistRepository;
-import com.codaily.codereview.dto.*;
 import com.codaily.global.exception.ProjectNotFoundException;
 import com.codaily.management.entity.FeatureItemSchedule;
 import com.codaily.management.repository.DaysOfWeekRepository;
 import com.codaily.management.repository.FeatureItemSchedulesRepository;
 import com.codaily.project.dto.*;
-import com.codaily.codereview.entity.FeatureItemChecklist;
-import com.codaily.codereview.repository.FeatureItemChecklistRepository;
-import com.codaily.project.dto.FeatureSaveContent;
-import com.codaily.project.dto.FeatureSaveItem;
-import com.codaily.project.dto.FeatureSaveRequest;
-import com.codaily.project.dto.FeatureSaveResponse;
 import com.codaily.project.entity.FeatureItem;
 import com.codaily.project.entity.Project;
 import com.codaily.project.entity.Specification;
@@ -28,7 +19,6 @@ import com.codaily.project.repository.SpecificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -361,8 +351,8 @@ public class FeatureItemServiceImpl implements FeatureItemService {
 
     @Override
     @Transactional
-    public int calculateTotalEstimatedTime(Long specId) {
-        Integer total = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
+    public Double calculateTotalEstimatedTime(Long specId) {
+        Double total = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
         return total != null ? total : 0;
     }
 
@@ -456,7 +446,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             try {
                 FeatureChecklistResponseDto response = langchainWebClient
                         .post()
-                        .uri("ai/api/generate-checklist")
+                        .uri("/ai/api/generate-checklist")
                         .bodyValue(request)
                         .retrieve()
                         .bodyToMono(FeatureChecklistResponseDto.class)
@@ -516,7 +506,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
         try {
             FeatureChecklistExtraResponseDto response = langchainWebClient
                     .post()
-                    .uri("ai/api/generate-checklist")
+                    .uri("/ai/api/generate-checklist")
                     .bodyValue(request)
                     .retrieve()
                     .bodyToMono(FeatureChecklistExtraResponseDto.class)
@@ -586,7 +576,7 @@ public class FeatureItemServiceImpl implements FeatureItemService {
     }
 
     @Transactional
-    public void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced) {
+    public void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced, Boolean cascadeChildren) {
         if (isReduced == null) throw new IllegalArgumentException("isReduced 값이 필요합니다.");
         if ((field == null && featureId == null) || (field != null && featureId != null)) {
             throw new IllegalArgumentException("field 또는 featureId 중 하나만 지정해야 합니다.");
@@ -608,20 +598,24 @@ public class FeatureItemServiceImpl implements FeatureItemService {
             throw new IllegalArgumentException("해당 기능이 프로젝트에 속하지 않습니다. featureId=" + featureId);
         }
 
-        // 3) 서브트리 모든 ID BFS 수집 (ID만 다룸 → 가볍고 빠름)
-        Deque<Long> q = new ArrayDeque<>();
-        List<Long> allIds = new ArrayList<>();
-        q.add(featureId);
-        while (!q.isEmpty()) {
-            Long cur = q.pollFirst();
-            allIds.add(cur);
-            q.addAll(featureItemRepository.findChildIds(cur));
-        }
+        if (cascadeChildren) {
+            // 기존 BFS 로직 (하위 기능들도 함께 업데이트)
+            Deque<Long> q = new ArrayDeque<>();
+            List<Long> allIds = new ArrayList<>();
+            q.add(featureId);
+            while (!q.isEmpty()) {
+                Long cur = q.pollFirst();
+                allIds.add(cur);
+                q.addAll(featureItemRepository.findChildIds(cur));
+            }
 
-        // 4) IN 벌크 업데이트 (대용량 대비 배치 처리)
-        for (int i = 0; i < allIds.size(); i += BATCH_SIZE) {
-            int end = Math.min(i + BATCH_SIZE, allIds.size());
-            featureItemRepository.bulkUpdateIsReducedByIds(allIds.subList(i, end), isReduced);
+            for (int i = 0; i < allIds.size(); i += BATCH_SIZE) {
+                int end = Math.min(i + BATCH_SIZE, allIds.size());
+                featureItemRepository.bulkUpdateIsReducedByIds(allIds.subList(i, end), isReduced);
+            }
+        } else {
+            // 해당 기능만 업데이트
+            featureItemRepository.bulkUpdateIsReducedByIds(Collections.singletonList(featureId), isReduced);
         }
     }
 

@@ -12,6 +12,90 @@
   position: relative;
 }
 
+/* 로딩 스피너 애니메이션 */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 로딩 스피너 스타일 */
+.loadingSpinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #737373;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 큰 로딩 스피너 */
+.loadingSpinnerLarge {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #F3F2FA;
+  border-top: 4px solid #8483AB;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin: 0 auto 16px;
+}
+
+/* 로딩 컨테이너 */
+.loadingContainer {
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.loadingText {
+  color: #737373;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.errorContainer {
+  padding: 20px;
+  text-align: center;
+  color: #dc3545;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+}
+
+.errorTitle {
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.emptyContainer {
+  padding: 20px;
+  text-align: center;
+  color: #737373;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+}
+
+.emptyTitle {
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+}
+
 /* 스크롤바 숨기기 */
 /* .requirementsSidebar::-webkit-scrollbar {
   display: none;
@@ -848,7 +932,7 @@
   align-self: stretch;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: center;
   gap: 15px;
   display: flex;
 }
@@ -960,20 +1044,21 @@
 }
 
 .subTaskRight {
-  width: 58px;
+  min-width: 80px;
   flex-direction: column;
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 10px;
   display: inline-flex;
 }
 
 .subTaskActions {
   align-self: stretch;
-  justify-content: flex-start;
+  justify-content: flex-end;
   align-items: center;
   gap: 6px;
   display: inline-flex;
+  white-space: nowrap;
 }
 
 .subTaskTime {
@@ -1069,8 +1154,7 @@
 
 .expandedSectionItem {
   align-self: stretch;
-  height: 55px;
-  /* height: 60px; */
+  min-height: 55px;
   box-sizing: border-box;
   padding-left: 17px;
   padding-right: 17px;
@@ -1217,4 +1301,10 @@
 
 .expandIconContainer {
   position: relative;
+}
+
+.dropdownIcon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
 }

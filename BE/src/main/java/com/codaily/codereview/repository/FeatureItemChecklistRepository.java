@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FeatureItemChecklistRepository extends JpaRepository<FeatureItemChecklist, Long> {
-    Optional<List<FeatureItemChecklist>> findByFeatureItem_FeatureId(Long featureId);
+    List<FeatureItemChecklist> findByFeatureItem_FeatureId(Long featureId);
     
     Optional<FeatureItemChecklist> findByFeatureItem_FeatureIdAndItem(Long featureId, String item);
 

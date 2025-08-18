@@ -35,6 +35,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -66,10 +68,12 @@ public class WebhookServiceImpl implements WebhookService {
     @Value("${app.url.ai}")
     private String aiUrl;
 
+    @Value("${gpt.api.feature-inference-url}")
+    private String featureInferenceUrl;
+
     @Override
     public void handlePushEvent(WebhookPayload payload, Long userId) {
         List<WebhookPayload.Commit> commits = payload.getCommits();
-        String repo = payload.getRepository().getFull_name();
         String accessToken = userRepository.findById(userId)
                 .map(User::getGithubAccessToken)
                 .orElse(null);
@@ -81,45 +85,60 @@ public class WebhookServiceImpl implements WebhookService {
             log.info("수정된 파일: {}", commit.getModified());
             log.info("삭제된 파일: {}", commit.getRemoved());
 
-            List<DiffFile> diffFiles = getDiffFilesFromCommit(commit,accessToken);
+            String fullName = payload.getRepository().getFull_name();
+            String[] parts = fullName.trim().split("/");
+            String repoOwner = parts[0];
+            String repoName = parts[1];
 
-            if(diffFiles.isEmpty()) {
-                log.info("변경된 파일이 없습니다. 코드리뷰를 생략합니다.");
-                continue;
-            }
-            ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repo);
+            String ts = commit.getTimestamp(); // "2025-08-11T21:59:41+09:00"
+            // 1) 오프셋 포함 파싱
+            OffsetDateTime odt = OffsetDateTime.parse(ts);
+            LocalDateTime utcTime = LocalDateTime.ofInstant(odt.toInstant(), ZoneOffset.UTC);
+
+            ProjectRepositories repositories = projectRepositoriesService.getRepoByName(repoName);
+
             CodeCommit entity = CodeCommit.builder()
                             .commitHash(commit.getId())
                             .author(payload.getSender().getLogin())
                             .project(repositories.getProject())
                             .message(commit.getMessage())
-                            .committedAt(LocalDateTime.parse(commit.getTimestamp())).build();
+                            .committedAt(utcTime).build();
 
             Long commitId = codeCommitRepository.save(entity).getCommitId();
-            String fullName = payload.getRepository().getFull_name();
-            String[] parts = fullName.split("/");
-            String repoOwner = parts[0];
-            String repoName = parts[1];
+
             String commitBranch = payload.getRef().replace("refs/heads/", "");
 
             CommitInfoDto commitInfoDto = CommitInfoDto.builder().repoName(repoName).repoOwner(repoOwner).build();
 
             Long projectId = repositories.getProject().getProjectId();
 
+            List<DiffFile> diffFiles = getDiffFilesFromCommit(repoOwner, repoName, commit.getId(), accessToken);
+
+            if(diffFiles.isEmpty()) {
+                log.info("변경된 파일이 없습니다. 코드리뷰를 생략합니다.");
+                continue;
+            }
+
             sendDiffFilesToPython(projectId, commitId, commit.getId(), commit.getMessage(), diffFiles, userId, commitInfoDto, commitBranch);
         }
     }
 
     @Override
-    public List<DiffFile> getDiffFilesFromCommit(WebhookPayload.Commit commit, String accessToken) {
-        String commitUrl = commit.getUrl();
+    public List<DiffFile> getDiffFilesFromCommit(String repoOwner, String repoName, String commitHash, String accessToken) {
+        String apiUrl = String.format(
+                "https://api.github.com/repos/%s/%s/commits/%s",
+                repoOwner, repoName, commitHash
+        );
         HttpHeaders headers = new HttpHeaders();
+        log.info("Webhook commit.url = {}", apiUrl);
+
         headers.set("Authorization", "token " + accessToken);
-        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+        headers.set("Accept", "application/vnd.github+json");
+        headers.set("User-Agent", "codaily-bot");
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<JsonNode> response = restTemplate.exchange(commitUrl, HttpMethod.GET, entity, JsonNode.class);
+        ResponseEntity<JsonNode> response = restTemplate.exchange(apiUrl, HttpMethod.GET, entity, JsonNode.class);
 
         List<DiffFile> diffFiles = new ArrayList<>();
 
@@ -142,7 +161,7 @@ public class WebhookServiceImpl implements WebhookService {
 
                 String patch = file.has("patch") ? file.get("patch").asText() : "";
                 String status = file.has("status") ? file.get("status").asText() : "modified";
-                ChangeType changeType = ChangeType.fromString(status);
+                ChangeType changeType = ChangeType.fromGithubStatus(status);
 
                 diffFiles.add(new DiffFile(filename, patch, changeType));
             }
@@ -165,7 +184,6 @@ public class WebhookServiceImpl implements WebhookService {
                                       String commitBranch) {
 
         WebClient webClient = WebClient.builder()
-                .baseUrl(aiUrl) // Python 서버 전용
                 .build();
 
         List<FeatureItem> featureItems = featureItemRepository.findByProject_ProjectId(projectId);
@@ -189,14 +207,27 @@ public class WebhookServiceImpl implements WebhookService {
                 .build();
 
         webClient.post()
-                .uri("ai/api/code-review/feature-inference")
+                .uri(featureInferenceUrl)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
-                .retrieve()
-                .toBodilessEntity()
-                .doOnSuccess(res -> log.info("Python 서버로 diffFiles 전송 성공"))
+                .exchangeToMono(res -> {
+                    if (res.statusCode().isError()) {
+                        return res.bodyToMono(String.class)
+                                .defaultIfEmpty("")
+                                .flatMap(body -> {
+                                    log.error("AI  error {} body={}", res.statusCode(), body);
+                                    return Mono.error(new RuntimeException("AI error " + res.statusCode()));
+                                });
+                    }
+                    return res.toBodilessEntity().then(Mono.empty());
+                })
+                .doOnSuccess(v -> log.info("Python 서버로 diffFiles 전송 성공"))
                 .doOnError(error -> log.error("전송 실패", error))
-                .subscribe(); // 비동기 실행 (subscribe 없으면 실행 안됨)
+                .subscribe();
+
+
+        log.info("featureInferenceUrl={}", featureInferenceUrl);
+
     }
 
     @Override
@@ -240,7 +271,7 @@ public class WebhookServiceImpl implements WebhookService {
                 .projectId(projectId).featureName(featureItem.getTitle()).items(codeReviewItems).build();
 
         webClient.post()
-                .uri("ai/api/code-review/feature-inference")
+                .uri("/feature-inference")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestDto)
                 .retrieve()
@@ -252,7 +283,7 @@ public class WebhookServiceImpl implements WebhookService {
 
     @Override
     public List<FullFile> getFullFilesFromCommit(String commitHash, Long projectId, Long userId, String repoOwner, String repoName) {
-        String token = userRepository.findById(userId)
+        String accessToken = userRepository.findById(userId)
                 .map(User::getGithubAccessToken)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
 
@@ -260,7 +291,7 @@ public class WebhookServiceImpl implements WebhookService {
         Mono<Map<String, Object>> responseMono = githubWebClient.get()
                 .uri(commitUrl)
                 .headers(h -> {
-                    h.setBearerAuth(token);
+                    h.set("Authorization", "token " + accessToken);
                     h.set(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
                 })
                 .retrieve()
@@ -279,7 +310,7 @@ public class WebhookServiceImpl implements WebhookService {
             String content = githubWebClient.get()
                     .uri(contentUrl)
                     .headers(h -> {
-                        h.setBearerAuth(token);
+                        h.set("Authorization", "token " + accessToken);
                         h.set(HttpHeaders.ACCEPT, "application/vnd.github.v3.raw");
                     })
                     .retrieve()

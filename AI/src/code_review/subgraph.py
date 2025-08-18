@@ -38,7 +38,7 @@ def create_feature_graph():
         "apply_checklist_evaluation",
         route_after_checklist_apply,
         {
-            "to_summary": "run_code_review_summary",
+            "to_summary": "run_code_review_item_fetch",
             "to_detail": "run_code_review_file_fetch",
         },
     )
@@ -49,7 +49,7 @@ def create_feature_graph():
     # ── 분기 2: 세부 리뷰 이후 최종 요약 여부 ──────────────────
     # 세부 리뷰를 돈 경우엔 implements 기준으로 요약 수행 (미구현이면 종료)
     def should_run_code_review_summary(state: CodeReviewState) -> bool:
-        return bool(state.get("implemented"))  # run_feature_implementation_check에서 설정됨
+        return bool(state.get("go_summary")) or bool(state.get("implemented"))
 
     builder.add_conditional_edges(
         "run_feature_code_review",

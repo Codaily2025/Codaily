@@ -149,20 +149,20 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional
-    public int calculateTotalUserAvailableHours(Long projectId) {
+    public Double calculateTotalUserAvailableHours(Long projectId) {
         List<Schedule> schedules = scheduleRepository.findAllByProject_ProjectId(projectId);
         List<DaysOfWeek> daysOfWeeks = daysOfWeekRepository.findAllByProject_ProjectId(projectId);
 
-        Map<DayOfWeek, Integer> hoursByDay = new HashMap<>();
+        Map<DayOfWeek, Double> hoursByDay = new HashMap<>();
         for (DaysOfWeek dow : daysOfWeeks) {
             DayOfWeek day = DayOfWeek.valueOf(dow.getDateName().toUpperCase());
             hoursByDay.put(day, dow.getHours());
         }
 
-        int totalHours = 0;
+        Double totalHours = 0.0;
         for (Schedule schedule : schedules) {
             DayOfWeek day = schedule.getScheduledDate().getDayOfWeek();
-            totalHours += hoursByDay.getOrDefault(day, 0);
+            totalHours += hoursByDay.getOrDefault(day, 0.0);
         }
 
         return totalHours;
@@ -171,8 +171,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public FeatureItemReduceResponse reduceFeatureItemsIfNeeded(Long projectId, Long specId) {
-        int totalEstimated = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
-        int totalAvailable = calculateTotalUserAvailableHours(projectId);
+        Double totalEstimated = featureItemRepository.getTotalEstimatedTimeBySpecId(specId);
+        Double totalAvailable = calculateTotalUserAvailableHours(projectId);
 
         List<FeatureItem> items = featureItemRepository.findAllBySpecification_SpecId(specId);
 
@@ -188,6 +188,7 @@ public class ProjectServiceImpl implements ProjectService {
         int reducedCount = 0, keptCount = 0;
 
         for (FeatureItem item : sorted) {
+            if(item.getIsReduced()) continue;
             boolean reduced;
             if (accumulated + item.getEstimatedTime() <= totalAvailable) {
                 reduced = false;
@@ -343,11 +344,11 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         // 각 요일별로 시간이 다른지 확인
-        Map<String, Integer> currentMap = currentDaysOfWeek.stream()
+        Map<String, Double> currentMap = currentDaysOfWeek.stream()
                 .collect(Collectors.toMap(DaysOfWeek::getDateName, DaysOfWeek::getHours));
 
         for (ProjectUpdateRequest.DaysOfWeekRequest requestDay : request.getDaysOfWeek()) {
-            Integer currentHours = currentMap.get(requestDay.getDateName());
+            Double currentHours = currentMap.get(requestDay.getDateName());
             if (currentHours == null || !currentHours.equals(requestDay.getHours())) {
                 return true;
             }

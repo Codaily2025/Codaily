@@ -25,7 +25,7 @@ public interface FeatureItemService {
 
     void deleteBySpecId(Long specId);
 
-    int calculateTotalEstimatedTime(Long specId);
+    Double calculateTotalEstimatedTime(Long specId);
 
     List<FeatureItem> getAllMainFeature(Long projectId);
 
@@ -43,7 +43,7 @@ public interface FeatureItemService {
 
     Long getSpecIdByFeatureId(Long featureId);
 
-    void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced);
+    void updateIsReduced(Long projectId, String field, Long featureId, Boolean isReduced, Boolean cascadeChildren);
 
     boolean existsActive(Long specId);
 

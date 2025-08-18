@@ -1,15 +1,35 @@
 .project-container {
-  padding: 20px;
+  /* padding: 20px; */
   max-width: 1200px;
   margin: 0 auto;
   width: 100%; /* 전체 너비 사용 */
   height: 100%; /* 전체 높이 사용 */
 }
 
-.project-container h1 {
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.project-info h1 {
   color: #333;
   font-size: 2rem;
-  margin-bottom: 20px;
+  margin: 0;
+}
+
+.last-worked {
+  color: #666;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.project-divider {
+  width: 100%;
+  height: 0.5px;
+  background-color: #CCCBE4;
+  margin: 40px 0px 60px 0px;
 } 
 
 .create-project-button {

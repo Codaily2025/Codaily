@@ -5,6 +5,8 @@ import EventDetailModal from './EventDetailModal'
 import NicknameCheckModal from './NicknameCheckModal'
 import TaskDetailModal from './TaskDetailModal'
 import StatusConfirmModal from './StatusConfirmModal'
+import AddFeatureModal from './AddFeatureModal'
+import RetrospectiveResultModal from './RetrospectiveResultModal'
 import { useAuthStore } from "../../stores/authStore"
 
 
@@ -16,6 +18,8 @@ const MODAL_COMPONENTS = {
     PROJECT_EDIT: ProjectEditModal,
     TASK_DETAIL: TaskDetailModal,
     STATUS_CONFIRM: StatusConfirmModal,
+    ADD_FEATURE: AddFeatureModal,
+    RETROSPECTIVE_RESULT: RetrospectiveResultModal,
     // CONFIRMATION: ConfirmationModal,
     // DELETION: DeleteModal,
     // ...
@@ -29,22 +33,22 @@ const ModalManager = () => {
     const userId = 1 // 임시로 하드코딩
 
     // 콘솔 디버깅
-    console.log('ModalManager 상태:', { isOpen, modalType, modalData })
+    // console.log('ModalManager 상태:', { isOpen, modalType, modalData })
 
     if (!isOpen || !modalType) {
-        console.log('모달이 열리지 않았거나 type 확인 X')
+        // console.log('모달이 열리지 않았거나 type 확인 X')
         return null
     }
 
     const ModalComponent = MODAL_COMPONENTS[modalType]
-    console.log('Modal 컴포넌트:', ModalComponent)
+    // console.log('Modal 컴포넌트:', ModalComponent)
 
     if (!ModalComponent) {
-        console.log(`모달 없엉: ${modalType}`)
+        // console.log(`모달 없엉: ${modalType}`)
         return null
     }
 
-    console.log('렌더링되는 Modal 컴포넌트:', modalType)
+    // console.log('렌더링되는 Modal 컴포넌트:', modalType)
 
     // ProjectEditModal에는 userId도 전달
     if (modalType === 'PROJECT_EDIT') {
@@ -53,6 +57,17 @@ const ModalManager = () => {
                 data={modalData}
                 onClose={closeModal}
                 userId={userId}
+            />
+        )
+    }
+
+    // AddFeatureModal 전용 props 처리
+    if (modalType === 'ADD_FEATURE') {
+        return (
+            <ModalComponent 
+                isOpen={isOpen}
+                onClose={closeModal}
+                initialData={modalData?.initialData || null}
             />
         )
     }

@@ -11,13 +11,13 @@ from src.specification.specification_prompts import *
 
 
 MIN_FIELDS = 0
-MAX_FIELDS = 2
+MAX_FIELDS = 5
 
 MIN_MAIN_FUNCTIONS = 0
-MAX_MAIN_FUNCTIONS = 2
+MAX_MAIN_FUNCTIONS = 5
 
 MIN_SUB_FUNCTIONS = 0
-MAX_SUB_FUNCTIONS = 2
+MAX_SUB_FUNCTIONS = 5
 
 
 # 1. 환경 변수 로드
@@ -32,7 +32,7 @@ model = init_chat_model(
 str_parser = StrOutputParser()
 
 
-async def function_fields_generator(project_description: str) -> list:
+async def function_fields_generator(project_description: str, time: float) -> list:
     """
     주어진 프로젝트 설명을 기반으로 핵심 기능 그룹 목록을 리스트로 반환합니다.
     """
@@ -47,16 +47,23 @@ async def function_fields_generator(project_description: str) -> list:
     )
 
     chain = prompt | model | str_parser
-    raw_output = await chain.ainvoke({"description": project_description})
+    raw_output = await chain.ainvoke({"description": project_description, "time": time})
 
     # 리스트로 변환 (Markdown-style list 형식 파싱)
+    print("raw_output: ", raw_output)
     lines = raw_output.strip().split("\n")
-    groups = [
-        re.sub(r"^-", "", line).strip()
-        for line in lines
-        if line.strip().startswith("-")
-    ]
-
+    groups = []
+    for line in lines:
+        if line.strip().startswith("-"):
+            content = re.sub(r"^-", "", line).strip()  # "- " 제거
+            if ":" in content:
+                title, time_str = content.split(":", 1)
+                try:
+                    time_value = float(time_str.strip())  # 시간은 숫자로 변환
+                except ValueError:
+                    time_value = None
+                groups.append({"title": title.strip(), "time": time_value})
+    # print("groups: ", groups)
     return groups
 
 
@@ -73,13 +80,19 @@ def parse_bullet_items(response: str, key_name: str) -> list[dict]:
     for line in lines:
         if line.strip().startswith("-") and ":" in line:
             content = line.lstrip("-").strip()
-            name, desc = content.split(":", 1)
-            result.append({key_name: name.strip(), "description": desc.strip()})
+            name, desc, time = content.split(":", 2)
+            result.append(
+                {
+                    key_name: name.strip(),
+                    "description": desc.strip(),
+                    "time": float(time.strip()),
+                }
+            )
     return result
 
 
 async def main_functions_generator(
-    project_description: str, function_group: str
+    project_description: str, function_group: dict[str, float]
 ) -> list[dict]:
     """
     주어진 기능 그룹에 대해 주요 기능 항목을 리스트로 반환합니다.
@@ -103,7 +116,11 @@ async def main_functions_generator(
 
     chain = prompt | model | str_parser
     response = await chain.ainvoke(
-        {"description": project_description, "group": function_group}
+        {
+            "description": project_description,
+            "group": function_group,
+            "time": function_group["time"],
+        }
     )
 
     # 문자열 응답을 리스트[dict]로 파싱
@@ -129,7 +146,7 @@ def parse_bullet_items_with_duration_and_priority(
                     {
                         key_name: name,
                         "description": desc,
-                        "estimated_time": float(duration.replace("시간", "").strip()),
+                        "estimated_time": float(duration),
                         "priority_level": int(priority),
                     }
                 )
@@ -139,7 +156,7 @@ def parse_bullet_items_with_duration_and_priority(
 
 
 async def spec_sub_functions_generator(
-    project_description: str, function_group: str, main_function: str
+    project_description: str, function_group: str, main_function: str, time: float
 ) -> list[dict]:
     """
     주어진 주 기능 항목에 대해 상세 기능 항목들을 list[dict] 형식으로 반환합니다.
@@ -147,7 +164,10 @@ async def spec_sub_functions_generator(
     """
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", SPEC_GEN_SUB_FUNC_SYS),
+            (
+                "system",
+                SPEC_GEN_SUB_FUNC_SYS.format(time=time),
+            ),
             (
                 "user",
                 SPEC_GEN_SUB_FUNC_USER.format(
@@ -163,6 +183,7 @@ async def spec_sub_functions_generator(
             "description": project_description,
             "group": function_group,
             "main_function": main_function,
+            "time": time,
         }
     )
 
@@ -173,21 +194,35 @@ async def spec_sub_functions_generator(
 
 
 async def process_main_function(
-    project_description: str, field: str, main_func: dict, queue: asyncio.Queue
+    project_description: str,
+    field: str,
+    main_func: dict[str, str, float],
+    queue: asyncio.Queue,
 ):
-    main_func_full = f"{main_func['title']}. {main_func['description']}"
+    # print("main_func: ", main_func)
+    main_func_full = f"{main_func['title']}:{main_func['description']}"
     sub_functions = await spec_sub_functions_generator(
-        project_description, field, main_func_full
+        project_description, field, main_func_full, main_func["time"]
     )
-    result = {"field": field, "main_feature": main_func, "sub_feature": sub_functions}
-
+    result = {
+        "field": field,
+        "main_feature": {
+            "title": main_func["title"],
+            "description": main_func["description"],
+        },
+        "sub_feature": sub_functions,
+    }
+    # print("result: ", result, "\n")
     await queue.put(result)
 
 
-async def process_field(project_description: str, field: str, queue: asyncio.Queue):
+async def process_field(
+    project_description: str, field: dict[str, float], queue: asyncio.Queue
+):
     main_functions = await main_functions_generator(project_description, field)
+    # print("main_func: ", main_functions, "\n")
     tasks = [
-        process_main_function(project_description, field, main_func, queue)
+        process_main_function(project_description, field["title"], main_func, queue)
         for main_func in main_functions
     ]
     await asyncio.gather(*tasks)
@@ -208,10 +243,12 @@ async def watch_all_fields(field_tasks: list[Awaitable[Any]], queue: asyncio.Que
 
 async def stream_function_specification(
     project_description: str,
+    time: float,
 ) -> AsyncGenerator[str, None]:
     queue = asyncio.Queue()
 
-    function_fields = await function_fields_generator(project_description)
+    function_fields = await function_fields_generator(project_description, time)
+    # print("function_fields: ", function_fields)
     field_tasks = [
         process_field(project_description, field, queue) for field in function_fields
     ]
@@ -227,7 +264,7 @@ async def stream_function_specification(
     while True:
         try:
             item = await asyncio.wait_for(queue.get(), timeout=0.1)
-
+            # print("item: ", item)
             if item is SENTINEL:
                 break
 
@@ -324,7 +361,11 @@ async def generate_main_feature_from_message(message_text: str, field: str) -> d
     # 파싱
     parsed = parse_bullet_items(raw, key_name="title")
     # print(parsed)
-    return parsed[0] if parsed else {"title": "(제목 없음)", "description": ""}
+    return (
+        parsed[0]
+        if parsed
+        else {"title": "(제목 없음)", "description": "", "time": 0.0}
+    )
 
 
 async def stream_sub_feature(history: list, title: str, field: str):
@@ -356,7 +397,7 @@ async def stream_sub_feature(history: list, title: str, field: str):
     return parsed[0]
 
 
-async def generate_field_from_message(user_message: str) -> str:
+async def generate_field_from_message(user_message: str) -> dict[str, float]:
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", SPEC_ADD_GROUP_SYS),
@@ -365,15 +406,25 @@ async def generate_field_from_message(user_message: str) -> str:
     )
 
     chain = prompt | model | str_parser
-    return (await chain.ainvoke({"user_message": user_message})).strip()
+    raw = (await chain.ainvoke({"user_message": user_message})).strip()
+    # print("raw: ", raw)
+    # 파싱
+    if ":" not in raw:
+        return {"title": raw, "time": 0.0}
+    title, time_str = raw.split(":", 1)
+    try:
+        time_val = float(time_str.strip())
+    except ValueError:
+        time_val = 0.0
+    return {"title": title.strip(), "time": time_val}
 
 
 async def stream_single_field(
-    project_description: str, field_title: str
+    project_description: str, field: dict[str, float]
 ) -> AsyncGenerator[str, None]:
     queue = asyncio.Queue()
 
-    field_tasks = [process_field(project_description, field_title, queue)]
+    field_tasks = [process_field(project_description, field, queue)]
 
     watcher = asyncio.create_task(watch_all_fields(field_tasks, queue))
 

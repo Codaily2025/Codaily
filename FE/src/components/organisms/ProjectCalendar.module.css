@@ -173,6 +173,64 @@
   border: none !important;
 }
 
+/* 요일 헤더 sticky 제거 및 배경 투명 */
+.calendarContainer :global(.fc-scrollgrid-section-header) {
+  position: static !important; /* sticky 해제 */
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.calendarContainer :global(.fc-scrollgrid-section-header > *) {
+  position: static !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* 요일 헤더 셀 배경 투명 */
+.calendarContainer :global(.fc-col-header-cell) {
+  background: transparent !important;
+  background-color: transparent !important;
+  position: static !important;
+}
+
+.calendarContainer :global(.fc-col-header-cell > *) {
+  background: transparent !important;
+  background-color: transparent !important;
+  position: static !important;
+}
+
+/* sticky 관련 요소 초기화 */
+.calendarContainer :global(.fc-sticky) {
+  position: static !important; /* sticky 해제 */
+  background: transparent !important;
+  background-color: transparent !important;
+  z-index: auto !important;
+}
+
+/* FullCalendar 기본 헤더 스타일 강제 오버라이드 */
+.calendarContainer :global(.fc-scrollgrid-section-header .fc-scrollgrid-sync-table) {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.calendarContainer :global(.fc-scrollgrid-section-header thead) {
+  background: transparent !important;
+  background-color: transparent !important;
+  position: static !important;
+}
+
+.calendarContainer :global(.fc-scrollgrid-section-header thead tr) {
+  background: transparent !important;
+  background-color: transparent !important;
+  position: static !important;
+}
+
+.calendarContainer :global(.fc-scrollgrid-section-header thead th) {
+  background: transparent !important;
+  background-color: transparent !important;
+  position: static !important;
+}
+
 /* 요일 헤더 스타일 */
 .calendarContainer :global(.fc-col-header-cell) {
   padding: 8px;

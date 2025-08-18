@@ -11,6 +11,7 @@ import { useGetProfileImageQuery } from '../queries/useProfile';
 import { useDeleteUserMutation } from '../queries/useUser';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
+import userBaseImage from '../assets/user_base_image.png';
 
 // GitHub OAuth 설정
 const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID;
@@ -380,7 +381,7 @@ const ProfileEditModal = ({ isOpen, onClose, nickname }) => {
                 {profileImage?.imageUrl ? (
                   <img src={profileImage.imageUrl} alt="프로필" className={styles.profileImagePreview} />
                 ) : (
-                  <User size={32} className={styles.profileImageIcon} />
+                  <img src={userBaseImage} alt="프로필" style={{ width: '100%', height: '100%' }}/>
                 )}
               </div>
               <div className={styles.cameraButton} onClick={(e) => e.stopPropagation()}>

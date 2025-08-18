@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, Field, AliasChoices, model_validator
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Dict
 
 
 class DiffChangeType(str, Enum):
@@ -84,3 +84,10 @@ class ManualCodeReviewRequest(BaseModel):
     project_id: int
     feature_name: str
     items: List[CodeReviewItem]
+
+class ChecklistEvaluation(BaseModel):
+    feature_name: str = Field(...)
+    checklist_evaluation: Dict[str, bool] = Field(default_factory=dict)
+    implemented: bool = Field(...)
+    extra_implemented: List[str] = Field(default_factory=list)
+    checklist_file_map: Dict[str, List[str]] = Field(default_factory=dict)

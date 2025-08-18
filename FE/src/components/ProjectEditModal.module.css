@@ -92,7 +92,8 @@
 /* 모달 본문 */
 .modalBody {
   width: 100%;
-  padding: 0 24px;
+  /* height: 100%; */
+  padding: 0 24px 10px 24px; 
   position: absolute;
   top: 96px;
   bottom: 92px;
@@ -306,6 +307,7 @@
   height: 100%;
   position: relative;
   border-radius: 4px;
+  cursor: pointer;
 }
 
 .sliderProgress {
@@ -356,6 +358,7 @@
   align-items: flex-start;
   gap: 4px;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .repoOptionCard.active {
@@ -453,7 +456,7 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  padding-top: 30px;
+  padding-top: 25px;
   background: white;
 }
 
@@ -588,7 +591,7 @@
 }
 
 .calendarDay.selected {
-  background: #D690A6;
+  background: #9C9BC3;
   color: white;
 }
 
@@ -768,4 +771,114 @@
   border-top: 1px solid #E9EAEB;
   display: flex;
   justify-content: center;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 32px;
+  min-height: 24px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+  /* color: #D4D4D4; */
+  transition: color 0.2s ease;
+}
+
+.icon-btn:focus {
+  outline: none;
+}
+
+/* 삭제 버튼 스타일 */
+.iconBtn.deleteBtn {
+  background: transparent;
+  border: none;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  color: #737373;
+  padding: 0;
+  margin: 0;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.iconBtn.deleteBtn svg path {
+  stroke: #737373;
+  transition: stroke 0.2s ease;
+}
+
+/* 삭제 버튼 hover 스타일 */
+.iconBtn.deleteBtn:hover {
+  /* background-color: #FEE2E2; */
+  transform: scale(1.05);
+}
+
+.iconBtn.deleteBtn:hover svg path {
+  stroke: #DC2626;
+}
+
+.iconBtn.deleteBtn:focus {
+  outline: none;
+}
+
+.iconBtn.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loadingSpinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #737373;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* 큰 로딩 스피너 */
+.loadingSpinnerLarge {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #F3F2FA;
+  border-top: 4px solid #8483AB;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  margin: 0 auto 16px;
+}
+
+/* 로딩 컨테이너 */
+.loadingContainer {
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.loadingText {
+  color: #737373;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

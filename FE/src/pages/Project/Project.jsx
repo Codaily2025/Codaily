@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import './Project.css'
 import './TaskCard.css'
 import ProjectTemplate from '@/components/layouts/ProjectTemplate'
-import { useUserProjects } from '@/hooks/useProjects'
+import { useUserProjects, useParentFeatures } from '@/hooks/useProjects'
 import useProjectStore from '@/stores/projectStore'
 
 const Project = () => {
@@ -13,9 +13,11 @@ const Project = () => {
     activeProjects,
     lastWorkedProject,
     currentProject,
+    parentFeatures,
     setActiveProjects, 
     updateLastWorkedProject, 
-    setCurrentProject 
+    setCurrentProject,
+    setParentFeatures 
   } = useProjectStore()
 
   // id 여부에 따른 currentProject 설정
@@ -61,8 +63,8 @@ const Project = () => {
     }
   }, [projects, setActiveProjects, updateLastWorkedProject])
 
-  console.log('사용자가 진행 중인 프로젝트 리스트: ', projects)
-  console.log('현재 렌더링 중인 currentProject: ', currentProject)
+  // console.log('사용자가 진행 중인 프로젝트 리스트: ', projects)
+  // console.log('현재 렌더링 중인 currentProject: ', currentProject)
 
   const handleCreateProject = () => {
     navigate('/project/create')
@@ -96,20 +98,22 @@ const Project = () => {
         <div className="project-info">
           {/* 전역에서 가져온 currentProject 데이터 */}
           <h1>{currentProject?.title || '프로젝트'}</h1>
-          <p>{currentProject?.description || `프로젝트 ID: ${currentProject?.projectId}`}</p>
-          {currentProject?.lastWorkedDate && (
-            <span className="last-worked">
-              마지막 작업: {new Date(currentProject?.lastWorkedDate).toLocaleDateString('ko-KR')}
-            </span>
-          )}
+          {/* <p>{currentProject?.description || `프로젝트 ID: ${currentProject?.projectId}`}</p> */}
         </div>
+        {currentProject?.lastWorkedDate && (
+          <span className="last-worked">
+            마지막 작업일: {new Date(currentProject?.lastWorkedDate).toLocaleDateString('ko-KR')}
+          </span>
+        )}
         {/* <button className="create-project-button" onClick={handleCreateProject}>
           + 새 프로젝트 만들기
         </button> */}
       </div>
+      <div className="project-divider"></div>
       <ProjectTemplate 
         currentProject={currentProject} 
         projects={projects}
+        // parentFeatures={parentFeaturesList}
       />
     </div>
   );
