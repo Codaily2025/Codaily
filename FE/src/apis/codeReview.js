@@ -17,8 +17,8 @@ export async function fetchCodeReviewList() {
         // 각 항목을 원하는 형식으로 변환
         return dataArray.map(item => {
             const tags = (item.severityCount) ? Object.entries(item.severityCount).map(([severity, count]) => ({
-                text: (severity==='high' ? '높음' : severity==='medium' ? '중간' : '낮음') + ' ' + count, // 예: high 8
-                type: severity,
+                text: severity.trim() + ' ' + count, // 공백 제거 후 사용: '낮음 1', '중간 2', '높음 2'
+                type: severity.trim(), // 공백 제거 후 사용: '낮음', '중간', '높음'
             })) : [];
             // 현재 createdAt 예시 : 2025-08-09T21:00:33.408579
             // 원하는 형식 : 2025/08/09 21:00

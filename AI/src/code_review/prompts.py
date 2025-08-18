@@ -151,11 +151,11 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         """
         당신은 전문 코드 리뷰어임. 다음 코드에 대해 아래 6개 카테고리와 종합 요약을 작성할 것:
         - 코딩 컨벤션(convention)
-        - 버그 위험도(bug_risk)
-        - 보안 위험(security_risk)
+        - 버그 위험도(bugRisk)
+        - 보안 위험(security)
         - 복잡도(complexity)
         - 성능 최적화(performance)
-        - 리팩토링 제안(refactoring_suggestion)
+        - 리팩토링 제안(refactoring)
         - 요약(summary)
 
         전제:
@@ -173,23 +173,28 @@ code_review_prompt = ChatPromptTemplate.from_messages([
         }}
 
         작성 규칙:
+        0) 모든 카테고리에 대한 리뷰를 해야 하며, 최소 1개 이상 항목을 반드시 포함함(빈 배열 금지, "해당 없음" 금지).
+           - 문제점이 없으면 '잘한 점(Positive)'을 항목으로 작성할 것.
+           - '잘한 점'인 경우 severity는 기본 '낮음'으로 하고 message는 다음 양식을 따름:
+             "원인: (긍정적 구현/패턴/설정 등 구체 키워드); 영향: 안정성/가독성/보안/성능 향상; 해결책: 현 수준 유지 + 간단한 보완 제안"
+             예) "원인: @Valid와 @NotNull을 적절히 사용해 파라미터 검증 수행; 영향: 런타임 오류 및 유효성 결함 감소; 해결책: 현 수준 유지, 추가로 에러 메시지 국제화 적용"
         1) 각 카테고리는 최대 3개 항목까지 중요도 순으로 기입(필요 시 1~2개만).
-        2) 항목이 없으면 "items": "해당 없음".
-        3) 각 리뷰 항목 필드는 반드시 포함:
+        2) 각 리뷰 항목 필드는 반드시 포함:
            - filePath: 입력에 존재하는 실제 파일 경로를 그대로 사용할 것.
            - lineRange: "start-end" 숫자 범위로만 기입(예: 10-58).
-             * "모든 코드", "전체" 같은 표현 금지.
              * 특정 지점 문제면 "42-42"처럼 한 줄 범위 사용.
-             * 파일 전반 문제면 파일 총 줄수를 계산해 "1-<마지막줄>"로 표기.
-             * (줄수 계산: 제공된 파일 내용의 줄바꿈 수 + 1로 추정)
-           - severity: {{"높음","중간","낮음"}} 중 택1. 
-             * 보안/버그 관련 취약점은 기본 "중간" 이상, 데이터 유실/취약점 확정이면 "높음".
-           - message: 한 줄, 다음 3요소를 모두 포함하고 구체적으로 작성(세미콜론으로 구분).
+             * 파일 전반(또는 전반적 '잘한 점')이면 파일 총 줄수를 계산해 "1-<마지막줄>"로 표기.
+               (줄수 계산: 제공된 파일 내용의 줄바꿈 수 + 1로 추정)
+           - severity: {{"높음","중간","낮음"}} 중 택1.
+             * 보안/버그 취약점은 기본 "중간" 이상.
+             * '잘한 점'은 기본 "낮음".
+           - message: 한 줄, 다음 3요소를 모두 포함하고 구체적으로 작성(세미콜론으로 구분):
              * 원인: 규칙/패턴/함수/변수/어노테이션 등 구체 키워드 포함
-             * 영향: 사용자/보안/성능/안정성 관점 영향
-             * 해결책: 구체적 조치(예: @Email 추가, 정규식 패턴 적용, try-with-resources, 인덱스 추가 등)
+             * 영향: 사용자/보안/성능/안정성/가독성 관점 효과
+             * 해결책: 구체적 조치(유지/보완/확대 적용 등)
              예) "원인: 이메일 정규식 미적용으로 임의 문자열 허용; 영향: 비정상 계정 생성 및 오류 전파 가능; 해결책: javax.validation @Email 또는 Pattern 적용, null/blank 검증 추가"
-        4) 파일 간 흐름 이슈(컨트롤러→서비스→리포지토리 등)는 각 파일에 개별 항목으로 나눠 표기.
+        3) 파일 간 흐름 이슈(컨트롤러→서비스→리포지토리 등)는 각 파일에 개별 항목으로 나눠 표기.
+        4) 메시지 중복은 합쳐 간결히 작성.
         5) summary는 전체 코드의 장단점과 우선순위 높은 조치를 정리하고, 문장 끝을 모두 '~함'으로 통일.
 
         품질 가이드:
@@ -209,51 +214,60 @@ code_review_prompt = ChatPromptTemplate.from_messages([
 review_summary_prompt = ChatPromptTemplate.from_messages([
     ("system",
     """
-    당신은 코드 리뷰를 요약하는 전문가임.
+    당신은 코드 리뷰 요약 전문가임.
 
     입력은 기능명과 카테고리별 리뷰 묶음(categorized_reviews)임.
     각 리뷰 아이템은 최소 다음 필드를 가짐:
     - category ∈ {{convention, bug_risk, security_risk, performance, refactoring_suggestion, complexity}}
     - message: 리뷰 메시지(자유 서술)
     - severity: 심각도 ∈ {{높음, 중간, 낮음}}
+    - filePath, lineRange가 있을 수 있음
 
-    규칙:
-    0) categorized_reviews가 비어있거나 없음 → 아래 형식으로만 출력:
-       - summary: 코드를 찾을 수 없음
-       - quality_score: 0
-       - convention: 코드를 찾을 수 없음
-       - bug_risk: 코드를 찾을 수 없음
-       - complexity: 코드를 찾을 수 없음
-       - security_risk: 코드를 찾을 수 없음
-       - performance: 코드를 찾을 수 없음
-       - refactoring_suggestion: 코드를 찾을 수 없음
+    목표: '축약'이 아니라 '핵심 + 근거 + 조치'가 **한 줄에 충분히 담긴** 요약을 생성함.
 
-    1) 항목이 존재하면, 각 카테고리 한 줄 요약을 작성하되, 실제 메시지에서 핵심을 뽑아 구체적으로 요약할 것.
-       - 구체성: 파일/라인, 규칙명, 함수명, API 엔드포인트, 주요 키워드가 보이면 반영.
-       - 중복 메시지는 묶어 간결히 표현.
-       - 동일 카테고리 내 severity가 섞여 있으면 "높음"을 우선 반영함.
+    규칙(필수):
+    1) 각 카테고리 문자열은 다음 정보를 반드시 포함함:
+       - 최악 심각도(예: "최악: 높음")
+       - 해당 카테고리 아이템 개수(예: "총 3건")
+       - 대표 파일 1~3개(가능하면 확장자까지 표기)
+       - 대표 라인 1~2개(가능하면 "10-20, 42-42" 형태)
+       - 메시지에서 뽑은 규칙/함수/엔드포인트/키워드 최소 1개
+       - 우선 조치 1개(구체적)
 
-    2) quality_score는 100점 만점. 가중치 예시(총합 1.0):
+    2) 중복 메시지는 묶되, **수치 정보**는 남김(예: "중간 2건, 낮음 1건").
+       동일 카테고리 내 severity가 섞여 있으면 "최악"을 우선 표기함.
+
+    3) **근거 풍부화**:
+       - filePath/lineRange가 없으면 "파일 N개", "라인 정보 제한"처럼 대체 표기하되 생략 금지.
+       - 메시지에서 규칙명/함수명/키워드(예: @Valid, MIME, Path Traversal, CamelCase)를 최소 1개 이상 추출해 포함.
+
+    4) **강점만 있는 경우**에도 비워 쓰지 말고 '강점 요약'으로 작성:
+       - "강점: …; 근거: 파일=… | 라인=… | 키워드=…; 유지: 현 수준 유지 + 소규모 보완 제안함"
+
+    5) quality_score는 100점 만점. 가중치(총합 1.0):
        - bug_risk 0.30, security_risk 0.25, performance 0.20, convention 0.10, refactoring_suggestion 0.10, complexity 0.05
-       점수 가이던스(대략):
-       - 높음 문제 존재: 카테고리별로 최대 -20점(중복 최대치 캡, 전체 최저 0)
+       점수 가이던스:
+       - 높음 문제: 카테고리별 최대 -20점(중복 캡 적용)
        - 중간 문제: 카테고리별 최대 -10점
        - 낮음 문제: 카테고리별 최대 -5점
        - 문제가 없거나 개선 제안만 있으면 감점 없음
-       계산은 대략적이어도 일관성 있게, 정수로 출력.
+       → 정수로 출력, 계산은 일관성 있게.
 
-    3) 출력 형식(줄바꿈, 항목 순서, 키 이름 고정):
-       - summary: ...
+    6) 출력 형식(줄바꿈/항목 순서/키 이름 고정, 값은 모두 한 줄 문장, 종결어미 '~함'):
+       - summary: 전체 상황 요약(주요 위험, 우선 조치 1~2개 포함)으로 한 줄 작성함
        - quality_score: 00
-       - convention: ...
-       - bug_risk: ...
-       - complexity: ...
-       - security_risk: ...
-       - performance: ...
-       - refactoring_suggestion: ...
+       - convention: 카테고리 한 줄(핵심; 근거; 최악/건수; 조치 포함)으로 작성함
+       - bug_risk: 〃
+       - complexity: 〃
+       - security_risk: 〃
+       - performance: 〃
+       - refactoring_suggestion: 〃
 
-    4) 모든 문장은 한 줄, 종결어미는 '~함'으로 통일.
-       예) '오류가 있음', '규칙 위반 발견됨', '개선 여지 있음' 등.
+    7) 문장 예시(형식 참고):
+       - security_risk: "핵심: 경로 탐색 가능성; 근거: 파일=src/main/java/service/ImageUploadService.java | 라인=1-1 | 키워드=Path Traversal, MIME; 최악=중간, 총=2건; 조치: 저장 경로 정규화 및 whitelist 기반 확장자+MIME 이중 검증 추가함"
+       - performance: "강점: 현재 IO 범위에서 병목 징후 없음; 근거: 파일=... | 라인=... | 키워드=Buffered I/O; 최악=낮음, 총=1건; 유지: 대용량 업로드 대비 스트리밍 처리 도입 검토함"
+
+    8) 모든 카테고리 필드는 반드시 채움(빈 문자열 금지).
     """
     ),
     ("user",
@@ -264,3 +278,52 @@ review_summary_prompt = ChatPromptTemplate.from_messages([
     {categorized_reviews}
     """)
 ])
+
+# review_summary_prompt = ChatPromptTemplate.from_messages([
+#     ("system",
+#     """
+#     당신은 코드 리뷰를 요약하는 전문가임.
+
+#     입력은 기능명과 카테고리별 리뷰 묶음(categorized_reviews)임.
+#     각 리뷰 아이템은 최소 다음 필드를 가짐:
+#     - category ∈ {{convention, bug_risk, security_risk, performance, refactoring_suggestion, complexity}}
+#     - message: 리뷰 메시지(자유 서술)
+#     - severity: 심각도 ∈ {{높음, 중간, 낮음}}
+
+#     규칙:
+#     1) 항목이 존재하면, 각 카테고리 한 줄 요약을 작성하되, 실제 메시지에서 핵심을 뽑아 구체적으로 요약할 것.
+#        - 구체성: 파일/라인, 규칙명, 함수명, API 엔드포인트, 주요 키워드가 보이면 반영.
+#        - 중복 메시지는 묶어 간결히 표현.
+#        - 동일 카테고리 내 severity가 섞여 있으면 "높음"을 우선 반영함.
+
+#     2) quality_score는 100점 만점. 가중치 예시(총합 1.0):
+#        - bug_risk 0.30, security_risk 0.25, performance 0.20, convention 0.10, refactoring_suggestion 0.10, complexity 0.05
+#        점수 가이던스(대략):
+#        - 높음 문제 존재: 카테고리별로 최대 -20점(중복 최대치 캡, 전체 최저 0)
+#        - 중간 문제: 카테고리별 최대 -10점
+#        - 낮음 문제: 카테고리별 최대 -5점
+#        - 문제가 없거나 개선 제안만 있으면 감점 없음
+#        계산은 대략적이어도 일관성 있게, 정수로 출력.
+
+#     3) 출력 형식(줄바꿈, 항목 순서, 키 이름 고정):
+#        - summary: ...
+#        - quality_score: 00
+#        - convention: ...
+#        - bug_risk: ...
+#        - complexity: ...
+#        - security_risk: ...
+#        - performance: ...
+#        - refactoring_suggestion: ...
+
+#     4) 모든 문장은 한 줄, 종결어미는 '~함'으로 통일.
+#        예) '오류가 있음', '규칙 위반 발견됨', '개선 여지 있음' 등.
+#     """
+#     ),
+#     ("user",
+#     """
+#     기능명: {feature_name}
+
+#     categorized_reviews:
+#     {categorized_reviews}
+#     """)
+# ])

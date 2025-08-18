@@ -36,18 +36,21 @@ const Sidebar = ({ isOpen, onClose, projects = [], currentProjectId, isLoading =
           {isLoading ? (
             <div className={styles.sidebarLoading}>프로젝트 목록을 불러오는 중...</div>
           ) : projects.length > 0 ? (
-            projects.map((project) => (
-              <ProjectItem
-                key={project.projectId}
-                project={{ ...project, name: project.title }}
-                state={{
-                  isActive: project.projectId === currentProjectId,
-                  isExpanded: expandedProject === project.title
-                }}
-                onToggle={() => handleProjectToggle(project.title)}
-                onClick={() => handleProjectClick(project.projectId)}
-              />
-            ))
+            projects.map((project) => {
+              console.log('Sidebar project data:', project)
+              return (
+                <ProjectItem
+                  key={project.projectId}
+                  project={{ ...project, name: project.title }}
+                  state={{
+                    isActive: project.projectId === currentProjectId,
+                    isExpanded: expandedProject === project.title
+                  }}
+                  onToggle={() => handleProjectToggle(project.title)}
+                  onClick={() => handleProjectClick(project.projectId)}
+                />
+              )
+            })
           ) : (
             <div className={styles.noProjects}>진행 중인 프로젝트가 없습니다.</div>
           )}

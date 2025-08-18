@@ -1,6 +1,7 @@
 package com.codaily.codereview.entity;
 
 import com.codaily.project.entity.FeatureItem;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,6 +33,10 @@ public class FeatureItemChecklist {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @OneToMany(mappedBy = "featureItemChecklist", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<CodeReviewItem> codeReviewItems;
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "feature_item_checklist_filepaths", joinColumns = @JoinColumn(name = "checklist_id"))

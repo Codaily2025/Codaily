@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react'
 import { useLocation } from 'react-router-dom'
+import { BarChart3, CheckCircle, ClipboardList } from 'lucide-react'
 import { useAllRetrospectives, useProjectRetrospectives, useCreateRetrospectiveMutation } from '@/hooks/useRetrospectives'
 import useProjectStore from '@/stores/projectStore'
 import useModalStore from '@/store/modalStore'
@@ -228,7 +229,10 @@ const Retrospective = memo(() => {
           <div className={styles.expandedContent}>
             {/* 요약 섹션 */}
             <div className={styles.summarySection}>
-              <div className={styles.summaryTitle}>📊 Overall</div>
+              <div className={styles.summaryTitle}>
+                <BarChart3 size={16} />
+                Overall
+              </div>
               <div className={styles.summaryItem}>
                 <div className={styles.summaryLabel}>Overall</div>
                 <div className={styles.summaryText}>{item.summary.overall}</div>
@@ -256,7 +260,10 @@ const Retrospective = memo(() => {
             {/* 완료된 기능 섹션 */}
             {item.completedFeatures && item.completedFeatures.length > 0 && (
               <div className={styles.featuresSection}>
-                <div className={styles.summaryTitle}>✅ 완료된 기능</div>
+                <div className={styles.summaryTitle}>
+                  <CheckCircle size={16} />
+                  완료된 기능
+                </div>
                 {item.completedFeatures.map(feature => (
                   <div key={feature.featureId} className={styles.featureItem}>
                     <div className={styles.featureHeader}>
@@ -278,7 +285,10 @@ const Retrospective = memo(() => {
             {/* 액션 아이템 */}
             {item.actionItems && item.actionItems.length > 0 && (
               <div className={styles.actionItems}>
-                <div className={styles.summaryTitle}>📋 Action Items</div>
+                <div className={styles.summaryTitle}>
+                  <ClipboardList size={16} />
+                  Action Items
+                </div>
                 <ul className={styles.actionItemsList}>
                   {item.actionItems.map((action, index) => (
                     <li key={index} className={styles.actionItem}>

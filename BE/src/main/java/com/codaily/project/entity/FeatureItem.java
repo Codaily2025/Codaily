@@ -2,6 +2,7 @@ package com.codaily.project.entity;
 
 import com.codaily.codereview.entity.CodeCommit;
 import com.codaily.codereview.entity.CodeReview;
+import com.codaily.codereview.entity.FeatureItemChecklist;
 import com.codaily.management.entity.FeatureItemSchedule;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -82,6 +83,10 @@ public class FeatureItem {
     @JoinColumn(name = "parent_feature_id")
     @JsonIgnore
     private FeatureItem parentFeature;
+
+    @OneToMany(mappedBy = "featureItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<FeatureItemChecklist> checklists;
 
     @OneToMany(mappedBy = "parentFeature", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy("priorityLevel ASC, estimatedTime ASC, featureId ASC")

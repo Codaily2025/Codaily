@@ -115,7 +115,7 @@ const AddFeatureContent = ({
                         value={formData.parentFeatureId}
                         onChange={(e) => handleChange('parentFeatureId', e.target.value)}
                         options={parentFeatureOptions}
-                        placeholder="상위 기능을 선택하세요 (선택사항)"
+                        placeholder="상위 기능을 선택하세요"
                         className={styles.input}
                     />
                 </div>
@@ -177,8 +177,8 @@ const AddFeatureContent = ({
                             className={styles.range}
                         />
                         <div className={styles.rangeLabels}>
-                            <span>낮음(1)</span>
-                            <span>높음(10)</span>
+                            <span>높음(1)</span>
+                            <span>낮음(10)</span>
                         </div>
                     </div>
 

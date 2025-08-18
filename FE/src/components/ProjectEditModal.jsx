@@ -65,7 +65,7 @@ const DeleteIcon = () => (
 
 
 // 캘린더 컴포넌트
-const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedDate, selectedDates = null, isWorkDayAdjustment = false }) {
+const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedDate, selectedDates = null, isWorkDayAdjustment = false, projectStartDate = null, projectEndDate = null }) {
   // 시작일/종료일 캘린더인 경우 선택된 날짜가 있으면 그 날짜의 월을 보여주고, 없으면 현재 월을 보여줌
   // 작업 가능 날짜 캘린더인 경우 현재 월을 보여줌
   const getInitialMonth = () => {
@@ -119,6 +119,35 @@ const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedD
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
+  // 날짜가 프로젝트 기간 내에 있는지 확인하는 함수
+  const isDateInProjectRange = (date) => {
+    if (!isWorkDayAdjustment || !projectStartDate || !projectEndDate) {
+      return true; // 작업 가능 날짜 캘린더가 아니거나 기간 정보가 없으면 모든 날짜 허용
+    }
+
+    // 날짜 문자열을 Date 객체로 변환하는 함수 (시간 부분 제거)
+    const parseDate = (dateStr) => {
+      if (!dateStr) return null;
+      // "2025.08.03" 형식을 "2025-08-03" 형식으로 변환
+      const normalizedDate = dateStr.replace(/\./g, '-');
+      const parsedDate = new Date(normalizedDate);
+      // 시간 부분을 제거하여 날짜만 비교
+      return new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate());
+    };
+
+    const startDate = parseDate(projectStartDate);
+    const endDate = parseDate(projectEndDate);
+
+    if (!startDate || !endDate) {
+      return true;
+    }
+
+    // 비교할 날짜도 시간 부분 제거
+    const compareDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    return compareDate >= startDate && compareDate <= endDate;
+  };
+
   const handleDayClick = (day) => {
     if (day) {
       // 작업 가능 날짜 캘린더인 경우, 다른 달의 날짜를 클릭해도 현재 달을 유지
@@ -131,6 +160,11 @@ const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedD
 
         // 다른 달의 날짜를 클릭한 경우 무시
         if (dayYear !== currentYear || dayMonth !== currentMonthNum) {
+          return;
+        }
+
+        // 프로젝트 기간 외의 날짜를 클릭한 경우 무시
+        if (!isDateInProjectRange(day)) {
           return;
         }
       }
@@ -170,6 +204,7 @@ const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedD
 
             const isSelected = selectedDate && day.toDateString() === selectedDate.toDateString();
             const isWorkDaySelected = selectedDates && selectedDates.has(dateString);
+            const isInProjectRange = isDateInProjectRange(day);
 
             let className = styles.calendarDay;
             if (isSelected) {
@@ -178,12 +213,21 @@ const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedD
             if (isWorkDaySelected) {
               className += ` ${styles.workDaySelected}`;
             }
+            // 작업 가능 날짜 캘린더에서 프로젝트 기간 외의 날짜는 비활성화
+            if (isWorkDayAdjustment && !isInProjectRange) {
+              className += ` ${styles.disabled}`;
+            }
 
             return (
               <div
                 key={index}
                 className={className}
                 onClick={() => handleDayClick(day)}
+                style={{
+                  // 비활성화된 날짜는 클릭 불가능하게 표시
+                  cursor: (isWorkDayAdjustment && !isInProjectRange) ? 'not-allowed' : 'pointer',
+                  opacity: (isWorkDayAdjustment && !isInProjectRange) ? 0.3 : 1
+                }}
               >
                 {day.getDate()}
               </div>
@@ -206,11 +250,84 @@ const Calendar = React.memo(function Calendar({ onDateSelect, onClose, selectedD
   );
 });
 
+// 로컬에서만 사용할 헬퍼 함수: 기간 변경에 따른 schedules 자동 조정
+const adjustSchedulesBasedOnDateRangeLocal = (currentSchedules, newStartDate, newEndDate, originalStartDate, originalEndDate) => {
+  if (!currentSchedules || !Array.isArray(currentSchedules)) {
+    return [];
+  }
+
+  // 날짜 문자열을 Date 객체로 변환하는 함수
+  const parseDate = (dateStr) => {
+    if (!dateStr) return null;
+    // "2025.08.03" 형식을 "2025-08-03" 형식으로 변환
+    const normalizedDate = dateStr.replace(/\./g, '-');
+    return new Date(normalizedDate);
+  };
+
+  const startDate = parseDate(newStartDate);
+  const endDate = parseDate(newEndDate);
+  const orgStartDate = parseDate(originalStartDate);
+  const orgEndDate = parseDate(originalEndDate);
+
+  if (!startDate || !endDate || !orgStartDate || !orgEndDate) {
+    return currentSchedules;
+  }
+
+  // 기존 schedules에서 새로운 기간 범위 내의 날짜만 필터링
+  const filteredSchedules = currentSchedules.filter(schedule => {
+    const scheduleDate = new Date(schedule.scheduledDate);
+    return scheduleDate >= startDate && scheduleDate <= endDate;
+  });
+
+  // 기간이 확장된 경우 새로운 날짜들을 자동으로 추가
+  const existingDates = new Set(filteredSchedules.map(s => s.scheduledDate));
+  const newSchedules = [...filteredSchedules];
+
+  // 시작일이 앞당겨진 경우: 새로운 시작일과 원래 시작일 사이의 날짜만 추가
+  if (startDate < orgStartDate) {
+    const currentDate = new Date(startDate);
+    while (currentDate < orgStartDate) {
+      const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      if (!existingDates.has(dateStr)) {
+        newSchedules.push({
+          scheduleId: newSchedules.length + 1,
+          scheduledDate: dateStr
+        });
+        existingDates.add(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+
+  // 종료일이 늘어난 경우: 원래 종료일과 새로운 종료일 사이의 날짜만 추가
+  if (endDate > orgEndDate) {
+    const currentDate = new Date(orgEndDate);
+    currentDate.setDate(currentDate.getDate() + 1); // 다음 날부터 시작
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      if (!existingDates.has(dateStr)) {
+        newSchedules.push({
+          scheduleId: newSchedules.length + 1,
+          scheduledDate: dateStr
+        });
+        existingDates.add(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+
+  // scheduleId 재정렬
+  return newSchedules.map((schedule, index) => ({
+    ...schedule,
+    scheduleId: index + 1
+  }));
+};
+
 const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('project:', data?.title)
 
   // useProjectStore에서 프로젝트 정보 가져오기
-  const { projects, projectDetail, getProjectDetail, removeRepository } = useProjectStore();
+  const { projects, projectDetail, getProjectDetail, removeRepository, adjustSchedulesForDateRange } = useProjectStore();
 
   // data prop으로 전달된 프로젝트 ID를 사용하여 스토어에서 프로젝트 정보 찾기
   const projectFromStore = data?.id ? projects.find(p => p.id === data.id) : null;
@@ -314,6 +431,9 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
   // console.log('현재프로젝트 정보:', projectDetails)
   // console.log('스토어에서 가져온 상세 정보:', detailFromStore)
 
+  // 사용자가 날짜를 수동으로 변경했는지 추적하는 ref
+  const userDateChangeRef = useRef({ startDate: false, endDate: false });
+
   // 상세 정보가 업데이트될 때 컴포넌트 상태 업데이트
   useEffect(() => {
     if (detailFromStore) {
@@ -324,26 +444,29 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
       setProjectDetails(prev => ({
         ...prev,
         projectName: detailFromStore.title || prev.projectName,
-        startDate: finalStartDate,
-        endDate: finalEndDate,
+        // 사용자가 수동으로 변경한 날짜는 덮어쓰지 않음
+        startDate: userDateChangeRef.current.startDate ? prev.startDate : finalStartDate,
+        endDate: userDateChangeRef.current.endDate ? prev.endDate : finalEndDate,
         timeByDay: finalTimeByDay,
         // schedules는 projectDetails에서 제거하고 selectedDates로만 관리
       }));
 
-      // 기존 schedules 데이터를 selectedDates에 설정
-      if (detailFromStore.schedules && Array.isArray(detailFromStore.schedules)) {
-        const existingDates = new Set();
-        detailFromStore.schedules.forEach(schedule => {
-          if (schedule.scheduledDate) {
-            existingDates.add(schedule.scheduledDate);
-          }
-        });
-        setSelectedDates(existingDates);
-        // console.log('기존 schedules에서 selectedDates 설정:', Array.from(existingDates)); // 디버깅용
-      } else {
-        // schedules가 없으면 빈 Set으로 초기화
-        setSelectedDates(new Set());
-        // console.log('schedules가 없어서 빈 Set으로 초기화'); // 디버깅용
+      // 기존 schedules 데이터를 selectedDates에 설정 (사용자가 날짜를 변경하지 않은 경우에만)
+      if (!userDateChangeRef.current.startDate && !userDateChangeRef.current.endDate) {
+        if (detailFromStore.schedules && Array.isArray(detailFromStore.schedules)) {
+          const existingDates = new Set();
+          detailFromStore.schedules.forEach(schedule => {
+            if (schedule.scheduledDate) {
+              existingDates.add(schedule.scheduledDate);
+            }
+          });
+          setSelectedDates(existingDates);
+          // console.log('기존 schedules에서 selectedDates 설정:', Array.from(existingDates)); // 디버깅용
+        } else {
+          // schedules가 없으면 빈 Set으로 초기화
+          setSelectedDates(new Set());
+          // console.log('schedules가 없어서 빈 Set으로 초기화'); // 디버깅용
+        }
       }
     }
   }, [detailFromStore?.id, detailFromStore?.title, detailFromStore?.startDate, detailFromStore?.endDate, detailFromStore?.timeByDay, detailFromStore?.schedules, initialStartDate, initialEndDate]);
@@ -372,11 +495,81 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
     }).replace(/\.\s*/g, '.').replace(/\.$/, '');
 
     if (type === 'start') {
-      setProjectDetails(prev => ({ ...prev, startDate: formattedDate }));
+      const newStartDate = formattedDate;
+      const currentEndDate = projectDetails.endDate;
+      
+      // 사용자가 시작일을 변경했다는 것을 표시
+      userDateChangeRef.current.startDate = true;
+      
+      setProjectDetails(prev => ({ ...prev, startDate: newStartDate }));
       setShowStartCalendar(false);
+      
+      // 기간 변경 시 schedules 자동 조정 (로컬에서만)
+      if (currentEndDate) {
+        // 스토어를 업데이트하지 않고 로컬에서만 schedules 조정
+        const currentSchedules = Array.from(selectedDates).map((date, index) => ({
+          scheduleId: index + 1,
+          scheduledDate: date
+        }));
+        
+        // 원래 시작일/종료일 가져오기 (DB에서 가져온 원본 데이터)
+        const originalStartDate = detailFromStore?.startDate?.replace(/-/g, '.') || initialStartDate;
+        const originalEndDate = detailFromStore?.endDate?.replace(/-/g, '.') || initialEndDate;
+        
+        const adjustedSchedules = adjustSchedulesBasedOnDateRangeLocal(
+          currentSchedules,
+          newStartDate,
+          currentEndDate,
+          originalStartDate,
+          originalEndDate
+        );
+        
+        const adjustedDates = new Set();
+        adjustedSchedules.forEach(schedule => {
+          if (schedule.scheduledDate) {
+            adjustedDates.add(schedule.scheduledDate);
+          }
+        });
+        setSelectedDates(adjustedDates);
+      }
     } else if (type === 'end') {
-      setProjectDetails(prev => ({ ...prev, endDate: formattedDate }));
+      const currentStartDate = projectDetails.startDate;
+      const newEndDate = formattedDate;
+      
+      // 사용자가 종료일을 변경했다는 것을 표시
+      userDateChangeRef.current.endDate = true;
+      
+      setProjectDetails(prev => ({ ...prev, endDate: newEndDate }));
       setShowEndCalendar(false);
+      
+      // 기간 변경 시 schedules 자동 조정 (로컬에서만)
+      if (currentStartDate) {
+        // 스토어를 업데이트하지 않고 로컬에서만 schedules 조정
+        const currentSchedules = Array.from(selectedDates).map((date, index) => ({
+          scheduleId: index + 1,
+          scheduledDate: date
+        }));
+        
+        // 원래 시작일/종료일 가져오기 (DB에서 가져온 원본 데이터)
+        const originalStartDate = detailFromStore?.startDate?.replace(/-/g, '.') || initialStartDate;
+        const originalEndDate = detailFromStore?.endDate?.replace(/-/g, '.') || initialEndDate;
+        
+        const adjustedSchedules = adjustSchedulesBasedOnDateRangeLocal(
+          currentSchedules,
+          currentStartDate,
+          newEndDate,
+          originalStartDate,
+          originalEndDate
+        );
+        
+        const adjustedDates = new Set();
+        adjustedSchedules.forEach(schedule => {
+          if (schedule.scheduledDate) {
+            adjustedDates.add(schedule.scheduledDate);
+          }
+        });
+        setSelectedDates(adjustedDates);
+      }
     } else if (type === 'workDayAdjustment') {
       // 작업 가능 날짜 선택/해제
       // 시간대 문제를 해결하기 위해 로컬 날짜 형식 사용
@@ -967,6 +1160,8 @@ const ProjectEditModal = ({ onClose, data, onSave, userId }) => {
           onClose={() => setShowWorkDayAdjustment(false)}
           selectedDates={selectedDates}
           isWorkDayAdjustment={true}
+          projectStartDate={projectDetails.startDate}
+          projectEndDate={projectDetails.endDate}
         />
       )}
     </>

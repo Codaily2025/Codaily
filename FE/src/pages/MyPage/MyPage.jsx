@@ -81,7 +81,7 @@ const Mypage = () => {
             <div className={`${styles.infoBox} ${styles.techStack}`}>
               {!isGithubConnected ? ( // 깃허브 미연동일때
                 <div className={styles.techStackEmpty}>
-                  <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
+                  <span>GitHub에서 나의 기술 스택을 가져와보세요.</span>
                   <button
                     className={styles.syncTechStackBtn}
                     onClick={handleSyncTechStack}
@@ -93,14 +93,14 @@ const Mypage = () => {
               ) : 
               isTechStackEmpty ? ( // 기술스택 비어있을때
                 <div className={styles.techStackEmpty}>
-                  <span>GitHub에서 나의 기술 스택을 설정해보세요.</span>
-                  {/* <button
+                  <span>GitHub에서 나의 기술 스택을 가져와보세요.</span>
+                  <button
                     className={styles.syncTechStackBtn}
                     onClick={handleSyncTechStack}
                     disabled={githubTechStackSyncMutation.isPending}
                   >
-                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : 'GitHub 동기화'}
-                  </button> */}
+                    {githubTechStackSyncMutation.isPending ? '동기화 중...' : '기술스택 동기화'}
+                  </button>
                 </div>
               ) : (
                 <>

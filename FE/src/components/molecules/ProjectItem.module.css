@@ -6,8 +6,8 @@
 }
 
 .projectItemActive {
-  background-color: #f0f4ff;
-  border: 1px solid #3b82f6;
+  background-color: #FAF9FD;
+  border: 1px solid #9C9BC3;
 }
 
 /* Project Header */
@@ -22,7 +22,7 @@
 }
 
 .projectHeader:hover {
-  background-color: #f8fafc;
+  background-color: #E4E3F3;
 }
 
 .projectHeaderActive {
@@ -32,7 +32,7 @@
   padding: 12px;
   cursor: pointer;
   border-radius: 8px;
-  background-color: #f0f4ff;
+  background-color: #FAF9FD;
 }
 
 /* Project Info */
@@ -50,7 +50,7 @@
 }
 
 .projectIconActive {
-  color: #3b82f6;
+  color: #6C6B93;
 }
 
 /* Project Name */
@@ -62,7 +62,7 @@
 
 .projectNameActive {
   font-weight: 600;
-  color: #3b82f6;
+  color: #6C6B93;
   font-size: 14px;
 }
 
@@ -91,7 +91,7 @@
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
-  color: #3b82f6;
+  color: #6C6B93;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -99,7 +99,7 @@
 }
 
 .projectToggleBtnActive:hover {
-  background-color: #dbeafe;
+  background-color: #E4E3F3;
 }
 
 /* Submenu */
@@ -121,7 +121,7 @@
 }
 
 .submenuItem:hover {
-  background-color: #f8fafc;
+  background-color: #E4E3F3;
 }
 
 .submenuIcon {

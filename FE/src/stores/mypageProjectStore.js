@@ -128,6 +128,29 @@ export const useProjectStore = create((set, get) => ({
       };
     });
   },
+
+  // 기간 변경에 따른 schedules 자동 조정
+  adjustSchedulesForDateRange: (newStartDate, newEndDate) => {
+    set((state) => {
+      if (!state.projectDetail) {
+        return state;
+      }
+
+      const currentSchedules = state.projectDetail.schedules || [];
+      const adjustedSchedules = adjustSchedulesBasedOnDateRange(
+        currentSchedules,
+        newStartDate,
+        newEndDate
+      );
+
+      return {
+        projectDetail: {
+          ...state.projectDetail,
+          schedules: adjustedSchedules
+        }
+      };
+    });
+  },
 }));
 
 // 헬퍼 함수: 영문 요일명을 한글로 변환
@@ -158,4 +181,83 @@ const convertDaysOfWeeksToTimeByDay = (daysOfWeeks) => {
   }
   
   return timeByDay;
+};
+
+// 헬퍼 함수: 기간 변경에 따른 schedules 자동 조정
+const adjustSchedulesBasedOnDateRange = (currentSchedules, newStartDate, newEndDate) => {
+  if (!currentSchedules || !Array.isArray(currentSchedules)) {
+    return [];
+  }
+
+  // 날짜 문자열을 Date 객체로 변환하는 함수
+  const parseDate = (dateStr) => {
+    if (!dateStr) return null;
+    // "2025.08.03" 형식을 "2025-08-03" 형식으로 변환
+    const normalizedDate = dateStr.replace(/\./g, '-');
+    return new Date(normalizedDate);
+  };
+
+  const startDate = parseDate(newStartDate);
+  const endDate = parseDate(newEndDate);
+
+  if (!startDate || !endDate) {
+    return currentSchedules;
+  }
+
+  // 기존 schedules에서 새로운 기간 범위 내의 날짜만 필터링
+  const filteredSchedules = currentSchedules.filter(schedule => {
+    const scheduleDate = new Date(schedule.scheduledDate);
+    return scheduleDate >= startDate && scheduleDate <= endDate;
+  });
+
+  // 기간이 확장된 경우 새로운 날짜들을 자동으로 추가
+  const existingDates = new Set(filteredSchedules.map(s => s.scheduledDate));
+  const newSchedules = [...filteredSchedules];
+
+  // 시작일 이전의 새로운 날짜들 추가
+  const originalStartDate = currentSchedules.length > 0 
+    ? new Date(Math.min(...currentSchedules.map(s => new Date(s.scheduledDate))))
+    : startDate;
+  
+  if (startDate < originalStartDate) {
+    const currentDate = new Date(startDate);
+    while (currentDate < originalStartDate) {
+      const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      if (!existingDates.has(dateStr)) {
+        newSchedules.push({
+          scheduleId: newSchedules.length + 1,
+          scheduledDate: dateStr
+        });
+        existingDates.add(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+
+  // 종료일 이후의 새로운 날짜들 추가
+  const originalEndDate = currentSchedules.length > 0
+    ? new Date(Math.max(...currentSchedules.map(s => new Date(s.scheduledDate))))
+    : endDate;
+
+  if (endDate > originalEndDate) {
+    const currentDate = new Date(originalEndDate);
+    currentDate.setDate(currentDate.getDate() + 1); // 다음 날부터 시작
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+      if (!existingDates.has(dateStr)) {
+        newSchedules.push({
+          scheduleId: newSchedules.length + 1,
+          scheduledDate: dateStr
+        });
+        existingDates.add(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+
+  // scheduleId 재정렬
+  return newSchedules.map((schedule, index) => ({
+    ...schedule,
+    scheduleId: index + 1
+  }));
 };
