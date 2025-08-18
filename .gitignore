@@ -96,3 +96,6 @@ media/
 
 # Spring Boot's static files should not be excluded
 !src/main/resources/static/
+
+
+.prettierignore
