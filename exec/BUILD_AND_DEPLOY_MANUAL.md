@@ -11,6 +11,7 @@
     - ssl_certificate_key: `/etc/letsencrypt/live/{DOMAIN}/privkey.pem`
 
 ### 프론트엔드 (정적 서빙)
+- **noe.js 버전**: 22.17.0
 - **FE 컨테이너**: Nginx (런타임) + (Vite/React 빌드 산출물)
 - **통신 흐름**: Browser → Host Nginx → FE 컨테이너
 - **참고**: SPA 라우팅 필요 시 FE Nginx 설정에  
