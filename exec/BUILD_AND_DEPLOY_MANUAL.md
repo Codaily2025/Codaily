@@ -22,6 +22,7 @@
 - **외부 API**: GitHub API, Google/Naver/Kakao OAuth2 API 사용
 
 ### AI 서비스
+- **python version**: 3.13.5
 - **AI 컨테이너**: FastAPI (+Uvicorn)
 - **모델 경로**: `/home/ubuntu/models` → `/app/models:ro` (읽기 전용 마운트)
 - **AI API**: GMS API Gateway (`https://gms.ssafy.io/gmsapi/api.openai.com/v1`)
@@ -290,7 +291,7 @@ proxy_send_timeout 600s;
 
 
 ## 로컬 실행
-로컬 환경에서 Codaily 프로젝트를 실행하기 위한 간단한 안내입니다. 아래와 같이 프론트엔드, 백엔드, AI 모듈을 각각 별도의 터미널에서 실행해야 합니다. 실행에 앞서 Node.js (v14+ 권장), JDK (Java 11 이상), **Python 3.10+**가 설치되어 있어야 합니다.
+로컬 환경에서 Codaily 프로젝트를 실행하기 위한 간단한 안내입니다. 아래와 같이 프론트엔드, 백엔드, AI 모듈을 각각 별도의 터미널에서 실행해야 합니다. 실행에 앞서 Node.js (v22+ 권장), JDK (Java 17 이상), **Python 3.10+**가 설치되어 있어야 합니다.
 
 ### 프론트엔드 (FE) 실행
 
